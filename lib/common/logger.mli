@@ -1,7 +1,7 @@
 (** Structured logging utilities.
 
-    This module provides setup and general-purpose structured logging functions
-    that all components use.
+    This module provides setup and structured logging functions that all
+    components use.
 
     {1 Log Format}
 
@@ -69,6 +69,35 @@ val format_kv : string * string -> string
 
 val format_kvs : (string * string) list -> string
 (** Format a list of key-value pairs as [key1="value1" key2="value2" ...]. *)
+
+(** {1 HTTP Logging} *)
+
+val log_request : method_:string -> uri:Uri.t -> unit
+(** Log an outgoing HTTP request. Format:
+    [[HTTP_CLIENT] [REQUEST] method="..." url="..."] *)
+
+val log_response :
+  method_:string ->
+  uri:Uri.t ->
+  status:Cohttp.Code.status_code ->
+  body:string ->
+  unit
+(** Log an HTTP response. Format:
+    [[HTTP_CLIENT] [RESPONSE] method="..." url="..." status="..."] *)
+
+val log_error : method_:string -> uri:Uri.t -> exn:exn -> unit
+(** Log an HTTP request error. Format:
+    [[HTTP_CLIENT] [ERROR] method="..." url="..." error="..."] *)
+
+(** {1 JSON Field Logging} *)
+
+val log_json_fields : context:string -> Yojson.Safe.t -> unit
+(** Log JSON field names at debug level. Format:
+    [[HTTP_CLIENT] [JSON_FIELDS] context="..." fields="..."] *)
+
+val log_json_fields_with_expected :
+  context:string -> expected:string list -> Yojson.Safe.t -> unit
+(** Log JSON fields and compare with expected fields. *)
 
 (** {1 Advanced} *)
 
