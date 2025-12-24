@@ -31,6 +31,8 @@ type side =
   | BUY   (** Buy side of a trade *)
   | SELL  (** Sell side of a trade *)
 
+val string_of_side : side -> string
+
 (** Activity type enum *)
 type activity_type =
   | TRADE       (** A trade activity *)
@@ -39,6 +41,8 @@ type activity_type =
   | REDEEM      (** A redemption *)
   | REWARD      (** A reward *)
   | CONVERSION  (** A conversion *)
+
+val string_of_activity_type : activity_type -> string
 
 (** {1 Response Types} *)
 

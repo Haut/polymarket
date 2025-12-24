@@ -29,6 +29,8 @@ type side =
   | SELL
 [@@deriving yojson, show, eq]
 
+let string_of_side = function BUY -> "BUY" | SELL -> "SELL"
+
 (** Activity type enum *)
 type activity_type =
   | TRADE
@@ -38,6 +40,14 @@ type activity_type =
   | REWARD
   | CONVERSION
 [@@deriving yojson, show, eq]
+
+let string_of_activity_type = function
+  | TRADE -> "TRADE"
+  | SPLIT -> "SPLIT"
+  | MERGE -> "MERGE"
+  | REDEEM -> "REDEEM"
+  | REWARD -> "REWARD"
+  | CONVERSION -> "CONVERSION"
 
 (** {1 Response Types} *)
 
