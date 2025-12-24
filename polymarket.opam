@@ -23,6 +23,7 @@ depends: [
   "dune" {>= "3.16" & >= "3.16"}
   "yojson" {>= "2.0"}
   "ppx_yojson_conv" {>= "0.16"}
+  "ppx_deriving" {>= "5.2"}
   "cohttp-eio" {>= "6.0"}
   "eio_main" {>= "1.0"}
   "uri" {>= "4.0"}

@@ -9,6 +9,7 @@
 type sort_direction =
   | ASC
   | DESC
+[@@deriving yojson, show, eq]
 
 let string_of_sort_direction = function
   | ASC -> "ASC"
@@ -26,6 +27,7 @@ type position_sort_by =
   | RESOLVING
   | PRICE
   | AVGPRICE
+[@@deriving yojson, show, eq]
 
 let string_of_position_sort_by = function
   | CURRENT -> "CURRENT"
@@ -43,6 +45,7 @@ let string_of_position_sort_by = function
 type filter_type =
   | CASH
   | TOKENS_FILTER
+[@@deriving yojson, show, eq]
 
 let string_of_filter_type = function
   | CASH -> "CASH"
@@ -54,6 +57,7 @@ type activity_sort_by =
   | TIMESTAMP
   | TOKENS_SORT
   | CASH_SORT
+[@@deriving yojson, show, eq]
 
 let string_of_activity_sort_by = function
   | TIMESTAMP -> "TIMESTAMP"
@@ -68,6 +72,7 @@ type closed_position_sort_by =
   | PRICE_SORT
   | AVGPRICE_SORT
   | TIMESTAMP_SORT
+[@@deriving yojson, show, eq]
 
 let string_of_closed_position_sort_by = function
   | REALIZEDPNL -> "REALIZEDPNL"
@@ -83,6 +88,7 @@ type time_period =
   | WEEK
   | MONTH
   | ALL
+[@@deriving yojson, show, eq]
 
 let string_of_time_period = function
   | DAY -> "DAY"
@@ -103,6 +109,7 @@ type leaderboard_category =
   | ECONOMICS
   | TECH
   | FINANCE
+[@@deriving yojson, show, eq]
 
 let string_of_leaderboard_category = function
   | OVERALL -> "OVERALL"
@@ -119,6 +126,7 @@ let string_of_leaderboard_category = function
 type leaderboard_order_by =
   | PNL
   | VOL
+[@@deriving yojson, show, eq]
 
 let string_of_leaderboard_order_by = function
   | PNL -> "PNL"

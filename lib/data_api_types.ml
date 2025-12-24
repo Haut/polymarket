@@ -10,11 +10,16 @@ open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 
 (** User Profile Address (0x-prefixed, 40 hex chars).
     Pattern: ^0x[a-fA-F0-9]{40}$ *)
-type address = string [@@deriving yojson]
+type address = string [@@deriving yojson, show, eq]
 
 (** 0x-prefixed 64-hex string.
     Pattern: ^0x[a-fA-F0-9]{64}$ *)
-type hash64 = string [@@deriving yojson]
+type hash64 = string [@@deriving yojson, show, eq]
+
+(** {1 Validation Errors} *)
+
+exception Invalid_address of string
+exception Invalid_hash64 of string
 
 (** {1 Enums} *)
 
@@ -22,7 +27,7 @@ type hash64 = string [@@deriving yojson]
 type side =
   | BUY
   | SELL
-[@@deriving yojson]
+[@@deriving yojson, show, eq]
 
 (** Activity type enum *)
 type activity_type =
@@ -32,19 +37,19 @@ type activity_type =
   | REDEEM
   | REWARD
   | CONVERSION
-[@@deriving yojson]
+[@@deriving yojson, show, eq]
 
 (** {1 Response Types} *)
 
 (** Health check response *)
 type health_response = {
   data : string option; [@yojson.option]
-} [@@deriving yojson]
+} [@@deriving yojson, show, eq]
 
 (** Error response *)
 type error_response = {
   error : string;
-} [@@deriving yojson]
+} [@@deriving yojson, show, eq]
 
 (** {1 Domain Models} *)
 
@@ -75,7 +80,7 @@ type position = {
   opposite_asset : string option; [@yojson.option] [@key "oppositeAsset"]
   end_date : string option; [@yojson.option] [@key "endDate"]
   negative_risk : bool option; [@yojson.option] [@key "negativeRisk"]
-} [@@deriving yojson]
+} [@@deriving yojson, show, eq]
 
 (** Closed position in a market *)
 type closed_position = {
@@ -96,7 +101,7 @@ type closed_position = {
   opposite_outcome : string option; [@yojson.option] [@key "oppositeOutcome"]
   opposite_asset : string option; [@yojson.option] [@key "oppositeAsset"]
   end_date : string option; [@yojson.option] [@key "endDate"]
-} [@@deriving yojson]
+} [@@deriving yojson, show, eq]
 
 (** Trade record *)
 type trade = {
@@ -119,7 +124,7 @@ type trade = {
   profile_image : string option; [@yojson.option] [@key "profileImage"]
   profile_image_optimized : string option; [@yojson.option] [@key "profileImageOptimized"]
   transaction_hash : string option; [@yojson.option] [@key "transactionHash"]
-} [@@deriving yojson]
+} [@@deriving yojson, show, eq]
 
 (** Activity record *)
 type activity = {
@@ -144,7 +149,7 @@ type activity = {
   bio : string option; [@yojson.option]
   profile_image : string option; [@yojson.option] [@key "profileImage"]
   profile_image_optimized : string option; [@yojson.option] [@key "profileImageOptimized"]
-} [@@deriving yojson]
+} [@@deriving yojson, show, eq]
 
 (** Holder of a position *)
 type holder = {
@@ -158,62 +163,62 @@ type holder = {
   name : string option; [@yojson.option]
   profile_image : string option; [@yojson.option] [@key "profileImage"]
   profile_image_optimized : string option; [@yojson.option] [@key "profileImageOptimized"]
-} [@@deriving yojson]
+} [@@deriving yojson, show, eq]
 
 (** Meta holder with token and list of holders *)
 type meta_holder = {
   token : string option; [@yojson.option]
   holders : holder list option; [@yojson.option]
-} [@@deriving yojson]
+} [@@deriving yojson, show, eq]
 
 (** Traded record *)
 type traded = {
   user : address option; [@yojson.option]
   traded : int option; [@yojson.option]
-} [@@deriving yojson]
+} [@@deriving yojson, show, eq]
 
 (** Revision entry *)
 type revision_entry = {
   revision : string option; [@yojson.option]
   timestamp : int option; [@yojson.option]
-} [@@deriving yojson]
+} [@@deriving yojson, show, eq]
 
 (** Revision payload *)
 type revision_payload = {
   question_id : hash64 option; [@yojson.option] [@key "questionID"]
   revisions : revision_entry list option; [@yojson.option]
-} [@@deriving yojson]
+} [@@deriving yojson, show, eq]
 
 (** Value record *)
 type value = {
   user : address option; [@yojson.option]
   value : float option; [@yojson.option]
-} [@@deriving yojson]
+} [@@deriving yojson, show, eq]
 
 (** Open interest for a market *)
 type open_interest = {
   market : hash64 option; [@yojson.option]
   value : float option; [@yojson.option]
-} [@@deriving yojson]
+} [@@deriving yojson, show, eq]
 
 (** Market volume *)
 type market_volume = {
   market : hash64 option; [@yojson.option]
   value : float option; [@yojson.option]
-} [@@deriving yojson]
+} [@@deriving yojson, show, eq]
 
 (** Live volume *)
 type live_volume = {
   total : float option; [@yojson.option]
   markets : market_volume list option; [@yojson.option]
-} [@@deriving yojson]
+} [@@deriving yojson, show, eq]
 
 (** Other size record *)
 type other_size = {
   id : int option; [@yojson.option]
   user : address option; [@yojson.option]
   size : float option; [@yojson.option]
-} [@@deriving yojson]
+} [@@deriving yojson, show, eq]
 
 (** {1 Leaderboard Types} *)
 
@@ -225,7 +230,7 @@ type leaderboard_entry = {
   active_users : int option; [@yojson.option] [@key "activeUsers"]
   verified : bool option; [@yojson.option]
   builder_logo : string option; [@yojson.option] [@key "builderLogo"]
-} [@@deriving yojson]
+} [@@deriving yojson, show, eq]
 
 (** Builder volume entry *)
 type builder_volume_entry = {
@@ -236,7 +241,7 @@ type builder_volume_entry = {
   volume : float option; [@yojson.option]
   active_users : int option; [@yojson.option] [@key "activeUsers"]
   rank : string option; [@yojson.option]
-} [@@deriving yojson]
+} [@@deriving yojson, show, eq]
 
 (** Trader leaderboard entry *)
 type trader_leaderboard_entry = {
@@ -248,7 +253,7 @@ type trader_leaderboard_entry = {
   profile_image : string option; [@yojson.option] [@key "profileImage"]
   x_username : string option; [@yojson.option] [@key "xUsername"]
   verified_badge : bool option; [@yojson.option] [@key "verifiedBadge"]
-} [@@deriving yojson]
+} [@@deriving yojson, show, eq]
 
 (** {1 Validation Functions} *)
 
@@ -279,6 +284,42 @@ let is_valid_hash64 (hash : hash64) : bool =
     | '0'..'9' | 'a'..'f' | 'A'..'F' -> true
     | _ -> false
   ) (String.sub hash 2 (len - 2))
+
+(** {1 Validating Deserializers} *)
+
+(** Deserialize an address with validation.
+    @raise Invalid_address if the address doesn't match the expected pattern *)
+let address_of_yojson_exn json =
+  let addr = address_of_yojson json in
+  if is_valid_address addr then addr
+  else raise (Invalid_address addr)
+
+(** Deserialize a hash64 with validation.
+    @raise Invalid_hash64 if the hash doesn't match the expected pattern *)
+let hash64_of_yojson_exn json =
+  let hash = hash64_of_yojson json in
+  if is_valid_hash64 hash then hash
+  else raise (Invalid_hash64 hash)
+
+(** Deserialize an address with validation, returning a result.
+    @return [Ok address] if valid, [Error msg] if invalid *)
+let address_of_yojson_result json =
+  try
+    let addr = address_of_yojson json in
+    if is_valid_address addr then Ok addr
+    else Error ("Invalid address format: " ^ addr)
+  with Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, _) ->
+    Error ("JSON parse error: " ^ Printexc.to_string exn)
+
+(** Deserialize a hash64 with validation, returning a result.
+    @return [Ok hash64] if valid, [Error msg] if invalid *)
+let hash64_of_yojson_result json =
+  try
+    let hash = hash64_of_yojson json in
+    if is_valid_hash64 hash then Ok hash
+    else Error ("Invalid hash64 format: " ^ hash)
+  with Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, _) ->
+    Error ("JSON parse error: " ^ Printexc.to_string exn)
 
 (** {1 Constructors} *)
 

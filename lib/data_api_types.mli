@@ -16,6 +16,14 @@ type address = string
     @example "0xdd22472e552920b8438158ea7238bfadfa4f736aa4cee91a6b86c39ead110917" *)
 type hash64 = string
 
+(** {1 Validation Exceptions} *)
+
+(** Raised when an address fails validation *)
+exception Invalid_address of string
+
+(** Raised when a hash64 fails validation *)
+exception Invalid_hash64 of string
+
 (** {1 Enums} *)
 
 (** Trade side enum *)
@@ -261,6 +269,121 @@ val yojson_of_side : side -> Yojson.Safe.t
 
 val activity_type_of_yojson : Yojson.Safe.t -> activity_type
 val yojson_of_activity_type : activity_type -> Yojson.Safe.t
+
+(** {1 Validating Deserializers} *)
+
+(** Deserialize an address with validation.
+    @raise Invalid_address if the address doesn't match the expected pattern *)
+val address_of_yojson_exn : Yojson.Safe.t -> address
+
+(** Deserialize a hash64 with validation.
+    @raise Invalid_hash64 if the hash doesn't match the expected pattern *)
+val hash64_of_yojson_exn : Yojson.Safe.t -> hash64
+
+(** Deserialize an address with validation, returning a result.
+    @return [Ok address] if valid, [Error msg] if invalid *)
+val address_of_yojson_result : Yojson.Safe.t -> (address, string) result
+
+(** Deserialize a hash64 with validation, returning a result.
+    @return [Ok hash64] if valid, [Error msg] if invalid *)
+val hash64_of_yojson_result : Yojson.Safe.t -> (hash64, string) result
+
+(** {1 Pretty Printing Functions} *)
+
+val pp_address : Format.formatter -> address -> unit
+val show_address : address -> string
+
+val pp_hash64 : Format.formatter -> hash64 -> unit
+val show_hash64 : hash64 -> string
+
+val pp_side : Format.formatter -> side -> unit
+val show_side : side -> string
+
+val pp_activity_type : Format.formatter -> activity_type -> unit
+val show_activity_type : activity_type -> string
+
+val pp_health_response : Format.formatter -> health_response -> unit
+val show_health_response : health_response -> string
+
+val pp_error_response : Format.formatter -> error_response -> unit
+val show_error_response : error_response -> string
+
+val pp_position : Format.formatter -> position -> unit
+val show_position : position -> string
+
+val pp_closed_position : Format.formatter -> closed_position -> unit
+val show_closed_position : closed_position -> string
+
+val pp_trade : Format.formatter -> trade -> unit
+val show_trade : trade -> string
+
+val pp_activity : Format.formatter -> activity -> unit
+val show_activity : activity -> string
+
+val pp_holder : Format.formatter -> holder -> unit
+val show_holder : holder -> string
+
+val pp_meta_holder : Format.formatter -> meta_holder -> unit
+val show_meta_holder : meta_holder -> string
+
+val pp_traded : Format.formatter -> traded -> unit
+val show_traded : traded -> string
+
+val pp_revision_entry : Format.formatter -> revision_entry -> unit
+val show_revision_entry : revision_entry -> string
+
+val pp_revision_payload : Format.formatter -> revision_payload -> unit
+val show_revision_payload : revision_payload -> string
+
+val pp_value : Format.formatter -> value -> unit
+val show_value : value -> string
+
+val pp_open_interest : Format.formatter -> open_interest -> unit
+val show_open_interest : open_interest -> string
+
+val pp_market_volume : Format.formatter -> market_volume -> unit
+val show_market_volume : market_volume -> string
+
+val pp_live_volume : Format.formatter -> live_volume -> unit
+val show_live_volume : live_volume -> string
+
+val pp_other_size : Format.formatter -> other_size -> unit
+val show_other_size : other_size -> string
+
+val pp_leaderboard_entry : Format.formatter -> leaderboard_entry -> unit
+val show_leaderboard_entry : leaderboard_entry -> string
+
+val pp_builder_volume_entry : Format.formatter -> builder_volume_entry -> unit
+val show_builder_volume_entry : builder_volume_entry -> string
+
+val pp_trader_leaderboard_entry : Format.formatter -> trader_leaderboard_entry -> unit
+val show_trader_leaderboard_entry : trader_leaderboard_entry -> string
+
+(** {1 Equality Functions} *)
+
+val equal_address : address -> address -> bool
+val equal_hash64 : hash64 -> hash64 -> bool
+val equal_side : side -> side -> bool
+val equal_activity_type : activity_type -> activity_type -> bool
+val equal_health_response : health_response -> health_response -> bool
+val equal_error_response : error_response -> error_response -> bool
+val equal_position : position -> position -> bool
+val equal_closed_position : closed_position -> closed_position -> bool
+val equal_trade : trade -> trade -> bool
+val equal_activity : activity -> activity -> bool
+val equal_holder : holder -> holder -> bool
+val equal_meta_holder : meta_holder -> meta_holder -> bool
+val equal_traded : traded -> traded -> bool
+val equal_revision_entry : revision_entry -> revision_entry -> bool
+val equal_revision_payload : revision_payload -> revision_payload -> bool
+val equal_value : value -> value -> bool
+val equal_open_interest : open_interest -> open_interest -> bool
+val equal_market_volume : market_volume -> market_volume -> bool
+val equal_live_volume : live_volume -> live_volume -> bool
+val equal_other_size : other_size -> other_size -> bool
+val equal_leaderboard_entry : leaderboard_entry -> leaderboard_entry -> bool
+val equal_builder_volume_entry : builder_volume_entry -> builder_volume_entry -> bool
+val equal_trader_leaderboard_entry : trader_leaderboard_entry -> trader_leaderboard_entry -> bool
 
 val health_response_of_yojson : Yojson.Safe.t -> health_response
 val yojson_of_health_response : health_response -> Yojson.Safe.t
