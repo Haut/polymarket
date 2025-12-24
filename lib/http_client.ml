@@ -3,6 +3,8 @@
     This module provides a reusable HTTP client with JSON parsing
     and query parameter building utilities. *)
 
+open Ppx_yojson_conv_lib.Yojson_conv.Primitives
+
 (** {1 Client Configuration} *)
 
 type t = {
@@ -88,6 +90,16 @@ let parse_json_list parse_item_fn body =
   | Yojson.Json_error msg ->
     Error ("JSON error: " ^ msg)
 
+(** {1 Error Handling} *)
+
+type error_response = { error : string } [@@deriving yojson]
+
+let to_error msg = { error = msg }
+
+let parse_error body =
+  try error_response_of_yojson (Yojson.Safe.from_string body)
+  with _ -> { error = body }
+
 (** {1 Response Handling} *)
 
 let handle_response status body parse_fn error_parser =
@@ -99,3 +111,17 @@ let request t path parse_fn error_parser params =
   let uri = build_uri t.base_url path params in
   let status, body = do_get t uri in
   handle_response status body parse_fn error_parser
+
+(** {1 Convenient JSON Request Helpers} *)
+
+let get_json t path parser params =
+  request t path
+    (fun body -> parse_json parser body |> Result.map_error to_error)
+    parse_error
+    params
+
+let get_json_list t path parser params =
+  request t path
+    (fun body -> parse_json_list parser body |> Result.map_error to_error)
+    parse_error
+    params

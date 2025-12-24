@@ -56,10 +56,9 @@ type health_response = {
   data : string option; [@yojson.option]
 } [@@deriving yojson, show, eq]
 
-(** Error response *)
-type error_response = {
-  error : string;
-} [@@deriving yojson, show, eq]
+(** Error response (alias to Http_client.error_response for compatibility) *)
+type error_response = Http_client.error_response = { error : string }
+[@@deriving yojson, show, eq]
 
 (** {1 Domain Models} *)
 

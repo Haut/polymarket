@@ -77,6 +77,11 @@ val parse_json_list :
   string ->
   ('a list, string) result
 
+(** {1 Error Handling} *)
+
+(** Standard error response type used by Polymarket APIs *)
+type error_response = { error : string }
+
 (** {1 Response Handling} *)
 
 (** Handle HTTP response status and parse body.
@@ -106,3 +111,23 @@ val request :
   (string -> 'e) ->
   params ->
   ('a, 'e) result
+
+(** {1 Convenient JSON Request Helpers}
+
+    These combine request + JSON parsing + standard error handling. *)
+
+(** GET request expecting a JSON object response *)
+val get_json :
+  t ->
+  string ->
+  (Yojson.Safe.t -> 'a) ->
+  params ->
+  ('a, error_response) result
+
+(** GET request expecting a JSON array response *)
+val get_json_list :
+  t ->
+  string ->
+  (Yojson.Safe.t -> 'a) ->
+  params ->
+  ('a list, error_response) result
