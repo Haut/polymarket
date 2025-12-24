@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, master]
 
+# Restrict permissions to minimum required
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build and Test
