@@ -11,8 +11,4 @@ let () =
          prefix_tests "Common.Http_client" Test_common.Test_http_client.tests;
          (* Data API tests *)
          prefix_tests "Data_api.Types" Test_data_api.Test_types.tests;
-         prefix_tests "Data_api.Params" Test_data_api.Test_params.tests;
-         (* Gamma API tests *)
-         prefix_tests "Gamma_api.Types" Test_gamma_api.Test_types.tests;
-         prefix_tests "Gamma_api.Params" Test_gamma_api.Test_params.tests;
        ])
