@@ -8,19 +8,19 @@
     {[
       Eio_main.run @@ fun env ->
       Eio.Switch.run @@ fun sw ->
-      let client = Data_api_client.create
+      let client = Polymarket.Data_api.Client.create
         ~sw
         ~net:(Eio.Stdenv.net env)
         ()
       in
-      match Data_api_client.health_check client with
+      match Polymarket.Data_api.Client.health_check client with
       | Ok response -> print_endline (Option.value ~default:"OK" response.data)
       | Error err -> print_endline ("Error: " ^ err.error)
     ]}
 *)
 
-open Data_api_types
-open Data_api_params
+open Types
+open Params
 
 (** {1 Client Configuration} *)
 

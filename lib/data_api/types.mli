@@ -51,8 +51,8 @@ type health_response = {
   data : string option;
 }
 
-(** Error response (alias to Http_client.error_response for compatibility) *)
-type error_response = Http_client.error_response = { error : string }
+(** Error response (alias to Common.Http_client.error_response for compatibility) *)
+type error_response = Common.Http_client.error_response = { error : string }
 
 (** {1 Domain Models} *)
 
