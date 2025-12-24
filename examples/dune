@@ -1,9 +1,9 @@
 (executable
  (name data_api_demo)
  (modules data_api_demo logger)
- (libraries polymarket unix eio_main mirage-crypto-rng.unix))
+ (libraries polymarket unix eio_main mirage-crypto-rng.unix logs))
 
 (executable
  (name gamma_api_demo)
  (modules gamma_api_demo logger)
- (libraries polymarket unix eio_main mirage-crypto-rng.unix))
+ (libraries polymarket unix eio_main mirage-crypto-rng.unix logs))

@@ -45,12 +45,7 @@ let first_market_slug (markets : Gamma_api.Types.market list) =
   match markets with [] -> None | m :: _ -> m.slug
 
 let first_series_id (series_list : Gamma_api.Types.series list) =
-  match series_list with
-  | [] -> None
-  | s :: _ -> (
-      match s.id with
-      | Some id -> ( try Some (int_of_string id) with _ -> None)
-      | None -> None)
+  match series_list with [] -> None | s :: _ -> s.id
 
 let first_tag_id (tags : Gamma_api.Types.tag list) =
   match tags with [] -> None | t :: _ -> t.id
@@ -75,7 +70,9 @@ let first_user_address (comments : Gamma_api.Types.comment list) =
 (** {1 Main Demo} *)
 
 let run_demo env =
-  (* Initialize logging from POLYMARKET_LOG_LEVEL environment variable *)
+  (* Initialize demo logger (disables noise from other libraries) *)
+  Logger.setup ();
+  (* Initialize library logging from POLYMARKET_LOG_LEVEL environment variable *)
   Common.Logger.setup ();
   Eio.Switch.run @@ fun sw ->
   let net = Eio.Stdenv.net env in
@@ -317,4 +314,5 @@ let run_demo env =
 
 let () =
   Mirage_crypto_rng_unix.use_default ();
-  Eio_main.run run_demo
+  Eio_main.run run_demo;
+  Logger.close ()

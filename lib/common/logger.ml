@@ -37,12 +37,8 @@ let setup () =
             None
         | some_level -> some_level)
   in
-  match log_level with
-  | Some level ->
-      Fmt_tty.setup_std_outputs ();
-      Logs.set_reporter (Logs_fmt.reporter ());
-      Logs.set_level (Some level)
-  | None -> Logs.set_level None
+  (* Only set the source level, don't override the reporter *)
+  Logs.Src.set_level src log_level
 
 (** {1 Structured Logging} *)
 

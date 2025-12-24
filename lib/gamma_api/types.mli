@@ -555,6 +555,8 @@ and event = {
   scheduled_deployment_timestamp : string option;
   game_status : string option;
   neg_risk_augmented : bool option;
+  country_name : string option;
+  election_type : string option;
   requires_translation : bool option;
   game_id : string option;
 }

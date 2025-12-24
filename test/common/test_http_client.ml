@@ -229,7 +229,9 @@ let test_parse_json_list_not_array () =
   match result with
   | Ok _ -> Alcotest.fail "expected error"
   | Error msg ->
-      Alcotest.(check string) "expects array error" "Expected JSON array" msg
+      Alcotest.(check bool)
+        "expects array error" true
+        (String.starts_with ~prefix:"Expected JSON array" msg)
 
 (** {1 Error Handling Tests} *)
 

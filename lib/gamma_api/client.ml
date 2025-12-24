@@ -193,13 +193,13 @@ let get_series_list t ?id ?ticker ?slug ?archived ?active ?closed ?status ?order
 let get_series t ~id () =
   []
   |> Http_client.Client.get_json t
-       (Printf.sprintf "/series/%d" id)
+       (Printf.sprintf "/series/%s" id)
        series_of_yojson
 
 let get_series_summary t ~id () =
   []
   |> Http_client.Client.get_json t
-       (Printf.sprintf "/series-summary/%d" id)
+       (Printf.sprintf "/series-summary/%s" id)
        series_summary_of_yojson
 
 (** {1 Comments Endpoints} *)

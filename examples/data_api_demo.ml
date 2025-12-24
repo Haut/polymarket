@@ -27,7 +27,9 @@ let print_result_count name result =
   | Error err -> Logger.error name err.Http_client.Client.error
 
 let run_demo env =
-  (* Initialize logging from POLYMARKET_LOG_LEVEL environment variable *)
+  (* Initialize demo logger (disables noise from other libraries) *)
+  Logger.setup ();
+  (* Initialize library logging from POLYMARKET_LOG_LEVEL environment variable *)
   Common.Logger.setup ();
   Eio.Switch.run @@ fun sw ->
   let net = Eio.Stdenv.net env in

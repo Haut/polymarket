@@ -85,10 +85,6 @@ let do_get t uri =
 
 (** {1 JSON Parsing} *)
 
-let truncate_json json =
-  let s = Yojson.Safe.to_string json in
-  if String.length s > 200 then String.sub s 0 200 ^ "..." else s
-
 let parse_json parse_fn body =
   try
     let json = Yojson.Safe.from_string body in
@@ -96,22 +92,28 @@ let parse_json parse_fn body =
   with
   | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, json) ->
       Error
-        (Printf.sprintf "JSON parse error: %s\nProblematic JSON: %s"
-           (Printexc.to_string exn) (truncate_json json))
-  | Yojson.Json_error msg -> Error ("JSON error: " ^ msg)
+        (Printf.sprintf
+           "JSON parse error: %s\nProblematic value: %s\nFull response:\n%s"
+           (Printexc.to_string exn)
+           (Yojson.Safe.to_string json)
+           body)
+  | Yojson.Json_error msg -> Error ("JSON error: " ^ msg ^ "\nBody:\n" ^ body)
 
 let parse_json_list parse_item_fn body =
   try
     let json = Yojson.Safe.from_string body in
     match json with
     | `List items -> Ok (List.map parse_item_fn items)
-    | _ -> Error "Expected JSON array"
+    | _ -> Error ("Expected JSON array\nBody:\n" ^ body)
   with
   | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, json) ->
       Error
-        (Printf.sprintf "JSON parse error: %s\nProblematic JSON: %s"
-           (Printexc.to_string exn) (truncate_json json))
-  | Yojson.Json_error msg -> Error ("JSON error: " ^ msg)
+        (Printf.sprintf
+           "JSON parse error: %s\nProblematic value: %s\nFull response:\n%s"
+           (Printexc.to_string exn)
+           (Yojson.Safe.to_string json)
+           body)
+  | Yojson.Json_error msg -> Error ("JSON error: " ^ msg ^ "\nBody:\n" ^ body)
 
 (** {1 Error Handling} *)
 

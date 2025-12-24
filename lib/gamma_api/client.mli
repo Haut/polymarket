@@ -268,13 +268,13 @@ val get_series_list :
     @param next_cursor Next pagination cursor *)
 
 val get_series :
-  t -> id:int -> unit -> (series, Http_client.Client.error_response) result
+  t -> id:string -> unit -> (series, Http_client.Client.error_response) result
 (** Get a series by ID.
     @param id Series ID (required) *)
 
 val get_series_summary :
   t ->
-  id:int ->
+  id:string ->
   unit ->
   (series_summary, Http_client.Client.error_response) result
 (** Get a series summary by ID.
