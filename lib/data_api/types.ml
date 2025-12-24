@@ -27,9 +27,20 @@ exception Invalid_hash64 of string
 type side =
   | BUY
   | SELL
-[@@deriving yojson, show, eq]
+[@@deriving show, eq]
 
 let string_of_side = function BUY -> "BUY" | SELL -> "SELL"
+
+let side_of_string = function
+  | "BUY" | "buy" -> BUY
+  | "SELL" | "sell" -> SELL
+  | s -> failwith ("Unknown side: " ^ s)
+
+let side_of_yojson = function
+  | `String s -> side_of_string s
+  | _ -> failwith "side_of_yojson: expected string"
+
+let yojson_of_side side = `String (string_of_side side)
 
 (** Activity type enum *)
 type activity_type =
@@ -39,7 +50,7 @@ type activity_type =
   | REDEEM
   | REWARD
   | CONVERSION
-[@@deriving yojson, show, eq]
+[@@deriving show, eq]
 
 let string_of_activity_type = function
   | TRADE -> "TRADE"
@@ -48,6 +59,21 @@ let string_of_activity_type = function
   | REDEEM -> "REDEEM"
   | REWARD -> "REWARD"
   | CONVERSION -> "CONVERSION"
+
+let activity_type_of_string = function
+  | "TRADE" | "trade" -> TRADE
+  | "SPLIT" | "split" -> SPLIT
+  | "MERGE" | "merge" -> MERGE
+  | "REDEEM" | "redeem" -> REDEEM
+  | "REWARD" | "reward" -> REWARD
+  | "CONVERSION" | "conversion" -> CONVERSION
+  | s -> failwith ("Unknown activity_type: " ^ s)
+
+let activity_type_of_yojson = function
+  | `String s -> activity_type_of_string s
+  | _ -> failwith "activity_type_of_yojson: expected string"
+
+let yojson_of_activity_type t = `String (string_of_activity_type t)
 
 (** {1 Response Types} *)
 
@@ -219,8 +245,28 @@ type market_volume = {
 (** Live volume *)
 type live_volume = {
   total : float option; [@yojson.option]
-  markets : market_volume list option; [@yojson.option]
+  markets : market_volume list; [@default []]
 } [@@deriving yojson, show, eq]
+
+(** Custom deserializer for live_volume that handles null markets *)
+let live_volume_of_yojson json =
+  match json with
+  | `Assoc fields ->
+    let total =
+      match List.assoc_opt "total" fields with
+      | Some (`Float f) -> Some f
+      | Some (`Int i) -> Some (float_of_int i)
+      | Some `Null | None -> None
+      | _ -> None
+    in
+    let markets =
+      match List.assoc_opt "markets" fields with
+      | Some `Null | None -> []
+      | Some (`List items) -> List.map market_volume_of_yojson items
+      | _ -> []
+    in
+    { total; markets }
+  | _ -> failwith "live_volume_of_yojson: expected object"
 
 (** Other size record *)
 type other_size = {

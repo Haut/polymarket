@@ -14,7 +14,25 @@ type t = {
 }
 
 let create ~base_url ~sw ~net () =
-  let client = Cohttp_eio.Client.make ~https:None net in
+  let authenticator =
+    match Ca_certs.authenticator () with
+    | Ok x -> x
+    | Error (`Msg m) -> failwith ("Failed to create X509 authenticator: " ^ m)
+  in
+  let https =
+    let tls_config =
+      match Tls.Config.client ~authenticator () with
+      | Error (`Msg msg) -> failwith ("TLS configuration error: " ^ msg)
+      | Ok cfg -> cfg
+    in
+    fun uri raw ->
+      let host =
+        Uri.host uri
+        |> Option.map (fun x -> Domain_name.(host_exn (of_string_exn x)))
+      in
+      Tls_eio.client_of_flow ?host tls_config raw
+  in
+  let client = Cohttp_eio.Client.make ~https:(Some https) net in
   { base_url; client; sw }
 
 let base_url t = t.base_url

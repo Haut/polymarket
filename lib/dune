@@ -3,5 +3,5 @@
 (library
  (name polymarket)
  (public_name polymarket)
- (libraries yojson ppx_yojson_conv_lib cohttp-eio eio_main uri)
+ (libraries yojson ppx_yojson_conv_lib cohttp-eio eio_main uri tls tls-eio ca-certs mirage-crypto-rng-eio)
  (preprocess (pps ppx_yojson_conv ppx_deriving.show ppx_deriving.eq)))

@@ -82,6 +82,12 @@ val parse_json_list :
 (** Standard error response type used by Polymarket APIs *)
 type error_response = { error : string }
 
+(** Create an error response from a message *)
+val to_error : string -> error_response
+
+(** Parse an error response from a JSON body, falling back to body as error message *)
+val parse_error : string -> error_response
+
 (** {1 Response Handling} *)
 
 (** Handle HTTP response status and parse body.

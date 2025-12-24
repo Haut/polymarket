@@ -30,6 +30,11 @@
   (ppx_deriving (>= 5.2))
   (cohttp-eio (>= 6.0))
   (eio_main (>= 1.0))
-  (uri (>= 4.0)))
+  (uri (>= 4.0))
+  (tls (>= 1.0))
+  (tls-eio (>= 1.0))
+  (ca-certs (>= 1.0))
+  (mirage-crypto-rng-eio (>= 1.0))
+  (alcotest (and (>= 1.7) :with-test)))
  (tags
   (polymarket prediction-market blockchain polygon api-client trading)))

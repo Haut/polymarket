@@ -213,7 +213,7 @@ type market_volume = {
 (** Live volume *)
 type live_volume = {
   total : float option;
-  markets : market_volume list option;
+  markets : market_volume list;
 }
 
 (** Other size record *)
