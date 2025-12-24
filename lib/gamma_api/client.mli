@@ -35,19 +35,19 @@ val create : ?base_url:string -> sw:Eio.Switch.t -> net:_ Eio.Net.t -> unit -> t
 
 (** {1 Health Endpoint} *)
 
-val status : t -> (string, Common.Http_client.error_response) result
+val status : t -> (string, Http_client.Client.error_response) result
 (** Check if the API is healthy.
     @return [Ok "OK"] on success, [Error error] on failure *)
 
 (** {1 Teams Endpoints} *)
 
 val get_teams :
-  t -> ?id:int -> unit -> (team list, Common.Http_client.error_response) result
+  t -> ?id:int -> unit -> (team list, Http_client.Client.error_response) result
 (** Get list of sports teams.
     @param id Optional team ID to filter by *)
 
 val get_team :
-  t -> id:int -> unit -> (team, Common.Http_client.error_response) result
+  t -> id:int -> unit -> (team, Http_client.Client.error_response) result
 (** Get a team by ID.
     @param id Team ID (required) *)
 
@@ -62,7 +62,7 @@ val get_tags :
   ?limit:int ->
   ?offset:int ->
   unit ->
-  (tag list, Common.Http_client.error_response) result
+  (tag list, Http_client.Client.error_response) result
 (** Get list of tags.
     @param id Tag ID to filter by
     @param label Tag label to filter by
@@ -72,12 +72,12 @@ val get_tags :
     @param offset Pagination offset *)
 
 val get_tag :
-  t -> id:string -> unit -> (tag, Common.Http_client.error_response) result
+  t -> id:string -> unit -> (tag, Http_client.Client.error_response) result
 (** Get a tag by ID.
     @param id Tag ID (required) *)
 
 val get_tag_by_slug :
-  t -> slug:string -> unit -> (tag, Common.Http_client.error_response) result
+  t -> slug:string -> unit -> (tag, Http_client.Client.error_response) result
 (** Get a tag by slug.
     @param slug Tag slug (required) *)
 
@@ -85,7 +85,7 @@ val get_related_tags :
   t ->
   id:string ->
   unit ->
-  (related_tag list, Common.Http_client.error_response) result
+  (related_tag list, Http_client.Client.error_response) result
 (** Get related tags for a tag.
     @param id Tag ID (required) *)
 
@@ -116,7 +116,7 @@ val get_events :
   ?slug_size:slug_size ->
   ?_c:string ->
   unit ->
-  (event list, Common.Http_client.error_response) result
+  (event list, Http_client.Client.error_response) result
 (** Get events list.
     @param id Event ID to filter by
     @param ticker Event ticker to filter by
@@ -142,17 +142,17 @@ val get_events :
     @param _c Cache buster parameter *)
 
 val get_event :
-  t -> id:int -> unit -> (event, Common.Http_client.error_response) result
+  t -> id:int -> unit -> (event, Http_client.Client.error_response) result
 (** Get an event by ID.
     @param id Event ID (required) *)
 
 val get_event_by_slug :
-  t -> slug:string -> unit -> (event, Common.Http_client.error_response) result
+  t -> slug:string -> unit -> (event, Http_client.Client.error_response) result
 (** Get an event by slug.
     @param slug Event slug (required) *)
 
 val get_event_tags :
-  t -> id:int -> unit -> (tag list, Common.Http_client.error_response) result
+  t -> id:int -> unit -> (tag list, Http_client.Client.error_response) result
 (** Get tags for an event.
     @param id Event ID (required) *)
 
@@ -184,7 +184,7 @@ val get_markets :
   ?slug_size:slug_size ->
   ?_c:string ->
   unit ->
-  (market list, Common.Http_client.error_response) result
+  (market list, Http_client.Client.error_response) result
 (** Get list of markets.
     @param id Market ID to filter by
     @param condition_id Condition ID to filter by
@@ -211,17 +211,17 @@ val get_markets :
     @param _c Cache buster parameter *)
 
 val get_market :
-  t -> id:int -> unit -> (market, Common.Http_client.error_response) result
+  t -> id:int -> unit -> (market, Http_client.Client.error_response) result
 (** Get a market by ID.
     @param id Market ID (required) *)
 
 val get_market_by_slug :
-  t -> slug:string -> unit -> (market, Common.Http_client.error_response) result
+  t -> slug:string -> unit -> (market, Http_client.Client.error_response) result
 (** Get a market by slug.
     @param slug Market slug (required) *)
 
 val get_market_tags :
-  t -> id:int -> unit -> (tag list, Common.Http_client.error_response) result
+  t -> id:int -> unit -> (tag list, Http_client.Client.error_response) result
 (** Get tags for a market.
     @param id Market ID (required) *)
 
@@ -229,7 +229,7 @@ val get_market_description :
   t ->
   id:int ->
   unit ->
-  (market_description, Common.Http_client.error_response) result
+  (market_description, Http_client.Client.error_response) result
 (** Get description for a market.
     @param id Market ID (required) *)
 
@@ -251,7 +251,7 @@ val get_series_list :
   ?cursor:string ->
   ?next_cursor:string ->
   unit ->
-  (series list, Common.Http_client.error_response) result
+  (series list, Http_client.Client.error_response) result
 (** Get list of series.
     @param id Series ID to filter by
     @param ticker Series ticker to filter by
@@ -268,7 +268,7 @@ val get_series_list :
     @param next_cursor Next pagination cursor *)
 
 val get_series :
-  t -> id:int -> unit -> (series, Common.Http_client.error_response) result
+  t -> id:int -> unit -> (series, Http_client.Client.error_response) result
 (** Get a series by ID.
     @param id Series ID (required) *)
 
@@ -276,7 +276,7 @@ val get_series_summary :
   t ->
   id:int ->
   unit ->
-  (series_summary, Common.Http_client.error_response) result
+  (series_summary, Http_client.Client.error_response) result
 (** Get a series summary by ID.
     @param id Series ID (required) *)
 
@@ -291,7 +291,7 @@ val get_comments :
   ?limit:int ->
   ?offset:int ->
   unit ->
-  (comment list, Common.Http_client.error_response) result
+  (comment list, Http_client.Client.error_response) result
 (** Get list of comments.
     @param parent_entity_type Entity type (Event, Series, market)
     @param parent_entity_id Entity ID
@@ -301,7 +301,7 @@ val get_comments :
     @param offset Pagination offset *)
 
 val get_comment :
-  t -> id:int -> unit -> (comment, Common.Http_client.error_response) result
+  t -> id:int -> unit -> (comment, Http_client.Client.error_response) result
 (** Get a comment by ID.
     @param id Comment ID (required) *)
 
@@ -311,7 +311,7 @@ val get_user_comments :
   ?limit:int ->
   ?offset:int ->
   unit ->
-  (comment list, Common.Http_client.error_response) result
+  (comment list, Http_client.Client.error_response) result
 (** Get comments by user address.
     @param user_address User address (required)
     @param limit Maximum results
@@ -323,7 +323,7 @@ val get_public_profile :
   t ->
   address:string ->
   unit ->
-  (public_profile_response, Common.Http_client.error_response) result
+  (public_profile_response, Http_client.Client.error_response) result
 (** Get public profile by address.
     @param address User address (required) *)
 
@@ -331,20 +331,20 @@ val get_profile :
   t ->
   user_address:string ->
   unit ->
-  (profile, Common.Http_client.error_response) result
+  (profile, Http_client.Client.error_response) result
 (** Get profile by user address.
     @param user_address User address (required) *)
 
 (** {1 Sports Endpoints} *)
 
 val get_sports :
-  t -> unit -> (sports_metadata list, Common.Http_client.error_response) result
+  t -> unit -> (sports_metadata list, Http_client.Client.error_response) result
 (** Get list of sports with metadata. *)
 
 val get_sports_market_types :
   t ->
   unit ->
-  (sports_market_types_response, Common.Http_client.error_response) result
+  (sports_market_types_response, Http_client.Client.error_response) result
 (** Get list of sports market types. *)
 
 (** {1 Search Endpoint} *)
@@ -366,7 +366,7 @@ val public_search :
   ?exclude_tag_id:int list ->
   ?optimized:bool ->
   unit ->
-  (search, Common.Http_client.error_response) result
+  (search, Http_client.Client.error_response) result
 (** Search for events, tags, and profiles.
     @param q Search query (required)
     @param cache Enable caching

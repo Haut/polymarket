@@ -3,6 +3,9 @@
 module Common = Common
 (** Common utilities shared across all Polymarket APIs *)
 
+module Http_client = Http_client
+(** HTTP client utilities for making API requests *)
+
 module Data_api = Data_api
 (** Data API client for positions, trades, activity, and leaderboards *)
 

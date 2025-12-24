@@ -1,6 +1,10 @@
-(** Logging utilities for Polymarket API clients. *)
+(** Application-level logging utilities.
 
-let src = Logs.Src.create "polymarket.http" ~doc:"Polymarket HTTP client"
+    This module provides the logging setup function and application-level
+    logging functions. Component-specific logging is in each component's Logger
+    module. *)
+
+let src = Logs.Src.create "polymarket.app" ~doc:"Polymarket application"
 
 module Log = (val Logs.src_log src : Logs.LOG)
 
@@ -14,7 +18,6 @@ let parse_log_level level_str =
   | _ -> None
 
 let setup () =
-  (* Read log level from environment variable *)
   let log_level =
     match Sys.getenv_opt "POLYMARKET_LOG_LEVEL" with
     | None -> None
@@ -29,57 +32,25 @@ let setup () =
             None
         | some_level -> some_level)
   in
-
-  (* Only set up reporter if logging is enabled *)
   match log_level with
-  | Some _ ->
+  | Some level ->
       Fmt_tty.setup_std_outputs ();
       Logs.set_reporter (Logs_fmt.reporter ());
-      Logs.Src.set_level src log_level
-  | None ->
-      (* Explicitly disable logging *)
-      Logs.Src.set_level src None
+      Logs.set_level (Some level)
+  | None -> Logs.set_level None
 
-(** {1 HTTP Logging} *)
+(** {1 Application Logging} *)
 
-let log_request ~method_ ~uri =
-  let uri_str = Uri.to_string uri in
-  Log.info (fun m -> m "HTTP %s %s" method_ uri_str)
+let info msg = Log.info (fun m -> m "%s" msg)
+let debug msg = Log.debug (fun m -> m "%s" msg)
+let warn msg = Log.warn (fun m -> m "%s" msg)
+let err msg = Log.err (fun m -> m "%s" msg)
 
-let log_response ~method_ ~uri ~status ~body =
-  let uri_str = Uri.to_string uri in
-  let status_code = Cohttp.Code.code_of_status status in
-  Log.info (fun m -> m "HTTP %s %s -> %d" method_ uri_str status_code);
-  Log.debug (fun m -> m "Response body: %s" body)
+let section name =
+  Log.info (fun m -> m "");
+  Log.info (fun m -> m "%s" name);
+  Log.info (fun m -> m "%s" (String.make (String.length name) '='))
 
-let log_error ~method_ ~uri ~exn =
-  let uri_str = Uri.to_string uri in
-  Log.err (fun m ->
-      m "HTTP %s %s failed: %s" method_ uri_str (Printexc.to_string exn))
-
-(** {1 JSON Field Logging} *)
-
-let extract_keys json =
-  match json with `Assoc pairs -> List.map fst pairs | _ -> []
-
-let log_json_fields ~context json =
-  let keys = extract_keys json in
-  if keys <> [] then
-    Log.debug (fun m ->
-        m "JSON fields [%s]: %s" context (String.concat ", " keys))
-
-let log_json_fields_with_expected ~context ~expected json =
-  let actual = extract_keys json in
-  if actual <> [] || expected <> [] then begin
-    let extra = List.filter (fun k -> not (List.mem k expected)) actual in
-    let missing = List.filter (fun k -> not (List.mem k actual)) expected in
-    Log.debug (fun m ->
-        m "JSON fields [%s]: %s" context (String.concat ", " actual));
-    if extra <> [] then
-      Log.debug (fun m ->
-          m "  Extra fields (not in type): %s" (String.concat ", " extra));
-    if missing <> [] then
-      Log.debug (fun m ->
-          m "  Missing fields (in type but not JSON): %s"
-            (String.concat ", " missing))
-  end
+let ok name msg = Log.info (fun m -> m "[OK] %s: %s" name msg)
+let error name msg = Log.info (fun m -> m "[ERROR] %s: %s" name msg)
+let skip name msg = Log.info (fun m -> m "[SKIP] %s: %s" name msg)

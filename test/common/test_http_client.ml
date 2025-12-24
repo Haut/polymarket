@@ -1,6 +1,6 @@
 (** Unit tests for Common.Http_client module *)
 
-open Polymarket.Common.Http_client
+open Polymarket.Http_client.Client
 
 let params_testable =
   Alcotest.testable
