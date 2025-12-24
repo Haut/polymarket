@@ -5,6 +5,7 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+# Restrict permissions to minimum required for GitHub Pages deployment
 permissions:
   contents: read
   pages: write
