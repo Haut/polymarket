@@ -9,100 +9,44 @@ open Data_api_params
 
 (** {1 Client Configuration} *)
 
-type t = {
-  base_url : string;
-  client : Cohttp_eio.Client.t;
-  sw : Eio.Switch.t;
-}
+type t = Http_client.t
 
 let default_base_url = "https://data-api.polymarket.com"
 
 let create ?(base_url = default_base_url) ~sw ~net () =
-  let client = Cohttp_eio.Client.make ~https:None net in
-  { base_url; client; sw }
+  Http_client.create ~base_url ~sw ~net ()
 
 (** {1 Internal Helpers} *)
 
-(* Pipe-friendly param builders: params comes last for |> chaining *)
+(* Re-export param builders for convenience *)
+let add = Http_client.add
+let add_list = Http_client.add_list
+let add_bool = Http_client.add_bool
+let add_int = Http_client.add_int
+let add_float = Http_client.add_float
 
-let add key value params =
-  match value with
-  | Some v -> (key, [v]) :: params
-  | None -> params
-
-let add_list key to_string values params =
-  match values with
-  | Some vs when vs <> [] ->
-    let joined = String.concat "," (List.map to_string vs) in
-    (key, [joined]) :: params
-  | _ -> params
-
-let add_bool key value params =
-  match value with
-  | Some true -> (key, ["true"]) :: params
-  | Some false -> (key, ["false"]) :: params
-  | None -> params
-
-let add_int key value params =
-  match value with
-  | Some v -> (key, [string_of_int v]) :: params
-  | None -> params
-
-let add_float key value params =
-  match value with
-  | Some v -> (key, [string_of_float v]) :: params
-  | None -> params
-
-let build_uri base_url path params =
-  let uri = Uri.of_string (base_url ^ path) in
-  Uri.add_query_params uri params
-
+(* Data API specific JSON parsers that return error_response on failure *)
 let parse_json parse_fn body =
-  try
-    let json = Yojson.Safe.from_string body in
-    Ok (parse_fn json)
-  with
-  | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, _json) ->
-    Error { error = "JSON parse error: " ^ Printexc.to_string exn }
-  | Yojson.Json_error msg ->
-    Error { error = "JSON error: " ^ msg }
+  match Http_client.parse_json parse_fn body with
+  | Ok v -> Ok v
+  | Error msg -> Error { error = msg }
 
 let parse_json_list parse_item_fn body =
+  match Http_client.parse_json_list parse_item_fn body with
+  | Ok v -> Ok v
+  | Error msg -> Error { error = msg }
+
+(* Error parser for Data API responses *)
+let parse_error body =
   try
     let json = Yojson.Safe.from_string body in
-    match json with
-    | `List items -> Ok (List.map parse_item_fn items)
-    | _ -> Error { error = "Expected JSON array" }
-  with
-  | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, _json) ->
-    Error { error = "JSON parse error: " ^ Printexc.to_string exn }
-  | Yojson.Json_error msg ->
-    Error { error = "JSON error: " ^ msg }
-
-let do_get t uri =
-  try
-    let resp, body = Cohttp_eio.Client.get ~sw:t.sw t.client uri in
-    let status = Cohttp.Response.status resp in
-    let body_str = Eio.Buf_read.(parse_exn take_all) body ~max_size:max_int in
-    (status, body_str)
-  with exn ->
-    (`Internal_server_error, Printf.sprintf {|{"error": "Request failed: %s"}|} (Printexc.to_string exn))
-
-let handle_response status body parse_fn =
-  match Cohttp.Code.code_of_status status with
-  | 200 -> parse_fn body
-  | _ ->
-    (try
-      let json = Yojson.Safe.from_string body in
-      Error (error_response_of_yojson json)
-    with _ ->
-      Error { error = Printf.sprintf "HTTP %d: %s" (Cohttp.Code.code_of_status status) body })
+    error_response_of_yojson json
+  with _ ->
+    { error = body }
 
 (* Unified request function: params |> request t path parser *)
 let request t path parse_fn params =
-  let uri = build_uri t.base_url path params in
-  let status, body = do_get t uri in
-  handle_response status body parse_fn
+  Http_client.request t path parse_fn parse_error params
 
 (** {1 Health Endpoint} *)
 
