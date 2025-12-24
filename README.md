@@ -4,11 +4,12 @@ OCaml client library for the [Polymarket](https://polymarket.com) prediction mar
 
 ## Features
 
-- Full coverage of the Polymarket Data API
+- Full coverage of the Polymarket Data API and Gamma API
 - Type-safe interface with OCaml variant types for enums
 - Built on [Eio](https://github.com/ocaml-multicore/eio) for efficient concurrent I/O
 - TLS support for secure API connections
 - Comprehensive error handling with result types
+- Structured logging with configurable log levels
 - JSON serialization via ppx_yojson_conv
 - Pretty printing and equality functions for all types
 
@@ -39,6 +40,10 @@ let () =
   (* Initialize RNG for TLS *)
   Mirage_crypto_rng_unix.use_default ();
 
+  (* Optional: Enable logging (levels: debug, info, off) *)
+  (* Common.Logger.setup () reads POLYMARKET_LOG_LEVEL env var *)
+  Common.Logger.setup ();
+
   Eio_main.run @@ fun env ->
   Eio.Switch.run @@ fun sw ->
 
@@ -57,7 +62,7 @@ let () =
     print_endline ("Error: " ^ err.error)
 ```
 
-## Usage Examples
+## Data API Examples
 
 ### Get User Positions
 
@@ -121,6 +126,71 @@ with
   Printf.printf "Error: %s\n" err.error
 ```
 
+## Gamma API Examples
+
+The Gamma API provides access to markets, events, series, and search functionality.
+
+### Get Active Markets
+
+```ocaml
+let client = Gamma_api.Client.create ~sw ~net:(Eio.Stdenv.net env) () in
+match Gamma_api.Client.get_markets client ~active:true ~limit:10 () with
+| Ok markets ->
+  List.iter (fun (m : Gamma_api.Types.market) ->
+    Printf.printf "Market: %s\n"
+      (Option.value ~default:"(no question)" m.question)
+  ) markets
+| Error err ->
+  Printf.printf "Error: %s\n" err.error
+```
+
+### Get Events by Tag
+
+```ocaml
+match Gamma_api.Client.get_events client ~tag_slug:"politics" ~limit:10 () with
+| Ok events ->
+  List.iter (fun (e : Gamma_api.Types.event) ->
+    Printf.printf "Event: %s\n"
+      (Option.value ~default:"(no title)" e.title)
+  ) events
+| Error err ->
+  Printf.printf "Error: %s\n" err.error
+```
+
+### Search
+
+```ocaml
+match Gamma_api.Client.public_search client ~q:"election" ~limit_per_type:5 () with
+| Ok search ->
+  let event_count = match search.events with Some e -> List.length e | None -> 0 in
+  Printf.printf "Found %d events\n" event_count
+| Error err ->
+  Printf.printf "Error: %s\n" err.error
+```
+
+## Logging
+
+The library includes structured logging via `Common.Logger`. Enable it by setting the `POLYMARKET_LOG_LEVEL` environment variable:
+
+```bash
+# Debug level - detailed logging including HTTP response bodies
+POLYMARKET_LOG_LEVEL=debug dune exec examples/data_api_demo.exe
+
+# Info level - request URLs and response status codes
+POLYMARKET_LOG_LEVEL=info dune exec examples/data_api_demo.exe
+
+# Off (default) - no logging
+dune exec examples/data_api_demo.exe
+```
+
+Log messages follow a structured format:
+
+```
+[HTTP_CLIENT] [REQUEST] method="GET" url="https://..."
+[HTTP_CLIENT] [RESPONSE] method="GET" url="..." status="200"
+[DATA_API] [CALL] endpoint="/positions" user="0x..."
+```
+
 ## API Reference
 
 ### Module Structure
@@ -128,14 +198,20 @@ with
 ```
 Polymarket
 ├── Common          (* Shared utilities *)
-│   └── Http_client (* HTTP client with TLS support *)
-└── Data_api        (* Data API client *)
+│   └── Logger      (* Structured logging *)
+├── Http_client     (* HTTP client with TLS support *)
+│   └── Client      (* HTTP request functions *)
+├── Data_api        (* Data API client *)
+│   ├── Client      (* API client functions *)
+│   ├── Types       (* Response types *)
+│   └── Params      (* Query parameter types *)
+└── Gamma_api       (* Gamma API client *)
     ├── Client      (* API client functions *)
     ├── Types       (* Response types *)
     └── Params      (* Query parameter types *)
 ```
 
-### Supported Endpoints
+### Data API Endpoints
 
 | Endpoint | Function | Description |
 |----------|----------|-------------|
@@ -153,9 +229,41 @@ Polymarket
 | `GET /leaderboard/builder/volume` | `get_builder_volume` | Get builder volume time-series |
 | `GET /leaderboard/trader` | `get_trader_leaderboard` | Get trader leaderboard |
 
+### Gamma API Endpoints
+
+| Endpoint | Function | Description |
+|----------|----------|-------------|
+| `GET /status` | `status` | Check API health status |
+| `GET /teams` | `get_teams` | Get list of sports teams |
+| `GET /teams/{id}` | `get_team` | Get a team by ID |
+| `GET /tags` | `get_tags` | Get list of tags |
+| `GET /tags/{id}` | `get_tag` | Get a tag by ID |
+| `GET /tags/slug/{slug}` | `get_tag_by_slug` | Get a tag by slug |
+| `GET /tags/{id}/related` | `get_related_tags` | Get related tags |
+| `GET /events` | `get_events` | Get list of events |
+| `GET /events/{id}` | `get_event` | Get an event by ID |
+| `GET /events/slug/{slug}` | `get_event_by_slug` | Get an event by slug |
+| `GET /events/{id}/tags` | `get_event_tags` | Get tags for an event |
+| `GET /markets` | `get_markets` | Get list of markets |
+| `GET /markets/{id}` | `get_market` | Get a market by ID |
+| `GET /markets/slug/{slug}` | `get_market_by_slug` | Get a market by slug |
+| `GET /markets/{id}/tags` | `get_market_tags` | Get tags for a market |
+| `GET /markets/{id}/description` | `get_market_description` | Get market description |
+| `GET /series` | `get_series_list` | Get list of series |
+| `GET /series/{id}` | `get_series` | Get a series by ID |
+| `GET /series/{id}/summary` | `get_series_summary` | Get series summary |
+| `GET /comments` | `get_comments` | Get list of comments |
+| `GET /comments/{id}` | `get_comment` | Get a comment by ID |
+| `GET /comments/user/{address}` | `get_user_comments` | Get comments by user |
+| `GET /profiles/public/{address}` | `get_public_profile` | Get public profile |
+| `GET /profiles/{address}` | `get_profile` | Get profile by address |
+| `GET /sports` | `get_sports` | Get list of sports |
+| `GET /sports/market-types` | `get_sports_market_types` | Get sports market types |
+| `GET /search` | `public_search` | Search events, tags, profiles |
+
 ### Type Reference
 
-#### Enums
+#### Data API Enums
 
 | Type | Values |
 |------|--------|
@@ -165,6 +273,14 @@ Polymarket
 | `time_period` | `DAY`, `WEEK`, `MONTH`, `ALL` |
 | `leaderboard_category` | `OVERALL`, `POLITICS`, `SPORTS`, `CRYPTO`, `CULTURE`, `MENTIONS`, `WEATHER`, `ECONOMICS`, `TECH`, `FINANCE` |
 | `position_sort_by` | `CURRENT`, `INITIAL`, `TOKENS`, `CASHPNL`, `PERCENTPNL`, `TITLE`, `RESOLVING`, `PRICE`, `AVGPRICE` |
+
+#### Gamma API Enums
+
+| Type | Values |
+|------|--------|
+| `status` | `Active`, `Closed`, `All` |
+| `slug_size` | `Full`, `Slim` |
+| `parent_entity_type` | `Event`, `Series`, `Market` |
 
 #### Primitive Types
 
@@ -198,10 +314,17 @@ dune runtest
 dune runtest --force --verbose
 ```
 
-### Running the Demo
+### Running the Demos
 
 ```bash
+# Data API demo
 dune exec examples/data_api_demo.exe
+
+# Gamma API demo
+dune exec examples/gamma_api_demo.exe
+
+# With debug logging enabled
+POLYMARKET_LOG_LEVEL=debug dune exec examples/data_api_demo.exe
 ```
 
 ### Code Formatting
@@ -216,14 +339,22 @@ dune fmt
 polymarket/
 ├── lib/
 │   ├── common/           # Shared utilities
-│   │   └── http_client.ml
+│   │   └── logger.ml     # Structured logging
+│   ├── http_client/      # HTTP client
+│   │   └── client.ml     # TLS-enabled HTTP requests
 │   ├── data_api/         # Data API implementation
+│   │   ├── client.ml     # API client
+│   │   ├── params.ml     # Query parameters
+│   │   └── types.ml      # Response types
+│   ├── gamma_api/        # Gamma API implementation
 │   │   ├── client.ml     # API client
 │   │   ├── params.ml     # Query parameters
 │   │   └── types.ml      # Response types
 │   └── polymarket.ml     # Main module
 ├── examples/
-│   └── data_api_demo.ml  # Live demo
+│   ├── data_api_demo.ml  # Data API live demo
+│   ├── gamma_api_demo.ml # Gamma API live demo
+│   └── logger.ml         # Demo logging utilities
 ├── test/                 # Test suite
 ├── CHANGELOG.md
 ├── CODE_OF_CONDUCT.md
