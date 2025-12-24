@@ -3,3 +3,4 @@ _build/
 .merlin
 *.opam.locked
 _opam/
+./data-api-openapi.yaml

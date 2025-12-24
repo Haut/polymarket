@@ -1,3 +1,5 @@
 (library
  (name polymarket)
- (public_name polymarket))
+ (public_name polymarket)
+ (libraries yojson ppx_yojson_conv_lib cohttp-eio eio_main uri)
+ (preprocess (pps ppx_yojson_conv)))
