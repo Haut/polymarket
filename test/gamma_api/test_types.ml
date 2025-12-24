@@ -57,7 +57,12 @@ let test_market_description_empty () =
   Alcotest.(check (option string)) "description is None" None md.description
 
 let test_market_description_roundtrip () =
-  let md = { description = Some "Test market description" } in
+  let md =
+    {
+      empty_market_description with
+      description = Some "Test market description";
+    }
+  in
   let json = yojson_of_market_description md in
   let result = market_description_of_yojson json in
   Alcotest.(check bool) "roundtrip" true (equal_market_description md result)
@@ -67,7 +72,8 @@ let test_market_description_roundtrip () =
 let test_image_optimization_empty () =
   let io = empty_image_optimization in
   Alcotest.(check (option string)) "id is None" None io.id;
-  Alcotest.(check (option string)) "image_url_source is None" None io.image_url_source
+  Alcotest.(check (option string))
+    "image_url_source is None" None io.image_url_source
 
 let test_image_optimization_roundtrip () =
   let io =
@@ -135,7 +141,9 @@ let test_related_tag_empty () =
   Alcotest.(check option_int) "rank is None" None rt.rank
 
 let test_related_tag_roundtrip () =
-  let rt = { id = Some "1"; tag_id = Some 10; related_tag_id = Some 20; rank = Some 1 } in
+  let rt =
+    { id = Some "1"; tag_id = Some 10; related_tag_id = Some 20; rank = Some 1 }
+  in
   let json = yojson_of_related_tag rt in
   let result = related_tag_of_yojson json in
   Alcotest.(check bool) "roundtrip" true (equal_related_tag rt result)
@@ -233,7 +241,12 @@ let test_search_tag_empty () =
 
 let test_search_tag_roundtrip () =
   let st =
-    { id = Some "st_1"; label = Some "Politics"; slug = Some "politics"; event_count = Some 50 }
+    {
+      id = Some "st_1";
+      label = Some "Politics";
+      slug = Some "politics";
+      event_count = Some 50;
+    }
   in
   let json = yojson_of_search_tag st in
   let result = search_tag_of_yojson json in
@@ -256,11 +269,16 @@ let test_comment_position_roundtrip () =
 let test_comment_profile_empty () =
   let cp = empty_comment_profile in
   Alcotest.(check (option string)) "name is None" None cp.name;
-  Alcotest.(check (list (module struct
-    type t = comment_position
-    let equal = equal_comment_position
-    let pp = pp_comment_position
-  end))) "positions is empty" [] cp.positions
+  Alcotest.(
+    check
+      (list
+         (module struct
+           type t = comment_position
+
+           let equal = equal_comment_position
+           let pp = pp_comment_position
+         end)))
+    "positions is empty" [] cp.positions
 
 let test_comment_profile_roundtrip () =
   let cp =
@@ -365,7 +383,9 @@ let test_public_profile_response_roundtrip () =
   in
   let json = yojson_of_public_profile_response ppr in
   let result = public_profile_response_of_yojson json in
-  Alcotest.(check bool) "roundtrip" true (equal_public_profile_response ppr result)
+  Alcotest.(check bool)
+    "roundtrip" true
+    (equal_public_profile_response ppr result)
 
 (** {1 Profile Tests} *)
 
@@ -535,11 +555,16 @@ let test_series_roundtrip () =
 
 let test_events_pagination_empty () =
   let ep = empty_events_pagination in
-  Alcotest.(check (list (module struct
-    type t = event
-    let equal = equal_event
-    let pp = pp_event
-  end))) "data is empty" [] ep.data
+  Alcotest.(
+    check
+      (list
+         (module struct
+           type t = event
+
+           let equal = equal_event
+           let pp = pp_event
+         end)))
+    "data is empty" [] ep.data
 
 let test_events_pagination_roundtrip () =
   let ep =
@@ -563,7 +588,16 @@ let test_search_roundtrip () =
   let s =
     {
       events = Some [ { empty_event with id = Some "e1" } ];
-      tags = Some [ { id = Some "t1"; label = Some "Tag"; slug = Some "tag"; event_count = Some 10 } ];
+      tags =
+        Some
+          [
+            {
+              id = Some "t1";
+              label = Some "Tag";
+              slug = Some "tag";
+              event_count = Some 10;
+            };
+          ];
       profiles = None;
       pagination = Some { has_more = Some false; total_results = Some 1 };
     }
@@ -581,12 +615,14 @@ let test_sports_metadata_empty () =
 let test_sports_metadata_roundtrip () =
   let sm =
     {
+      id = Some 1;
       sport = Some "football";
       image = Some "https://example.com/football.png";
       resolution = Some "manual";
       ordering = Some "alphabetical";
       tags = Some "nfl,ncaa";
       series = Some "nfl-2024";
+      created_at = Some "2024-01-01T00:00:00Z";
     }
   in
   let json = yojson_of_sports_metadata sm in
@@ -603,14 +639,17 @@ let test_sports_market_types_response_roundtrip () =
   let smtr = { market_types = [ "moneyline"; "spread"; "total" ] } in
   let json = yojson_of_sports_market_types_response smtr in
   let result = sports_market_types_response_of_yojson json in
-  Alcotest.(check bool) "roundtrip" true (equal_sports_market_types_response smtr result)
+  Alcotest.(check bool)
+    "roundtrip" true
+    (equal_sports_market_types_response smtr result)
 
 (** {1 Markets Information Body Tests} *)
 
 let test_markets_information_body_empty () =
   let mib = empty_markets_information_body in
   Alcotest.(check bool) "id is None" true (Option.is_none mib.id);
-  Alcotest.(check option_float) "liquidity_num_min is None" None mib.liquidity_num_min
+  Alcotest.(check option_float)
+    "liquidity_num_min is None" None mib.liquidity_num_min
 
 let test_markets_information_body_roundtrip () =
   let mib =
@@ -625,7 +664,9 @@ let test_markets_information_body_roundtrip () =
   in
   let json = yojson_of_markets_information_body mib in
   let result = markets_information_body_of_yojson json in
-  Alcotest.(check bool) "roundtrip" true (equal_markets_information_body mib result)
+  Alcotest.(check bool)
+    "roundtrip" true
+    (equal_markets_information_body mib result)
 
 (** {1 Test Suite} *)
 

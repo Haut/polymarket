@@ -17,13 +17,7 @@ let create ?(base_url = default_base_url) ~sw ~net () =
 
 (** {1 Health Endpoint} *)
 
-let status t =
-  let parse json =
-    match Yojson.Safe.Util.to_string_option json with
-    | Some s -> s
-    | None -> Yojson.Safe.to_string json
-  in
-  [] |> Common.Http_client.get_json t "/status" parse
+let status t = [] |> Common.Http_client.get_text t "/status"
 
 (** {1 Teams Endpoints} *)
 
@@ -34,7 +28,9 @@ let get_teams t ?id () =
 
 let get_team t ~id () =
   []
-  |> Common.Http_client.get_json t (Printf.sprintf "/teams/%d" id) team_of_yojson
+  |> Common.Http_client.get_json t
+       (Printf.sprintf "/teams/%d" id)
+       team_of_yojson
 
 (** {1 Tags Endpoints} *)
 
@@ -68,8 +64,8 @@ let get_related_tags t ~id () =
 
 let get_events t ?id ?ticker ?slug ?archived ?active ?closed ?liquidity_min
     ?end_date_min ?end_date_max ?start_date_min ?start_date_max ?status ?order
-    ?ascending ?tag ?tag_slug ?limit ?offset ?cursor ?next_cursor
-    ?slug_size ?_c () =
+    ?ascending ?tag ?tag_slug ?limit ?offset ?cursor ?next_cursor ?slug_size ?_c
+    () =
   []
   |> Common.Http_client.add "id" id
   |> Common.Http_client.add "ticker" ticker
@@ -94,7 +90,10 @@ let get_events t ?id ?ticker ?slug ?archived ?active ?closed ?liquidity_min
   |> Common.Http_client.add "slug_size"
        (Option.map string_of_slug_size slug_size)
   |> Common.Http_client.add "_c" _c
-  |> Common.Http_client.get_json t "/events" events_pagination_of_yojson
+  |> Common.Http_client.get_json t "/events" (fun json ->
+         match json with
+         | `List events -> List.map event_of_yojson events
+         | _ -> failwith "Expected list of events")
 
 let get_event t ~id () =
   []
@@ -114,30 +113,12 @@ let get_event_tags t ~id () =
        (Printf.sprintf "/events/%d/tags" id)
        tag_of_yojson
 
-let get_event_markets t ~id () =
-  []
-  |> Common.Http_client.get_json_list t
-       (Printf.sprintf "/events/%d/markets" id)
-       market_of_yojson
-
-let get_event_comments_count t ~id () =
-  []
-  |> Common.Http_client.get_json t
-       (Printf.sprintf "/events/%d/comments-count" id)
-       count_of_yojson
-
-let get_event_tweet_count t ~id () =
-  []
-  |> Common.Http_client.get_json t
-       (Printf.sprintf "/events/%d/tweet-count" id)
-       event_tweet_count_of_yojson
-
 (** {1 Markets Endpoints} *)
 
-let get_markets t ?id ?condition_id ?slug ?archived ?active ?closed ?clob_token_ids
-    ?liquidity_num_min ?volume_num_min ?start_date_min ?start_date_max
-    ?end_date_min ?end_date_max ?status ?order ?ascending ?tag_slug ?limit
-    ?offset ?cursor ?next_cursor ?slug_size ?_c () =
+let get_markets t ?id ?condition_id ?slug ?archived ?active ?closed
+    ?clob_token_ids ?liquidity_num_min ?volume_num_min ?start_date_min
+    ?start_date_max ?end_date_min ?end_date_max ?status ?order ?ascending
+    ?tag_slug ?limit ?offset ?cursor ?next_cursor ?slug_size ?_c () =
   []
   |> Common.Http_client.add "id" id
   |> Common.Http_client.add "condition_id" condition_id
@@ -182,12 +163,6 @@ let get_market_tags t ~id () =
   |> Common.Http_client.get_json_list t
        (Printf.sprintf "/markets/%d/tags" id)
        tag_of_yojson
-
-let get_market_events t ~id () =
-  []
-  |> Common.Http_client.get_json_list t
-       (Printf.sprintf "/markets/%d/events" id)
-       event_of_yojson
 
 let get_market_description t ~id () =
   []
@@ -259,7 +234,8 @@ let get_user_comments t ~user_address ?limit ?offset () =
 
 let get_public_profile t ~address () =
   [ ("address", [ address ]) ]
-  |> Common.Http_client.get_json t "/public-profile" public_profile_response_of_yojson
+  |> Common.Http_client.get_json t "/public-profile"
+       public_profile_response_of_yojson
 
 let get_profile t ~user_address () =
   []
@@ -270,8 +246,7 @@ let get_profile t ~user_address () =
 (** {1 Sports Endpoints} *)
 
 let get_sports t () =
-  []
-  |> Common.Http_client.get_json_list t "/sports" sports_metadata_of_yojson
+  [] |> Common.Http_client.get_json_list t "/sports" sports_metadata_of_yojson
 
 let get_sports_market_types t () =
   []
@@ -280,8 +255,27 @@ let get_sports_market_types t () =
 
 (** {1 Search Endpoint} *)
 
-let public_search t ~q ?limit ?tag_slug () =
+let public_search t ~q ?cache ?events_status ?limit_per_type ?page ?events_tag
+    ?keep_closed_markets ?sort ?ascending ?search_tags ?search_profiles
+    ?recurrence ?exclude_tag_id ?optimized () =
   [ ("q", [ q ]) ]
-  |> Common.Http_client.add_int "limit" limit
-  |> Common.Http_client.add "tag_slug" tag_slug
+  |> Common.Http_client.add_bool "cache" cache
+  |> Common.Http_client.add "events_status" events_status
+  |> Common.Http_client.add_int "limit_per_type" limit_per_type
+  |> Common.Http_client.add_int "page" page
+  |> (fun params ->
+       match events_tag with
+       | Some tags -> List.fold_left (fun acc tag -> ("events_tag", [ tag ]) :: acc) params tags
+       | None -> params)
+  |> Common.Http_client.add_int "keep_closed_markets" keep_closed_markets
+  |> Common.Http_client.add "sort" sort
+  |> Common.Http_client.add_bool "ascending" ascending
+  |> Common.Http_client.add_bool "search_tags" search_tags
+  |> Common.Http_client.add_bool "search_profiles" search_profiles
+  |> Common.Http_client.add "recurrence" recurrence
+  |> (fun params ->
+       match exclude_tag_id with
+       | Some ids -> List.fold_left (fun acc id -> ("exclude_tag_id", [ string_of_int id ]) :: acc) params ids
+       | None -> params)
+  |> Common.Http_client.add_bool "optimized" optimized
   |> Common.Http_client.get_json t "/public-search" search_of_yojson

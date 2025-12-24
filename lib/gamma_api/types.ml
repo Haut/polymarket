@@ -19,22 +19,34 @@ type count = { count : int option [@yojson.option] }
 [@@deriving yojson, show, eq]
 (** Generic count response *)
 
-type event_tweet_count = { tweet_count : int option [@yojson.option] [@key "tweetCount"] }
+type event_tweet_count = {
+  tweet_count : int option; [@yojson.option] [@key "tweetCount"]
+}
 [@@deriving yojson, show, eq]
 (** Event tweet count response *)
 
-type market_description = { description : string option [@yojson.option] }
+type market_description = {
+  id : string option; [@yojson.option]
+  condition_id : string option; [@yojson.option] [@key "conditionId"]
+  market_maker_address : string option; [@yojson.option] [@key "marketMakerAddress"]
+  description : string option; [@yojson.option]
+}
 [@@deriving yojson, show, eq]
 (** Market description response *)
 
 type image_optimization = {
   id : string option; [@yojson.option]
   image_url_source : string option; [@yojson.option] [@key "imageUrlSource"]
-  image_url_optimized : string option; [@yojson.option] [@key "imageUrlOptimized"]
-  image_size_kb_source : float option; [@yojson.option] [@key "imageSizeKbSource"]
-  image_size_kb_optimized : float option; [@yojson.option] [@key "imageSizeKbOptimized"]
-  image_optimized_complete : bool option; [@yojson.option] [@key "imageOptimizedComplete"]
-  image_optimized_last_updated : string option; [@yojson.option] [@key "imageOptimizedLastUpdated"]
+  image_url_optimized : string option;
+      [@yojson.option] [@key "imageUrlOptimized"]
+  image_size_kb_source : float option;
+      [@yojson.option] [@key "imageSizeKbSource"]
+  image_size_kb_optimized : float option;
+      [@yojson.option] [@key "imageSizeKbOptimized"]
+  image_optimized_complete : bool option;
+      [@yojson.option] [@key "imageOptimizedComplete"]
+  image_optimized_last_updated : string option;
+      [@yojson.option] [@key "imageOptimizedLastUpdated"]
   rel_id : int option; [@yojson.option] [@key "relID"]
   field : string option; [@yojson.option]
   relname : string option; [@yojson.option]
@@ -51,9 +63,11 @@ type team = {
   record : string option; [@yojson.option]
   logo : string option; [@yojson.option]
   abbreviation : string option; [@yojson.option]
-  alias : string option; [@yojson.option]
+  alias : string option; [@default None]
   created_at : string option; [@yojson.option] [@key "createdAt"]
   updated_at : string option; [@yojson.option] [@key "updatedAt"]
+  provider_id : int option; [@yojson.option] [@key "providerId"]
+  color : string option; [@yojson.option]
 }
 [@@deriving yojson, show, eq]
 (** Sports team *)
@@ -70,6 +84,8 @@ type tag = {
   updated_at : string option; [@yojson.option] [@key "updatedAt"]
   force_hide : bool option; [@yojson.option] [@key "forceHide"]
   is_carousel : bool option; [@yojson.option] [@key "isCarousel"]
+  requires_translation : bool option;
+      [@yojson.option] [@key "requiresTranslation"]
 }
 [@@deriving yojson, show, eq]
 (** Tag for categorization *)
@@ -159,14 +175,16 @@ type comment_position = {
 type comment_profile = {
   name : string option; [@yojson.option]
   pseudonym : string option; [@yojson.option]
-  display_username_public : bool option; [@yojson.option] [@key "displayUsernamePublic"]
+  display_username_public : bool option;
+      [@yojson.option] [@key "displayUsernamePublic"]
   bio : string option; [@yojson.option]
   is_mod : bool option; [@yojson.option] [@key "isMod"]
   is_creator : bool option; [@yojson.option] [@key "isCreator"]
   proxy_wallet : string option; [@yojson.option] [@key "proxyWallet"]
   base_address : string option; [@yojson.option] [@key "baseAddress"]
   profile_image : string option; [@yojson.option] [@key "profileImage"]
-  profile_image_optimized : image_optimization option; [@yojson.option] [@key "profileImageOptimized"]
+  profile_image_optimized : image_optimization option;
+      [@yojson.option] [@key "profileImageOptimized"]
   positions : comment_position list; [@default []]
 }
 [@@deriving yojson, show, eq]
@@ -223,7 +241,8 @@ type public_profile_response = {
   created_at : string option; [@yojson.option] [@key "createdAt"]
   proxy_wallet : string option; [@yojson.option] [@key "proxyWallet"]
   profile_image : string option; [@yojson.option] [@key "profileImage"]
-  display_username_public : bool option; [@yojson.option] [@key "displayUsernamePublic"]
+  display_username_public : bool option;
+      [@yojson.option] [@key "displayUsernamePublic"]
   bio : string option; [@yojson.option]
   pseudonym : string option; [@yojson.option]
   name : string option; [@yojson.option]
@@ -250,11 +269,13 @@ type profile = {
   utm_term : string option; [@yojson.option] [@key "utmTerm"]
   wallet_activated : bool option; [@yojson.option] [@key "walletActivated"]
   pseudonym : string option; [@yojson.option]
-  display_username_public : bool option; [@yojson.option] [@key "displayUsernamePublic"]
+  display_username_public : bool option;
+      [@yojson.option] [@key "displayUsernamePublic"]
   profile_image : string option; [@yojson.option] [@key "profileImage"]
   bio : string option; [@yojson.option]
   proxy_wallet : string option; [@yojson.option] [@key "proxyWallet"]
-  profile_image_optimized : image_optimization option; [@yojson.option] [@key "profileImageOptimized"]
+  profile_image_optimized : image_optimization option;
+      [@yojson.option] [@key "profileImageOptimized"]
   is_close_only : bool option; [@yojson.option] [@key "isCloseOnly"]
   is_cert_req : bool option; [@yojson.option] [@key "isCertReq"]
   cert_req_date : string option; [@yojson.option] [@key "certReqDate"]
@@ -284,16 +305,20 @@ type collection = {
   featured : bool option; [@yojson.option]
   restricted : bool option; [@yojson.option]
   is_template : bool option; [@yojson.option] [@key "isTemplate"]
-  template_variables : string option; [@yojson.option] [@key "templateVariables"]
+  template_variables : string option;
+      [@yojson.option] [@key "templateVariables"]
   published_at : string option; [@yojson.option] [@key "publishedAt"]
   created_by : string option; [@yojson.option] [@key "createdBy"]
   updated_by : string option; [@yojson.option] [@key "updatedBy"]
   created_at : string option; [@yojson.option] [@key "createdAt"]
   updated_at : string option; [@yojson.option] [@key "updatedAt"]
   comments_enabled : bool option; [@yojson.option] [@key "commentsEnabled"]
-  image_optimized : image_optimization option; [@yojson.option] [@key "imageOptimized"]
-  icon_optimized : image_optimization option; [@yojson.option] [@key "iconOptimized"]
-  header_image_optimized : image_optimization option; [@yojson.option] [@key "headerImageOptimized"]
+  image_optimized : image_optimization option;
+      [@yojson.option] [@key "imageOptimized"]
+  icon_optimized : image_optimization option;
+      [@yojson.option] [@key "iconOptimized"]
+  header_image_optimized : image_optimization option;
+      [@yojson.option] [@key "headerImageOptimized"]
 }
 [@@deriving yojson, show, eq]
 (** Collection of events/markets *)
@@ -307,10 +332,25 @@ type series_summary = {
   event_dates : string list; [@default []] [@key "eventDates"]
   event_weeks : int list; [@default []] [@key "eventWeeks"]
   earliest_open_week : int option; [@yojson.option] [@key "earliest_open_week"]
-  earliest_open_date : string option; [@yojson.option] [@key "earliest_open_date"]
+  earliest_open_date : string option;
+      [@yojson.option] [@key "earliest_open_date"]
 }
 [@@deriving yojson, show, eq]
 (** Series summary *)
+
+(** {1 CLOB Rewards Type} *)
+
+type clob_reward = {
+  id : string option; [@yojson.option]
+  condition_id : string option; [@yojson.option] [@key "conditionId"]
+  asset_address : string option; [@yojson.option] [@key "assetAddress"]
+  rewards_amount : float option; [@yojson.option] [@key "rewardsAmount"]
+  rewards_daily_rate : float option; [@yojson.option] [@key "rewardsDailyRate"]
+  start_date : string option; [@yojson.option] [@key "startDate"]
+  end_date : string option; [@yojson.option] [@key "endDate"]
+}
+[@@deriving yojson, show, eq]
+(** CLOB reward configuration *)
 
 (** {1 Mutually Recursive Types: Market, Event, Series}
 
@@ -332,7 +372,8 @@ type market = {
   start_date : string option; [@yojson.option] [@key "startDate"]
   x_axis_value : string option; [@yojson.option] [@key "xAxisValue"]
   y_axis_value : string option; [@yojson.option] [@key "yAxisValue"]
-  denomination_token : string option; [@yojson.option] [@key "denominationToken"]
+  denomination_token : string option;
+      [@yojson.option] [@key "denominationToken"]
   fee : string option; [@yojson.option]
   image : string option; [@yojson.option]
   icon : string option; [@yojson.option]
@@ -348,7 +389,8 @@ type market = {
   lower_bound_date : string option; [@yojson.option] [@key "lowerBoundDate"]
   upper_bound_date : string option; [@yojson.option] [@key "upperBoundDate"]
   closed : bool option; [@yojson.option]
-  market_maker_address : string option; [@yojson.option] [@key "marketMakerAddress"]
+  market_maker_address : string option;
+      [@yojson.option] [@key "marketMakerAddress"]
   created_by : int option; [@yojson.option] [@key "createdBy"]
   updated_by : int option; [@yojson.option] [@key "updatedBy"]
   created_at : string option; [@yojson.option] [@key "createdAt"]
@@ -363,13 +405,16 @@ type market = {
   restricted : bool option; [@yojson.option]
   market_group : int option; [@yojson.option] [@key "marketGroup"]
   group_item_title : string option; [@yojson.option] [@key "groupItemTitle"]
-  group_item_threshold : string option; [@yojson.option] [@key "groupItemThreshold"]
+  group_item_threshold : string option;
+      [@yojson.option] [@key "groupItemThreshold"]
   question_id : string option; [@yojson.option] [@key "questionID"]
   uma_end_date : string option; [@yojson.option] [@key "umaEndDate"]
   enable_order_book : bool option; [@yojson.option] [@key "enableOrderBook"]
-  order_price_min_tick_size : float option; [@yojson.option] [@key "orderPriceMinTickSize"]
+  order_price_min_tick_size : float option;
+      [@yojson.option] [@key "orderPriceMinTickSize"]
   order_min_size : float option; [@yojson.option] [@key "orderMinSize"]
-  uma_resolution_status : string option; [@yojson.option] [@key "umaResolutionStatus"]
+  uma_resolution_status : string option;
+      [@yojson.option] [@key "umaResolutionStatus"]
   curation_order : int option; [@yojson.option] [@key "curationOrder"]
   volume_num : float option; [@yojson.option] [@key "volumeNum"]
   liquidity_num : float option; [@yojson.option] [@key "liquidityNum"]
@@ -393,26 +438,29 @@ type market = {
   uma_bond : string option; [@yojson.option] [@key "umaBond"]
   uma_reward : string option; [@yojson.option] [@key "umaReward"]
   fpmm_live : bool option; [@yojson.option] [@key "fpmmLive"]
-  volume_24hr_amm : float option; [@yojson.option] [@key "volume24hrAmm"]
-  volume_1wk_amm : float option; [@yojson.option] [@key "volume1wkAmm"]
-  volume_1mo_amm : float option; [@yojson.option] [@key "volume1moAmm"]
-  volume_1yr_amm : float option; [@yojson.option] [@key "volume1yrAmm"]
-  volume_24hr_clob : float option; [@yojson.option] [@key "volume24hrClob"]
-  volume_1wk_clob : float option; [@yojson.option] [@key "volume1wkClob"]
-  volume_1mo_clob : float option; [@yojson.option] [@key "volume1moClob"]
-  volume_1yr_clob : float option; [@yojson.option] [@key "volume1yrClob"]
-  volume_amm : float option; [@yojson.option] [@key "volumeAmm"]
-  volume_clob : float option; [@yojson.option] [@key "volumeClob"]
-  liquidity_amm : float option; [@yojson.option] [@key "liquidityAmm"]
-  liquidity_clob : float option; [@yojson.option] [@key "liquidityClob"]
+  volume_24hr_amm : float option; [@default None] [@key "volume24hrAmm"]
+  volume_1wk_amm : float option; [@default None] [@key "volume1wkAmm"]
+  volume_1mo_amm : float option; [@default None] [@key "volume1moAmm"]
+  volume_1yr_amm : float option; [@default None] [@key "volume1yrAmm"]
+  volume_24hr_clob : float option; [@default None] [@key "volume24hrClob"]
+  volume_1wk_clob : float option; [@default None] [@key "volume1wkClob"]
+  volume_1mo_clob : float option; [@default None] [@key "volume1moClob"]
+  volume_1yr_clob : float option; [@default None] [@key "volume1yrClob"]
+  volume_amm : float option; [@default None] [@key "volumeAmm"]
+  volume_clob : float option; [@default None] [@key "volumeClob"]
+  liquidity_amm : float option; [@default None] [@key "liquidityAmm"]
+  liquidity_clob : float option; [@default None] [@key "liquidityClob"]
   maker_base_fee : int option; [@yojson.option] [@key "makerBaseFee"]
   taker_base_fee : int option; [@yojson.option] [@key "takerBaseFee"]
   custom_liveness : int option; [@yojson.option] [@key "customLiveness"]
   accepting_orders : bool option; [@yojson.option] [@key "acceptingOrders"]
-  notifications_enabled : bool option; [@yojson.option] [@key "notificationsEnabled"]
+  notifications_enabled : bool option;
+      [@yojson.option] [@key "notificationsEnabled"]
   score : int option; [@yojson.option]
-  image_optimized : image_optimization option; [@yojson.option] [@key "imageOptimized"]
-  icon_optimized : image_optimization option; [@yojson.option] [@key "iconOptimized"]
+  image_optimized : image_optimization option;
+      [@yojson.option] [@key "imageOptimized"]
+  icon_optimized : image_optimization option;
+      [@yojson.option] [@key "iconOptimized"]
   events : event list; [@default []]
   categories : category list; [@default []]
   tags : tag list; [@default []]
@@ -422,21 +470,29 @@ type market = {
   past_slugs : string option; [@yojson.option] [@key "pastSlugs"]
   ready_timestamp : string option; [@yojson.option] [@key "readyTimestamp"]
   funded_timestamp : string option; [@yojson.option] [@key "fundedTimestamp"]
-  accepting_orders_timestamp : string option; [@yojson.option] [@key "acceptingOrdersTimestamp"]
+  accepting_orders_timestamp : string option;
+      [@yojson.option] [@key "acceptingOrdersTimestamp"]
   competitive : float option; [@yojson.option]
   rewards_min_size : float option; [@yojson.option] [@key "rewardsMinSize"]
   rewards_max_spread : float option; [@yojson.option] [@key "rewardsMaxSpread"]
   spread : float option; [@yojson.option]
-  automatically_resolved : bool option; [@yojson.option] [@key "automaticallyResolved"]
-  one_day_price_change : float option; [@yojson.option] [@key "oneDayPriceChange"]
-  one_hour_price_change : float option; [@yojson.option] [@key "oneHourPriceChange"]
-  one_week_price_change : float option; [@yojson.option] [@key "oneWeekPriceChange"]
-  one_month_price_change : float option; [@yojson.option] [@key "oneMonthPriceChange"]
-  one_year_price_change : float option; [@yojson.option] [@key "oneYearPriceChange"]
+  automatically_resolved : bool option;
+      [@yojson.option] [@key "automaticallyResolved"]
+  one_day_price_change : float option;
+      [@yojson.option] [@key "oneDayPriceChange"]
+  one_hour_price_change : float option;
+      [@yojson.option] [@key "oneHourPriceChange"]
+  one_week_price_change : float option;
+      [@yojson.option] [@key "oneWeekPriceChange"]
+  one_month_price_change : float option;
+      [@yojson.option] [@key "oneMonthPriceChange"]
+  one_year_price_change : float option;
+      [@yojson.option] [@key "oneYearPriceChange"]
   last_trade_price : float option; [@yojson.option] [@key "lastTradePrice"]
   best_bid : float option; [@yojson.option] [@key "bestBid"]
   best_ask : float option; [@yojson.option] [@key "bestAsk"]
-  automatically_active : bool option; [@yojson.option] [@key "automaticallyActive"]
+  automatically_active : bool option;
+      [@yojson.option] [@key "automaticallyActive"]
   clear_book_on_start : bool option; [@yojson.option] [@key "clearBookOnStart"]
   chart_color : string option; [@yojson.option] [@key "chartColor"]
   series_color : string option; [@yojson.option] [@key "seriesColor"]
@@ -448,13 +504,37 @@ type market = {
   group_item_range : string option; [@yojson.option] [@key "groupItemRange"]
   sports_market_type : string option; [@yojson.option] [@key "sportsMarketType"]
   line : float option; [@yojson.option]
-  uma_resolution_statuses : string option; [@yojson.option] [@key "umaResolutionStatuses"]
+  uma_resolution_statuses : string option;
+      [@yojson.option] [@key "umaResolutionStatuses"]
   pending_deployment : bool option; [@yojson.option] [@key "pendingDeployment"]
   deploying : bool option; [@yojson.option]
-  deploying_timestamp : string option; [@yojson.option] [@key "deployingTimestamp"]
-  scheduled_deployment_timestamp : string option; [@yojson.option] [@key "scheduledDeploymentTimestamp"]
+  deploying_timestamp : string option;
+      [@yojson.option] [@key "deployingTimestamp"]
+  scheduled_deployment_timestamp : string option;
+      [@yojson.option] [@key "scheduledDeploymentTimestamp"]
   rfq_enabled : bool option; [@yojson.option] [@key "rfqEnabled"]
   event_start_time : string option; [@yojson.option] [@key "eventStartTime"]
+  submitted_by : string option; [@yojson.option] [@key "submitted_by"]
+  cyom : bool option; [@yojson.option]
+  pager_duty_notification_enabled : bool option;
+      [@yojson.option] [@key "pagerDutyNotificationEnabled"]
+  approved : bool option; [@yojson.option]
+  holding_rewards_enabled : bool option;
+      [@yojson.option] [@key "holdingRewardsEnabled"]
+  fees_enabled : bool option; [@yojson.option] [@key "feesEnabled"]
+  requires_translation : bool option;
+      [@yojson.option] [@key "requiresTranslation"]
+  neg_risk : bool option; [@yojson.option] [@key "negRisk"]
+  neg_risk_market_id : string option; [@yojson.option] [@key "negRiskMarketID"]
+  neg_risk_request_id : string option; [@yojson.option] [@key "negRiskRequestID"]
+  clob_rewards : clob_reward list; [@default []] [@key "clobRewards"]
+  sent_discord : bool option; [@yojson.option] [@key "sentDiscord"]
+  twitter_card_location : string option;
+      [@yojson.option] [@key "twitterCardLocation"]
+  twitter_card_last_refreshed : string option;
+      [@yojson.option] [@key "twitterCardLastRefreshed"]
+  twitter_card_last_validated : string option;
+      [@yojson.option] [@key "twitterCardLastValidated"]
 }
 
 and event = {
@@ -483,7 +563,8 @@ and event = {
   category : string option; [@yojson.option]
   subcategory : string option; [@yojson.option]
   is_template : bool option; [@yojson.option] [@key "isTemplate"]
-  template_variables : string option; [@yojson.option] [@key "templateVariables"]
+  template_variables : string option;
+      [@yojson.option] [@key "templateVariables"]
   published_at : string option; [@yojson.option] [@key "published_at"]
   created_by : string option; [@yojson.option] [@key "createdBy"]
   updated_by : string option; [@yojson.option] [@key "updatedBy"]
@@ -499,15 +580,18 @@ and event = {
   disqus_thread : string option; [@yojson.option] [@key "disqusThread"]
   parent_event : string option; [@yojson.option] [@key "parentEvent"]
   enable_order_book : bool option; [@yojson.option] [@key "enableOrderBook"]
-  liquidity_amm : float option; [@yojson.option] [@key "liquidityAmm"]
-  liquidity_clob : float option; [@yojson.option] [@key "liquidityClob"]
+  liquidity_amm : float option; [@default None] [@key "liquidityAmm"]
+  liquidity_clob : float option; [@default None] [@key "liquidityClob"]
   neg_risk : bool option; [@yojson.option] [@key "negRisk"]
   neg_risk_market_id : string option; [@yojson.option] [@key "negRiskMarketID"]
   neg_risk_fee_bips : int option; [@yojson.option] [@key "negRiskFeeBips"]
   comment_count : int option; [@yojson.option] [@key "commentCount"]
-  image_optimized : image_optimization option; [@yojson.option] [@key "imageOptimized"]
-  icon_optimized : image_optimization option; [@yojson.option] [@key "iconOptimized"]
-  featured_image_optimized : image_optimization option; [@yojson.option] [@key "featuredImageOptimized"]
+  image_optimized : image_optimization option;
+      [@yojson.option] [@key "imageOptimized"]
+  icon_optimized : image_optimization option;
+      [@yojson.option] [@key "iconOptimized"]
+  featured_image_optimized : image_optimization option;
+      [@yojson.option] [@key "featuredImageOptimized"]
   sub_events : string list option; [@yojson.option] [@key "subEvents"]
   markets : market list; [@default []]
   series : series list; [@default []]
@@ -518,9 +602,11 @@ and event = {
   closed_time : string option; [@yojson.option] [@key "closedTime"]
   show_all_outcomes : bool option; [@yojson.option] [@key "showAllOutcomes"]
   show_market_images : bool option; [@yojson.option] [@key "showMarketImages"]
-  automatically_resolved : bool option; [@yojson.option] [@key "automaticallyResolved"]
+  automatically_resolved : bool option;
+      [@yojson.option] [@key "automaticallyResolved"]
   enable_neg_risk : bool option; [@yojson.option] [@key "enableNegRisk"]
-  automatically_active : bool option; [@yojson.option] [@key "automaticallyActive"]
+  automatically_active : bool option;
+      [@yojson.option] [@key "automaticallyActive"]
   event_date : string option; [@yojson.option] [@key "eventDate"]
   start_time : string option; [@yojson.option] [@key "startTime"]
   event_week : int option; [@yojson.option] [@key "eventWeek"]
@@ -530,7 +616,8 @@ and event = {
   period : string option; [@yojson.option]
   live : bool option; [@yojson.option]
   ended : bool option; [@yojson.option]
-  finished_timestamp : string option; [@yojson.option] [@key "finishedTimestamp"]
+  finished_timestamp : string option;
+      [@yojson.option] [@key "finishedTimestamp"]
   gmp_chart_mode : string option; [@yojson.option] [@key "gmpChartMode"]
   event_creators : event_creator list; [@default []] [@key "eventCreators"]
   tweet_count : int option; [@yojson.option] [@key "tweetCount"]
@@ -545,9 +632,15 @@ and event = {
   carousel_map : string option; [@yojson.option] [@key "carouselMap"]
   pending_deployment : bool option; [@yojson.option] [@key "pendingDeployment"]
   deploying : bool option; [@yojson.option]
-  deploying_timestamp : string option; [@yojson.option] [@key "deployingTimestamp"]
-  scheduled_deployment_timestamp : string option; [@yojson.option] [@key "scheduledDeploymentTimestamp"]
+  deploying_timestamp : string option;
+      [@yojson.option] [@key "deployingTimestamp"]
+  scheduled_deployment_timestamp : string option;
+      [@yojson.option] [@key "scheduledDeploymentTimestamp"]
   game_status : string option; [@yojson.option] [@key "gameStatus"]
+  neg_risk_augmented : bool option; [@yojson.option] [@key "negRiskAugmented"]
+  requires_translation : bool option;
+      [@yojson.option] [@key "requiresTranslation"]
+  game_id : string option; [@yojson.option] [@key "gameId"]
 }
 
 and series = {
@@ -590,6 +683,8 @@ and series = {
   tags : tag list; [@default []]
   comment_count : int option; [@yojson.option] [@key "commentCount"]
   chats : chat list; [@default []]
+  requires_translation : bool option;
+      [@yojson.option] [@key "requiresTranslation"]
 }
 [@@deriving yojson, show, eq]
 
@@ -614,12 +709,14 @@ type search = {
 (** {1 Sports Types} *)
 
 type sports_metadata = {
+  id : int option; [@yojson.option]
   sport : string option; [@yojson.option]
   image : string option; [@yojson.option]
   resolution : string option; [@yojson.option]
   ordering : string option; [@yojson.option]
   tags : string option; [@yojson.option]
   series : string option; [@yojson.option]
+  created_at : string option; [@yojson.option] [@key "createdAt"]
 }
 [@@deriving yojson, show, eq]
 (** Sports metadata *)
@@ -638,7 +735,8 @@ type markets_information_body = {
   closed : bool option; [@yojson.option]
   clob_token_ids : string list option; [@yojson.option] [@key "clobTokenIds"]
   condition_ids : string list option; [@yojson.option] [@key "conditionIds"]
-  market_maker_address : string list option; [@yojson.option] [@key "marketMakerAddress"]
+  market_maker_address : string list option;
+      [@yojson.option] [@key "marketMakerAddress"]
   liquidity_num_min : float option; [@yojson.option] [@key "liquidityNumMin"]
   liquidity_num_max : float option; [@yojson.option] [@key "liquidityNumMax"]
   volume_num_min : float option; [@yojson.option] [@key "volumeNumMin"]
@@ -658,7 +756,8 @@ type markets_information_body = {
 let empty_pagination : pagination = { has_more = None; total_results = None }
 let empty_count : count = { count = None }
 let empty_event_tweet_count : event_tweet_count = { tweet_count = None }
-let empty_market_description : market_description = { description = None }
+let empty_market_description : market_description =
+  { id = None; condition_id = None; market_maker_address = None; description = None }
 
 let empty_image_optimization : image_optimization =
   {
@@ -685,6 +784,8 @@ let empty_team : team =
     alias = None;
     created_at = None;
     updated_at = None;
+    provider_id = None;
+    color = None;
   }
 
 let empty_tag : tag =
@@ -700,6 +801,7 @@ let empty_tag : tag =
     updated_at = None;
     force_hide = None;
     is_carousel = None;
+    requires_translation = None;
   }
 
 let empty_related_tag : related_tag =
@@ -756,9 +858,11 @@ let empty_template : template =
     outcomes = None;
   }
 
-let empty_search_tag : search_tag = { id = None; label = None; slug = None; event_count = None }
+let empty_search_tag : search_tag =
+  { id = None; label = None; slug = None; event_count = None }
 
-let empty_comment_position : comment_position = { token_id = None; position_size = None }
+let empty_comment_position : comment_position =
+  { token_id = None; position_size = None }
 
 let empty_comment_profile : comment_profile =
   {
@@ -803,8 +907,11 @@ let empty_comment : comment =
     reaction_count = None;
   }
 
-let empty_public_profile_user : public_profile_user = { id = None; creator = None; mod_ = None }
-let empty_public_profile_error : public_profile_error = { type_ = None; error = None }
+let empty_public_profile_user : public_profile_user =
+  { id = None; creator = None; mod_ = None }
+
+let empty_public_profile_error : public_profile_error =
+  { type_ = None; error = None }
 
 let empty_public_profile_response : public_profile_response =
   {
@@ -889,6 +996,17 @@ let empty_series_summary : series_summary =
     event_weeks = [];
     earliest_open_week = None;
     earliest_open_date = None;
+  }
+
+let empty_clob_reward : clob_reward =
+  {
+    id = None;
+    condition_id = None;
+    asset_address = None;
+    rewards_amount = None;
+    rewards_daily_rate = None;
+    start_date = None;
+    end_date = None;
   }
 
 let empty_market : market =
@@ -1031,6 +1149,21 @@ let empty_market : market =
     scheduled_deployment_timestamp = None;
     rfq_enabled = None;
     event_start_time = None;
+    submitted_by = None;
+    cyom = None;
+    pager_duty_notification_enabled = None;
+    approved = None;
+    holding_rewards_enabled = None;
+    fees_enabled = None;
+    requires_translation = None;
+    neg_risk = None;
+    neg_risk_market_id = None;
+    neg_risk_request_id = None;
+    clob_rewards = [];
+    sent_discord = None;
+    twitter_card_location = None;
+    twitter_card_last_refreshed = None;
+    twitter_card_last_validated = None;
   }
 
 let empty_event : event =
@@ -1125,6 +1258,9 @@ let empty_event : event =
     deploying_timestamp = None;
     scheduled_deployment_timestamp = None;
     game_status = None;
+    neg_risk_augmented = None;
+    requires_translation = None;
+    game_id = None;
   }
 
 let empty_series : series =
@@ -1168,24 +1304,29 @@ let empty_series : series =
     tags = [];
     comment_count = None;
     chats = [];
+    requires_translation = None;
   }
 
-let empty_events_pagination : events_pagination = { data = []; pagination = None }
+let empty_events_pagination : events_pagination =
+  { data = []; pagination = None }
 
 let empty_search : search =
   { events = None; tags = None; profiles = None; pagination = None }
 
 let empty_sports_metadata : sports_metadata =
   {
+    id = None;
     sport = None;
     image = None;
     resolution = None;
     ordering = None;
     tags = None;
     series = None;
+    created_at = None;
   }
 
-let empty_sports_market_types_response : sports_market_types_response = { market_types = [] }
+let empty_sports_market_types_response : sports_market_types_response =
+  { market_types = [] }
 
 let empty_markets_information_body : markets_information_body =
   {

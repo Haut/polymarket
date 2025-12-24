@@ -6,10 +6,7 @@
 
 (** {1 Simple Types} *)
 
-type pagination = {
-  has_more : bool option;
-  total_results : int option;
-}
+type pagination = { has_more : bool option; total_results : int option }
 (** Pagination information *)
 
 type count = { count : int option }
@@ -18,7 +15,12 @@ type count = { count : int option }
 type event_tweet_count = { tweet_count : int option }
 (** Event tweet count response *)
 
-type market_description = { description : string option }
+type market_description = {
+  id : string option;
+  condition_id : string option;
+  market_maker_address : string option;
+  description : string option;
+}
 (** Market description response *)
 
 type image_optimization = {
@@ -47,6 +49,8 @@ type team = {
   alias : string option;
   created_at : string option;
   updated_at : string option;
+  provider_id : int option;
+  color : string option;
 }
 (** Sports team *)
 
@@ -62,6 +66,7 @@ type tag = {
   updated_at : string option;
   force_hide : bool option;
   is_carousel : bool option;
+  requires_translation : bool option;
 }
 (** Tag for categorization *)
 
@@ -192,10 +197,7 @@ type public_profile_user = {
 }
 (** Public profile user *)
 
-type public_profile_error = {
-  type_ : string option;
-  error : string option;
-}
+type public_profile_error = { type_ : string option; error : string option }
 (** Public profile error response *)
 
 type public_profile_response = {
@@ -286,6 +288,19 @@ type series_summary = {
   earliest_open_date : string option;
 }
 (** Series summary *)
+
+(** {1 CLOB Rewards Type} *)
+
+type clob_reward = {
+  id : string option;
+  condition_id : string option;
+  asset_address : string option;
+  rewards_amount : float option;
+  rewards_daily_rate : float option;
+  start_date : string option;
+  end_date : string option;
+}
+(** CLOB reward configuration *)
 
 (** {1 Mutually Recursive Types: Market, Event, Series}
 
@@ -430,6 +445,21 @@ type market = {
   scheduled_deployment_timestamp : string option;
   rfq_enabled : bool option;
   event_start_time : string option;
+  submitted_by : string option;
+  cyom : bool option;
+  pager_duty_notification_enabled : bool option;
+  approved : bool option;
+  holding_rewards_enabled : bool option;
+  fees_enabled : bool option;
+  requires_translation : bool option;
+  neg_risk : bool option;
+  neg_risk_market_id : string option;
+  neg_risk_request_id : string option;
+  clob_rewards : clob_reward list;
+  sent_discord : bool option;
+  twitter_card_location : string option;
+  twitter_card_last_refreshed : string option;
+  twitter_card_last_validated : string option;
 }
 (** Market *)
 
@@ -524,6 +554,9 @@ and event = {
   deploying_timestamp : string option;
   scheduled_deployment_timestamp : string option;
   game_status : string option;
+  neg_risk_augmented : bool option;
+  requires_translation : bool option;
+  game_id : string option;
 }
 (** Event *)
 
@@ -567,15 +600,13 @@ and series = {
   tags : tag list;
   comment_count : int option;
   chats : chat list;
+  requires_translation : bool option;
 }
 (** Series *)
 
 (** {1 Pagination Response Types} *)
 
-type events_pagination = {
-  data : event list;
-  pagination : pagination option;
-}
+type events_pagination = { data : event list; pagination : pagination option }
 (** Paginated events response *)
 
 type search = {
@@ -589,12 +620,14 @@ type search = {
 (** {1 Sports Types} *)
 
 type sports_metadata = {
+  id : int option;
   sport : string option;
   image : string option;
   resolution : string option;
   ordering : string option;
   tags : string option;
   series : string option;
+  created_at : string option;
 }
 (** Sports metadata *)
 
@@ -669,6 +702,8 @@ val collection_of_yojson : Yojson.Safe.t -> collection
 val yojson_of_collection : collection -> Yojson.Safe.t
 val series_summary_of_yojson : Yojson.Safe.t -> series_summary
 val yojson_of_series_summary : series_summary -> Yojson.Safe.t
+val clob_reward_of_yojson : Yojson.Safe.t -> clob_reward
+val yojson_of_clob_reward : clob_reward -> Yojson.Safe.t
 val market_of_yojson : Yojson.Safe.t -> market
 val yojson_of_market : market -> Yojson.Safe.t
 val event_of_yojson : Yojson.Safe.t -> event
@@ -681,10 +716,18 @@ val search_of_yojson : Yojson.Safe.t -> search
 val yojson_of_search : search -> Yojson.Safe.t
 val sports_metadata_of_yojson : Yojson.Safe.t -> sports_metadata
 val yojson_of_sports_metadata : sports_metadata -> Yojson.Safe.t
-val sports_market_types_response_of_yojson : Yojson.Safe.t -> sports_market_types_response
-val yojson_of_sports_market_types_response : sports_market_types_response -> Yojson.Safe.t
-val markets_information_body_of_yojson : Yojson.Safe.t -> markets_information_body
-val yojson_of_markets_information_body : markets_information_body -> Yojson.Safe.t
+
+val sports_market_types_response_of_yojson :
+  Yojson.Safe.t -> sports_market_types_response
+
+val yojson_of_sports_market_types_response :
+  sports_market_types_response -> Yojson.Safe.t
+
+val markets_information_body_of_yojson :
+  Yojson.Safe.t -> markets_information_body
+
+val yojson_of_markets_information_body :
+  markets_information_body -> Yojson.Safe.t
 
 (** {1 Pretty Printing Functions} *)
 
@@ -726,7 +769,10 @@ val pp_public_profile_user : Format.formatter -> public_profile_user -> unit
 val show_public_profile_user : public_profile_user -> string
 val pp_public_profile_error : Format.formatter -> public_profile_error -> unit
 val show_public_profile_error : public_profile_error -> string
-val pp_public_profile_response : Format.formatter -> public_profile_response -> unit
+
+val pp_public_profile_response :
+  Format.formatter -> public_profile_response -> unit
+
 val show_public_profile_response : public_profile_response -> string
 val pp_profile : Format.formatter -> profile -> unit
 val show_profile : profile -> string
@@ -734,6 +780,8 @@ val pp_collection : Format.formatter -> collection -> unit
 val show_collection : collection -> string
 val pp_series_summary : Format.formatter -> series_summary -> unit
 val show_series_summary : series_summary -> string
+val pp_clob_reward : Format.formatter -> clob_reward -> unit
+val show_clob_reward : clob_reward -> string
 val pp_market : Format.formatter -> market -> unit
 val show_market : market -> string
 val pp_event : Format.formatter -> event -> unit
@@ -746,9 +794,15 @@ val pp_search : Format.formatter -> search -> unit
 val show_search : search -> string
 val pp_sports_metadata : Format.formatter -> sports_metadata -> unit
 val show_sports_metadata : sports_metadata -> string
-val pp_sports_market_types_response : Format.formatter -> sports_market_types_response -> unit
+
+val pp_sports_market_types_response :
+  Format.formatter -> sports_market_types_response -> unit
+
 val show_sports_market_types_response : sports_market_types_response -> string
-val pp_markets_information_body : Format.formatter -> markets_information_body -> unit
+
+val pp_markets_information_body :
+  Format.formatter -> markets_information_body -> unit
+
 val show_markets_information_body : markets_information_body -> string
 
 (** {1 Equality Functions} *)
@@ -770,20 +824,32 @@ val equal_comment_position : comment_position -> comment_position -> bool
 val equal_comment_profile : comment_profile -> comment_profile -> bool
 val equal_reaction : reaction -> reaction -> bool
 val equal_comment : comment -> comment -> bool
-val equal_public_profile_user : public_profile_user -> public_profile_user -> bool
-val equal_public_profile_error : public_profile_error -> public_profile_error -> bool
-val equal_public_profile_response : public_profile_response -> public_profile_response -> bool
+
+val equal_public_profile_user :
+  public_profile_user -> public_profile_user -> bool
+
+val equal_public_profile_error :
+  public_profile_error -> public_profile_error -> bool
+
+val equal_public_profile_response :
+  public_profile_response -> public_profile_response -> bool
+
 val equal_profile : profile -> profile -> bool
 val equal_collection : collection -> collection -> bool
 val equal_series_summary : series_summary -> series_summary -> bool
+val equal_clob_reward : clob_reward -> clob_reward -> bool
 val equal_market : market -> market -> bool
 val equal_event : event -> event -> bool
 val equal_series : series -> series -> bool
 val equal_events_pagination : events_pagination -> events_pagination -> bool
 val equal_search : search -> search -> bool
 val equal_sports_metadata : sports_metadata -> sports_metadata -> bool
-val equal_sports_market_types_response : sports_market_types_response -> sports_market_types_response -> bool
-val equal_markets_information_body : markets_information_body -> markets_information_body -> bool
+
+val equal_sports_market_types_response :
+  sports_market_types_response -> sports_market_types_response -> bool
+
+val equal_markets_information_body :
+  markets_information_body -> markets_information_body -> bool
 
 (** {1 Empty Constructors}
 
@@ -812,6 +878,7 @@ val empty_public_profile_response : public_profile_response
 val empty_profile : profile
 val empty_collection : collection
 val empty_series_summary : series_summary
+val empty_clob_reward : clob_reward
 val empty_market : market
 val empty_event : event
 val empty_series : series

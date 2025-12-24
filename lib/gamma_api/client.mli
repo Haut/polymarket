@@ -116,8 +116,8 @@ val get_events :
   ?slug_size:slug_size ->
   ?_c:string ->
   unit ->
-  (events_pagination, Common.Http_client.error_response) result
-(** Get paginated events.
+  (event list, Common.Http_client.error_response) result
+(** Get events list.
     @param id Event ID to filter by
     @param ticker Event ticker to filter by
     @param slug Event slug to filter by
@@ -154,24 +154,6 @@ val get_event_by_slug :
 val get_event_tags :
   t -> id:int -> unit -> (tag list, Common.Http_client.error_response) result
 (** Get tags for an event.
-    @param id Event ID (required) *)
-
-val get_event_markets :
-  t -> id:int -> unit -> (market list, Common.Http_client.error_response) result
-(** Get markets for an event.
-    @param id Event ID (required) *)
-
-val get_event_comments_count :
-  t -> id:int -> unit -> (count, Common.Http_client.error_response) result
-(** Get comment count for an event.
-    @param id Event ID (required) *)
-
-val get_event_tweet_count :
-  t ->
-  id:int ->
-  unit ->
-  (event_tweet_count, Common.Http_client.error_response) result
-(** Get tweet count for an event.
     @param id Event ID (required) *)
 
 (** {1 Markets Endpoints} *)
@@ -241,11 +223,6 @@ val get_market_by_slug :
 val get_market_tags :
   t -> id:int -> unit -> (tag list, Common.Http_client.error_response) result
 (** Get tags for a market.
-    @param id Market ID (required) *)
-
-val get_market_events :
-  t -> id:int -> unit -> (event list, Common.Http_client.error_response) result
-(** Get events for a market.
     @param id Market ID (required) *)
 
 val get_market_description :
@@ -375,11 +352,33 @@ val get_sports_market_types :
 val public_search :
   t ->
   q:string ->
-  ?limit:int ->
-  ?tag_slug:string ->
+  ?cache:bool ->
+  ?events_status:string ->
+  ?limit_per_type:int ->
+  ?page:int ->
+  ?events_tag:string list ->
+  ?keep_closed_markets:int ->
+  ?sort:string ->
+  ?ascending:bool ->
+  ?search_tags:bool ->
+  ?search_profiles:bool ->
+  ?recurrence:string ->
+  ?exclude_tag_id:int list ->
+  ?optimized:bool ->
   unit ->
   (search, Common.Http_client.error_response) result
 (** Search for events, tags, and profiles.
     @param q Search query (required)
-    @param limit Maximum results
-    @param tag_slug Filter by tag slug *)
+    @param cache Enable caching
+    @param events_status Filter events by status
+    @param limit_per_type Maximum results per type
+    @param page Pagination page number
+    @param events_tag Filter by event tags (array)
+    @param keep_closed_markets Include closed markets (0 or 1)
+    @param sort Sort field
+    @param ascending Sort ascending if true
+    @param search_tags Include tags in search results
+    @param search_profiles Include profiles in search results
+    @param recurrence Filter by recurrence type
+    @param exclude_tag_id Tag IDs to exclude (array)
+    @param optimized Use optimized response format *)
