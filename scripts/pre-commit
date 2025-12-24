@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -e
+
+echo "Running pre-commit checks..."
+
+# Check formatting (--check mode doesn't modify files, just fails if unformatted)
+echo "▶ Checking formatting..."
+if ! dune fmt 2>&1 | grep -q "^File"; then
+    echo "  ✓ Formatting OK"
+else
+    echo "  ✗ Formatting issues found. Run 'dune fmt' to fix."
+    exit 1
+fi
+
+# Build the project
+echo "▶ Building..."
+if dune build; then
+    echo "  ✓ Build OK"
+else
+    echo "  ✗ Build failed"
+    exit 1
+fi
+
+# Run tests
+echo "▶ Running tests..."
+if dune runtest; then
+    echo "  ✓ Tests OK"
+else
+    echo "  ✗ Tests failed"
+    exit 1
+fi
+
+echo "✓ All pre-commit checks passed!"

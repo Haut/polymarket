@@ -289,7 +289,8 @@ let run_demo env =
   let profile =
     Gamma_api.Client.get_profile client ~user_address:test_address ()
   in
-  print_result "get_profile" profile ~on_ok:(fun (p : Gamma_api.Types.profile) ->
+  print_result "get_profile" profile
+    ~on_ok:(fun (p : Gamma_api.Types.profile) ->
       Option.value ~default:"(no pseudonym)" p.pseudonym);
 
   (* ===== Sports ===== *)

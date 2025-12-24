@@ -91,9 +91,9 @@ let get_events t ?id ?ticker ?slug ?archived ?active ?closed ?liquidity_min
        (Option.map string_of_slug_size slug_size)
   |> Common.Http_client.add "_c" _c
   |> Common.Http_client.get_json t "/events" (fun json ->
-         match json with
-         | `List events -> List.map event_of_yojson events
-         | _ -> failwith "Expected list of events")
+      match json with
+      | `List events -> List.map event_of_yojson events
+      | _ -> failwith "Expected list of events")
 
 let get_event t ~id () =
   []
@@ -264,9 +264,10 @@ let public_search t ~q ?cache ?events_status ?limit_per_type ?page ?events_tag
   |> Common.Http_client.add_int "limit_per_type" limit_per_type
   |> Common.Http_client.add_int "page" page
   |> (fun params ->
-       match events_tag with
-       | Some tags -> List.fold_left (fun acc tag -> ("events_tag", [ tag ]) :: acc) params tags
-       | None -> params)
+  match events_tag with
+  | Some tags ->
+      List.fold_left (fun acc tag -> ("events_tag", [ tag ]) :: acc) params tags
+  | None -> params)
   |> Common.Http_client.add_int "keep_closed_markets" keep_closed_markets
   |> Common.Http_client.add "sort" sort
   |> Common.Http_client.add_bool "ascending" ascending
@@ -274,8 +275,11 @@ let public_search t ~q ?cache ?events_status ?limit_per_type ?page ?events_tag
   |> Common.Http_client.add_bool "search_profiles" search_profiles
   |> Common.Http_client.add "recurrence" recurrence
   |> (fun params ->
-       match exclude_tag_id with
-       | Some ids -> List.fold_left (fun acc id -> ("exclude_tag_id", [ string_of_int id ]) :: acc) params ids
-       | None -> params)
+  match exclude_tag_id with
+  | Some ids ->
+      List.fold_left
+        (fun acc id -> ("exclude_tag_id", [ string_of_int id ]) :: acc)
+        params ids
+  | None -> params)
   |> Common.Http_client.add_bool "optimized" optimized
   |> Common.Http_client.get_json t "/public-search" search_of_yojson

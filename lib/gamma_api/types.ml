@@ -28,7 +28,8 @@ type event_tweet_count = {
 type market_description = {
   id : string option; [@yojson.option]
   condition_id : string option; [@yojson.option] [@key "conditionId"]
-  market_maker_address : string option; [@yojson.option] [@key "marketMakerAddress"]
+  market_maker_address : string option;
+      [@yojson.option] [@key "marketMakerAddress"]
   description : string option; [@yojson.option]
 }
 [@@deriving yojson, show, eq]
@@ -526,7 +527,8 @@ type market = {
       [@yojson.option] [@key "requiresTranslation"]
   neg_risk : bool option; [@yojson.option] [@key "negRisk"]
   neg_risk_market_id : string option; [@yojson.option] [@key "negRiskMarketID"]
-  neg_risk_request_id : string option; [@yojson.option] [@key "negRiskRequestID"]
+  neg_risk_request_id : string option;
+      [@yojson.option] [@key "negRiskRequestID"]
   clob_rewards : clob_reward list; [@default []] [@key "clobRewards"]
   sent_discord : bool option; [@yojson.option] [@key "sentDiscord"]
   twitter_card_location : string option;
@@ -756,8 +758,14 @@ type markets_information_body = {
 let empty_pagination : pagination = { has_more = None; total_results = None }
 let empty_count : count = { count = None }
 let empty_event_tweet_count : event_tweet_count = { tweet_count = None }
+
 let empty_market_description : market_description =
-  { id = None; condition_id = None; market_maker_address = None; description = None }
+  {
+    id = None;
+    condition_id = None;
+    market_maker_address = None;
+    description = None;
+  }
 
 let empty_image_optimization : image_optimization =
   {
