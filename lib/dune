@@ -12,6 +12,10 @@
   tls
   tls-eio
   ca-certs
-  mirage-crypto-rng-eio)
+  mirage-crypto-rng-eio
+  logs
+  logs.fmt
+  fmt
+  fmt.tty)
  (preprocess
   (pps ppx_yojson_conv ppx_deriving.show ppx_deriving.eq)))

@@ -35,6 +35,8 @@
   (tls-eio (>= 1.0))
   (ca-certs (>= 1.0))
   (mirage-crypto-rng-eio (>= 1.0))
+  (logs (>= 0.7))
+  (fmt (>= 0.9))
   (alcotest (and (>= 1.7) :with-test)))
  (tags
   (polymarket prediction-market blockchain polygon api-client trading)))
