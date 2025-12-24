@@ -21,16 +21,10 @@ let sample_market =
 let sample_event_id = 903
 
 (* Helper functions *)
-let section name =
-  Printf.printf "\n%s\n%s\n" name (String.make (String.length name) '=')
-
-let print_ok name msg = Printf.printf "[OK] %s: %s\n" name msg
-let print_error name err = Printf.printf "[ERROR] %s: %s\n" name err
-
 let print_result_count name result =
   match result with
-  | Ok items -> print_ok name (Printf.sprintf "%d items" (List.length items))
-  | Error err -> print_error name err.Http_client.Client.error
+  | Ok items -> Logger.ok name (Printf.sprintf "%d items" (List.length items))
+  | Error err -> Logger.error name err.Http_client.Client.error
 
 let run_demo env =
   (* Initialize logging from POLYMARKET_LOG_LEVEL environment variable *)
@@ -38,26 +32,25 @@ let run_demo env =
   Eio.Switch.run @@ fun sw ->
   let net = Eio.Stdenv.net env in
 
-  Printf.printf "Polymarket Data API Demo\n";
-  Printf.printf "========================\n";
-  Printf.printf "Base URL: %s\n" Data_api.Client.default_base_url;
+  Logger.info "START"
+    [ ("demo", "Data API"); ("base_url", Data_api.Client.default_base_url) ];
 
   (* Create the client *)
   let client = Data_api.Client.create ~sw ~net () in
 
   (* Health Check *)
-  section "Health Check";
+  Logger.header "Health Check";
   let health = Data_api.Client.health_check client in
   (match health with
   | Ok resp -> (
-      print_ok "health_check" "passed";
+      Logger.ok "health_check" "passed";
       match resp.data with
-      | Some d -> Printf.printf "    Data: %s\n" d
+      | Some d -> Logger.info "DATA" [ ("value", d) ]
       | None -> ())
-  | Error err -> print_error "health_check" err.error);
+  | Error err -> Logger.error "health_check" err.error);
 
   (* Positions *)
-  section "Positions";
+  Logger.header "Positions";
   let positions =
     Data_api.Client.get_positions client ~user:sample_user ~limit:5 ()
   in
@@ -65,12 +58,12 @@ let run_demo env =
   (match positions with
   | Ok items when List.length items > 0 ->
       let pos = List.hd items in
-      Printf.printf "    First position: %s\n"
-        (Option.value ~default:"(no title)" pos.title)
+      Logger.info "FIRST"
+        [ ("position", Option.value ~default:"(no title)" pos.title) ]
   | _ -> ());
 
   (* Trades *)
-  section "Trades";
+  Logger.header "Trades";
   let trades = Data_api.Client.get_trades client ~limit:5 () in
   print_result_count "get_trades (all)" trades;
 
@@ -80,36 +73,36 @@ let run_demo env =
   print_result_count "get_trades (by user)" user_trades;
 
   (* Activity *)
-  section "Activity";
+  Logger.header "Activity";
   let activity =
     Data_api.Client.get_activity client ~user:sample_user ~limit:5 ()
   in
   print_result_count "get_activity" activity;
 
   (* Holders *)
-  section "Holders";
+  Logger.header "Holders";
   let holders =
     Data_api.Client.get_holders client ~market:[ sample_market ] ~limit:5 ()
   in
   print_result_count "get_holders" holders;
 
   (* Traded *)
-  section "Traded";
+  Logger.header "Traded";
   let traded = Data_api.Client.get_traded client ~user:sample_user () in
   (match traded with
   | Ok t ->
-      print_ok "get_traded"
+      Logger.ok "get_traded"
         (Printf.sprintf "user has traded %d markets"
            (Option.value ~default:0 t.traded))
-  | Error err -> print_error "get_traded" err.error);
+  | Error err -> Logger.error "get_traded" err.error);
 
   (* Value *)
-  section "Value";
+  Logger.header "Value";
   let value = Data_api.Client.get_value client ~user:sample_user () in
   print_result_count "get_value" value;
 
   (* Open Interest *)
-  section "Open Interest";
+  Logger.header "Open Interest";
   let oi = Data_api.Client.get_open_interest client () in
   print_result_count "get_open_interest (all)" oi;
 
@@ -119,19 +112,19 @@ let run_demo env =
   print_result_count "get_open_interest (by market)" oi_market;
 
   (* Live Volume *)
-  section "Live Volume";
+  Logger.header "Live Volume";
   let volume = Data_api.Client.get_live_volume client ~id:sample_event_id () in
   print_result_count "get_live_volume" volume;
 
   (* Closed Positions *)
-  section "Closed Positions";
+  Logger.header "Closed Positions";
   let closed =
     Data_api.Client.get_closed_positions client ~user:sample_user ~limit:5 ()
   in
   print_result_count "get_closed_positions" closed;
 
   (* Builder Leaderboard *)
-  section "Builder Leaderboard";
+  Logger.header "Builder Leaderboard";
   let builders =
     Data_api.Client.get_builder_leaderboard client
       ~time_period:Data_api.Params.WEEK ~limit:5 ()
@@ -140,12 +133,12 @@ let run_demo env =
   (match builders with
   | Ok items when List.length items > 0 ->
       let b = List.hd items in
-      Printf.printf "    Top builder: %s\n"
-        (Option.value ~default:"(unknown)" b.builder)
+      Logger.info "TOP"
+        [ ("builder", Option.value ~default:"(unknown)" b.builder) ]
   | _ -> ());
 
   (* Builder Volume *)
-  section "Builder Volume";
+  Logger.header "Builder Volume";
   let builder_vol =
     Data_api.Client.get_builder_volume client ~time_period:Data_api.Params.WEEK
       ()
@@ -153,7 +146,7 @@ let run_demo env =
   print_result_count "get_builder_volume" builder_vol;
 
   (* Trader Leaderboard *)
-  section "Trader Leaderboard";
+  Logger.header "Trader Leaderboard";
   let traders =
     Data_api.Client.get_trader_leaderboard client
       ~category:Data_api.Params.OVERALL ~time_period:Data_api.Params.WEEK
@@ -163,16 +156,21 @@ let run_demo env =
   (match traders with
   | Ok items when List.length items > 0 ->
       let t = List.hd items in
-      Printf.printf "    Top trader: %s (rank %s)\n"
-        (Option.value ~default:"(anonymous)" t.user_name)
-        (Option.value ~default:"?" t.rank)
+      Logger.info "TOP"
+        [
+          ("trader", Option.value ~default:"(anonymous)" t.user_name);
+          ("rank", Option.value ~default:"?" t.rank);
+        ]
   | _ -> ());
 
   (* Summary *)
-  section "Summary";
-  Printf.printf "Demo complete! All endpoints were called.\n";
-  Printf.printf
-    "Note: Empty results may indicate no matching data for sample parameters.\n"
+  Logger.header "Summary";
+  Logger.info "COMPLETE" [ ("status", "all endpoints called") ];
+  Logger.info "NOTE"
+    [
+      ( "message",
+        "Empty results may indicate no matching data for sample parameters" );
+    ]
 
 let () =
   Mirage_crypto_rng_unix.use_default ();
