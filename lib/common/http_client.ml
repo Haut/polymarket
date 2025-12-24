@@ -1,17 +1,13 @@
 (** Generic HTTP client for Polymarket APIs.
 
-    This module provides a reusable HTTP client with JSON parsing
-    and query parameter building utilities. *)
+    This module provides a reusable HTTP client with JSON parsing and query
+    parameter building utilities. *)
 
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 
 (** {1 Client Configuration} *)
 
-type t = {
-  base_url : string;
-  client : Cohttp_eio.Client.t;
-  sw : Eio.Switch.t;
-}
+type t = { base_url : string; client : Cohttp_eio.Client.t; sw : Eio.Switch.t }
 
 let create ~base_url ~sw ~net () =
   let authenticator =
@@ -42,31 +38,29 @@ let base_url t = t.base_url
 type params = (string * string list) list
 
 let add key value params =
-  match value with
-  | Some v -> (key, [v]) :: params
-  | None -> params
+  match value with Some v -> (key, [ v ]) :: params | None -> params
 
 let add_list key to_string values params =
   match values with
   | Some vs when vs <> [] ->
-    let joined = String.concat "," (List.map to_string vs) in
-    (key, [joined]) :: params
+      let joined = String.concat "," (List.map to_string vs) in
+      (key, [ joined ]) :: params
   | _ -> params
 
 let add_bool key value params =
   match value with
-  | Some true -> (key, ["true"]) :: params
-  | Some false -> (key, ["false"]) :: params
+  | Some true -> (key, [ "true" ]) :: params
+  | Some false -> (key, [ "false" ]) :: params
   | None -> params
 
 let add_int key value params =
   match value with
-  | Some v -> (key, [string_of_int v]) :: params
+  | Some v -> (key, [ string_of_int v ]) :: params
   | None -> params
 
 let add_float key value params =
   match value with
-  | Some v -> (key, [string_of_float v]) :: params
+  | Some v -> (key, [ string_of_float v ]) :: params
   | None -> params
 
 (** {1 HTTP Request Functions} *)
@@ -82,7 +76,9 @@ let do_get t uri =
     let body_str = Eio.Buf_read.(parse_exn take_all) body ~max_size:max_int in
     (status, body_str)
   with exn ->
-    (`Internal_server_error, Printf.sprintf {|{"error": "Request failed: %s"}|} (Printexc.to_string exn))
+    ( `Internal_server_error,
+      Printf.sprintf {|{"error": "Request failed: %s"}|}
+        (Printexc.to_string exn) )
 
 (** {1 JSON Parsing} *)
 
@@ -92,9 +88,8 @@ let parse_json parse_fn body =
     Ok (parse_fn json)
   with
   | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, _json) ->
-    Error ("JSON parse error: " ^ Printexc.to_string exn)
-  | Yojson.Json_error msg ->
-    Error ("JSON error: " ^ msg)
+      Error ("JSON parse error: " ^ Printexc.to_string exn)
+  | Yojson.Json_error msg -> Error ("JSON error: " ^ msg)
 
 let parse_json_list parse_item_fn body =
   try
@@ -104,9 +99,8 @@ let parse_json_list parse_item_fn body =
     | _ -> Error "Expected JSON array"
   with
   | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, _json) ->
-    Error ("JSON parse error: " ^ Printexc.to_string exn)
-  | Yojson.Json_error msg ->
-    Error ("JSON error: " ^ msg)
+      Error ("JSON parse error: " ^ Printexc.to_string exn)
+  | Yojson.Json_error msg -> Error ("JSON error: " ^ msg)
 
 (** {1 Error Handling} *)
 
@@ -135,11 +129,9 @@ let request t path parse_fn error_parser params =
 let get_json t path parser params =
   request t path
     (fun body -> parse_json parser body |> Result.map_error to_error)
-    parse_error
-    params
+    parse_error params
 
 let get_json_list t path parser params =
   request t path
     (fun body -> parse_json_list parser body |> Result.map_error to_error)
-    parse_error
-    params
+    parse_error params

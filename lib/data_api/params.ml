@@ -1,19 +1,13 @@
 (** Query parameter types for the Polymarket Data API.
 
     These types correspond to the query parameters defined in the OpenAPI spec
-    for the Data API endpoints.
-*)
+    for the Data API endpoints. *)
 
 (** {1 Sort Direction} *)
 
-type sort_direction =
-  | ASC
-  | DESC
-[@@deriving yojson, show, eq]
+type sort_direction = ASC | DESC [@@deriving yojson, show, eq]
 
-let string_of_sort_direction = function
-  | ASC -> "ASC"
-  | DESC -> "DESC"
+let string_of_sort_direction = function ASC -> "ASC" | DESC -> "DESC"
 
 (** {1 Position Parameters} *)
 
@@ -42,10 +36,7 @@ let string_of_position_sort_by = function
 
 (** {1 Trade Parameters} *)
 
-type filter_type =
-  | CASH
-  | TOKENS_FILTER
-[@@deriving yojson, show, eq]
+type filter_type = CASH | TOKENS_FILTER [@@deriving yojson, show, eq]
 
 let string_of_filter_type = function
   | CASH -> "CASH"
@@ -53,10 +44,7 @@ let string_of_filter_type = function
 
 (** {1 Activity Parameters} *)
 
-type activity_sort_by =
-  | TIMESTAMP
-  | TOKENS_SORT
-  | CASH_SORT
+type activity_sort_by = TIMESTAMP | TOKENS_SORT | CASH_SORT
 [@@deriving yojson, show, eq]
 
 let string_of_activity_sort_by = function
@@ -83,12 +71,7 @@ let string_of_closed_position_sort_by = function
 
 (** {1 Time Period} *)
 
-type time_period =
-  | DAY
-  | WEEK
-  | MONTH
-  | ALL
-[@@deriving yojson, show, eq]
+type time_period = DAY | WEEK | MONTH | ALL [@@deriving yojson, show, eq]
 
 let string_of_time_period = function
   | DAY -> "DAY"
@@ -123,11 +106,6 @@ let string_of_leaderboard_category = function
   | TECH -> "TECH"
   | FINANCE -> "FINANCE"
 
-type leaderboard_order_by =
-  | PNL
-  | VOL
-[@@deriving yojson, show, eq]
+type leaderboard_order_by = PNL | VOL [@@deriving yojson, show, eq]
 
-let string_of_leaderboard_order_by = function
-  | PNL -> "PNL"
-  | VOL -> "VOL"
+let string_of_leaderboard_order_by = function PNL -> "PNL" | VOL -> "VOL"
