@@ -640,6 +640,8 @@ and event = {
       [@yojson.option] [@key "scheduledDeploymentTimestamp"]
   game_status : string option; [@yojson.option] [@key "gameStatus"]
   neg_risk_augmented : bool option; [@yojson.option] [@key "negRiskAugmented"]
+  country_name : string option; [@yojson.option] [@key "countryName"]
+  election_type : string option; [@yojson.option] [@key "electionType"]
   requires_translation : bool option;
       [@yojson.option] [@key "requiresTranslation"]
   game_id : string option; [@yojson.option] [@key "gameId"]
@@ -1267,6 +1269,8 @@ let empty_event : event =
     scheduled_deployment_timestamp = None;
     game_status = None;
     neg_risk_augmented = None;
+    country_name = None;
+    election_type = None;
     requires_translation = None;
     game_id = None;
   }

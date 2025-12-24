@@ -539,7 +539,7 @@ let test_series_roundtrip () =
   let s =
     {
       empty_series with
-      id = Some "series_1";
+      id = Some "1";
       title = Some "NFL 2024";
       slug = Some "nfl-2024";
       series_type = Some "sports";

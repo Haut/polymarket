@@ -1,8 +1,19 @@
-(** Logging utilities for Polymarket API clients.
+(** Structured logging utilities.
 
-    This module provides structured HTTP request/response logging using the
-    OCaml Logs library. Logging is controlled via the POLYMARKET_LOG_LEVEL
-    environment variable.
+    This module provides setup and structured logging functions that all
+    components use.
+
+    {1 Log Format}
+
+    All log messages follow the structured format:
+    {[
+      [ SECTION ] [ EVENT ] key = "value" key2 = "value2"
+    ]}
+
+    Examples:
+    - [[HTTP_CLIENT] [REQUEST] method="GET" url="https://..."]
+    - [[HTTP_CLIENT] [RESPONSE] method="GET" url="..." status="200"]
+    - [[DATA_API] [CALL] endpoint="/positions" user="0x..."]
 
     {1 Usage}
 
@@ -10,7 +21,6 @@
 
     {[
       let () = Polymarket.Common.Logger.setup ()
-      (* rest of your program *)
     ]}
 
     Set the log level via environment variable:
@@ -27,19 +37,44 @@ val setup : unit -> unit
 (** Initialize logging from POLYMARKET_LOG_LEVEL environment variable.
 
     Valid levels:
-    - "debug": Detailed HTTP request/response logging including full bodies
+    - "debug": Detailed logging including HTTP response bodies
     - "info": Request URLs and response status codes
     - "off": No logging (default)
 
-    This function should be called once at program startup before making any API
-    calls. *)
+    This sets the global log level that applies to all log sources. *)
+
+(** {1 Structured Logging}
+
+    General-purpose logging functions that take section, event, and key-value
+    pairs. *)
+
+val log_info : section:string -> event:string -> (string * string) list -> unit
+(** Log at info level. Example:
+    [log_info ~section:"HTTP_CLIENT" ~event:"REQUEST" [("method", "GET");
+     ("url", "...")]] *)
+
+val log_debug : section:string -> event:string -> (string * string) list -> unit
+(** Log at debug level. *)
+
+val log_warn : section:string -> event:string -> (string * string) list -> unit
+(** Log at warning level. *)
+
+val log_err : section:string -> event:string -> (string * string) list -> unit
+(** Log at error level. *)
+
+(** {1 Formatting Helpers} *)
+
+val format_kv : string * string -> string
+(** Format a single key-value pair as [key="value"]. *)
+
+val format_kvs : (string * string) list -> string
+(** Format a list of key-value pairs as [key1="value1" key2="value2" ...]. *)
 
 (** {1 HTTP Logging} *)
 
 val log_request : method_:string -> uri:Uri.t -> unit
-(** Log an outgoing HTTP request.
-    @param method_ HTTP method (e.g., "GET", "POST")
-    @param uri Full request URI including query parameters *)
+(** Log an outgoing HTTP request. Format:
+    [[HTTP_CLIENT] [REQUEST] method="..." url="..."] *)
 
 val log_response :
   method_:string ->
@@ -47,42 +82,24 @@ val log_response :
   status:Cohttp.Code.status_code ->
   body:string ->
   unit
-(** Log an HTTP response.
-    @param method_ HTTP method used in the request
-    @param uri Request URI
-    @param status HTTP status code
-    @param body Full response body *)
+(** Log an HTTP response. Format:
+    [[HTTP_CLIENT] [RESPONSE] method="..." url="..." status="..."] *)
 
 val log_error : method_:string -> uri:Uri.t -> exn:exn -> unit
-(** Log an HTTP request error.
-    @param method_ HTTP method used in the request
-    @param uri Request URI
-    @param exn The exception that occurred *)
+(** Log an HTTP request error. Format:
+    [[HTTP_CLIENT] [ERROR] method="..." url="..." error="..."] *)
 
 (** {1 JSON Field Logging} *)
 
 val log_json_fields : context:string -> Yojson.Safe.t -> unit
-(** Log the top-level field names from a JSON object at debug level.
-    @param context Description of what's being parsed (e.g., "event", "market")
-
-    This helps identify fields that the API returns which may not be captured in
-    our OCaml types. *)
+(** Log JSON field names at debug level. Format:
+    [[HTTP_CLIENT] [JSON_FIELDS] context="..." fields="..."] *)
 
 val log_json_fields_with_expected :
   context:string -> expected:string list -> Yojson.Safe.t -> unit
-(** Log JSON fields and compare with expected type fields.
-    @param context Description of what's being parsed
-    @param expected List of field names expected by the OCaml type
-
-    Logs:
-    - All fields present in the JSON
-    - Extra fields: in JSON but not in expected list (API returns more than we
-      capture)
-    - Missing fields: in expected but not in JSON (our type expects more than
-      API provides) *)
+(** Log JSON fields and compare with expected fields. *)
 
 (** {1 Advanced} *)
 
 val src : Logs.Src.t
-(** The logs source for Polymarket library. Advanced users can configure custom
-    reporters using this source. *)
+(** The log source for the Polymarket library. *)

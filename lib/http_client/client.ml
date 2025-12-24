@@ -70,24 +70,20 @@ let build_uri base_url path params =
   Uri.add_query_params uri params
 
 let do_get t uri =
-  Logger.log_request ~method_:"GET" ~uri;
+  Common.Logger.log_request ~method_:"GET" ~uri;
   try
     let resp, body = Cohttp_eio.Client.get ~sw:t.sw t.client uri in
     let status = Cohttp.Response.status resp in
     let body_str = Eio.Buf_read.(parse_exn take_all) body ~max_size:max_int in
-    Logger.log_response ~method_:"GET" ~uri ~status ~body:body_str;
+    Common.Logger.log_response ~method_:"GET" ~uri ~status ~body:body_str;
     (status, body_str)
   with exn ->
-    Logger.log_error ~method_:"GET" ~uri ~exn;
+    Common.Logger.log_error ~method_:"GET" ~uri ~exn;
     ( `Internal_server_error,
       Printf.sprintf {|{"error": "Request failed: %s"}|}
         (Printexc.to_string exn) )
 
 (** {1 JSON Parsing} *)
-
-let truncate_json json =
-  let s = Yojson.Safe.to_string json in
-  if String.length s > 200 then String.sub s 0 200 ^ "..." else s
 
 let parse_json parse_fn body =
   try
@@ -96,22 +92,28 @@ let parse_json parse_fn body =
   with
   | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, json) ->
       Error
-        (Printf.sprintf "JSON parse error: %s\nProblematic JSON: %s"
-           (Printexc.to_string exn) (truncate_json json))
-  | Yojson.Json_error msg -> Error ("JSON error: " ^ msg)
+        (Printf.sprintf
+           "JSON parse error: %s\nProblematic value: %s\nFull response:\n%s"
+           (Printexc.to_string exn)
+           (Yojson.Safe.to_string json)
+           body)
+  | Yojson.Json_error msg -> Error ("JSON error: " ^ msg ^ "\nBody:\n" ^ body)
 
 let parse_json_list parse_item_fn body =
   try
     let json = Yojson.Safe.from_string body in
     match json with
     | `List items -> Ok (List.map parse_item_fn items)
-    | _ -> Error "Expected JSON array"
+    | _ -> Error ("Expected JSON array\nBody:\n" ^ body)
   with
   | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, json) ->
       Error
-        (Printf.sprintf "JSON parse error: %s\nProblematic JSON: %s"
-           (Printexc.to_string exn) (truncate_json json))
-  | Yojson.Json_error msg -> Error ("JSON error: " ^ msg)
+        (Printf.sprintf
+           "JSON parse error: %s\nProblematic value: %s\nFull response:\n%s"
+           (Printexc.to_string exn)
+           (Yojson.Safe.to_string json)
+           body)
+  | Yojson.Json_error msg -> Error ("JSON error: " ^ msg ^ "\nBody:\n" ^ body)
 
 (** {1 Error Handling} *)
 

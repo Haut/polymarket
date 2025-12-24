@@ -49,8 +49,8 @@ val string_of_activity_type : activity_type -> string
 type health_response = { data : string option }
 (** Health check response *)
 
-type error_response = Common.Http_client.error_response = { error : string }
-(** Error response (alias to Common.Http_client.error_response for
+type error_response = Http_client.Client.error_response = { error : string }
+(** Error response (alias to Http_client.Client.error_response for
     compatibility) *)
 
 (** {1 Domain Models} *)
