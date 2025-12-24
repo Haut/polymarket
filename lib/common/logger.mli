@@ -1,11 +1,19 @@
-(** Application-level logging utilities.
+(** Structured logging utilities.
 
-    This module provides the logging setup function and application-level
-    logging functions. Component-specific logging is in each component's Logger
-    module:
-    - {!Http_client.Logger} - HTTP request/response logging
-    - {!Gamma_api.Logger} - Gamma API logging
-    - {!Data_api.Logger} - Data API logging
+    This module provides setup and general-purpose structured logging functions
+    that all components use.
+
+    {1 Log Format}
+
+    All log messages follow the structured format:
+    {[
+      [ SECTION ] [ EVENT ] key = "value" key2 = "value2"
+    ]}
+
+    Examples:
+    - [[HTTP_CLIENT] [REQUEST] method="GET" url="https://..."]
+    - [[HTTP_CLIENT] [RESPONSE] method="GET" url="..." status="200"]
+    - [[DATA_API] [CALL] endpoint="/positions" user="0x..."]
 
     {1 Usage}
 
@@ -35,36 +43,34 @@ val setup : unit -> unit
 
     This sets the global log level that applies to all log sources. *)
 
-(** {1 Application Logging}
+(** {1 Structured Logging}
 
-    General-purpose logging functions for application output. Uses the
-    "polymarket.app" log source. *)
+    General-purpose logging functions that take section, event, and key-value
+    pairs. *)
 
-val info : string -> unit
-(** Log an info-level message. *)
+val log_info : section:string -> event:string -> (string * string) list -> unit
+(** Log at info level. Example:
+    [log_info ~section:"HTTP_CLIENT" ~event:"REQUEST" [("method", "GET");
+     ("url", "...")]] *)
 
-val debug : string -> unit
-(** Log a debug-level message. *)
+val log_debug : section:string -> event:string -> (string * string) list -> unit
+(** Log at debug level. *)
 
-val warn : string -> unit
-(** Log a warning-level message. *)
+val log_warn : section:string -> event:string -> (string * string) list -> unit
+(** Log at warning level. *)
 
-val err : string -> unit
-(** Log an error-level message. *)
+val log_err : section:string -> event:string -> (string * string) list -> unit
+(** Log at error level. *)
 
-val section : string -> unit
-(** Print a section header with underline. *)
+(** {1 Formatting Helpers} *)
 
-val ok : string -> string -> unit
-(** Log a success message: [ok name msg] prints "[OK] name: msg". *)
+val format_kv : string * string -> string
+(** Format a single key-value pair as [key="value"]. *)
 
-val error : string -> string -> unit
-(** Log an error message: [error name msg] prints "[ERROR] name: msg". *)
-
-val skip : string -> string -> unit
-(** Log a skip message: [skip name msg] prints "[SKIP] name: msg". *)
+val format_kvs : (string * string) list -> string
+(** Format a list of key-value pairs as [key1="value1" key2="value2" ...]. *)
 
 (** {1 Advanced} *)
 
 val src : Logs.Src.t
-(** The log source for application logging. *)
+(** The log source for the Polymarket library. *)

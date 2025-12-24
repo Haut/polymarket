@@ -10,21 +10,22 @@ open Polymarket
 
 (** {1 Helper Functions} *)
 
-let log = Common.Logger.info
-let section = Common.Logger.section
-let log_ok = Common.Logger.ok
-let log_error name err = Common.Logger.error name err.Http_client.Client.error
-let log_skip = Common.Logger.skip
+let section name =
+  Printf.printf "\n%s\n%s\n" name (String.make (String.length name) '=')
+
+let print_ok name msg = Printf.printf "[OK] %s: %s\n" name msg
+let print_error name err = Printf.printf "[ERROR] %s: %s\n" name err
+let print_skip name msg = Printf.printf "[SKIP] %s: %s\n" name msg
 
 let print_result_count name result =
   match result with
-  | Ok items -> log_ok name (Printf.sprintf "%d items" (List.length items))
-  | Error err -> log_error name err
+  | Ok items -> print_ok name (Printf.sprintf "%d items" (List.length items))
+  | Error err -> print_error name err.Http_client.Client.error
 
 let print_result name ~on_ok result =
   match result with
-  | Ok value -> log_ok name (on_ok value)
-  | Error err -> log_error name err
+  | Ok value -> print_ok name (on_ok value)
+  | Error err -> print_error name err.Http_client.Client.error
 
 (** {1 ID Extraction Helpers} *)
 
@@ -86,9 +87,9 @@ let run_demo env =
   Eio.Switch.run @@ fun sw ->
   let net = Eio.Stdenv.net env in
 
-  log "Polymarket Gamma API Demo";
-  log "=========================";
-  log (Printf.sprintf "Base URL: %s" Gamma_api.Client.default_base_url);
+  Printf.printf "Polymarket Gamma API Demo\n";
+  Printf.printf "=========================\n";
+  Printf.printf "Base URL: %s\n" Gamma_api.Client.default_base_url;
 
   let client = Gamma_api.Client.create ~sw ~net () in
 
@@ -108,7 +109,7 @@ let run_demo env =
       let team = Gamma_api.Client.get_team client ~id () in
       print_result "get_team" team ~on_ok:(fun (t : Gamma_api.Types.team) ->
           Option.value ~default:"(no name)" t.name)
-  | None -> log_skip "get_team" "no team ID available");
+  | None -> print_skip "get_team" "no team ID available");
 
   (* ===== Tags ===== *)
   section "Tags";
@@ -129,8 +130,8 @@ let run_demo env =
       let related = Gamma_api.Client.get_related_tags client ~id () in
       print_result_count "get_related_tags" related
   | None ->
-      log_skip "get_tag" "no tag ID available";
-      log_skip "get_related_tags" "no tag ID available");
+      print_skip "get_tag" "no tag ID available";
+      print_skip "get_related_tags" "no tag ID available");
 
   (match tag_slug with
   | Some slug ->
@@ -138,7 +139,7 @@ let run_demo env =
       print_result "get_tag_by_slug" tag
         ~on_ok:(fun (t : Gamma_api.Types.tag) ->
           Option.value ~default:"(no label)" t.label)
-  | None -> log_skip "get_tag_by_slug" "no tag slug available");
+  | None -> print_skip "get_tag_by_slug" "no tag slug available");
 
   (* ===== Events ===== *)
   section "Events";
@@ -160,8 +161,8 @@ let run_demo env =
       let event_tags = Gamma_api.Client.get_event_tags client ~id () in
       print_result_count "get_event_tags" event_tags
   | None ->
-      log_skip "get_event" "no event ID available";
-      log_skip "get_event_tags" "no event ID available");
+      print_skip "get_event" "no event ID available";
+      print_skip "get_event_tags" "no event ID available");
 
   (match event_slug with
   | Some slug ->
@@ -169,7 +170,7 @@ let run_demo env =
       print_result "get_event_by_slug" event
         ~on_ok:(fun (e : Gamma_api.Types.event) ->
           Option.value ~default:"(no title)" e.title)
-  | None -> log_skip "get_event_by_slug" "no event slug available");
+  | None -> print_skip "get_event_by_slug" "no event slug available");
 
   (* ===== Markets ===== *)
   section "Markets";
@@ -198,9 +199,9 @@ let run_demo env =
           let desc = Option.value ~default:"(none)" d.description in
           if String.length desc > 50 then String.sub desc 0 50 ^ "..." else desc)
   | None ->
-      log_skip "get_market" "no market ID available";
-      log_skip "get_market_tags" "no market ID available";
-      log_skip "get_market_description" "no market ID available");
+      print_skip "get_market" "no market ID available";
+      print_skip "get_market_tags" "no market ID available";
+      print_skip "get_market_description" "no market ID available");
 
   (match market_slug with
   | Some slug ->
@@ -208,7 +209,7 @@ let run_demo env =
       print_result "get_market_by_slug" market
         ~on_ok:(fun (m : Gamma_api.Types.market) ->
           Option.value ~default:"(no question)" m.question)
-  | None -> log_skip "get_market_by_slug" "no market slug available");
+  | None -> print_skip "get_market_by_slug" "no market slug available");
 
   (* ===== Series ===== *)
   section "Series";
@@ -234,8 +235,8 @@ let run_demo env =
             (List.length s.event_dates)
             (List.length s.event_weeks))
   | None ->
-      log_skip "get_series" "no series ID available";
-      log_skip "get_series_summary" "no series ID available");
+      print_skip "get_series" "no series ID available";
+      print_skip "get_series_summary" "no series ID available");
 
   (* ===== Comments ===== *)
   section "Comments";
@@ -263,7 +264,7 @@ let run_demo env =
         ~on_ok:(fun (c : Gamma_api.Types.comment) ->
           let body = Option.value ~default:"(no body)" c.body in
           if String.length body > 50 then String.sub body 0 50 ^ "..." else body)
-  | None -> log_skip "get_comment" "no comment ID available");
+  | None -> print_skip "get_comment" "no comment ID available");
 
   (match user_address with
   | Some addr ->
@@ -271,7 +272,7 @@ let run_demo env =
         Gamma_api.Client.get_user_comments client ~user_address:addr ~limit:5 ()
       in
       print_result_count "get_user_comments" user_comments
-  | None -> log_skip "get_user_comments" "no user address available");
+  | None -> print_skip "get_user_comments" "no user address available");
 
   (* ===== Profiles ===== *)
   section "Profiles";
@@ -316,11 +317,12 @@ let run_demo env =
 
   (* ===== Summary ===== *)
   section "Summary";
-  log "Demo complete! All Gamma API endpoints were exercised.";
-  log "Endpoints that returned [SKIP] had no valid IDs to test with.";
-  log
+  Printf.printf "Demo complete! All Gamma API endpoints were exercised.\n";
+  Printf.printf
+    "Endpoints that returned [SKIP] had no valid IDs to test with.\n";
+  Printf.printf
     "JSON parse errors indicate the API response has fields not in the type \
-     definitions."
+     definitions.\n"
 
 let () =
   Mirage_crypto_rng_unix.use_default ();

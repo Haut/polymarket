@@ -20,16 +20,17 @@ let sample_market =
 (* A sample event ID *)
 let sample_event_id = 903
 
-(* Helper functions using Logger *)
-let log = Common.Logger.info
-let section = Common.Logger.section
-let log_ok = Common.Logger.ok
-let log_error name err = Common.Logger.error name err.Http_client.Client.error
+(* Helper functions *)
+let section name =
+  Printf.printf "\n%s\n%s\n" name (String.make (String.length name) '=')
+
+let print_ok name msg = Printf.printf "[OK] %s: %s\n" name msg
+let print_error name err = Printf.printf "[ERROR] %s: %s\n" name err
 
 let print_result_count name result =
   match result with
-  | Ok items -> log_ok name (Printf.sprintf "%d items" (List.length items))
-  | Error err -> log_error name err
+  | Ok items -> print_ok name (Printf.sprintf "%d items" (List.length items))
+  | Error err -> print_error name err.Http_client.Client.error
 
 let run_demo env =
   (* Initialize logging from POLYMARKET_LOG_LEVEL environment variable *)
@@ -37,9 +38,9 @@ let run_demo env =
   Eio.Switch.run @@ fun sw ->
   let net = Eio.Stdenv.net env in
 
-  log "Polymarket Data API Demo";
-  log "========================";
-  log (Printf.sprintf "Base URL: %s" Data_api.Client.default_base_url);
+  Printf.printf "Polymarket Data API Demo\n";
+  Printf.printf "========================\n";
+  Printf.printf "Base URL: %s\n" Data_api.Client.default_base_url;
 
   (* Create the client *)
   let client = Data_api.Client.create ~sw ~net () in
@@ -49,11 +50,11 @@ let run_demo env =
   let health = Data_api.Client.health_check client in
   (match health with
   | Ok resp -> (
-      log_ok "health_check" "passed";
+      print_ok "health_check" "passed";
       match resp.data with
-      | Some d -> log (Printf.sprintf "    Data: %s" d)
+      | Some d -> Printf.printf "    Data: %s\n" d
       | None -> ())
-  | Error err -> log_error "health_check" err);
+  | Error err -> print_error "health_check" err.error);
 
   (* Positions *)
   section "Positions";
@@ -64,9 +65,8 @@ let run_demo env =
   (match positions with
   | Ok items when List.length items > 0 ->
       let pos = List.hd items in
-      log
-        (Printf.sprintf "    First position: %s"
-           (Option.value ~default:"(no title)" pos.title))
+      Printf.printf "    First position: %s\n"
+        (Option.value ~default:"(no title)" pos.title)
   | _ -> ());
 
   (* Trades *)
@@ -98,10 +98,10 @@ let run_demo env =
   let traded = Data_api.Client.get_traded client ~user:sample_user () in
   (match traded with
   | Ok t ->
-      log_ok "get_traded"
+      print_ok "get_traded"
         (Printf.sprintf "user has traded %d markets"
            (Option.value ~default:0 t.traded))
-  | Error err -> log_error "get_traded" err);
+  | Error err -> print_error "get_traded" err.error);
 
   (* Value *)
   section "Value";
@@ -140,9 +140,8 @@ let run_demo env =
   (match builders with
   | Ok items when List.length items > 0 ->
       let b = List.hd items in
-      log
-        (Printf.sprintf "    Top builder: %s"
-           (Option.value ~default:"(unknown)" b.builder))
+      Printf.printf "    Top builder: %s\n"
+        (Option.value ~default:"(unknown)" b.builder)
   | _ -> ());
 
   (* Builder Volume *)
@@ -164,16 +163,16 @@ let run_demo env =
   (match traders with
   | Ok items when List.length items > 0 ->
       let t = List.hd items in
-      log
-        (Printf.sprintf "    Top trader: %s (rank %s)"
-           (Option.value ~default:"(anonymous)" t.user_name)
-           (Option.value ~default:"?" t.rank))
+      Printf.printf "    Top trader: %s (rank %s)\n"
+        (Option.value ~default:"(anonymous)" t.user_name)
+        (Option.value ~default:"?" t.rank)
   | _ -> ());
 
   (* Summary *)
   section "Summary";
-  log "Demo complete! All endpoints were called.";
-  log "Note: Empty results may indicate no matching data for sample parameters."
+  Printf.printf "Demo complete! All endpoints were called.\n";
+  Printf.printf
+    "Note: Empty results may indicate no matching data for sample parameters.\n"
 
 let () =
   Mirage_crypto_rng_unix.use_default ();

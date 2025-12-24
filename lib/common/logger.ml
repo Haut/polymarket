@@ -1,12 +1,17 @@
-(** Application-level logging utilities.
+(** Structured logging utilities.
 
-    This module provides the logging setup function and application-level
-    logging functions. Component-specific logging is in each component's Logger
-    module. *)
+    This module provides setup and a general-purpose structured logging function
+    that all components use. *)
 
-let src = Logs.Src.create "polymarket.app" ~doc:"Polymarket application"
+let src = Logs.Src.create "polymarket" ~doc:"Polymarket library"
 
 module Log = (val Logs.src_log src : Logs.LOG)
+
+(** {1 Formatting} *)
+
+let quote s = Printf.sprintf "\"%s\"" s
+let format_kv (key, value) = Printf.sprintf "%s=%s" key (quote value)
+let format_kvs kvs = String.concat " " (List.map format_kv kvs)
 
 (** {1 Initialization} *)
 
@@ -39,18 +44,24 @@ let setup () =
       Logs.set_level (Some level)
   | None -> Logs.set_level None
 
-(** {1 Application Logging} *)
+(** {1 Structured Logging} *)
 
-let info msg = Log.info (fun m -> m "%s" msg)
-let debug msg = Log.debug (fun m -> m "%s" msg)
-let warn msg = Log.warn (fun m -> m "%s" msg)
-let err msg = Log.err (fun m -> m "%s" msg)
+let log_info ~section ~event kvs =
+  let kv_str = format_kvs kvs in
+  if kv_str = "" then Log.info (fun m -> m "[%s] [%s]" section event)
+  else Log.info (fun m -> m "[%s] [%s] %s" section event kv_str)
 
-let section name =
-  Log.info (fun m -> m "");
-  Log.info (fun m -> m "%s" name);
-  Log.info (fun m -> m "%s" (String.make (String.length name) '='))
+let log_debug ~section ~event kvs =
+  let kv_str = format_kvs kvs in
+  if kv_str = "" then Log.debug (fun m -> m "[%s] [%s]" section event)
+  else Log.debug (fun m -> m "[%s] [%s] %s" section event kv_str)
 
-let ok name msg = Log.info (fun m -> m "[OK] %s: %s" name msg)
-let error name msg = Log.info (fun m -> m "[ERROR] %s: %s" name msg)
-let skip name msg = Log.info (fun m -> m "[SKIP] %s: %s" name msg)
+let log_warn ~section ~event kvs =
+  let kv_str = format_kvs kvs in
+  if kv_str = "" then Log.warn (fun m -> m "[%s] [%s]" section event)
+  else Log.warn (fun m -> m "[%s] [%s] %s" section event kv_str)
+
+let log_err ~section ~event kvs =
+  let kv_str = format_kvs kvs in
+  if kv_str = "" then Log.err (fun m -> m "[%s] [%s]" section event)
+  else Log.err (fun m -> m "[%s] [%s] %s" section event kv_str)
