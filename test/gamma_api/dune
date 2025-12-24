@@ -1,0 +1,3 @@
+(library
+ (name test_gamma_api)
+ (libraries polymarket alcotest test_utils))

@@ -123,3 +123,6 @@ val get_json_list :
   params ->
   ('a list, error_response) result
 (** GET request expecting a JSON array response *)
+
+val get_text : t -> string -> params -> (string, error_response) result
+(** GET request expecting a plain text response *)
