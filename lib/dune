@@ -1,0 +1,3 @@
+(library
+ (name polymarket)
+ (public_name polymarket))
