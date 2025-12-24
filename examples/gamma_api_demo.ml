@@ -83,6 +83,8 @@ let first_user_address (comments : Gamma_api.Types.comment list) =
 (** {1 Main Demo} *)
 
 let run_demo env =
+  (* Initialize logging from POLYMARKET_LOG_LEVEL environment variable *)
+  Common.Logger.setup ();
   Eio.Switch.run @@ fun sw ->
   let net = Eio.Stdenv.net env in
 

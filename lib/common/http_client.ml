@@ -70,12 +70,15 @@ let build_uri base_url path params =
   Uri.add_query_params uri params
 
 let do_get t uri =
+  Logger.log_request ~method_:"GET" ~uri;
   try
     let resp, body = Cohttp_eio.Client.get ~sw:t.sw t.client uri in
     let status = Cohttp.Response.status resp in
     let body_str = Eio.Buf_read.(parse_exn take_all) body ~max_size:max_int in
+    Logger.log_response ~method_:"GET" ~uri ~status ~body:body_str;
     (status, body_str)
   with exn ->
+    Logger.log_error ~method_:"GET" ~uri ~exn;
     ( `Internal_server_error,
       Printf.sprintf {|{"error": "Request failed: %s"}|}
         (Printexc.to_string exn) )
