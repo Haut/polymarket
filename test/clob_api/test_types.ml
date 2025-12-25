@@ -173,16 +173,16 @@ let test_order_status_string_roundtrip () =
     statuses
 
 let test_order_status_string_values () =
-  Alcotest.(check string) "live" "live" (string_of_order_status LIVE);
-  Alcotest.(check string) "matched" "matched" (string_of_order_status MATCHED);
-  Alcotest.(check string) "delayed" "delayed" (string_of_order_status DELAYED);
+  Alcotest.(check string) "LIVE" "LIVE" (string_of_order_status LIVE);
+  Alcotest.(check string) "MATCHED" "MATCHED" (string_of_order_status MATCHED);
+  Alcotest.(check string) "DELAYED" "DELAYED" (string_of_order_status DELAYED);
   Alcotest.(check string)
-    "unmatched" "unmatched"
+    "UNMATCHED" "UNMATCHED"
     (string_of_order_status UNMATCHED);
   Alcotest.(check string)
-    "cancelled" "cancelled"
+    "CANCELLED" "CANCELLED"
     (string_of_order_status CANCELLED);
-  Alcotest.(check string) "expired" "expired" (string_of_order_status EXPIRED)
+  Alcotest.(check string) "EXPIRED" "EXPIRED" (string_of_order_status EXPIRED)
 
 let test_order_status_json_roundtrip () =
   let statuses = [ LIVE; MATCHED; DELAYED; UNMATCHED; CANCELLED; EXPIRED ] in
@@ -286,25 +286,6 @@ let test_signature_of_yojson_result_invalid () =
   | Error msg ->
       Alcotest.(check bool) "returns Error" true (String.length msg > 0)
 
-(** {1 Empty Constructor Tests} *)
-
-let test_empty_constructors () =
-  let _ = empty_order_book_level in
-  let _ = empty_order_book_summary in
-  let _ = empty_signed_order in
-  let _ = empty_order_request in
-  let _ = empty_create_order_response in
-  let _ = empty_open_order in
-  let _ = empty_cancel_response in
-  let _ = empty_maker_order_fill in
-  let _ = empty_clob_trade in
-  let _ = empty_price_response in
-  let _ = empty_midpoint_response in
-  let _ = empty_token_price in
-  let _ = empty_price_point in
-  let _ = empty_price_history in
-  Alcotest.(check pass) "all empty constructors exist" () ()
-
 (** {1 Test Suite} *)
 
 let tests =
@@ -374,5 +355,4 @@ let tests =
           `Quick,
           test_signature_of_yojson_result_invalid );
       ] );
-    ("empty constructors", [ ("all exist", `Quick, test_empty_constructors) ]);
   ]

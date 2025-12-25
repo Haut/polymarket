@@ -95,12 +95,12 @@ type order_status = LIVE | MATCHED | DELAYED | UNMATCHED | CANCELLED | EXPIRED
 [@@deriving show, eq]
 
 let string_of_order_status = function
-  | LIVE -> "live"
-  | MATCHED -> "matched"
-  | DELAYED -> "delayed"
-  | UNMATCHED -> "unmatched"
-  | CANCELLED -> "cancelled"
-  | EXPIRED -> "expired"
+  | LIVE -> "LIVE"
+  | MATCHED -> "MATCHED"
+  | DELAYED -> "DELAYED"
+  | UNMATCHED -> "UNMATCHED"
+  | CANCELLED -> "CANCELLED"
+  | EXPIRED -> "EXPIRED"
 
 let order_status_of_string = function
   | "live" | "LIVE" -> LIVE
@@ -356,33 +356,18 @@ type error_response = Http_client.Client.error_response = { error : string }
 [@@deriving yojson, show, eq]
 (** Error response (alias to Http_client.Client.error_response) *)
 
-(** {1 Validation Functions} *)
+(** {1 Validation Functions}
+
+    These functions delegate to Common.Primitives for validation logic. This
+    ensures a single source of truth for validation rules. *)
 
 (** Validates an address string (0x-prefixed, 40 hex chars). *)
-let is_valid_address (addr : address) : bool =
-  let len = String.length addr in
-  len = 42
-  && addr.[0] = '0'
-  && addr.[1] = 'x'
-  && String.for_all
-       (fun c ->
-         match c with
-         | '0' .. '9' | 'a' .. 'f' | 'A' .. 'F' -> true
-         | _ -> false)
-       (String.sub addr 2 (len - 2))
+let is_valid_address s =
+  match Common.Primitives.Address.make s with Ok _ -> true | Error _ -> false
 
 (** Validates a hex signature string (0x-prefixed). *)
-let is_valid_signature (sig_ : signature) : bool =
-  let len = String.length sig_ in
-  len > 2
-  && sig_.[0] = '0'
-  && sig_.[1] = 'x'
-  && String.for_all
-       (fun c ->
-         match c with
-         | '0' .. '9' | 'a' .. 'f' | 'A' .. 'F' -> true
-         | _ -> false)
-       (String.sub sig_ 2 (len - 2))
+let is_valid_signature s =
+  match Common.Primitives.Hash.make s with Ok _ -> true | Error _ -> false
 
 (** {1 Validating Deserializers} *)
 
@@ -415,112 +400,3 @@ let signature_of_yojson_result json =
     else Error ("Invalid signature format: " ^ sig_)
   with Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, _) ->
     Error ("JSON parse error: " ^ Printexc.to_string exn)
-
-(** {1 Empty Constructors} *)
-
-let empty_order_book_level : order_book_level = { price = None; size = None }
-
-let empty_order_book_summary : order_book_summary =
-  {
-    market = None;
-    asset_id = None;
-    timestamp = None;
-    hash = None;
-    bids = [];
-    asks = [];
-    min_order_size = None;
-    tick_size = None;
-    neg_risk = None;
-  }
-
-let empty_signed_order : signed_order =
-  {
-    salt = None;
-    maker = None;
-    signer = None;
-    taker = None;
-    token_id = None;
-    maker_amount = None;
-    taker_amount = None;
-    expiration = None;
-    nonce = None;
-    fee_rate_bps = None;
-    side = None;
-    signature_type = None;
-    signature = None;
-  }
-
-let empty_order_request : order_request =
-  { order = None; owner = None; order_type = None }
-
-let empty_create_order_response : create_order_response =
-  {
-    success = None;
-    error_msg = None;
-    order_id = None;
-    order_hashes = [];
-    status = None;
-  }
-
-let empty_open_order : open_order =
-  {
-    id = None;
-    status = None;
-    market = None;
-    asset_id = None;
-    original_size = None;
-    size_matched = None;
-    price = None;
-    side = None;
-    outcome = None;
-    maker_address = None;
-    owner = None;
-    expiration = None;
-    order_type = None;
-    created_at = None;
-    associate_trades = [];
-  }
-
-let empty_cancel_response : cancel_response =
-  { canceled = []; not_canceled = [] }
-
-let empty_maker_order_fill : maker_order_fill =
-  {
-    order_id = None;
-    maker_address = None;
-    owner = None;
-    matched_amount = None;
-    fee_rate_bps = None;
-    price = None;
-    asset_id = None;
-    outcome = None;
-    side = None;
-  }
-
-let empty_clob_trade : clob_trade =
-  {
-    id = None;
-    taker_order_id = None;
-    market = None;
-    asset_id = None;
-    side = None;
-    size = None;
-    fee_rate_bps = None;
-    price = None;
-    status = None;
-    match_time = None;
-    last_update = None;
-    outcome = None;
-    maker_address = None;
-    owner = None;
-    transaction_hash = None;
-    bucket_index = None;
-    maker_orders = [];
-    trade_type = None;
-  }
-
-let empty_price_response : price_response = { price = None }
-let empty_midpoint_response : midpoint_response = { mid = None }
-let empty_token_price : token_price = { buy = None; sell = None }
-let empty_price_point : price_point = { t = None; p = None }
-let empty_price_history : price_history = { history = [] }

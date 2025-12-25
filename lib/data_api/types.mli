@@ -7,22 +7,10 @@
 (** {1 Primitive Types} *)
 
 type address = string
-(** User Profile Address (0x-prefixed, 40 hex chars).
-    Pattern: ^0x[a-fA-F0-9]{40}$
-    @example "0x56687bf447db6ffa42ffe2204a05edaa20f55839" *)
+(** User Profile Address (0x-prefixed, 40 hex chars). *)
 
 type hash64 = string
-(** 0x-prefixed 64-hex string.
-    Pattern: ^0x[a-fA-F0-9]{64}$
-    @example "0xdd22472e552920b8438158ea7238bfadfa4f736aa4cee91a6b86c39ead110917" *)
-
-(** {1 Validation Exceptions} *)
-
-exception Invalid_address of string
-(** Raised when an address fails validation *)
-
-exception Invalid_hash64 of string
-(** Raised when a hash64 fails validation *)
+(** 0x-prefixed 64-hex string. *)
 
 (** {1 Enums} *)
 
@@ -247,24 +235,6 @@ val yojson_of_side : side -> Yojson.Safe.t
 val activity_type_of_yojson : Yojson.Safe.t -> activity_type
 val yojson_of_activity_type : activity_type -> Yojson.Safe.t
 
-(** {1 Validating Deserializers} *)
-
-val address_of_yojson_exn : Yojson.Safe.t -> address
-(** Deserialize an address with validation.
-    @raise Invalid_address if the address doesn't match the expected pattern *)
-
-val hash64_of_yojson_exn : Yojson.Safe.t -> hash64
-(** Deserialize a hash64 with validation.
-    @raise Invalid_hash64 if the hash doesn't match the expected pattern *)
-
-val address_of_yojson_result : Yojson.Safe.t -> (address, string) result
-(** Deserialize an address with validation, returning a result.
-    @return [Ok address] if valid, [Error msg] if invalid *)
-
-val hash64_of_yojson_result : Yojson.Safe.t -> (hash64, string) result
-(** Deserialize a hash64 with validation, returning a result.
-    @return [Ok hash64] if valid, [Error msg] if invalid *)
-
 (** {1 Pretty Printing Functions} *)
 
 val pp_address : Format.formatter -> address -> unit
@@ -389,36 +359,3 @@ val trader_leaderboard_entry_of_yojson :
 
 val yojson_of_trader_leaderboard_entry :
   trader_leaderboard_entry -> Yojson.Safe.t
-
-(** {1 Validation Functions} *)
-
-val is_valid_address : address -> bool
-(** Validates an address string matches the expected pattern.
-    Pattern: ^0x[a-fA-F0-9]{40}$
-    @return [true] if the address is valid, [false] otherwise *)
-
-val is_valid_hash64 : hash64 -> bool
-(** Validates a hash64 string matches the expected pattern.
-    Pattern: ^0x[a-fA-F0-9]{64}$
-    @return [true] if the hash is valid, [false] otherwise *)
-
-(** {1 Constructors} *)
-
-val empty_position : position
-(** Create an empty position record with all fields set to [None] *)
-
-val empty_closed_position : closed_position
-(** Create an empty closed_position record with all fields set to [None] *)
-
-val empty_trade : trade
-(** Create an empty trade record with all fields set to [None] *)
-
-val empty_activity : activity
-(** Create an empty activity record with all fields set to [None] *)
-
-val empty_holder : holder
-(** Create an empty holder record with all fields set to [None] *)
-
-val empty_trader_leaderboard_entry : trader_leaderboard_entry
-(** Create an empty trader_leaderboard_entry record with all fields set to
-    [None] *)

@@ -380,20 +380,3 @@ val address_of_yojson_result : Yojson.Safe.t -> (address, string) result
 
 val signature_of_yojson_result : Yojson.Safe.t -> (signature, string) result
 (** Deserialize a signature with validation, returning a result. *)
-
-(** {1 Empty Constructors} *)
-
-val empty_order_book_level : order_book_level
-val empty_order_book_summary : order_book_summary
-val empty_signed_order : signed_order
-val empty_order_request : order_request
-val empty_create_order_response : create_order_response
-val empty_open_order : open_order
-val empty_cancel_response : cancel_response
-val empty_maker_order_fill : maker_order_fill
-val empty_clob_trade : clob_trade
-val empty_price_response : price_response
-val empty_midpoint_response : midpoint_response
-val empty_token_price : token_price
-val empty_price_point : price_point
-val empty_price_history : price_history
