@@ -42,14 +42,35 @@ val status : t -> (string, Http_client.Client.error_response) result
 (** {1 Teams Endpoints} *)
 
 val get_teams :
-  t -> ?id:int -> unit -> (team list, Http_client.Client.error_response) result
-(** Get list of sports teams.
-    @param id Optional team ID to filter by *)
+  t ->
+  ?limit:Http_client.Client.Nonneg_int.t ->
+  ?offset:Http_client.Client.Nonneg_int.t ->
+  ?order:string list ->
+  ?ascending:bool ->
+  ?league:string list ->
+  ?name:string list ->
+  ?abbreviation:string list ->
+  unit ->
+  (team list, Http_client.Client.error_response) result
 
-val get_team :
-  t -> id:int -> unit -> (team, Http_client.Client.error_response) result
-(** Get a team by ID.
-    @param id Team ID (required) *)
+(** Get list of sports teams.
+    @param limit Maximum number of results (non-negative)
+    @param offset Pagination offset (non-negative)
+    @param order Fields to order by
+    @param ascending Sort ascending if true
+    @param league Filter by league(s)
+    @param name Filter by team name(s)
+    @param abbreviation Filter by team abbreviation(s) *)
+
+val get_sports :
+  t -> unit -> (sports_metadata list, Http_client.Client.error_response) result
+(** Get list of sports with metadata. *)
+
+val get_sports_market_types :
+  t ->
+  unit ->
+  (sports_market_types_response, Http_client.Client.error_response) result
+(** Get list of sports market types. *)
 
 (** {1 Tags Endpoints} *)
 
@@ -334,18 +355,6 @@ val get_profile :
   (profile, Http_client.Client.error_response) result
 (** Get profile by user address.
     @param user_address User address (required) *)
-
-(** {1 Sports Endpoints} *)
-
-val get_sports :
-  t -> unit -> (sports_metadata list, Http_client.Client.error_response) result
-(** Get list of sports with metadata. *)
-
-val get_sports_market_types :
-  t ->
-  unit ->
-  (sports_market_types_response, Http_client.Client.error_response) result
-(** Get list of sports market types. *)
 
 (** {1 Search Endpoint} *)
 

@@ -72,22 +72,19 @@ type image_optimization = {
 (** {1 Basic Domain Types} *)
 
 type team = {
-  id : int option; [@default None] [@yojson_drop_default_if_none]
-  name : string option; [@default None] [@yojson_drop_default_if_none]
-  league : string option; [@default None] [@yojson_drop_default_if_none]
-  record : string option; [@default None] [@yojson_drop_default_if_none]
-  logo : string option; [@default None] [@yojson_drop_default_if_none]
-  abbreviation : string option; [@default None] [@yojson_drop_default_if_none]
-  alias : string option; [@default None] [@yojson_drop_default_if_none]
-  created_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "createdAt"]
-  updated_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "updatedAt"]
-  provider_id : int option;
-      [@default None] [@yojson_drop_default_if_none] [@key "providerId"]
-  color : string option; [@default None] [@yojson_drop_default_if_none]
+  id : int option; [@default None]
+  name : string option; [@default None]
+  league : string option; [@default None]
+  record : string option; [@default None]
+  logo : string option; [@default None]
+  abbreviation : string option; [@default None]
+  alias : string option; [@default None]
+  created_at : Http_client.Client.Timestamp.t option;
+      [@default None] [@key "createdAt"]
+  updated_at : Http_client.Client.Timestamp.t option;
+      [@default None] [@key "updatedAt"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Sports team *)
 
 type tag = {
@@ -782,6 +779,7 @@ type market = {
       [@yojson_drop_default_if_none]
       [@key "twitterCardLastValidated"]
 }
+[@@yojson.allow_extra_fields]
 
 and event = {
   id : string option; [@default None] [@yojson_drop_default_if_none]
@@ -950,6 +948,7 @@ and event = {
   game_id : int option;
       [@default None] [@yojson_drop_default_if_none] [@key "gameId"]
 }
+[@@yojson.allow_extra_fields]
 
 and series = {
   id : string option; [@default None] [@yojson_drop_default_if_none]
@@ -1011,7 +1010,7 @@ and series = {
       [@yojson_drop_default_if_none]
       [@key "requiresTranslation"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 
 (** {1 Pagination Response Types} *)
 
@@ -1034,21 +1033,18 @@ type search = {
 (** {1 Sports Types} *)
 
 type sports_metadata = {
-  id : int option; [@default None] [@yojson_drop_default_if_none]
-  sport : string option; [@default None] [@yojson_drop_default_if_none]
-  image : string option; [@default None] [@yojson_drop_default_if_none]
-  resolution : string option; [@default None] [@yojson_drop_default_if_none]
-  ordering : string option; [@default None] [@yojson_drop_default_if_none]
-  tags : string option; [@default None] [@yojson_drop_default_if_none]
-  series : string option; [@default None] [@yojson_drop_default_if_none]
-  created_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "createdAt"]
+  sport : string option; [@default None]
+  image : string option; [@default None]
+  resolution : string option; [@default None]
+  ordering : string option; [@default None]
+  tags : string option; [@default None]
+  series : string option; [@default None]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Sports metadata *)
 
 type sports_market_types_response = {
   market_types : string list; [@default []] [@key "marketTypes"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Sports market types response *)

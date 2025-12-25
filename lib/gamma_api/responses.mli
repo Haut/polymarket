@@ -47,10 +47,8 @@ type team = {
   logo : string option;
   abbreviation : string option;
   alias : string option;
-  created_at : string option;
-  updated_at : string option;
-  provider_id : int option;
-  color : string option;
+  created_at : Http_client.Client.Timestamp.t option;
+  updated_at : Http_client.Client.Timestamp.t option;
 }
 (** Sports team *)
 
@@ -622,14 +620,12 @@ type search = {
 (** {1 Sports Types} *)
 
 type sports_metadata = {
-  id : int option;
   sport : string option;
   image : string option;
   resolution : string option;
   ordering : string option;
   tags : string option;
   series : string option;
-  created_at : string option;
 }
 (** Sports metadata *)
 

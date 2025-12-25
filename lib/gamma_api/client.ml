@@ -21,16 +21,25 @@ let status t = [] |> Http_client.Client.get_text t "/status"
 
 (** {1 Teams Endpoints} *)
 
-let get_teams t ?id () =
+let get_teams t ?limit ?offset ?order ?ascending ?league ?name ?abbreviation ()
+    =
   []
-  |> Http_client.Client.add_int "id" id
+  |> Http_client.Client.add_nonneg_int "limit" limit
+  |> Http_client.Client.add_nonneg_int "offset" offset
+  |> Http_client.Client.add_string_array "order" order
+  |> Http_client.Client.add_bool "ascending" ascending
+  |> Http_client.Client.add_string_array "league" league
+  |> Http_client.Client.add_string_array "name" name
+  |> Http_client.Client.add_string_array "abbreviation" abbreviation
   |> Http_client.Client.get_json_list t "/teams" team_of_yojson
 
-let get_team t ~id () =
+let get_sports t () =
+  [] |> Http_client.Client.get_json_list t "/sports" sports_metadata_of_yojson
+
+let get_sports_market_types t () =
   []
-  |> Http_client.Client.get_json t
-       (Printf.sprintf "/teams/%d" id)
-       team_of_yojson
+  |> Http_client.Client.get_json t "/sports/market-types"
+       sports_market_types_response_of_yojson
 
 (** {1 Tags Endpoints} *)
 
@@ -242,16 +251,6 @@ let get_profile t ~user_address () =
   |> Http_client.Client.get_json t
        (Printf.sprintf "/profiles/user_address/%s" user_address)
        profile_of_yojson
-
-(** {1 Sports Endpoints} *)
-
-let get_sports t () =
-  [] |> Http_client.Client.get_json_list t "/sports" sports_metadata_of_yojson
-
-let get_sports_market_types t () =
-  []
-  |> Http_client.Client.get_json t "/sports/market-types"
-       sports_market_types_response_of_yojson
 
 (** {1 Search Endpoint} *)
 

@@ -3,6 +3,57 @@
     This module provides a reusable HTTP client with JSON parsing and query
     parameter building utilities. *)
 
+(** {1 Non-negative Integers} *)
+
+module Nonneg_int : sig
+  type t
+  (** A non-negative integer (>= 0) *)
+
+  val of_int : int -> t option
+  (** Create from int, returns None if negative *)
+
+  val of_int_exn : int -> t
+  (** Create from int, raises if negative *)
+
+  val to_int : t -> int
+  (** Extract the underlying int *)
+
+  val zero : t
+  val one : t
+end
+
+(** {1 Timestamps} *)
+
+module Timestamp : sig
+  type t
+  (** An ISO 8601 timestamp (e.g., "2023-11-07T05:31:56Z") *)
+
+  val of_string : string -> t option
+  (** Parse from ISO 8601 string *)
+
+  val of_string_exn : string -> t
+  (** Parse from ISO 8601 string, raises on invalid format *)
+
+  val to_string : t -> string
+  (** Convert to ISO 8601 string *)
+
+  val to_ptime : t -> Ptime.t
+  (** Get the underlying Ptime.t *)
+
+  val of_ptime : Ptime.t -> t
+  (** Create from Ptime.t *)
+
+  val t_of_yojson : Yojson.Safe.t -> t
+  (** Parse from JSON string *)
+
+  val yojson_of_t : t -> Yojson.Safe.t
+  (** Convert to JSON string *)
+
+  val pp : Format.formatter -> t -> unit
+  val show : t -> string
+  val equal : t -> t -> bool
+end
+
 (** {1 Client Configuration} *)
 
 type t
@@ -44,8 +95,15 @@ val add_bool : string -> bool option -> params -> params
 val add_int : string -> int option -> params -> params
 (** Add an optional integer parameter *)
 
+val add_nonneg_int : string -> Nonneg_int.t option -> params -> params
+(** Add an optional non-negative integer parameter *)
+
 val add_float : string -> float option -> params -> params
 (** Add an optional float parameter *)
+
+val add_string_array : string -> string list option -> params -> params
+(** Add an optional string array parameter, adding each value as a separate
+    query parameter with the same key (e.g., ?league=NBA&league=NFL) *)
 
 (** {1 HTTP Request Functions} *)
 

@@ -53,9 +53,6 @@ let first_tag_id (tags : Gamma_api.Responses.tag list) =
 let first_tag_slug (tags : Gamma_api.Responses.tag list) =
   match tags with [] -> None | t :: _ -> t.slug
 
-let first_team_id (teams : Gamma_api.Responses.team list) =
-  match teams with [] -> None | t :: _ -> t.id
-
 let first_comment_id (comments : Gamma_api.Responses.comment list) =
   match comments with
   | [] -> None
@@ -91,14 +88,6 @@ let run_demo env =
   Logger.header "Teams";
   let teams = Gamma_api.Client.get_teams client () in
   print_result_count "get_teams" teams;
-
-  let team_id = match teams with Ok t -> first_team_id t | Error _ -> None in
-  (match team_id with
-  | Some id ->
-      let team = Gamma_api.Client.get_team client ~id () in
-      print_result "get_team" team ~on_ok:(fun (t : Gamma_api.Responses.team) ->
-          Option.value ~default:"(no name)" t.name)
-  | None -> Logger.skip "get_team" "no team ID available");
 
   (* ===== Tags ===== *)
   Logger.header "Tags";
