@@ -78,9 +78,10 @@ let run_demo env =
   (* First, get markets from Gamma API to find token IDs with active order books *)
   Logger.header "Setup: Finding Active Markets";
   let gamma_client = Gamma_api.Client.create ~sw ~net () in
-  (* Filter for active, non-closed markets with volume to find ones with order books *)
+  (* Filter for non-closed markets with volume to find ones with order books *)
   let markets =
-    Gamma_api.Client.get_markets gamma_client ~limit:50 ~active:true
+    Gamma_api.Client.get_markets gamma_client
+      ~limit:(Http_client.Client.Nonneg_int.of_int_exn 50)
       ~closed:false ~volume_num_min:1000.0 ()
   in
 

@@ -6,25 +6,11 @@
 
 (** {1 Response Types} *)
 
-type pagination = { has_more : bool option; total_results : int option }
+type pagination = { has_more : bool; total_results : int }
 (** Pagination information *)
 
-type count = { count : int option }
-(** Generic count response *)
-
-type event_tweet_count = { tweet_count : int option }
-(** Event tweet count response *)
-
-type market_description = {
-  id : string option;
-  condition_id : string option;
-  market_maker_address : string option;
-  description : string option;
-}
-(** Market description response *)
-
 type image_optimization = {
-  id : string option;
+  id : string;
   image_url_source : string option;
   image_url_optimized : string option;
   image_size_kb_source : float option;
@@ -40,7 +26,7 @@ type image_optimization = {
 (** {1 Basic Domain Types} *)
 
 type team = {
-  id : int option;
+  id : int;
   name : string option;
   league : string option;
   record : string option;
@@ -53,7 +39,7 @@ type team = {
 (** Sports team *)
 
 type tag = {
-  id : string option;
+  id : string;
   label : string option;
   slug : string option;
   force_show : bool option;
@@ -68,7 +54,7 @@ type tag = {
 (** Tag for categorization *)
 
 type related_tag = {
-  id : string option;
+  id : string;
   tag_id : int option;
   related_tag_id : int option;
   rank : int option;
@@ -89,7 +75,7 @@ type category = {
 (** Market category *)
 
 type event_creator = {
-  id : string option;
+  id : string;
   creator_name : string option;
   creator_handle : string option;
   creator_url : string option;
@@ -100,18 +86,18 @@ type event_creator = {
 (** Event creator *)
 
 type chat = {
-  id : string option;
+  id : string;
   channel_id : string option;
   channel_name : string option;
   channel_image : string option;
   live : bool option;
-  start_time : string option;
-  end_time : string option;
+  start_time : Http_client.Client.Timestamp.t option;
+  end_time : Http_client.Client.Timestamp.t option;
 }
 (** Chat channel *)
 
 type template = {
-  id : string option;
+  id : string;
   event_title : string option;
   event_slug : string option;
   event_image : string option;
@@ -158,7 +144,7 @@ type comment_profile = {
 (** Comment author profile *)
 
 type reaction = {
-  id : string option;
+  id : string;
   comment_id : int option;
   reaction_type : string option;
   icon : string option;
@@ -187,15 +173,8 @@ type comment = {
 
 (** {1 Profile Types} *)
 
-type public_profile_user = {
-  id : string option;
-  creator : bool option;
-  mod_ : bool option;
-}
+type public_profile_user = { id : string; creator : bool; mod_ : bool }
 (** Public profile user *)
-
-type public_profile_error = { type_ : string option; error : string option }
-(** Public profile error response *)
 
 type public_profile_response = {
   created_at : Http_client.Client.Timestamp.t option;
@@ -212,14 +191,14 @@ type public_profile_response = {
 (** Public profile response *)
 
 type profile = {
-  id : string option;
+  id : string;
   name : string option;
   user : int option;
   referral : string option;
   created_by : int option;
   updated_by : int option;
-  created_at : string option;
-  updated_at : string option;
+  created_at : Http_client.Client.Timestamp.t option;
+  updated_at : Http_client.Client.Timestamp.t option;
   utm_source : string option;
   utm_medium : string option;
   utm_campaign : string option;
@@ -241,7 +220,7 @@ type profile = {
 (** {1 Collection Type} *)
 
 type collection = {
-  id : string option;
+  id : string;
   ticker : string option;
   slug : string option;
   title : string option;
@@ -273,38 +252,12 @@ type collection = {
 }
 (** Collection of events/markets *)
 
-(** {1 Series Summary Type} *)
-
-type series_summary = {
-  id : string option;
-  title : string option;
-  slug : string option;
-  event_dates : string list;
-  event_weeks : int list;
-  earliest_open_week : int option;
-  earliest_open_date : string option;
-}
-(** Series summary *)
-
-(** {1 CLOB Rewards Type} *)
-
-type clob_reward = {
-  id : string option;
-  condition_id : string option;
-  asset_address : string option;
-  rewards_amount : float option;
-  rewards_daily_rate : float option;
-  start_date : string option;
-  end_date : string option;
-}
-(** CLOB reward configuration *)
-
 (** {1 Mutually Recursive Types: Market, Event, Series}
 
     These types reference each other and must be defined together. *)
 
 type market = {
-  id : string option;
+  id : string;
   question : string option;
   condition_id : string option;
   slug : string option;
@@ -446,7 +399,7 @@ type market = {
 (** Market *)
 
 and event = {
-  id : string option;
+  id : string;
   ticker : string option;
   slug : string option;
   title : string option;
@@ -540,7 +493,7 @@ and event = {
 (** Event *)
 
 and series = {
-  id : string option;
+  id : string;
   ticker : string option;
   slug : string option;
   title : string option;
@@ -598,12 +551,12 @@ type search = {
 (** {1 Sports Types} *)
 
 type sports_metadata = {
-  sport : string option;
+  sport : string;
   image : string option;
   resolution : string option;
-  ordering : string option;
-  tags : string option;
-  series : string option;
+  ordering : string;
+  tags : string;
+  series : string;
 }
 (** Sports metadata *)
 
@@ -614,12 +567,6 @@ type sports_market_types_response = { market_types : string list }
 
 val pagination_of_yojson : Yojson.Safe.t -> pagination
 val yojson_of_pagination : pagination -> Yojson.Safe.t
-val count_of_yojson : Yojson.Safe.t -> count
-val yojson_of_count : count -> Yojson.Safe.t
-val event_tweet_count_of_yojson : Yojson.Safe.t -> event_tweet_count
-val yojson_of_event_tweet_count : event_tweet_count -> Yojson.Safe.t
-val market_description_of_yojson : Yojson.Safe.t -> market_description
-val yojson_of_market_description : market_description -> Yojson.Safe.t
 val image_optimization_of_yojson : Yojson.Safe.t -> image_optimization
 val yojson_of_image_optimization : image_optimization -> Yojson.Safe.t
 val team_of_yojson : Yojson.Safe.t -> team
@@ -648,18 +595,12 @@ val comment_of_yojson : Yojson.Safe.t -> comment
 val yojson_of_comment : comment -> Yojson.Safe.t
 val public_profile_user_of_yojson : Yojson.Safe.t -> public_profile_user
 val yojson_of_public_profile_user : public_profile_user -> Yojson.Safe.t
-val public_profile_error_of_yojson : Yojson.Safe.t -> public_profile_error
-val yojson_of_public_profile_error : public_profile_error -> Yojson.Safe.t
 val public_profile_response_of_yojson : Yojson.Safe.t -> public_profile_response
 val yojson_of_public_profile_response : public_profile_response -> Yojson.Safe.t
 val profile_of_yojson : Yojson.Safe.t -> profile
 val yojson_of_profile : profile -> Yojson.Safe.t
 val collection_of_yojson : Yojson.Safe.t -> collection
 val yojson_of_collection : collection -> Yojson.Safe.t
-val series_summary_of_yojson : Yojson.Safe.t -> series_summary
-val yojson_of_series_summary : series_summary -> Yojson.Safe.t
-val clob_reward_of_yojson : Yojson.Safe.t -> clob_reward
-val yojson_of_clob_reward : clob_reward -> Yojson.Safe.t
 val market_of_yojson : Yojson.Safe.t -> market
 val yojson_of_market : market -> Yojson.Safe.t
 val event_of_yojson : Yojson.Safe.t -> event
@@ -683,12 +624,6 @@ val yojson_of_sports_market_types_response :
 
 val pp_pagination : Format.formatter -> pagination -> unit
 val show_pagination : pagination -> string
-val pp_count : Format.formatter -> count -> unit
-val show_count : count -> string
-val pp_event_tweet_count : Format.formatter -> event_tweet_count -> unit
-val show_event_tweet_count : event_tweet_count -> string
-val pp_market_description : Format.formatter -> market_description -> unit
-val show_market_description : market_description -> string
 val pp_image_optimization : Format.formatter -> image_optimization -> unit
 val show_image_optimization : image_optimization -> string
 val pp_team : Format.formatter -> team -> unit
@@ -717,8 +652,6 @@ val pp_comment : Format.formatter -> comment -> unit
 val show_comment : comment -> string
 val pp_public_profile_user : Format.formatter -> public_profile_user -> unit
 val show_public_profile_user : public_profile_user -> string
-val pp_public_profile_error : Format.formatter -> public_profile_error -> unit
-val show_public_profile_error : public_profile_error -> string
 
 val pp_public_profile_response :
   Format.formatter -> public_profile_response -> unit
@@ -728,10 +661,6 @@ val pp_profile : Format.formatter -> profile -> unit
 val show_profile : profile -> string
 val pp_collection : Format.formatter -> collection -> unit
 val show_collection : collection -> string
-val pp_series_summary : Format.formatter -> series_summary -> unit
-val show_series_summary : series_summary -> string
-val pp_clob_reward : Format.formatter -> clob_reward -> unit
-val show_clob_reward : clob_reward -> string
 val pp_market : Format.formatter -> market -> unit
 val show_market : market -> string
 val pp_event : Format.formatter -> event -> unit
@@ -753,9 +682,6 @@ val show_sports_market_types_response : sports_market_types_response -> string
 (** {1 Equality Functions} *)
 
 val equal_pagination : pagination -> pagination -> bool
-val equal_count : count -> count -> bool
-val equal_event_tweet_count : event_tweet_count -> event_tweet_count -> bool
-val equal_market_description : market_description -> market_description -> bool
 val equal_image_optimization : image_optimization -> image_optimization -> bool
 val equal_team : team -> team -> bool
 val equal_tag : tag -> tag -> bool
@@ -773,16 +699,11 @@ val equal_comment : comment -> comment -> bool
 val equal_public_profile_user :
   public_profile_user -> public_profile_user -> bool
 
-val equal_public_profile_error :
-  public_profile_error -> public_profile_error -> bool
-
 val equal_public_profile_response :
   public_profile_response -> public_profile_response -> bool
 
 val equal_profile : profile -> profile -> bool
 val equal_collection : collection -> collection -> bool
-val equal_series_summary : series_summary -> series_summary -> bool
-val equal_clob_reward : clob_reward -> clob_reward -> bool
 val equal_market : market -> market -> bool
 val equal_event : event -> event -> bool
 val equal_series : series -> series -> bool

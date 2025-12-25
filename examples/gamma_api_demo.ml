@@ -23,34 +23,22 @@ let print_result name ~on_ok result =
 (** {1 ID Extraction Helpers} *)
 
 let first_event_id (events : Gamma_api.Responses.event list) =
-  match events with
-  | [] -> None
-  | e :: _ -> (
-      match e.id with
-      | Some id -> ( try Some (int_of_string id) with _ -> None)
-      | None -> None)
+  match events with [] -> None | e :: _ -> int_of_string_opt e.id
 
 let first_event_slug (events : Gamma_api.Responses.event list) =
   match events with [] -> None | e :: _ -> e.slug
 
 let first_market_id (markets : Gamma_api.Responses.market list) =
-  match markets with
-  | [] -> None
-  | m :: _ -> (
-      match m.id with
-      | Some id -> ( try Some (int_of_string id) with _ -> None)
-      | None -> None)
+  match markets with [] -> None | m :: _ -> int_of_string_opt m.id
 
 let first_market_slug (markets : Gamma_api.Responses.market list) =
   match markets with [] -> None | m :: _ -> m.slug
 
 let first_series_id (series_list : Gamma_api.Responses.series list) =
-  match series_list with
-  | [] -> None
-  | s :: _ -> Option.bind s.id (fun id -> int_of_string_opt id)
+  match series_list with [] -> None | s :: _ -> int_of_string_opt s.id
 
 let first_tag_id (tags : Gamma_api.Responses.tag list) =
-  match tags with [] -> None | t :: _ -> t.id
+  match tags with [] -> None | t :: _ -> Some t.id
 
 let first_tag_slug (tags : Gamma_api.Responses.tag list) =
   match tags with [] -> None | t :: _ -> t.slug
