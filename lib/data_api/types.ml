@@ -6,16 +6,6 @@
 
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 
-(** {1 Primitive Types} *)
-
-type address = string [@@deriving yojson, show, eq]
-(** User Profile Address (0x-prefixed, 40 hex chars).
-    Pattern: ^0x[a-fA-F0-9]{40}$ *)
-
-type hash64 = string [@@deriving yojson, show, eq]
-(** 0x-prefixed 64-hex string.
-    Pattern: ^0x[a-fA-F0-9]{64}$ *)
-
 (** {1 Query Parameter Enums} *)
 
 type sort_direction = ASC | DESC [@@deriving yojson, show, eq]
@@ -169,9 +159,9 @@ type error_response = Http_client.Client.error_response = { error : string }
 (** {1 Domain Models} *)
 
 type position = {
-  proxy_wallet : address; [@key "proxyWallet"]
+  proxy_wallet : Common.Primitives.Address.t; [@key "proxyWallet"]
   asset : string;
-  condition_id : hash64; [@key "conditionId"]
+  condition_id : Common.Primitives.Hash64.t; [@key "conditionId"]
   size : float;
   avg_price : float; [@key "avgPrice"]
   initial_value : float; [@key "initialValue"]
@@ -199,9 +189,9 @@ type position = {
 (** Position in a market *)
 
 type closed_position = {
-  proxy_wallet : address; [@key "proxyWallet"]
+  proxy_wallet : Common.Primitives.Address.t; [@key "proxyWallet"]
   asset : string;
-  condition_id : hash64; [@key "conditionId"]
+  condition_id : Common.Primitives.Hash64.t; [@key "conditionId"]
   avg_price : float; [@key "avgPrice"]
   total_bought : float; [@key "totalBought"]
   realized_pnl : float; [@key "realizedPnl"]
@@ -221,10 +211,10 @@ type closed_position = {
 (** Closed position in a market *)
 
 type trade = {
-  proxy_wallet : address; [@key "proxyWallet"]
+  proxy_wallet : Common.Primitives.Address.t; [@key "proxyWallet"]
   side : side;
   asset : string;
-  condition_id : hash64; [@key "conditionId"]
+  condition_id : Common.Primitives.Hash64.t; [@key "conditionId"]
   size : float;
   price : float;
   timestamp : int64;
@@ -245,9 +235,9 @@ type trade = {
 (** Trade record *)
 
 type activity = {
-  proxy_wallet : address; [@key "proxyWallet"]
+  proxy_wallet : Common.Primitives.Address.t; [@key "proxyWallet"]
   timestamp : int64;
-  condition_id : hash64; [@key "conditionId"]
+  condition_id : Common.Primitives.Hash64.t; [@key "conditionId"]
   activity_type : activity_type; [@key "type"]
   size : float;
   usdc_size : float; [@key "usdcSize"]
@@ -271,7 +261,7 @@ type activity = {
 (** Activity record *)
 
 type holder = {
-  proxy_wallet : address; [@key "proxyWallet"]
+  proxy_wallet : Common.Primitives.Address.t; [@key "proxyWallet"]
   bio : string;
   asset : string;
   pseudonym : string;
@@ -289,7 +279,7 @@ type meta_holder = { token : string; holders : holder list }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Meta holder with token and list of holders *)
 
-type traded = { user : address; traded : int }
+type traded = { user : Common.Primitives.Address.t; traded : int }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Traded record *)
 
@@ -298,22 +288,22 @@ type revision_entry = { revision : string; timestamp : int }
 (** Revision entry *)
 
 type revision_payload = {
-  question_id : hash64; [@key "questionID"]
+  question_id : Common.Primitives.Hash64.t; [@key "questionID"]
   revisions : revision_entry list;
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Revision payload *)
 
-type value = { user : address; value : float }
+type value = { user : Common.Primitives.Address.t; value : float }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Value record *)
 
-type open_interest = { market : hash64; value : float }
+type open_interest = { market : Common.Primitives.Hash64.t; value : float }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Open interest for a market *)
 
 type market_volume = {
-  market : hash64 option; [@yojson.option]
+  market : Common.Primitives.Hash64.t option; [@yojson.option]
   value : float option; [@yojson.option]
 }
 [@@deriving yojson, show, eq]
@@ -373,7 +363,7 @@ type builder_volume_entry = {
 
 type trader_leaderboard_entry = {
   rank : string;
-  proxy_wallet : address; [@key "proxyWallet"]
+  proxy_wallet : Common.Primitives.Address.t; [@key "proxyWallet"]
   user_name : string; [@key "userName"]
   vol : float;
   pnl : float;

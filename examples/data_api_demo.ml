@@ -11,11 +11,14 @@ open Polymarket
 (* Sample data for testing - these are real Polymarket values *)
 
 (* A known active trader address *)
-let sample_user = "0x1a9a6f917a87a4f02c33f8530c6a8998f1bc8d59"
+let sample_user =
+  Common.Primitives.Address.make_exn
+    "0x1a9a6f917a87a4f02c33f8530c6a8998f1bc8d59"
 
 (* A sample condition ID (market) - 2024 US Presidential Election Winner *)
 let sample_market =
-  "0xdd22472e552920b8438f08c8830e189a5a159cc4e8d5f2fb0f0e8e9a7e3e2a5e"
+  Common.Primitives.Hash64.make_exn
+    "0xdd22472e552920b8438f08c8830e189a5a159cc4e8d5f2fb0f0e8e9a7e3e2a5e"
 
 (* A sample event ID *)
 let sample_event_id = 903

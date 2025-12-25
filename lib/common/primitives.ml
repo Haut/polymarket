@@ -50,6 +50,7 @@ module Address = struct
 
   let to_yojson t = `String t
   let yojson_of t = to_yojson t
+  let yojson_of_t = yojson_of
   let t_of_yojson = of_yojson_exn
 end
 
@@ -79,6 +80,7 @@ module Hash64 = struct
 
   let to_yojson t = `String t
   let yojson_of t = to_yojson t
+  let yojson_of_t = yojson_of
   let t_of_yojson = of_yojson_exn
 end
 
@@ -114,6 +116,7 @@ module Hash = struct
 
   let to_yojson t = `String t
   let yojson_of t = to_yojson t
+  let yojson_of_t = yojson_of
   let t_of_yojson = of_yojson_exn
 end
 

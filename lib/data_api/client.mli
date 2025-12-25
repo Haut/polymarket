@@ -42,8 +42,8 @@ val health_check : t -> (health_response, error_response) result
 
 val get_positions :
   t ->
-  user:address ->
-  ?market:hash64 list ->
+  user:Common.Primitives.Address.t ->
+  ?market:Common.Primitives.Hash64.t list ->
   ?event_id:Common.Primitives.Pos_int.t list ->
   ?size_threshold:Common.Primitives.Nonneg_float.t ->
   ?redeemable:bool ->
@@ -71,8 +71,8 @@ val get_positions :
 
 val get_closed_positions :
   t ->
-  user:address ->
-  ?market:hash64 list ->
+  user:Common.Primitives.Address.t ->
+  ?market:Common.Primitives.Hash64.t list ->
   ?event_id:Common.Primitives.Pos_int.t list ->
   ?title:Common.Primitives.Bounded_string.t ->
   ?sort_by:closed_position_sort_by ->
@@ -95,8 +95,8 @@ val get_closed_positions :
 
 val get_trades :
   t ->
-  ?user:address ->
-  ?market:hash64 list ->
+  ?user:Common.Primitives.Address.t ->
+  ?market:Common.Primitives.Hash64.t list ->
   ?event_id:Common.Primitives.Pos_int.t list ->
   ?side:side ->
   ?filter_type:filter_type ->
@@ -121,8 +121,8 @@ val get_trades :
 
 val get_activity :
   t ->
-  user:address ->
-  ?market:hash64 list ->
+  user:Common.Primitives.Address.t ->
+  ?market:Common.Primitives.Hash64.t list ->
   ?event_id:Common.Primitives.Pos_int.t list ->
   ?activity_types:activity_type list ->
   ?side:side ->
@@ -151,7 +151,7 @@ val get_activity :
 
 val get_holders :
   t ->
-  market:hash64 list ->
+  market:Common.Primitives.Hash64.t list ->
   ?min_balance:Common.Primitives.Min_balance.t ->
   ?limit:Common.Primitives.Holders_limit.t ->
   unit ->
@@ -163,14 +163,18 @@ val get_holders :
 
 (** {1 User Data Endpoints} *)
 
-val get_traded : t -> user:address -> unit -> (traded, error_response) result
+val get_traded :
+  t ->
+  user:Common.Primitives.Address.t ->
+  unit ->
+  (traded, error_response) result
 (** Get total markets a user has traded.
     @param user User address (required) *)
 
 val get_value :
   t ->
-  user:address ->
-  ?market:hash64 list ->
+  user:Common.Primitives.Address.t ->
+  ?market:Common.Primitives.Hash64.t list ->
   unit ->
   (value list, error_response) result
 (** Get total value of a user's positions.
@@ -181,7 +185,7 @@ val get_value :
 
 val get_open_interest :
   t ->
-  ?market:hash64 list ->
+  ?market:Common.Primitives.Hash64.t list ->
   unit ->
   (open_interest list, error_response) result
 (** Get open interest for markets.
@@ -222,7 +226,7 @@ val get_trader_leaderboard :
   ?category:leaderboard_category ->
   ?time_period:time_period ->
   ?order_by:leaderboard_order_by ->
-  ?user:address ->
+  ?user:Common.Primitives.Address.t ->
   ?user_name:string ->
   ?limit:Common.Primitives.Leaderboard_limit.t ->
   ?offset:Common.Primitives.Leaderboard_offset.t ->

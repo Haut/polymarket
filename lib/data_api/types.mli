@@ -4,14 +4,6 @@
     data-api-openapi.yaml for the Polymarket Data API
     (https://data-api.polymarket.com). *)
 
-(** {1 Primitive Types} *)
-
-type address = string
-(** User Profile Address (0x-prefixed, 40 hex chars). *)
-
-type hash64 = string
-(** 0x-prefixed 64-hex string. *)
-
 (** {1 Query Parameter Enums} *)
 
 (** Sort direction for paginated results *)
@@ -172,9 +164,9 @@ type error_response = Http_client.Client.error_response = { error : string }
 (** {1 Domain Models} *)
 
 type position = {
-  proxy_wallet : address;
+  proxy_wallet : Common.Primitives.Address.t;
   asset : string;
-  condition_id : hash64;
+  condition_id : Common.Primitives.Hash64.t;
   size : float;
   avg_price : float;
   initial_value : float;
@@ -201,9 +193,9 @@ type position = {
 (** Position in a market *)
 
 type closed_position = {
-  proxy_wallet : address;
+  proxy_wallet : Common.Primitives.Address.t;
   asset : string;
-  condition_id : hash64;
+  condition_id : Common.Primitives.Hash64.t;
   avg_price : float;
   total_bought : float;
   realized_pnl : float;
@@ -222,10 +214,10 @@ type closed_position = {
 (** Closed position in a market *)
 
 type trade = {
-  proxy_wallet : address;
+  proxy_wallet : Common.Primitives.Address.t;
   side : side;
   asset : string;
-  condition_id : hash64;
+  condition_id : Common.Primitives.Hash64.t;
   size : float;
   price : float;
   timestamp : int64;
@@ -245,9 +237,9 @@ type trade = {
 (** Trade record *)
 
 type activity = {
-  proxy_wallet : address;
+  proxy_wallet : Common.Primitives.Address.t;
   timestamp : int64;
-  condition_id : hash64;
+  condition_id : Common.Primitives.Hash64.t;
   activity_type : activity_type;
   size : float;
   usdc_size : float;
@@ -270,7 +262,7 @@ type activity = {
 (** Activity record *)
 
 type holder = {
-  proxy_wallet : address;
+  proxy_wallet : Common.Primitives.Address.t;
   bio : string;
   asset : string;
   pseudonym : string;
@@ -286,25 +278,28 @@ type holder = {
 type meta_holder = { token : string; holders : holder list }
 (** Meta holder with token and list of holders *)
 
-type traded = { user : address; traded : int }
+type traded = { user : Common.Primitives.Address.t; traded : int }
 (** Traded record *)
 
 type revision_entry = { revision : string; timestamp : int }
 (** Revision entry *)
 
 type revision_payload = {
-  question_id : hash64;
+  question_id : Common.Primitives.Hash64.t;
   revisions : revision_entry list;
 }
 (** Revision payload *)
 
-type value = { user : address; value : float }
+type value = { user : Common.Primitives.Address.t; value : float }
 (** Value record *)
 
-type open_interest = { market : hash64; value : float }
+type open_interest = { market : Common.Primitives.Hash64.t; value : float }
 (** Open interest for a market *)
 
-type market_volume = { market : hash64 option; value : float option }
+type market_volume = {
+  market : Common.Primitives.Hash64.t option;
+  value : float option;
+}
 (** Market volume *)
 
 type live_volume = { total : float option; markets : market_volume list }
@@ -335,7 +330,7 @@ type builder_volume_entry = {
 
 type trader_leaderboard_entry = {
   rank : string;
-  proxy_wallet : address;
+  proxy_wallet : Common.Primitives.Address.t;
   user_name : string;
   vol : float;
   pnl : float;
@@ -347,10 +342,6 @@ type trader_leaderboard_entry = {
 
 (** {1 JSON Conversion Functions} *)
 
-val address_of_yojson : Yojson.Safe.t -> address
-val yojson_of_address : address -> Yojson.Safe.t
-val hash64_of_yojson : Yojson.Safe.t -> hash64
-val yojson_of_hash64 : hash64 -> Yojson.Safe.t
 val side_of_yojson : Yojson.Safe.t -> side
 val yojson_of_side : side -> Yojson.Safe.t
 val activity_type_of_yojson : Yojson.Safe.t -> activity_type
@@ -358,10 +349,6 @@ val yojson_of_activity_type : activity_type -> Yojson.Safe.t
 
 (** {1 Pretty Printing Functions} *)
 
-val pp_address : Format.formatter -> address -> unit
-val show_address : address -> string
-val pp_hash64 : Format.formatter -> hash64 -> unit
-val show_hash64 : hash64 -> string
 val pp_side : Format.formatter -> side -> unit
 val show_side : side -> string
 val pp_activity_type : Format.formatter -> activity_type -> unit
@@ -408,8 +395,6 @@ val show_trader_leaderboard_entry : trader_leaderboard_entry -> string
 
 (** {1 Equality Functions} *)
 
-val equal_address : address -> address -> bool
-val equal_hash64 : hash64 -> hash64 -> bool
 val equal_side : side -> side -> bool
 val equal_activity_type : activity_type -> activity_type -> bool
 val equal_health_response : health_response -> health_response -> bool

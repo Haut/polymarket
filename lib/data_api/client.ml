@@ -23,8 +23,9 @@ let health_check t =
 
 let get_positions t ~user ?market ?event_id ?size_threshold ?redeemable
     ?mergeable ?limit ?offset ?sort_by ?sort_direction ?title () =
-  [ ("user", [ user ]) ]
-  |> Http_client.Client.add_list "market" Fun.id market
+  [ ("user", [ Common.Primitives.Address.to_string user ]) ]
+  |> Http_client.Client.add_list "market" Common.Primitives.Hash64.to_string
+       market
   |> Http_client.Client.add_pos_int_list "eventId" event_id
   |> Http_client.Client.add_nonneg_float "sizeThreshold" size_threshold
   |> Http_client.Client.add_bool "redeemable" redeemable
@@ -49,9 +50,11 @@ let get_trades t ?user ?market ?event_id ?side ?filter_type ?filter_amount
   |> Http_client.Client.add "filterType"
        (Option.map string_of_filter_type filter_type)
   |> Http_client.Client.add_nonneg_float "filterAmount" filter_amount
-  |> Http_client.Client.add_list "market" Fun.id market
+  |> Http_client.Client.add_list "market" Common.Primitives.Hash64.to_string
+       market
   |> Http_client.Client.add_pos_int_list "eventId" event_id
-  |> Http_client.Client.add "user" user
+  |> Http_client.Client.add "user"
+       (Option.map Common.Primitives.Address.to_string user)
   |> Http_client.Client.add "side" (Option.map string_of_side side)
   |> Http_client.Client.get_json_list t "/trades" trade_of_yojson
 
@@ -59,10 +62,11 @@ let get_trades t ?user ?market ?event_id ?side ?filter_type ?filter_amount
 
 let get_activity t ~user ?market ?event_id ?activity_types ?side ?start_time
     ?end_time ?sort_by ?sort_direction ?limit ?offset () =
-  [ ("user", [ user ]) ]
+  [ ("user", [ Common.Primitives.Address.to_string user ]) ]
   |> Http_client.Client.add_limit "limit" limit
   |> Http_client.Client.add_offset "offset" offset
-  |> Http_client.Client.add_list "market" Fun.id market
+  |> Http_client.Client.add_list "market" Common.Primitives.Hash64.to_string
+       market
   |> Http_client.Client.add_pos_int_list "eventId" event_id
   |> Http_client.Client.add_list "type" string_of_activity_type activity_types
   |> Http_client.Client.add_nonneg_int "start" start_time
@@ -79,23 +83,26 @@ let get_activity t ~user ?market ?event_id ?activity_types ?side ?start_time
 let get_holders t ~market ?min_balance ?limit () =
   []
   |> Http_client.Client.add_holders_limit "limit" limit
-  |> Http_client.Client.add_list "market" Fun.id (Some market)
+  |> Http_client.Client.add_list "market" Common.Primitives.Hash64.to_string
+       (Some market)
   |> Http_client.Client.add_min_balance "minBalance" min_balance
   |> Http_client.Client.get_json_list t "/holders" meta_holder_of_yojson
 
 (** {1 Value Endpoint} *)
 
 let get_value t ~user ?market () =
-  [ ("user", [ user ]) ]
-  |> Http_client.Client.add_list "market" Fun.id market
+  [ ("user", [ Common.Primitives.Address.to_string user ]) ]
+  |> Http_client.Client.add_list "market" Common.Primitives.Hash64.to_string
+       market
   |> Http_client.Client.get_json_list t "/value" value_of_yojson
 
 (** {1 Closed Positions Endpoint} *)
 
 let get_closed_positions t ~user ?market ?event_id ?title ?sort_by
     ?sort_direction ?limit ?offset () =
-  [ ("user", [ user ]) ]
-  |> Http_client.Client.add_list "market" Fun.id market
+  [ ("user", [ Common.Primitives.Address.to_string user ]) ]
+  |> Http_client.Client.add_list "market" Common.Primitives.Hash64.to_string
+       market
   |> Http_client.Client.add_bounded_string "title" title
   |> Http_client.Client.add_pos_int_list "eventId" event_id
   |> Http_client.Client.add_closed_positions_limit "limit" limit
@@ -118,7 +125,8 @@ let get_trader_leaderboard t ?category ?time_period ?order_by ?user ?user_name
        (Option.map string_of_time_period time_period)
   |> Http_client.Client.add "orderBy"
        (Option.map string_of_leaderboard_order_by order_by)
-  |> Http_client.Client.add "user" user
+  |> Http_client.Client.add "user"
+       (Option.map Common.Primitives.Address.to_string user)
   |> Http_client.Client.add "userName" user_name
   |> Http_client.Client.add_leaderboard_limit "limit" limit
   |> Http_client.Client.add_leaderboard_offset "offset" offset
@@ -128,14 +136,15 @@ let get_trader_leaderboard t ?category ?time_period ?order_by ?user ?user_name
 (** {1 Traded Endpoint} *)
 
 let get_traded t ~user () =
-  [ ("user", [ user ]) ]
+  [ ("user", [ Common.Primitives.Address.to_string user ]) ]
   |> Http_client.Client.get_json t "/traded" traded_of_yojson
 
 (** {1 Open Interest Endpoint} *)
 
 let get_open_interest t ?market () =
   []
-  |> Http_client.Client.add_list "market" Fun.id market
+  |> Http_client.Client.add_list "market" Common.Primitives.Hash64.to_string
+       market
   |> Http_client.Client.get_json_list t "/oi" open_interest_of_yojson
 
 (** {1 Live Volume Endpoint} *)
