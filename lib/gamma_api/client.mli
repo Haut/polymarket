@@ -253,162 +253,176 @@ val get_event_tags :
 
 val get_markets :
   t ->
-  ?id:string ->
-  ?condition_id:string ->
-  ?slug:string ->
-  ?archived:bool ->
-  ?active:bool ->
-  ?closed:bool ->
-  ?clob_token_ids:string ->
-  ?liquidity_num_min:float ->
-  ?volume_num_min:float ->
-  ?start_date_min:string ->
-  ?start_date_max:string ->
-  ?end_date_min:string ->
-  ?end_date_max:string ->
-  ?status:status ->
+  ?limit:Http_client.Client.Nonneg_int.t ->
+  ?offset:Http_client.Client.Nonneg_int.t ->
   ?order:string ->
   ?ascending:bool ->
-  ?tag_slug:string ->
-  ?limit:int ->
-  ?offset:int ->
-  ?cursor:string ->
-  ?next_cursor:string ->
-  ?slug_size:slug_size ->
-  ?_c:string ->
+  ?id:int list ->
+  ?slug:string list ->
+  ?clob_token_ids:string list ->
+  ?condition_ids:string list ->
+  ?market_maker_address:string list ->
+  ?liquidity_num_min:float ->
+  ?liquidity_num_max:float ->
+  ?volume_num_min:float ->
+  ?volume_num_max:float ->
+  ?start_date_min:Http_client.Client.Timestamp.t ->
+  ?start_date_max:Http_client.Client.Timestamp.t ->
+  ?end_date_min:Http_client.Client.Timestamp.t ->
+  ?end_date_max:Http_client.Client.Timestamp.t ->
+  ?tag_id:int ->
+  ?related_tags:bool ->
+  ?cyom:bool ->
+  ?uma_resolution_status:string ->
+  ?game_id:string ->
+  ?sports_market_types:string list ->
+  ?rewards_min_size:float ->
+  ?question_ids:string list ->
+  ?include_tag:bool ->
+  ?closed:bool ->
   unit ->
   (market list, Http_client.Client.error_response) result
 (** Get list of markets.
-    @param id Market ID to filter by
-    @param condition_id Condition ID to filter by
-    @param slug Market slug to filter by
-    @param archived Filter by archived status
-    @param active Filter by active status
-    @param closed Filter by closed status
-    @param clob_token_ids CLOB token IDs to filter by
-    @param liquidity_num_min Minimum liquidity
-    @param volume_num_min Minimum volume
-    @param start_date_min Minimum start date (ISO format)
-    @param start_date_max Maximum start date (ISO format)
-    @param end_date_min Minimum end date (ISO format)
-    @param end_date_max Maximum end date (ISO format)
-    @param status Filter by status (active, closed, all)
-    @param order Order field
+    @param limit Maximum number of results (non-negative)
+    @param offset Pagination offset (non-negative)
+    @param order Comma-separated list of fields to order by
     @param ascending Sort ascending if true
-    @param tag_slug Tag slug to filter by
-    @param limit Maximum results
-    @param offset Pagination offset
-    @param cursor Pagination cursor
-    @param next_cursor Next pagination cursor
-    @param slug_size Size for slug in response
-    @param _c Cache buster parameter *)
+    @param id Filter by market IDs (array)
+    @param slug Filter by market slugs (array)
+    @param clob_token_ids Filter by CLOB token IDs (array)
+    @param condition_ids Filter by condition IDs (array)
+    @param market_maker_address Filter by market maker addresses (array)
+    @param liquidity_num_min Minimum liquidity
+    @param liquidity_num_max Maximum liquidity
+    @param volume_num_min Minimum volume
+    @param volume_num_max Maximum volume
+    @param start_date_min Minimum start date
+    @param start_date_max Maximum start date
+    @param end_date_min Minimum end date
+    @param end_date_max Maximum end date
+    @param tag_id Filter by tag ID
+    @param related_tags Include related tags
+    @param cyom Filter by CYOM (create your own market) status
+    @param uma_resolution_status Filter by UMA resolution status
+    @param game_id Filter by game ID
+    @param sports_market_types Filter by sports market types (array)
+    @param rewards_min_size Minimum rewards size
+    @param question_ids Filter by question IDs (array)
+    @param include_tag Include tag data
+    @param closed Filter by closed status *)
 
 val get_market :
-  t -> id:int -> unit -> (market, Http_client.Client.error_response) result
+  t ->
+  id:int ->
+  ?include_tag:bool ->
+  unit ->
+  (market, Http_client.Client.error_response) result
 (** Get a market by ID.
-    @param id Market ID (required) *)
+    @param id Market ID (required)
+    @param include_tag Include tag data *)
 
 val get_market_by_slug :
-  t -> slug:string -> unit -> (market, Http_client.Client.error_response) result
+  t ->
+  slug:string ->
+  ?include_tag:bool ->
+  unit ->
+  (market, Http_client.Client.error_response) result
 (** Get a market by slug.
-    @param slug Market slug (required) *)
+    @param slug Market slug (required)
+    @param include_tag Include tag data *)
 
 val get_market_tags :
   t -> id:int -> unit -> (tag list, Http_client.Client.error_response) result
 (** Get tags for a market.
     @param id Market ID (required) *)
 
-val get_market_description :
-  t ->
-  id:int ->
-  unit ->
-  (market_description, Http_client.Client.error_response) result
-(** Get description for a market.
-    @param id Market ID (required) *)
-
 (** {1 Series Endpoints} *)
 
 val get_series_list :
   t ->
-  ?id:string ->
-  ?ticker:string ->
-  ?slug:string ->
-  ?archived:bool ->
-  ?active:bool ->
-  ?closed:bool ->
-  ?status:status ->
+  ?limit:Http_client.Client.Nonneg_int.t ->
+  ?offset:Http_client.Client.Nonneg_int.t ->
   ?order:string ->
   ?ascending:bool ->
-  ?limit:int ->
-  ?offset:int ->
-  ?cursor:string ->
-  ?next_cursor:string ->
+  ?slug:string list ->
+  ?categories_ids:int list ->
+  ?categories_labels:string list ->
+  ?closed:bool ->
+  ?include_chat:bool ->
+  ?recurrence:string ->
   unit ->
   (series list, Http_client.Client.error_response) result
 (** Get list of series.
-    @param id Series ID to filter by
-    @param ticker Series ticker to filter by
-    @param slug Series slug to filter by
-    @param archived Filter by archived status
-    @param active Filter by active status
-    @param closed Filter by closed status
-    @param status Filter by status (active, closed, all)
-    @param order Order field
+    @param limit Maximum number of results (non-negative)
+    @param offset Pagination offset (non-negative)
+    @param order Comma-separated list of fields to order by
     @param ascending Sort ascending if true
-    @param limit Maximum results
-    @param offset Pagination offset
-    @param cursor Pagination cursor
-    @param next_cursor Next pagination cursor *)
+    @param slug Filter by series slugs (array)
+    @param categories_ids Filter by category IDs (array)
+    @param categories_labels Filter by category labels (array)
+    @param closed Filter by closed status
+    @param include_chat Include chat data
+    @param recurrence Filter by recurrence type *)
 
 val get_series :
-  t -> id:string -> unit -> (series, Http_client.Client.error_response) result
-(** Get a series by ID.
-    @param id Series ID (required) *)
-
-val get_series_summary :
   t ->
-  id:string ->
+  id:int ->
+  ?include_chat:bool ->
   unit ->
-  (series_summary, Http_client.Client.error_response) result
-(** Get a series summary by ID.
-    @param id Series ID (required) *)
+  (series, Http_client.Client.error_response) result
+(** Get a series by ID.
+    @param id Series ID (required)
+    @param include_chat Include chat data *)
 
 (** {1 Comments Endpoints} *)
 
 val get_comments :
   t ->
+  ?limit:Http_client.Client.Nonneg_int.t ->
+  ?offset:Http_client.Client.Nonneg_int.t ->
+  ?order:string ->
+  ?ascending:bool ->
   ?parent_entity_type:parent_entity_type ->
   ?parent_entity_id:int ->
-  ?parent_comment_id:string ->
-  ?user_address:string ->
-  ?limit:int ->
-  ?offset:int ->
+  ?get_positions:bool ->
+  ?holders_only:bool ->
   unit ->
   (comment list, Http_client.Client.error_response) result
 (** Get list of comments.
+    @param limit Maximum number of results (non-negative)
+    @param offset Pagination offset (non-negative)
+    @param order Comma-separated list of fields to order by
+    @param ascending Sort ascending if true
     @param parent_entity_type Entity type (Event, Series, market)
     @param parent_entity_id Entity ID
-    @param parent_comment_id Parent comment ID for replies
-    @param user_address Filter by user address
-    @param limit Maximum results
-    @param offset Pagination offset *)
+    @param get_positions Include position data
+    @param holders_only Filter to holders only *)
 
 val get_comment :
-  t -> id:int -> unit -> (comment, Http_client.Client.error_response) result
+  t ->
+  id:int ->
+  ?get_positions:bool ->
+  unit ->
+  (comment, Http_client.Client.error_response) result
 (** Get a comment by ID.
-    @param id Comment ID (required) *)
+    @param id Comment ID (required)
+    @param get_positions Include position data *)
 
 val get_user_comments :
   t ->
   user_address:string ->
-  ?limit:int ->
-  ?offset:int ->
+  ?limit:Http_client.Client.Nonneg_int.t ->
+  ?offset:Http_client.Client.Nonneg_int.t ->
+  ?order:string ->
+  ?ascending:bool ->
   unit ->
   (comment list, Http_client.Client.error_response) result
 (** Get comments by user address.
     @param user_address User address (required)
-    @param limit Maximum results
-    @param offset Pagination offset *)
+    @param limit Maximum number of results (non-negative)
+    @param offset Pagination offset (non-negative)
+    @param order Comma-separated list of fields to order by
+    @param ascending Sort ascending if true *)
 
 (** {1 Profile Endpoints} *)
 

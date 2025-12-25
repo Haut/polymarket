@@ -45,7 +45,9 @@ let first_market_slug (markets : Gamma_api.Responses.market list) =
   match markets with [] -> None | m :: _ -> m.slug
 
 let first_series_id (series_list : Gamma_api.Responses.series list) =
-  match series_list with [] -> None | s :: _ -> s.id
+  match series_list with
+  | [] -> None
+  | s :: _ -> Option.bind s.id (fun id -> int_of_string_opt id)
 
 let first_tag_id (tags : Gamma_api.Responses.tag list) =
   match tags with [] -> None | t :: _ -> t.id
@@ -54,12 +56,7 @@ let first_tag_slug (tags : Gamma_api.Responses.tag list) =
   match tags with [] -> None | t :: _ -> t.slug
 
 let first_comment_id (comments : Gamma_api.Responses.comment list) =
-  match comments with
-  | [] -> None
-  | c :: _ -> (
-      match c.id with
-      | Some id -> ( try Some (int_of_string id) with _ -> None)
-      | None -> None)
+  match comments with [] -> None | c :: _ -> int_of_string_opt c.id
 
 let first_user_address (comments : Gamma_api.Responses.comment list) =
   match comments with [] -> None | c :: _ -> c.user_address
@@ -161,7 +158,11 @@ let run_demo env =
 
   (* ===== Markets ===== *)
   Logger.header "Markets";
-  let markets = Gamma_api.Client.get_markets client ~limit:10 ~active:true () in
+  let markets =
+    Gamma_api.Client.get_markets client
+      ~limit:(Http_client.Client.Nonneg_int.of_int_exn 10)
+      ()
+  in
   print_result_count "get_markets" markets;
 
   let market_id, market_slug =
@@ -178,17 +179,10 @@ let run_demo env =
           Option.value ~default:"(no question)" m.question);
 
       let market_tags = Gamma_api.Client.get_market_tags client ~id () in
-      print_result_count "get_market_tags" market_tags;
-
-      let description = Gamma_api.Client.get_market_description client ~id () in
-      print_result "get_market_description" description
-        ~on_ok:(fun (d : Gamma_api.Responses.market_description) ->
-          let desc = Option.value ~default:"(none)" d.description in
-          if String.length desc > 50 then String.sub desc 0 50 ^ "..." else desc)
+      print_result_count "get_market_tags" market_tags
   | None ->
       Logger.skip "get_market" "no market ID available";
-      Logger.skip "get_market_tags" "no market ID available";
-      Logger.skip "get_market_description" "no market ID available");
+      Logger.skip "get_market_tags" "no market ID available");
 
   (match market_slug with
   | Some slug ->
@@ -200,7 +194,11 @@ let run_demo env =
 
   (* ===== Series ===== *)
   Logger.header "Series";
-  let series_list = Gamma_api.Client.get_series_list client ~limit:10 () in
+  let series_list =
+    Gamma_api.Client.get_series_list client
+      ~limit:(Http_client.Client.Nonneg_int.of_int_exn 10)
+      ()
+  in
   print_result_count "get_series_list" series_list;
 
   let series_id =
@@ -212,18 +210,8 @@ let run_demo env =
       let series = Gamma_api.Client.get_series client ~id () in
       print_result "get_series" series
         ~on_ok:(fun (s : Gamma_api.Responses.series) ->
-          Option.value ~default:"(no title)" s.title);
-
-      let summary = Gamma_api.Client.get_series_summary client ~id () in
-      print_result "get_series_summary" summary
-        ~on_ok:(fun (s : Gamma_api.Responses.series_summary) ->
-          Printf.sprintf "%s (%d dates, %d weeks)"
-            (Option.value ~default:"(no title)" s.title)
-            (List.length s.event_dates)
-            (List.length s.event_weeks))
-  | None ->
-      Logger.skip "get_series" "no series ID available";
-      Logger.skip "get_series_summary" "no series ID available");
+          Option.value ~default:"(no title)" s.title)
+  | None -> Logger.skip "get_series" "no series ID available");
 
   (* ===== Comments ===== *)
   Logger.header "Comments";
@@ -232,8 +220,8 @@ let run_demo env =
     match event_id with
     | Some eid ->
         Gamma_api.Client.get_comments client
-          ~parent_entity_type:Gamma_api.Query.Event ~parent_entity_id:eid
-          ~limit:10 ()
+          ~limit:(Http_client.Client.Nonneg_int.of_int_exn 10)
+          ~parent_entity_type:Gamma_api.Query.Event ~parent_entity_id:eid ()
     | None -> Error { Http_client.Client.error = "No event ID for comments" }
   in
   print_result_count "get_comments" comments;
@@ -256,7 +244,9 @@ let run_demo env =
   (match user_address with
   | Some addr ->
       let user_comments =
-        Gamma_api.Client.get_user_comments client ~user_address:addr ~limit:5 ()
+        Gamma_api.Client.get_user_comments client ~user_address:addr
+          ~limit:(Http_client.Client.Nonneg_int.of_int_exn 5)
+          ()
       in
       print_result_count "get_user_comments" user_comments
   | None -> Logger.skip "get_user_comments" "no user address available");

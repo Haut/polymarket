@@ -169,15 +169,15 @@ type reaction = {
 (** Comment reaction *)
 
 type comment = {
-  id : string option;
+  id : string;
   body : string option;
   parent_entity_type : string option;
   parent_entity_id : int option;
   parent_comment_id : string option;
   user_address : string option;
   reply_address : string option;
-  created_at : string option;
-  updated_at : string option;
+  created_at : Http_client.Client.Timestamp.t option;
+  updated_at : Http_client.Client.Timestamp.t option;
   profile : comment_profile option;
   reactions : reaction list;
   report_count : int option;
@@ -310,13 +310,13 @@ type market = {
   slug : string option;
   twitter_card_image : string option;
   resolution_source : string option;
-  end_date : string option;
+  end_date : Http_client.Client.Timestamp.t option;
   category : string option;
   amm_type : string option;
   liquidity : string option;
   sponsor_name : string option;
   sponsor_image : string option;
-  start_date : string option;
+  start_date : Http_client.Client.Timestamp.t option;
   x_axis_value : string option;
   y_axis_value : string option;
   denomination_token : string option;
@@ -338,8 +338,8 @@ type market = {
   market_maker_address : string option;
   created_by : int option;
   updated_by : int option;
-  created_at : string option;
-  updated_at : string option;
+  created_at : Http_client.Client.Timestamp.t option;
+  updated_at : Http_client.Client.Timestamp.t option;
   closed_time : string option;
   wide_format : bool option;
   new_ : bool option;
@@ -407,9 +407,9 @@ type market = {
   ready : bool option;
   funded : bool option;
   past_slugs : string option;
-  ready_timestamp : string option;
-  funded_timestamp : string option;
-  accepting_orders_timestamp : string option;
+  ready_timestamp : Http_client.Client.Timestamp.t option;
+  funded_timestamp : Http_client.Client.Timestamp.t option;
+  accepting_orders_timestamp : Http_client.Client.Timestamp.t option;
   competitive : float option;
   rewards_min_size : float option;
   rewards_max_spread : float option;
@@ -438,25 +438,10 @@ type market = {
   uma_resolution_statuses : string option;
   pending_deployment : bool option;
   deploying : bool option;
-  deploying_timestamp : string option;
-  scheduled_deployment_timestamp : string option;
+  deploying_timestamp : Http_client.Client.Timestamp.t option;
+  scheduled_deployment_timestamp : Http_client.Client.Timestamp.t option;
   rfq_enabled : bool option;
-  event_start_time : string option;
-  submitted_by : string option;
-  cyom : bool option;
-  pager_duty_notification_enabled : bool option;
-  approved : bool option;
-  holding_rewards_enabled : bool option;
-  fees_enabled : bool option;
-  requires_translation : bool option;
-  neg_risk : bool option;
-  neg_risk_market_id : string option;
-  neg_risk_request_id : string option;
-  clob_rewards : clob_reward list;
-  sent_discord : bool option;
-  twitter_card_location : string option;
-  twitter_card_last_refreshed : string option;
-  twitter_card_last_validated : string option;
+  event_start_time : Http_client.Client.Timestamp.t option;
 }
 (** Market *)
 
@@ -577,14 +562,14 @@ and series = {
   published_at : string option;
   created_by : string option;
   updated_by : string option;
-  created_at : string option;
-  updated_at : string option;
+  created_at : Http_client.Client.Timestamp.t option;
+  updated_at : Http_client.Client.Timestamp.t option;
   comments_enabled : bool option;
   competitive : string option;
   volume_24hr : float option;
   volume : float option;
   liquidity : float option;
-  start_date : string option;
+  start_date : Http_client.Client.Timestamp.t option;
   pyth_token_id : string option;
   cg_asset_name : string option;
   score : int option;
@@ -594,7 +579,6 @@ and series = {
   tags : tag list;
   comment_count : int option;
   chats : chat list;
-  requires_translation : bool option;
 }
 (** Series *)
 
