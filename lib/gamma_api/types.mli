@@ -599,7 +599,7 @@ and event = {
   country_name : string option;
   election_type : string option;
   requires_translation : bool option;
-  game_id : string option;
+  game_id : int option;
 }
 (** Event *)
 
@@ -893,40 +893,3 @@ val equal_sports_market_types_response :
 
 val equal_markets_information_body :
   markets_information_body -> markets_information_body -> bool
-
-(** {1 Empty Constructors}
-
-    These provide convenient defaults for testing and creating fixtures. *)
-
-val empty_pagination : pagination
-val empty_count : count
-val empty_event_tweet_count : event_tweet_count
-val empty_market_description : market_description
-val empty_image_optimization : image_optimization
-val empty_team : team
-val empty_tag : tag
-val empty_related_tag : related_tag
-val empty_category : category
-val empty_event_creator : event_creator
-val empty_chat : chat
-val empty_template : template
-val empty_search_tag : search_tag
-val empty_comment_position : comment_position
-val empty_comment_profile : comment_profile
-val empty_reaction : reaction
-val empty_comment : comment
-val empty_public_profile_user : public_profile_user
-val empty_public_profile_error : public_profile_error
-val empty_public_profile_response : public_profile_response
-val empty_profile : profile
-val empty_collection : collection
-val empty_series_summary : series_summary
-val empty_clob_reward : clob_reward
-val empty_market : market
-val empty_event : event
-val empty_series : series
-val empty_events_pagination : events_pagination
-val empty_search : search
-val empty_sports_metadata : sports_metadata
-val empty_sports_market_types_response : sports_market_types_response
-val empty_markets_information_body : markets_information_body
