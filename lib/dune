@@ -3,6 +3,8 @@
 (library
  (name polymarket)
  (public_name polymarket)
+ (flags
+  (:standard -w +32))
  (libraries
   yojson
   ppx_yojson_conv_lib
