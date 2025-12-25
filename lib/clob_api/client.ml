@@ -95,7 +95,7 @@ let get_price_history t ~market ?start_ts ?end_ts ?interval ?fidelity () =
   |> Http_client.Client.add "startTs" (Option.map string_of_int start_ts)
   |> Http_client.Client.add "endTs" (Option.map string_of_int end_ts)
   |> Http_client.Client.add "interval"
-       (Option.map Params.string_of_time_interval interval)
+       (Option.map string_of_time_interval interval)
   |> Http_client.Client.add_int "fidelity" fidelity
   |> Http_client.Client.get_json t.http "/prices-history"
        price_history_of_yojson

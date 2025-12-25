@@ -17,7 +17,6 @@
     ]} *)
 
 open Types
-open Params
 
 (** {1 Client Configuration} *)
 

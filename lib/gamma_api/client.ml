@@ -4,7 +4,6 @@
     Polymarket Gamma API (https://gamma-api.polymarket.com). *)
 
 open Types
-open Params
 
 (** {1 Client Configuration} *)
 

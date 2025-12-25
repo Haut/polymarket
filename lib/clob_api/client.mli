@@ -100,7 +100,7 @@ val get_price_history :
   market:string ->
   ?start_ts:int ->
   ?end_ts:int ->
-  ?interval:Params.time_interval ->
+  ?interval:Types.time_interval ->
   ?fidelity:int ->
   unit ->
   (Types.price_history, Types.error_response) result

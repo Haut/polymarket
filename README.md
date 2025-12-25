@@ -72,8 +72,8 @@ let user_address = "0x1a9a6f917a87a4f02c33f8530c6a8998f1bc8d59" in
 match Data_api.Client.get_positions client
   ~user:user_address
   ~limit:10
-  ~sort_by:Data_api.Params.CASHPNL
-  ~sort_direction:Data_api.Params.DESC
+  ~sort_by:Data_api.Types.CASHPNL
+  ~sort_direction:Data_api.Types.DESC
   ()
 with
 | Ok positions ->
@@ -110,9 +110,9 @@ with
 
 ```ocaml
 match Data_api.Client.get_trader_leaderboard client
-  ~category:Data_api.Params.POLITICS
-  ~time_period:Data_api.Params.WEEK
-  ~order_by:Data_api.Params.PNL
+  ~category:Data_api.Types.POLITICS
+  ~time_period:Data_api.Types.WEEK
+  ~order_by:Data_api.Types.PNL
   ~limit:10
   ()
 with

@@ -234,7 +234,7 @@ let run_demo env =
     match event_id with
     | Some eid ->
         Gamma_api.Client.get_comments client
-          ~parent_entity_type:Gamma_api.Params.Event ~parent_entity_id:eid
+          ~parent_entity_type:Gamma_api.Types.Event ~parent_entity_id:eid
           ~limit:10 ()
     | None -> Error { Http_client.Client.error = "No event ID for comments" }
   in

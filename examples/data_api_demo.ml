@@ -129,7 +129,7 @@ let run_demo env =
   Logger.header "Builder Leaderboard";
   let builders =
     Data_api.Client.get_builder_leaderboard client
-      ~time_period:Data_api.Params.WEEK ~limit:5 ()
+      ~time_period:Data_api.Types.WEEK ~limit:5 ()
   in
   print_result_count "get_builder_leaderboard" builders;
   (match builders with
@@ -142,7 +142,7 @@ let run_demo env =
   (* Builder Volume *)
   Logger.header "Builder Volume";
   let builder_vol =
-    Data_api.Client.get_builder_volume client ~time_period:Data_api.Params.WEEK
+    Data_api.Client.get_builder_volume client ~time_period:Data_api.Types.WEEK
       ()
   in
   print_result_count "get_builder_volume" builder_vol;
@@ -151,8 +151,8 @@ let run_demo env =
   Logger.header "Trader Leaderboard";
   let traders =
     Data_api.Client.get_trader_leaderboard client
-      ~category:Data_api.Params.OVERALL ~time_period:Data_api.Params.WEEK
-      ~order_by:Data_api.Params.PNL ~limit:5 ()
+      ~category:Data_api.Types.OVERALL ~time_period:Data_api.Types.WEEK
+      ~order_by:Data_api.Types.PNL ~limit:5 ()
   in
   print_result_count "get_trader_leaderboard" traders;
   (match traders with

@@ -209,7 +209,7 @@ let run_demo env =
       | Some cond_id ->
           let history =
             Clob_api.Client.get_price_history clob_client ~market:cond_id
-              ~interval:Clob_api.Params.DAY_1 ()
+              ~interval:Clob_api.Types.DAY_1 ()
           in
           print_result "get_price_history" history
             ~on_ok:(fun (h : Clob_api.Types.price_history) ->
