@@ -434,14 +434,6 @@ val get_public_profile :
 (** Get public profile by address.
     @param address User address (required) *)
 
-val get_profile :
-  t ->
-  user_address:string ->
-  unit ->
-  (profile, Http_client.Client.error_response) result
-(** Get profile by user address.
-    @param user_address User address (required) *)
-
 (** {1 Search Endpoint} *)
 
 val public_search :

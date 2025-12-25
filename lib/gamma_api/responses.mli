@@ -198,7 +198,7 @@ type public_profile_error = { type_ : string option; error : string option }
 (** Public profile error response *)
 
 type public_profile_response = {
-  created_at : string option;
+  created_at : Http_client.Client.Timestamp.t option;
   proxy_wallet : string option;
   profile_image : string option;
   display_username_public : bool option;

@@ -280,12 +280,6 @@ let get_public_profile t ~address () =
   |> Http_client.Client.get_json t "/public-profile"
        public_profile_response_of_yojson
 
-let get_profile t ~user_address () =
-  []
-  |> Http_client.Client.get_json t
-       (Printf.sprintf "/profiles/user_address/%s" user_address)
-       profile_of_yojson
-
 (** {1 Search Endpoint} *)
 
 let public_search t ~q ?cache ?events_status ?limit_per_type ?page ?events_tag

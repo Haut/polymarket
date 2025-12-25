@@ -262,13 +262,6 @@ let run_demo env =
     ~on_ok:(fun (p : Gamma_api.Responses.public_profile_response) ->
       Option.value ~default:"(no name)" p.name);
 
-  let profile =
-    Gamma_api.Client.get_profile client ~user_address:test_address ()
-  in
-  print_result "get_profile" profile
-    ~on_ok:(fun (p : Gamma_api.Responses.profile) ->
-      Option.value ~default:"(no pseudonym)" p.pseudonym);
-
   (* ===== Sports ===== *)
   Logger.header "Sports";
   let sports = Gamma_api.Client.get_sports client () in

@@ -9,80 +9,57 @@ open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 (** {1 Response Types} *)
 
 type pagination = {
-  has_more : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "hasMore"]
-  total_results : int option;
-      [@default None] [@yojson_drop_default_if_none] [@key "totalResults"]
+  has_more : bool option; [@key "hasMore"]
+  total_results : int option; [@key "totalResults"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Pagination information *)
 
-type count = {
-  count : int option; [@default None] [@yojson_drop_default_if_none]
-}
-[@@deriving yojson, show, eq]
+type count = { count : int option [@key "count"] }
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Generic count response *)
 
-type event_tweet_count = {
-  tweet_count : int option;
-      [@default None] [@yojson_drop_default_if_none] [@key "tweetCount"]
-}
-[@@deriving yojson, show, eq]
+type event_tweet_count = { tweet_count : int option [@key "tweetCount"] }
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Event tweet count response *)
 
 type market_description = {
-  id : string option; [@default None] [@yojson_drop_default_if_none]
+  id : string option;
   condition_id : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "conditionId"]
-  market_maker_address : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "marketMakerAddress"]
-  description : string option; [@default None] [@yojson_drop_default_if_none]
+  market_maker_address : string option; [@key "marketMakerAddress"]
+  description : string option;
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Market description response *)
 
 type image_optimization = {
-  id : string option; [@default None] [@yojson_drop_default_if_none]
+  id : string option;
   image_url_source : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "imageUrlSource"]
-  image_url_optimized : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "imageUrlOptimized"]
-  image_size_kb_source : float option;
-      [@default None] [@yojson_drop_default_if_none] [@key "imageSizeKbSource"]
-  image_size_kb_optimized : float option;
-      [@default None]
-      [@yojson_drop_default_if_none]
-      [@key "imageSizeKbOptimized"]
+  image_url_optimized : string option; [@key "imageUrlOptimized"]
+  image_size_kb_source : float option; [@key "imageSizeKbSource"]
+  image_size_kb_optimized : float option; [@key "imageSizeKbOptimized"]
   image_optimized_complete : bool option;
-      [@default None]
-      [@yojson_drop_default_if_none]
-      [@key "imageOptimizedComplete"]
   image_optimized_last_updated : string option;
-      [@default None]
-      [@yojson_drop_default_if_none]
       [@key "imageOptimizedLastUpdated"]
-  rel_id : int option;
-      [@default None] [@yojson_drop_default_if_none] [@key "relID"]
-  field : string option; [@default None] [@yojson_drop_default_if_none]
-  relname : string option; [@default None] [@yojson_drop_default_if_none]
+  rel_id : int option; [@key "relID"]
+  field : string option;
+  relname : string option;
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Image optimization data *)
 
 (** {1 Basic Domain Types} *)
 
 type team = {
-  id : int option; [@default None]
-  name : string option; [@default None]
-  league : string option; [@default None]
-  record : string option; [@default None]
-  logo : string option; [@default None]
-  abbreviation : string option; [@default None]
-  alias : string option; [@default None]
-  created_at : Http_client.Client.Timestamp.t option;
-      [@default None] [@key "createdAt"]
-  updated_at : Http_client.Client.Timestamp.t option;
-      [@default None] [@key "updatedAt"]
+  id : int option;
+  name : string option;
+  league : string option;
+  record : string option;
+  logo : string option;
+  abbreviation : string option;
+  alias : string option;
+  created_at : Http_client.Client.Timestamp.t option; [@key "createdAt"]
+  updated_at : Http_client.Client.Timestamp.t option; [@key "updatedAt"]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Sports team *)
@@ -113,149 +90,105 @@ type related_tag = {
 (** Related tag relationship *)
 
 type category = {
-  id : string option; [@default None] [@yojson_drop_default_if_none]
-  label : string option; [@default None] [@yojson_drop_default_if_none]
-  parent_category : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "parentCategory"]
-  slug : string option; [@default None] [@yojson_drop_default_if_none]
-  published_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "publishedAt"]
-  created_by : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "createdBy"]
-  updated_by : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "updatedBy"]
-  created_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "createdAt"]
-  updated_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "updatedAt"]
+  id : string option;
+  label : string option;
+  parent_category : string option; [@key "parentCategory"]
+  slug : string option;
+  published_at : string option; [@key "publishedAt"]
+  created_by : string option; [@key "createdBy"]
+  updated_by : string option; [@key "updatedBy"]
+  created_at : string option; [@key "createdAt"]
+  updated_at : string option; [@key "updatedAt"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Market category *)
 
 type event_creator = {
-  id : string option; [@default None] [@yojson_drop_default_if_none]
+  id : string option;
   creator_name : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "creatorName"]
-  creator_handle : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "creatorHandle"]
-  creator_url : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "creatorUrl"]
-  creator_image : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "creatorImage"]
-  created_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "createdAt"]
-  updated_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "updatedAt"]
+  creator_handle : string option; [@key "creatorHandle"]
+  creator_url : string option; [@key "creatorUrl"]
+  creator_image : string option; [@key "creatorImage"]
+  created_at : string option; [@key "createdAt"]
+  updated_at : string option; [@key "updatedAt"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Event creator *)
 
 type chat = {
-  id : string option; [@default None] [@yojson_drop_default_if_none]
+  id : string option;
   channel_id : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "channelId"]
-  channel_name : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "channelName"]
-  channel_image : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "channelImage"]
-  live : bool option; [@default None] [@yojson_drop_default_if_none]
-  start_time : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "startTime"]
-  end_time : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "endTime"]
+  channel_name : string option; [@key "channelName"]
+  channel_image : string option; [@key "channelImage"]
+  live : bool option;
+  start_time : string option; [@key "startTime"]
+  end_time : string option; [@key "endTime"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Chat channel *)
 
 type template = {
-  id : string option; [@default None] [@yojson_drop_default_if_none]
+  id : string option;
   event_title : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "eventTitle"]
-  event_slug : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "eventSlug"]
-  event_image : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "eventImage"]
-  market_title : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "marketTitle"]
-  description : string option; [@default None] [@yojson_drop_default_if_none]
-  resolution_source : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "resolutionSource"]
-  neg_risk : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "negRisk"]
-  sort_by : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "sortBy"]
-  show_market_images : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "showMarketImages"]
-  series_slug : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "seriesSlug"]
-  outcomes : string option; [@default None] [@yojson_drop_default_if_none]
+  event_slug : string option; [@key "eventSlug"]
+  event_image : string option; [@key "eventImage"]
+  market_title : string option; [@key "marketTitle"]
+  description : string option;
+  resolution_source : string option; [@key "resolutionSource"]
+  neg_risk : bool option; [@key "negRisk"]
+  sort_by : string option; [@key "sortBy"]
+  show_market_images : bool option; [@key "showMarketImages"]
+  series_slug : string option; [@key "seriesSlug"]
+  outcomes : string option;
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Event template *)
 
 type search_tag = {
-  id : string option; [@default None] [@yojson_drop_default_if_none]
-  label : string option; [@default None] [@yojson_drop_default_if_none]
-  slug : string option; [@default None] [@yojson_drop_default_if_none]
-  event_count : int option;
-      [@default None] [@yojson_drop_default_if_none] [@key "event_count"]
+  id : string option;
+  label : string option;
+  slug : string option;
+  event_count : int option; [@key "event_count"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Search result tag *)
 
 (** {1 Comment Types} *)
 
 type comment_position = {
-  token_id : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "tokenId"]
-  position_size : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "positionSize"]
+  token_id : string option; [@key "tokenId"]
+  position_size : string option; [@key "positionSize"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Position held by a commenter *)
 
 type comment_profile = {
-  name : string option; [@default None] [@yojson_drop_default_if_none]
-  pseudonym : string option; [@default None] [@yojson_drop_default_if_none]
-  display_username_public : bool option;
-      [@default None]
-      [@yojson_drop_default_if_none]
-      [@key "displayUsernamePublic"]
-  bio : string option; [@default None] [@yojson_drop_default_if_none]
-  is_mod : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "isMod"]
-  is_creator : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "isCreator"]
-  proxy_wallet : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "proxyWallet"]
-  base_address : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "baseAddress"]
+  name : string option;
+  pseudonym : string option;
+  display_username_public : bool option; [@key "displayUsernamePublic"]
+  bio : string option;
+  is_mod : bool option; [@key "isMod"]
+  is_creator : bool option; [@key "isCreator"]
+  proxy_wallet : string option; [@key "proxyWallet"]
+  base_address : string option; [@key "baseAddress"]
   profile_image : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "profileImage"]
   profile_image_optimized : image_optimization option;
-      [@default None]
-      [@yojson_drop_default_if_none]
       [@key "profileImageOptimized"]
-  positions : comment_position list; [@default []]
+  positions : comment_position list;
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Comment author profile *)
 
 type reaction = {
-  id : string option; [@default None] [@yojson_drop_default_if_none]
-  comment_id : int option;
-      [@default None] [@yojson_drop_default_if_none] [@key "commentID"]
-  reaction_type : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "reactionType"]
-  icon : string option; [@default None] [@yojson_drop_default_if_none]
-  user_address : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "userAddress"]
+  id : string option;
+  comment_id : int option; [@key "commentID"]
+  reaction_type : string option; [@key "reactionType"]
+  icon : string option; [@key "userAddress"]
+  user_address : string option; [@key "createdAt"]
   created_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "createdAt"]
   profile : comment_profile option;
-      [@default None] [@yojson_drop_default_if_none]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Comment reaction *)
 
 type comment = {
@@ -279,180 +212,127 @@ type comment = {
 (** {1 Profile Types} *)
 
 type public_profile_user = {
-  id : string option; [@default None] [@yojson_drop_default_if_none]
-  creator : bool option; [@default None] [@yojson_drop_default_if_none]
-  mod_ : bool option; [@default None] [@yojson_drop_default_if_none] [@key "mod"]
+  id : string option;
+  creator : bool option;
+  mod_ : bool option; [@key "mod"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Public profile user *)
 
 type public_profile_error = {
-  type_ : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "type"]
-  error : string option; [@default None] [@yojson_drop_default_if_none]
+  type_ : string option; [@key "type"]
+  error : string option;
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Public profile error response *)
 
 type public_profile_response = {
-  created_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "createdAt"]
-  proxy_wallet : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "proxyWallet"]
-  profile_image : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "profileImage"]
-  display_username_public : bool option;
-      [@default None]
-      [@yojson_drop_default_if_none]
-      [@key "displayUsernamePublic"]
-  bio : string option; [@default None] [@yojson_drop_default_if_none]
-  pseudonym : string option; [@default None] [@yojson_drop_default_if_none]
-  name : string option; [@default None] [@yojson_drop_default_if_none]
+  created_at : Http_client.Client.Timestamp.t option; [@key "createdAt"]
+  proxy_wallet : string option; [@key "proxyWallet"]
+  profile_image : string option; [@key "profileImage"]
+  display_username_public : bool option; [@key "displayUsernamePublic"]
+  bio : string option;
+  pseudonym : string option;
+  name : string option;
   users : public_profile_user list option;
-      [@default None] [@yojson_drop_default_if_none]
-  x_username : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "xUsername"]
-  verified_badge : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "verifiedBadge"]
+  x_username : string option; [@key "xUsername"]
+  verified_badge : bool option; [@key "verifiedBadge"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Public profile response *)
 
 type profile = {
-  id : string option; [@default None] [@yojson_drop_default_if_none]
-  name : string option; [@default None] [@yojson_drop_default_if_none]
-  user : int option; [@default None] [@yojson_drop_default_if_none]
-  referral : string option; [@default None] [@yojson_drop_default_if_none]
-  created_by : int option;
-      [@default None] [@yojson_drop_default_if_none] [@key "createdBy"]
-  updated_by : int option;
-      [@default None] [@yojson_drop_default_if_none] [@key "updatedBy"]
-  created_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "createdAt"]
-  updated_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "updatedAt"]
+  id : string option;
+  name : string option;
+  user : int option;
+  referral : string option;
+  created_by : int option; [@key "createdBy"]
+  updated_by : int option; [@key "updatedBy"]
+  created_at : string option; [@key "createdAt"]
+  updated_at : string option; [@key "updatedAt"]
   utm_source : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "utmSource"]
-  utm_medium : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "utmMedium"]
-  utm_campaign : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "utmCampaign"]
-  utm_content : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "utmContent"]
-  utm_term : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "utmTerm"]
-  wallet_activated : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "walletActivated"]
+  utm_medium : string option; [@key "utmMedium"]
+  utm_campaign : string option; [@key "utmCampaign"]
+  utm_content : string option; [@key "utmContent"]
+  utm_term : string option; [@key "utmTerm"]
+  wallet_activated : bool option; [@key "walletActivated"]
   pseudonym : string option; [@default None] [@yojson_drop_default_if_none]
-  display_username_public : bool option;
-      [@default None]
-      [@yojson_drop_default_if_none]
-      [@key "displayUsernamePublic"]
-  profile_image : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "profileImage"]
-  bio : string option; [@default None] [@yojson_drop_default_if_none]
-  proxy_wallet : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "proxyWallet"]
+  display_username_public : bool option; [@key "displayUsernamePublic"]
+  profile_image : string option; [@key "profileImage"]
+  bio : string option;
+  proxy_wallet : string option; [@key "proxyWallet"]
   profile_image_optimized : image_optimization option;
-      [@default None]
-      [@yojson_drop_default_if_none]
       [@key "profileImageOptimized"]
-  is_close_only : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "isCloseOnly"]
-  is_cert_req : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "isCertReq"]
-  cert_req_date : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "certReqDate"]
+  is_close_only : bool option; [@key "isCloseOnly"]
+  is_cert_req : bool option; [@key "isCertReq"]
+  cert_req_date : string option; [@key "certReqDate"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** User profile *)
 
 (** {1 Collection Type} *)
 
 type collection = {
-  id : string option; [@default None] [@yojson_drop_default_if_none]
-  ticker : string option; [@default None] [@yojson_drop_default_if_none]
-  slug : string option; [@default None] [@yojson_drop_default_if_none]
-  title : string option; [@default None] [@yojson_drop_default_if_none]
-  subtitle : string option; [@default None] [@yojson_drop_default_if_none]
-  collection_type : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "collectionType"]
-  description : string option; [@default None] [@yojson_drop_default_if_none]
-  tags : string option; [@default None] [@yojson_drop_default_if_none]
-  image : string option; [@default None] [@yojson_drop_default_if_none]
-  icon : string option; [@default None] [@yojson_drop_default_if_none]
-  header_image : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "headerImage"]
-  layout : string option; [@default None] [@yojson_drop_default_if_none]
-  active : bool option; [@default None] [@yojson_drop_default_if_none]
-  closed : bool option; [@default None] [@yojson_drop_default_if_none]
-  archived : bool option; [@default None] [@yojson_drop_default_if_none]
+  id : string option;
+  ticker : string option;
+  slug : string option;
+  title : string option;
+  subtitle : string option;
+  collection_type : string option; [@key "collectionType"]
+  description : string option;
+  tags : string option;
+  image : string option;
+  icon : string option;
+  header_image : string option; [@key "headerImage"]
+  layout : string option;
+  active : bool option;
+  closed : bool option;
+  archived : bool option;
   new_ : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "new"]
-  featured : bool option; [@default None] [@yojson_drop_default_if_none]
-  restricted : bool option; [@default None] [@yojson_drop_default_if_none]
-  is_template : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "isTemplate"]
-  template_variables : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "templateVariables"]
-  published_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "publishedAt"]
-  created_by : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "createdBy"]
-  updated_by : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "updatedBy"]
-  created_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "createdAt"]
-  updated_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "updatedAt"]
-  comments_enabled : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "commentsEnabled"]
+  featured : bool option;
+  restricted : bool option;
+  is_template : bool option; [@key "isTemplate"]
+  template_variables : string option; [@key "templateVariables"]
+  published_at : string option; [@key "publishedAt"]
+  created_by : string option; [@key "createdBy"]
+  updated_by : string option; [@key "updatedBy"]
+  created_at : string option; [@key "createdAt"]
+  updated_at : string option; [@key "updatedAt"]
+  comments_enabled : bool option; [@key "commentsEnabled"]
   image_optimized : image_optimization option;
-      [@default None] [@yojson_drop_default_if_none] [@key "imageOptimized"]
-  icon_optimized : image_optimization option;
-      [@default None] [@yojson_drop_default_if_none] [@key "iconOptimized"]
+  icon_optimized : image_optimization option; [@key "iconOptimized"]
   header_image_optimized : image_optimization option;
-      [@default None]
-      [@yojson_drop_default_if_none]
       [@key "headerImageOptimized"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Collection of events/markets *)
 
 (** {1 Series Summary Type} *)
 
 type series_summary = {
-  id : string option; [@default None] [@yojson_drop_default_if_none]
-  title : string option; [@default None] [@yojson_drop_default_if_none]
-  slug : string option; [@default None] [@yojson_drop_default_if_none]
-  event_dates : string list; [@default []] [@key "eventDates"]
-  event_weeks : int list; [@default []] [@key "eventWeeks"]
+  id : string option;
+  title : string option;
+  slug : string option;
+  event_dates : string list; [@key "eventDates"]
+  event_weeks : int list; [@key "eventWeeks"]
   earliest_open_week : int option;
-      [@default None] [@yojson_drop_default_if_none] [@key "earliest_open_week"]
   earliest_open_date : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "earliest_open_date"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Series summary *)
 
 (** {1 CLOB Rewards Type} *)
 
 type clob_reward = {
-  id : string option; [@default None] [@yojson_drop_default_if_none]
+  id : string option;
   condition_id : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "conditionId"]
   asset_address : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "assetAddress"]
   rewards_amount : float option;
-      [@default None] [@yojson_drop_default_if_none] [@key "rewardsAmount"]
   rewards_daily_rate : float option;
-      [@default None] [@yojson_drop_default_if_none] [@key "rewardsDailyRate"]
   start_date : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "startDate"]
   end_date : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "endDate"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** CLOB reward configuration *)
 
 (** {1 Mutually Recursive Types: Market, Event, Series}
@@ -750,37 +630,32 @@ and series = {
 
 (** {1 Pagination Response Types} *)
 
-type events_pagination = {
-  data : event list; [@default []]
-  pagination : pagination option; [@default None] [@yojson_drop_default_if_none]
-}
-[@@deriving yojson, show, eq]
+type events_pagination = { data : event list; pagination : pagination option }
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Paginated events response *)
 
 type search = {
-  events : event list option; [@default None] [@yojson_drop_default_if_none]
-  tags : search_tag list option; [@default None] [@yojson_drop_default_if_none]
-  profiles : profile list option; [@default None] [@yojson_drop_default_if_none]
-  pagination : pagination option; [@default None] [@yojson_drop_default_if_none]
+  events : event list option;
+  tags : search_tag list option;
+  profiles : profile list option;
+  pagination : pagination option;
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Search results *)
 
 (** {1 Sports Types} *)
 
 type sports_metadata = {
   sport : string option; [@default None]
-  image : string option; [@default None]
-  resolution : string option; [@default None]
-  ordering : string option; [@default None]
-  tags : string option; [@default None]
-  series : string option; [@default None]
+  image : string option;
+  resolution : string option;
+  ordering : string option;
+  tags : string option;
+  series : string option;
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Sports metadata *)
 
-type sports_market_types_response = {
-  market_types : string list; [@default []] [@key "marketTypes"]
-}
+type sports_market_types_response = { market_types : string list }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Sports market types response *)
