@@ -105,6 +105,13 @@ val add_string_array : string -> string list option -> params -> params
 (** Add an optional string array parameter, adding each value as a separate
     query parameter with the same key (e.g., ?league=NBA&league=NFL) *)
 
+val add_int_array : string -> int list option -> params -> params
+(** Add an optional int array parameter, adding each value as a separate query
+    parameter with the same key (e.g., ?id=1&id=2&id=3) *)
+
+val add_timestamp : string -> Timestamp.t option -> params -> params
+(** Add an optional timestamp parameter (ISO 8601 format) *)
+
 (** {1 HTTP Request Functions} *)
 
 val build_uri : string -> string -> params -> Uri.t

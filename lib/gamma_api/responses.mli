@@ -60,11 +60,10 @@ type tag = {
   published_at : string option;
   created_by : int option;
   updated_by : int option;
-  created_at : string option;
-  updated_at : string option;
+  created_at : Http_client.Client.Timestamp.t option;
+  updated_at : Http_client.Client.Timestamp.t option;
   force_hide : bool option;
   is_carousel : bool option;
-  requires_translation : bool option;
 }
 (** Tag for categorization *)
 
@@ -469,9 +468,9 @@ and event = {
   subtitle : string option;
   description : string option;
   resolution_source : string option;
-  start_date : string option;
-  creation_date : string option;
-  end_date : string option;
+  start_date : Http_client.Client.Timestamp.t option;
+  creation_date : Http_client.Client.Timestamp.t option;
+  end_date : Http_client.Client.Timestamp.t option;
   image : string option;
   icon : string option;
   active : bool option;
@@ -491,8 +490,8 @@ and event = {
   published_at : string option;
   created_by : string option;
   updated_by : string option;
-  created_at : string option;
-  updated_at : string option;
+  created_at : Http_client.Client.Timestamp.t option;
+  updated_at : Http_client.Client.Timestamp.t option;
   comments_enabled : bool option;
   competitive : float option;
   volume_24hr : float option;
@@ -519,14 +518,14 @@ and event = {
   collections : collection list;
   tags : tag list;
   cyom : bool option;
-  closed_time : string option;
+  closed_time : Http_client.Client.Timestamp.t option;
   show_all_outcomes : bool option;
   show_market_images : bool option;
   automatically_resolved : bool option;
   enable_neg_risk : bool option;
   automatically_active : bool option;
   event_date : string option;
-  start_time : string option;
+  start_time : Http_client.Client.Timestamp.t option;
   event_week : int option;
   series_slug : string option;
   score : string option;
@@ -534,7 +533,7 @@ and event = {
   period : string option;
   live : bool option;
   ended : bool option;
-  finished_timestamp : string option;
+  finished_timestamp : Http_client.Client.Timestamp.t option;
   gmp_chart_mode : string option;
   event_creators : event_creator list;
   tweet_count : int option;
@@ -549,14 +548,9 @@ and event = {
   carousel_map : string option;
   pending_deployment : bool option;
   deploying : bool option;
-  deploying_timestamp : string option;
-  scheduled_deployment_timestamp : string option;
+  deploying_timestamp : Http_client.Client.Timestamp.t option;
+  scheduled_deployment_timestamp : Http_client.Client.Timestamp.t option;
   game_status : string option;
-  neg_risk_augmented : bool option;
-  country_name : string option;
-  election_type : string option;
-  requires_translation : bool option;
-  game_id : int option;
 }
 (** Event *)
 

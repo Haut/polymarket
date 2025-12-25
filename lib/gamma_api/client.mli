@@ -164,63 +164,85 @@ val get_related_tag_tags_by_slug :
 
 val get_events :
   t ->
-  ?id:string ->
-  ?ticker:string ->
-  ?slug:string ->
-  ?archived:bool ->
+  ?limit:Http_client.Client.Nonneg_int.t ->
+  ?offset:Http_client.Client.Nonneg_int.t ->
+  ?order:string list ->
+  ?ascending:bool ->
+  ?id:int list ->
+  ?tag_id:int ->
+  ?exclude_tag_id:int list ->
+  ?slug:string list ->
+  ?tag_slug:string ->
+  ?related_tags:bool ->
   ?active:bool ->
+  ?archived:bool ->
+  ?featured:bool ->
+  ?cyom:bool ->
+  ?include_chat:bool ->
+  ?include_template:bool ->
+  ?recurrence:string ->
   ?closed:bool ->
   ?liquidity_min:float ->
-  ?end_date_min:string ->
-  ?end_date_max:string ->
-  ?start_date_min:string ->
-  ?start_date_max:string ->
-  ?status:status ->
-  ?order:string ->
-  ?ascending:bool ->
-  ?tag:string ->
-  ?tag_slug:string ->
-  ?limit:int ->
-  ?offset:int ->
-  ?cursor:string ->
-  ?next_cursor:string ->
-  ?slug_size:slug_size ->
-  ?_c:string ->
+  ?liquidity_max:float ->
+  ?volume_min:float ->
+  ?volume_max:float ->
+  ?start_date_min:Http_client.Client.Timestamp.t ->
+  ?start_date_max:Http_client.Client.Timestamp.t ->
+  ?end_date_min:Http_client.Client.Timestamp.t ->
+  ?end_date_max:Http_client.Client.Timestamp.t ->
   unit ->
   (event list, Http_client.Client.error_response) result
-(** Get events list.
-    @param id Event ID to filter by
-    @param ticker Event ticker to filter by
-    @param slug Event slug to filter by
-    @param archived Filter by archived status
+(** List events.
+    @param limit Maximum number of results (non-negative)
+    @param offset Pagination offset (non-negative)
+    @param order Fields to order by
+    @param ascending Sort ascending if true
+    @param id Filter by event IDs (array)
+    @param tag_id Filter by tag ID
+    @param exclude_tag_id Exclude events with these tag IDs (array)
+    @param slug Filter by event slugs (array)
+    @param tag_slug Filter by tag slug
+    @param related_tags Include related tags
     @param active Filter by active status
+    @param archived Filter by archived status
+    @param featured Filter by featured status
+    @param cyom Filter by CYOM (create your own market) status
+    @param include_chat Include chat data
+    @param include_template Include template data
+    @param recurrence Filter by recurrence type
     @param closed Filter by closed status
     @param liquidity_min Minimum liquidity
-    @param end_date_min Minimum end date (ISO format)
-    @param end_date_max Maximum end date (ISO format)
-    @param start_date_min Minimum start date (ISO format)
-    @param start_date_max Maximum start date (ISO format)
-    @param status Filter by status (active, closed, all)
-    @param order Order field
-    @param ascending Sort ascending if true
-    @param tag Tag to filter by
-    @param tag_slug Tag slug to filter by
-    @param limit Maximum results
-    @param offset Pagination offset
-    @param cursor Pagination cursor
-    @param next_cursor Next pagination cursor
-    @param slug_size Size for slug in response
-    @param _c Cache buster parameter *)
+    @param liquidity_max Maximum liquidity
+    @param volume_min Minimum volume
+    @param volume_max Maximum volume
+    @param start_date_min Minimum start date
+    @param start_date_max Maximum start date
+    @param end_date_min Minimum end date
+    @param end_date_max Maximum end date *)
 
 val get_event :
-  t -> id:int -> unit -> (event, Http_client.Client.error_response) result
+  t ->
+  id:int ->
+  ?include_chat:bool ->
+  ?include_template:bool ->
+  unit ->
+  (event, Http_client.Client.error_response) result
 (** Get an event by ID.
-    @param id Event ID (required) *)
+    @param id Event ID (required)
+    @param include_chat Include chat data
+    @param include_template Include template data *)
 
 val get_event_by_slug :
-  t -> slug:string -> unit -> (event, Http_client.Client.error_response) result
+  t ->
+  slug:string ->
+  ?include_chat:bool ->
+  ?include_template:bool ->
+  unit ->
+  (event, Http_client.Client.error_response) result
 (** Get an event by slug.
-    @param slug Event slug (required) *)
+    @param slug Event slug (required)
+    @param include_chat Include chat data
+    @param include_template Include template data *)
 
 val get_event_tags :
   t -> id:int -> unit -> (tag list, Http_client.Client.error_response) result

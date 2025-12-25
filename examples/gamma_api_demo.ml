@@ -91,7 +91,11 @@ let run_demo env =
 
   (* ===== Tags ===== *)
   Logger.header "Tags";
-  let tags = Gamma_api.Client.get_tags client ~limit:10 () in
+  let tags =
+    Gamma_api.Client.get_tags client
+      ~limit:(Http_client.Client.Nonneg_int.of_int_exn 10)
+      ()
+  in
   print_result_count "get_tags" tags;
 
   let tag_id, tag_slug =
@@ -121,7 +125,11 @@ let run_demo env =
 
   (* ===== Events ===== *)
   Logger.header "Events";
-  let events = Gamma_api.Client.get_events client ~limit:10 ~active:true () in
+  let events =
+    Gamma_api.Client.get_events client
+      ~limit:(Http_client.Client.Nonneg_int.of_int_exn 10)
+      ~active:true ()
+  in
   print_result_count "get_events" events;
 
   let event_id, event_slug =

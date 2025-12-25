@@ -112,6 +112,17 @@ let add_string_array key values params =
   | Some vs -> List.fold_left (fun acc v -> (key, [ v ]) :: acc) params vs
   | None -> params
 
+let add_int_array key values params =
+  match values with
+  | Some vs ->
+      List.fold_left (fun acc v -> (key, [ string_of_int v ]) :: acc) params vs
+  | None -> params
+
+let add_timestamp key value params =
+  match value with
+  | Some v -> (key, [ Timestamp.to_string v ]) :: params
+  | None -> params
+
 (** {1 HTTP Request Functions} *)
 
 let build_uri base_url path params =

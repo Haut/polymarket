@@ -88,42 +88,28 @@ type team = {
 (** Sports team *)
 
 type tag = {
-  id : string option; [@default None] [@yojson_drop_default_if_none]
-  label : string option; [@default None] [@yojson_drop_default_if_none]
-  slug : string option; [@default None] [@yojson_drop_default_if_none]
-  force_show : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "forceShow"]
-  published_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "publishedAt"]
-  created_by : int option;
-      [@default None] [@yojson_drop_default_if_none] [@key "createdBy"]
-  updated_by : int option;
-      [@default None] [@yojson_drop_default_if_none] [@key "updatedBy"]
-  created_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "createdAt"]
-  updated_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "updatedAt"]
-  force_hide : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "forceHide"]
-  is_carousel : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "isCarousel"]
-  requires_translation : bool option;
-      [@default None]
-      [@yojson_drop_default_if_none]
-      [@key "requiresTranslation"]
+  id : string option;
+  label : string option;
+  slug : string option;
+  force_show : bool option; [@key "forceShow"]
+  published_at : string option; [@key "publishedAt"]
+  created_by : int option; [@key "createdBy"]
+  updated_by : int option; [@key "updatedBy"]
+  created_at : Http_client.Client.Timestamp.t option; [@key "createdAt"]
+  updated_at : Http_client.Client.Timestamp.t option; [@key "updatedAt"]
+  force_hide : bool option; [@key "forceHide"]
+  is_carousel : bool option; [@key "isCarousel"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Tag for categorization *)
 
 type related_tag = {
-  id : string option; [@default None] [@yojson_drop_default_if_none]
-  tag_id : int option;
-      [@default None] [@yojson_drop_default_if_none] [@key "tagID"]
-  related_tag_id : int option;
-      [@default None] [@yojson_drop_default_if_none] [@key "relatedTagID"]
-  rank : int option; [@default None] [@yojson_drop_default_if_none]
+  id : string option;
+  tag_id : int option; [@key "tagID"]
+  related_tag_id : int option; [@key "relatedTagID"]
+  rank : int option;
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Related tag relationship *)
 
 type category = {
@@ -782,173 +768,102 @@ type market = {
 [@@yojson.allow_extra_fields]
 
 and event = {
-  id : string option; [@default None] [@yojson_drop_default_if_none]
-  ticker : string option; [@default None] [@yojson_drop_default_if_none]
-  slug : string option; [@default None] [@yojson_drop_default_if_none]
-  title : string option; [@default None] [@yojson_drop_default_if_none]
-  subtitle : string option; [@default None] [@yojson_drop_default_if_none]
-  description : string option; [@default None] [@yojson_drop_default_if_none]
-  resolution_source : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "resolutionSource"]
-  start_date : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "startDate"]
-  creation_date : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "creationDate"]
-  end_date : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "endDate"]
-  image : string option; [@default None] [@yojson_drop_default_if_none]
-  icon : string option; [@default None] [@yojson_drop_default_if_none]
-  active : bool option; [@default None] [@yojson_drop_default_if_none]
-  closed : bool option; [@default None] [@yojson_drop_default_if_none]
-  archived : bool option; [@default None] [@yojson_drop_default_if_none]
-  new_ : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "new"]
-  featured : bool option; [@default None] [@yojson_drop_default_if_none]
-  restricted : bool option; [@default None] [@yojson_drop_default_if_none]
-  liquidity : float option; [@default None] [@yojson_drop_default_if_none]
-  volume : float option; [@default None] [@yojson_drop_default_if_none]
-  open_interest : float option;
-      [@default None] [@yojson_drop_default_if_none] [@key "openInterest"]
-  sort_by : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "sortBy"]
-  category : string option; [@default None] [@yojson_drop_default_if_none]
-  subcategory : string option; [@default None] [@yojson_drop_default_if_none]
-  is_template : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "isTemplate"]
-  template_variables : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "templateVariables"]
-  published_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "published_at"]
-  created_by : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "createdBy"]
-  updated_by : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "updatedBy"]
-  created_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "createdAt"]
-  updated_at : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "updatedAt"]
-  comments_enabled : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "commentsEnabled"]
-  competitive : float option; [@default None] [@yojson_drop_default_if_none]
-  volume_24hr : float option;
-      [@default None] [@yojson_drop_default_if_none] [@key "volume24hr"]
-  volume_1wk : float option;
-      [@default None] [@yojson_drop_default_if_none] [@key "volume1wk"]
-  volume_1mo : float option;
-      [@default None] [@yojson_drop_default_if_none] [@key "volume1mo"]
-  volume_1yr : float option;
-      [@default None] [@yojson_drop_default_if_none] [@key "volume1yr"]
-  featured_image : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "featuredImage"]
-  disqus_thread : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "disqusThread"]
-  parent_event : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "parentEvent"]
-  enable_order_book : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "enableOrderBook"]
-  liquidity_amm : float option; [@default None] [@key "liquidityAmm"]
-  liquidity_clob : float option; [@default None] [@key "liquidityClob"]
-  neg_risk : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "negRisk"]
-  neg_risk_market_id : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "negRiskMarketID"]
-  neg_risk_fee_bips : int option;
-      [@default None] [@yojson_drop_default_if_none] [@key "negRiskFeeBips"]
-  comment_count : int option;
-      [@default None] [@yojson_drop_default_if_none] [@key "commentCount"]
-  image_optimized : image_optimization option;
-      [@default None] [@yojson_drop_default_if_none] [@key "imageOptimized"]
-  icon_optimized : image_optimization option;
-      [@default None] [@yojson_drop_default_if_none] [@key "iconOptimized"]
+  id : string option;
+  ticker : string option;
+  slug : string option;
+  title : string option;
+  subtitle : string option;
+  description : string option;
+  resolution_source : string option; [@key "resolutionSource"]
+  start_date : Http_client.Client.Timestamp.t option; [@key "startDate"]
+  creation_date : Http_client.Client.Timestamp.t option; [@key "creationDate"]
+  end_date : Http_client.Client.Timestamp.t option; [@key "endDate"]
+  image : string option;
+  icon : string option;
+  active : bool option;
+  closed : bool option;
+  archived : bool option;
+  new_ : bool option; [@key "new"]
+  featured : bool option;
+  restricted : bool option;
+  liquidity : float option;
+  volume : float option;
+  open_interest : float option; [@key "openInterest"]
+  sort_by : string option; [@key "sortBy"]
+  category : string option;
+  subcategory : string option;
+  is_template : bool option; [@key "isTemplate"]
+  template_variables : string option; [@key "templateVariables"]
+  published_at : string option; [@key "published_at"]
+  created_by : string option; [@key "createdBy"]
+  updated_by : string option; [@key "updatedBy"]
+  created_at : Http_client.Client.Timestamp.t option; [@key "createdAt"]
+  updated_at : Http_client.Client.Timestamp.t option; [@key "updatedAt"]
+  comments_enabled : bool option; [@key "commentsEnabled"]
+  competitive : float option;
+  volume_24hr : float option; [@key "volume24hr"]
+  volume_1wk : float option; [@key "volume1wk"]
+  volume_1mo : float option; [@key "volume1mo"]
+  volume_1yr : float option; [@key "volume1yr"]
+  featured_image : string option; [@key "featuredImage"]
+  disqus_thread : string option; [@key "disqusThread"]
+  parent_event : string option; [@key "parentEvent"]
+  enable_order_book : bool option; [@key "enableOrderBook"]
+  liquidity_amm : float option; [@key "liquidityAmm"]
+  liquidity_clob : float option; [@key "liquidityClob"]
+  neg_risk : bool option; [@key "negRisk"]
+  neg_risk_market_id : string option; [@key "negRiskMarketID"]
+  neg_risk_fee_bips : int option; [@key "negRiskFeeBips"]
+  comment_count : int option; [@key "commentCount"]
+  image_optimized : image_optimization option; [@key "imageOptimized"]
+  icon_optimized : image_optimization option; [@key "iconOptimized"]
   featured_image_optimized : image_optimization option;
-      [@default None]
-      [@yojson_drop_default_if_none]
       [@key "featuredImageOptimized"]
-  sub_events : string list option;
-      [@default None] [@yojson_drop_default_if_none] [@key "subEvents"]
-  markets : market list; [@default []]
-  series : series list; [@default []]
-  categories : category list; [@default []]
-  collections : collection list; [@default []]
-  tags : tag list; [@default []]
-  cyom : bool option; [@default None] [@yojson_drop_default_if_none]
-  closed_time : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "closedTime"]
-  show_all_outcomes : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "showAllOutcomes"]
-  show_market_images : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "showMarketImages"]
-  automatically_resolved : bool option;
-      [@default None]
-      [@yojson_drop_default_if_none]
-      [@key "automaticallyResolved"]
-  enable_neg_risk : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "enableNegRisk"]
-  automatically_active : bool option;
-      [@default None]
-      [@yojson_drop_default_if_none]
-      [@key "automaticallyActive"]
-  event_date : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "eventDate"]
-  start_time : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "startTime"]
-  event_week : int option;
-      [@default None] [@yojson_drop_default_if_none] [@key "eventWeek"]
-  series_slug : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "seriesSlug"]
-  score : string option; [@default None] [@yojson_drop_default_if_none]
-  elapsed : string option; [@default None] [@yojson_drop_default_if_none]
-  period : string option; [@default None] [@yojson_drop_default_if_none]
-  live : bool option; [@default None] [@yojson_drop_default_if_none]
-  ended : bool option; [@default None] [@yojson_drop_default_if_none]
-  finished_timestamp : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "finishedTimestamp"]
-  gmp_chart_mode : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "gmpChartMode"]
-  event_creators : event_creator list; [@default []] [@key "eventCreators"]
-  tweet_count : int option;
-      [@default None] [@yojson_drop_default_if_none] [@key "tweetCount"]
-  chats : chat list; [@default []]
-  featured_order : int option;
-      [@default None] [@yojson_drop_default_if_none] [@key "featuredOrder"]
-  estimate_value : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "estimateValue"]
-  cant_estimate : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "cantEstimate"]
-  estimated_value : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "estimatedValue"]
-  templates : template list; [@default []]
-  spreads_main_line : float option;
-      [@default None] [@yojson_drop_default_if_none] [@key "spreadsMainLine"]
-  totals_main_line : float option;
-      [@default None] [@yojson_drop_default_if_none] [@key "totalsMainLine"]
-  carousel_map : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "carouselMap"]
-  pending_deployment : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "pendingDeployment"]
-  deploying : bool option; [@default None] [@yojson_drop_default_if_none]
-  deploying_timestamp : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "deployingTimestamp"]
-  scheduled_deployment_timestamp : string option;
-      [@default None]
-      [@yojson_drop_default_if_none]
+  sub_events : string list option; [@key "subEvents"]
+  markets : market list;
+  series : series list;
+  categories : category list;
+  collections : collection list;
+  tags : tag list;
+  cyom : bool option;
+  closed_time : Http_client.Client.Timestamp.t option; [@key "closedTime"]
+  show_all_outcomes : bool option; [@key "showAllOutcomes"]
+  show_market_images : bool option; [@key "showMarketImages"]
+  automatically_resolved : bool option; [@key "automaticallyResolved"]
+  enable_neg_risk : bool option; [@key "enableNegRisk"]
+  automatically_active : bool option; [@key "automaticallyActive"]
+  event_date : string option; [@key "eventDate"]
+  start_time : Http_client.Client.Timestamp.t option; [@key "startTime"]
+  event_week : int option; [@key "eventWeek"]
+  series_slug : string option; [@key "seriesSlug"]
+  score : string option;
+  elapsed : string option;
+  period : string option;
+  live : bool option;
+  ended : bool option;
+  finished_timestamp : Http_client.Client.Timestamp.t option;
+      [@key "finishedTimestamp"]
+  gmp_chart_mode : string option; [@key "gmpChartMode"]
+  event_creators : event_creator list; [@key "eventCreators"]
+  tweet_count : int option; [@key "tweetCount"]
+  chats : chat list;
+  featured_order : int option; [@key "featuredOrder"]
+  estimate_value : bool option; [@key "estimateValue"]
+  cant_estimate : bool option; [@key "cantEstimate"]
+  estimated_value : string option; [@key "estimatedValue"]
+  templates : template list;
+  spreads_main_line : float option; [@key "spreadsMainLine"]
+  totals_main_line : float option; [@key "totalsMainLine"]
+  carousel_map : string option; [@key "carouselMap"]
+  pending_deployment : bool option; [@key "pendingDeployment"]
+  deploying : bool option; [@key "deploying"]
+  deploying_timestamp : Http_client.Client.Timestamp.t option;
+      [@key "deployingTimestamp"]
+  scheduled_deployment_timestamp : Http_client.Client.Timestamp.t option;
       [@key "scheduledDeploymentTimestamp"]
-  game_status : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "gameStatus"]
-  neg_risk_augmented : bool option;
-      [@default None] [@yojson_drop_default_if_none] [@key "negRiskAugmented"]
-  country_name : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "countryName"]
-  election_type : string option;
-      [@default None] [@yojson_drop_default_if_none] [@key "electionType"]
-  requires_translation : bool option;
-      [@default None]
-      [@yojson_drop_default_if_none]
-      [@key "requiresTranslation"]
-  game_id : int option;
-      [@default None] [@yojson_drop_default_if_none] [@key "gameId"]
+  game_status : string option; [@key "gameStatus"]
 }
-[@@yojson.allow_extra_fields]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 
 and series = {
   id : string option; [@default None] [@yojson_drop_default_if_none]

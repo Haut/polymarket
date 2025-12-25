@@ -100,49 +100,46 @@ let get_related_tag_tags_by_slug t ~slug ?omit_empty ?status () =
 
 (** {1 Events Endpoints} *)
 
-let get_events t ?id ?ticker ?slug ?archived ?active ?closed ?liquidity_min
-    ?end_date_min ?end_date_max ?start_date_min ?start_date_max ?status ?order
-    ?ascending ?tag ?tag_slug ?limit ?offset ?cursor ?next_cursor ?slug_size ?_c
-    () =
+let get_events t ?limit ?offset ?order ?ascending ?id ?tag_id ?exclude_tag_id
+    ?slug ?tag_slug ?related_tags ?active ?archived ?featured ?cyom
+    ?include_chat ?include_template ?recurrence ?closed ?liquidity_min
+    ?liquidity_max ?volume_min ?volume_max ?start_date_min ?start_date_max
+    ?end_date_min ?end_date_max () =
   []
-  |> Http_client.Client.add "id" id
-  |> Http_client.Client.add "ticker" ticker
-  |> Http_client.Client.add "slug" slug
-  |> Http_client.Client.add_bool "archived" archived
+  |> Http_client.Client.add_nonneg_int "limit" limit
+  |> Http_client.Client.add_nonneg_int "offset" offset
+  |> Http_client.Client.add_string_array "order" order
+  |> Http_client.Client.add_bool "ascending" ascending
+  |> Http_client.Client.add_int_array "id" id
+  |> Http_client.Client.add_int "tag_id" tag_id
+  |> Http_client.Client.add_int_array "exclude_tag_id" exclude_tag_id
+  |> Http_client.Client.add_string_array "slug" slug
+  |> Http_client.Client.add "tag_slug" tag_slug
+  |> Http_client.Client.add_bool "related_tags" related_tags
   |> Http_client.Client.add_bool "active" active
+  |> Http_client.Client.add_bool "archived" archived
+  |> Http_client.Client.add_bool "featured" featured
+  |> Http_client.Client.add_bool "cyom" cyom
+  |> Http_client.Client.add_bool "include_chat" include_chat
+  |> Http_client.Client.add_bool "include_template" include_template
+  |> Http_client.Client.add "recurrence" recurrence
   |> Http_client.Client.add_bool "closed" closed
   |> Http_client.Client.add_float "liquidity_min" liquidity_min
-  |> Http_client.Client.add "end_date_min" end_date_min
-  |> Http_client.Client.add "end_date_max" end_date_max
-  |> Http_client.Client.add "start_date_min" start_date_min
-  |> Http_client.Client.add "start_date_max" start_date_max
-  |> Http_client.Client.add "status" (Option.map string_of_status status)
-  |> Http_client.Client.add "order" order
-  |> Http_client.Client.add_bool "ascending" ascending
-  |> Http_client.Client.add "tag" tag
-  |> Http_client.Client.add "tag_slug" tag_slug
-  |> Http_client.Client.add_int "limit" limit
-  |> Http_client.Client.add_int "offset" offset
-  |> Http_client.Client.add "cursor" cursor
-  |> Http_client.Client.add "next_cursor" next_cursor
-  |> Http_client.Client.add "slug_size"
-       (Option.map string_of_slug_size slug_size)
-  |> Http_client.Client.add "_c" _c
-  |> Http_client.Client.get_json t "/events" (fun json ->
-      match json with
-      | `List events -> List.map event_of_yojson events
-      | _ -> failwith "Expected list of events")
+  |> Http_client.Client.add_float "liquidity_max" liquidity_max
+  |> Http_client.Client.add_float "volume_min" volume_min
+  |> Http_client.Client.add_float "volume_max" volume_max
+  |> Http_client.Client.add_timestamp "start_date_min" start_date_min
+  |> Http_client.Client.add_timestamp "start_date_max" start_date_max
+  |> Http_client.Client.add_timestamp "end_date_min" end_date_min
+  |> Http_client.Client.add_timestamp "end_date_max" end_date_max
+  |> Http_client.Client.get_json_list t "/events" event_of_yojson
 
-let get_event t ~id () =
+let get_event t ~id ?include_chat ?include_template () =
   []
+  |> Http_client.Client.add_bool "include_chat" include_chat
+  |> Http_client.Client.add_bool "include_template" include_template
   |> Http_client.Client.get_json t
        (Printf.sprintf "/events/%d" id)
-       event_of_yojson
-
-let get_event_by_slug t ~slug () =
-  []
-  |> Http_client.Client.get_json t
-       (Printf.sprintf "/events/slug/%s" slug)
        event_of_yojson
 
 let get_event_tags t ~id () =
@@ -150,6 +147,14 @@ let get_event_tags t ~id () =
   |> Http_client.Client.get_json_list t
        (Printf.sprintf "/events/%d/tags" id)
        tag_of_yojson
+
+let get_event_by_slug t ~slug ?include_chat ?include_template () =
+  []
+  |> Http_client.Client.add_bool "include_chat" include_chat
+  |> Http_client.Client.add_bool "include_template" include_template
+  |> Http_client.Client.get_json t
+       (Printf.sprintf "/events/slug/%s" slug)
+       event_of_yojson
 
 (** {1 Markets Endpoints} *)
 
@@ -302,12 +307,6 @@ let public_search t ~q ?cache ?events_status ?limit_per_type ?page ?events_tag
   |> Http_client.Client.add_bool "search_tags" search_tags
   |> Http_client.Client.add_bool "search_profiles" search_profiles
   |> Http_client.Client.add "recurrence" recurrence
-  |> (fun params ->
-  match exclude_tag_id with
-  | Some ids ->
-      List.fold_left
-        (fun acc id -> ("exclude_tag_id", [ string_of_int id ]) :: acc)
-        params ids
-  | None -> params)
+  |> Http_client.Client.add_int_array "exclude_tag_id" exclude_tag_id
   |> Http_client.Client.add_bool "optimized" optimized
   |> Http_client.Client.get_json t "/public-search" search_of_yojson
