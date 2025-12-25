@@ -6,4 +6,9 @@
 (test
  (name test_runner)
  (modules test_runner)
- (libraries alcotest test_common test_data_api))
+ (libraries
+  alcotest
+  mirage-crypto-rng.unix
+  test_common
+  test_data_api
+  test_clob_api))

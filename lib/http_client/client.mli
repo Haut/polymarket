@@ -52,8 +52,30 @@ val add_float : string -> float option -> params -> params
 val build_uri : string -> string -> params -> Uri.t
 (** Build a URI from base URL, path, and query parameters *)
 
-val do_get : t -> Uri.t -> Cohttp.Code.status_code * string
-(** Perform a GET request and return status code and body *)
+val do_get :
+  ?headers:(string * string) list ->
+  t ->
+  Uri.t ->
+  Cohttp.Code.status_code * string
+(** Perform a GET request and return status code and body.
+    @param headers Optional list of HTTP headers to include *)
+
+val do_post :
+  ?headers:(string * string) list ->
+  t ->
+  Uri.t ->
+  body:string ->
+  Cohttp.Code.status_code * string
+(** Perform a POST request with JSON body and return status code and body.
+    @param headers Optional list of HTTP headers to include *)
+
+val do_delete :
+  ?headers:(string * string) list ->
+  t ->
+  Uri.t ->
+  Cohttp.Code.status_code * string
+(** Perform a DELETE request and return status code and body.
+    @param headers Optional list of HTTP headers to include *)
 
 (** {1 JSON Parsing} *)
 
@@ -94,6 +116,7 @@ val handle_response :
     @return Parsed result or error *)
 
 val request :
+  ?headers:(string * string) list ->
   t ->
   string ->
   (string -> ('a, 'e) result) ->
@@ -101,6 +124,7 @@ val request :
   params ->
   ('a, 'e) result
 (** Unified request function for GET requests.
+    @param headers Optional list of HTTP headers to include
     @param t The client
     @param path API endpoint path
     @param parse_fn Parser for successful responses
@@ -113,16 +137,62 @@ val request :
     These combine request + JSON parsing + standard error handling. *)
 
 val get_json :
-  t -> string -> (Yojson.Safe.t -> 'a) -> params -> ('a, error_response) result
-(** GET request expecting a JSON object response *)
+  ?headers:(string * string) list ->
+  t ->
+  string ->
+  (Yojson.Safe.t -> 'a) ->
+  params ->
+  ('a, error_response) result
+(** GET request expecting a JSON object response.
+    @param headers Optional list of HTTP headers to include *)
 
 val get_json_list :
+  ?headers:(string * string) list ->
   t ->
   string ->
   (Yojson.Safe.t -> 'a) ->
   params ->
   ('a list, error_response) result
-(** GET request expecting a JSON array response *)
+(** GET request expecting a JSON array response.
+    @param headers Optional list of HTTP headers to include *)
 
-val get_text : t -> string -> params -> (string, error_response) result
-(** GET request expecting a plain text response *)
+val get_text :
+  ?headers:(string * string) list ->
+  t ->
+  string ->
+  params ->
+  (string, error_response) result
+(** GET request expecting a plain text response.
+    @param headers Optional list of HTTP headers to include *)
+
+val post_json :
+  ?headers:(string * string) list ->
+  t ->
+  string ->
+  (Yojson.Safe.t -> 'a) ->
+  body:string ->
+  params ->
+  ('a, error_response) result
+(** POST request with JSON body expecting a JSON object response.
+    @param headers Optional list of HTTP headers to include *)
+
+val post_json_list :
+  ?headers:(string * string) list ->
+  t ->
+  string ->
+  (Yojson.Safe.t -> 'a) ->
+  body:string ->
+  params ->
+  ('a list, error_response) result
+(** POST request with JSON body expecting a JSON array response.
+    @param headers Optional list of HTTP headers to include *)
+
+val delete_json :
+  ?headers:(string * string) list ->
+  t ->
+  string ->
+  (Yojson.Safe.t -> 'a) ->
+  params ->
+  ('a, error_response) result
+(** DELETE request expecting a JSON object response.
+    @param headers Optional list of HTTP headers to include *)
