@@ -16,7 +16,8 @@
       | Error err -> print_endline ("Error: " ^ err.error)
     ]} *)
 
-open Types
+open Query
+open Responses
 
 (** {1 Client Configuration} *)
 
@@ -41,300 +42,25 @@ val status : t -> (string, Http_client.Client.error_response) result
 (** {1 Teams Endpoints} *)
 
 val get_teams :
-  t -> ?id:int -> unit -> (team list, Http_client.Client.error_response) result
+  t ->
+  ?limit:Http_client.Client.Nonneg_int.t ->
+  ?offset:Http_client.Client.Nonneg_int.t ->
+  ?order:string list ->
+  ?ascending:bool ->
+  ?league:string list ->
+  ?name:string list ->
+  ?abbreviation:string list ->
+  unit ->
+  (team list, Http_client.Client.error_response) result
+
 (** Get list of sports teams.
-    @param id Optional team ID to filter by *)
-
-val get_team :
-  t -> id:int -> unit -> (team, Http_client.Client.error_response) result
-(** Get a team by ID.
-    @param id Team ID (required) *)
-
-(** {1 Tags Endpoints} *)
-
-val get_tags :
-  t ->
-  ?id:string ->
-  ?label:string ->
-  ?slug:string ->
-  ?force_show:bool ->
-  ?limit:int ->
-  ?offset:int ->
-  unit ->
-  (tag list, Http_client.Client.error_response) result
-(** Get list of tags.
-    @param id Tag ID to filter by
-    @param label Tag label to filter by
-    @param slug Tag slug to filter by
-    @param force_show Filter by force_show flag
-    @param limit Maximum results
-    @param offset Pagination offset *)
-
-val get_tag :
-  t -> id:string -> unit -> (tag, Http_client.Client.error_response) result
-(** Get a tag by ID.
-    @param id Tag ID (required) *)
-
-val get_tag_by_slug :
-  t -> slug:string -> unit -> (tag, Http_client.Client.error_response) result
-(** Get a tag by slug.
-    @param slug Tag slug (required) *)
-
-val get_related_tags :
-  t ->
-  id:string ->
-  unit ->
-  (related_tag list, Http_client.Client.error_response) result
-(** Get related tags for a tag.
-    @param id Tag ID (required) *)
-
-(** {1 Events Endpoints} *)
-
-val get_events :
-  t ->
-  ?id:string ->
-  ?ticker:string ->
-  ?slug:string ->
-  ?archived:bool ->
-  ?active:bool ->
-  ?closed:bool ->
-  ?liquidity_min:float ->
-  ?end_date_min:string ->
-  ?end_date_max:string ->
-  ?start_date_min:string ->
-  ?start_date_max:string ->
-  ?status:status ->
-  ?order:string ->
-  ?ascending:bool ->
-  ?tag:string ->
-  ?tag_slug:string ->
-  ?limit:int ->
-  ?offset:int ->
-  ?cursor:string ->
-  ?next_cursor:string ->
-  ?slug_size:slug_size ->
-  ?_c:string ->
-  unit ->
-  (event list, Http_client.Client.error_response) result
-(** Get events list.
-    @param id Event ID to filter by
-    @param ticker Event ticker to filter by
-    @param slug Event slug to filter by
-    @param archived Filter by archived status
-    @param active Filter by active status
-    @param closed Filter by closed status
-    @param liquidity_min Minimum liquidity
-    @param end_date_min Minimum end date (ISO format)
-    @param end_date_max Maximum end date (ISO format)
-    @param start_date_min Minimum start date (ISO format)
-    @param start_date_max Maximum start date (ISO format)
-    @param status Filter by status (active, closed, all)
-    @param order Order field
+    @param limit Maximum number of results (non-negative)
+    @param offset Pagination offset (non-negative)
+    @param order Fields to order by
     @param ascending Sort ascending if true
-    @param tag Tag to filter by
-    @param tag_slug Tag slug to filter by
-    @param limit Maximum results
-    @param offset Pagination offset
-    @param cursor Pagination cursor
-    @param next_cursor Next pagination cursor
-    @param slug_size Size for slug in response
-    @param _c Cache buster parameter *)
-
-val get_event :
-  t -> id:int -> unit -> (event, Http_client.Client.error_response) result
-(** Get an event by ID.
-    @param id Event ID (required) *)
-
-val get_event_by_slug :
-  t -> slug:string -> unit -> (event, Http_client.Client.error_response) result
-(** Get an event by slug.
-    @param slug Event slug (required) *)
-
-val get_event_tags :
-  t -> id:int -> unit -> (tag list, Http_client.Client.error_response) result
-(** Get tags for an event.
-    @param id Event ID (required) *)
-
-(** {1 Markets Endpoints} *)
-
-val get_markets :
-  t ->
-  ?id:string ->
-  ?condition_id:string ->
-  ?slug:string ->
-  ?archived:bool ->
-  ?active:bool ->
-  ?closed:bool ->
-  ?clob_token_ids:string ->
-  ?liquidity_num_min:float ->
-  ?volume_num_min:float ->
-  ?start_date_min:string ->
-  ?start_date_max:string ->
-  ?end_date_min:string ->
-  ?end_date_max:string ->
-  ?status:status ->
-  ?order:string ->
-  ?ascending:bool ->
-  ?tag_slug:string ->
-  ?limit:int ->
-  ?offset:int ->
-  ?cursor:string ->
-  ?next_cursor:string ->
-  ?slug_size:slug_size ->
-  ?_c:string ->
-  unit ->
-  (market list, Http_client.Client.error_response) result
-(** Get list of markets.
-    @param id Market ID to filter by
-    @param condition_id Condition ID to filter by
-    @param slug Market slug to filter by
-    @param archived Filter by archived status
-    @param active Filter by active status
-    @param closed Filter by closed status
-    @param clob_token_ids CLOB token IDs to filter by
-    @param liquidity_num_min Minimum liquidity
-    @param volume_num_min Minimum volume
-    @param start_date_min Minimum start date (ISO format)
-    @param start_date_max Maximum start date (ISO format)
-    @param end_date_min Minimum end date (ISO format)
-    @param end_date_max Maximum end date (ISO format)
-    @param status Filter by status (active, closed, all)
-    @param order Order field
-    @param ascending Sort ascending if true
-    @param tag_slug Tag slug to filter by
-    @param limit Maximum results
-    @param offset Pagination offset
-    @param cursor Pagination cursor
-    @param next_cursor Next pagination cursor
-    @param slug_size Size for slug in response
-    @param _c Cache buster parameter *)
-
-val get_market :
-  t -> id:int -> unit -> (market, Http_client.Client.error_response) result
-(** Get a market by ID.
-    @param id Market ID (required) *)
-
-val get_market_by_slug :
-  t -> slug:string -> unit -> (market, Http_client.Client.error_response) result
-(** Get a market by slug.
-    @param slug Market slug (required) *)
-
-val get_market_tags :
-  t -> id:int -> unit -> (tag list, Http_client.Client.error_response) result
-(** Get tags for a market.
-    @param id Market ID (required) *)
-
-val get_market_description :
-  t ->
-  id:int ->
-  unit ->
-  (market_description, Http_client.Client.error_response) result
-(** Get description for a market.
-    @param id Market ID (required) *)
-
-(** {1 Series Endpoints} *)
-
-val get_series_list :
-  t ->
-  ?id:string ->
-  ?ticker:string ->
-  ?slug:string ->
-  ?archived:bool ->
-  ?active:bool ->
-  ?closed:bool ->
-  ?status:status ->
-  ?order:string ->
-  ?ascending:bool ->
-  ?limit:int ->
-  ?offset:int ->
-  ?cursor:string ->
-  ?next_cursor:string ->
-  unit ->
-  (series list, Http_client.Client.error_response) result
-(** Get list of series.
-    @param id Series ID to filter by
-    @param ticker Series ticker to filter by
-    @param slug Series slug to filter by
-    @param archived Filter by archived status
-    @param active Filter by active status
-    @param closed Filter by closed status
-    @param status Filter by status (active, closed, all)
-    @param order Order field
-    @param ascending Sort ascending if true
-    @param limit Maximum results
-    @param offset Pagination offset
-    @param cursor Pagination cursor
-    @param next_cursor Next pagination cursor *)
-
-val get_series :
-  t -> id:string -> unit -> (series, Http_client.Client.error_response) result
-(** Get a series by ID.
-    @param id Series ID (required) *)
-
-val get_series_summary :
-  t ->
-  id:string ->
-  unit ->
-  (series_summary, Http_client.Client.error_response) result
-(** Get a series summary by ID.
-    @param id Series ID (required) *)
-
-(** {1 Comments Endpoints} *)
-
-val get_comments :
-  t ->
-  ?parent_entity_type:parent_entity_type ->
-  ?parent_entity_id:int ->
-  ?parent_comment_id:string ->
-  ?user_address:string ->
-  ?limit:int ->
-  ?offset:int ->
-  unit ->
-  (comment list, Http_client.Client.error_response) result
-(** Get list of comments.
-    @param parent_entity_type Entity type (Event, Series, market)
-    @param parent_entity_id Entity ID
-    @param parent_comment_id Parent comment ID for replies
-    @param user_address Filter by user address
-    @param limit Maximum results
-    @param offset Pagination offset *)
-
-val get_comment :
-  t -> id:int -> unit -> (comment, Http_client.Client.error_response) result
-(** Get a comment by ID.
-    @param id Comment ID (required) *)
-
-val get_user_comments :
-  t ->
-  user_address:string ->
-  ?limit:int ->
-  ?offset:int ->
-  unit ->
-  (comment list, Http_client.Client.error_response) result
-(** Get comments by user address.
-    @param user_address User address (required)
-    @param limit Maximum results
-    @param offset Pagination offset *)
-
-(** {1 Profile Endpoints} *)
-
-val get_public_profile :
-  t ->
-  address:string ->
-  unit ->
-  (public_profile_response, Http_client.Client.error_response) result
-(** Get public profile by address.
-    @param address User address (required) *)
-
-val get_profile :
-  t ->
-  user_address:string ->
-  unit ->
-  (profile, Http_client.Client.error_response) result
-(** Get profile by user address.
-    @param user_address User address (required) *)
-
-(** {1 Sports Endpoints} *)
+    @param league Filter by league(s)
+    @param name Filter by team name(s)
+    @param abbreviation Filter by team abbreviation(s) *)
 
 val get_sports :
   t -> unit -> (sports_metadata list, Http_client.Client.error_response) result
@@ -345,6 +71,368 @@ val get_sports_market_types :
   unit ->
   (sports_market_types_response, Http_client.Client.error_response) result
 (** Get list of sports market types. *)
+
+(** {1 Tags Endpoints} *)
+
+val get_tags :
+  t ->
+  ?limit:Http_client.Client.Nonneg_int.t ->
+  ?offset:Http_client.Client.Nonneg_int.t ->
+  ?order:string list ->
+  ?ascending:bool ->
+  ?include_template:bool ->
+  ?is_carousel:bool ->
+  unit ->
+  (tag list, Http_client.Client.error_response) result
+(** Get list of tags.
+    @param limit Maximum number of results (non-negative)
+    @param offset Pagination offset (non-negative)
+    @param order Fields to order by
+    @param ascending Sort ascending if true
+    @param include_template Include template tags if true
+    @param is_carousel Filter by carousel flag *)
+
+val get_tag :
+  t ->
+  id:string ->
+  ?include_template:bool ->
+  unit ->
+  (tag, Http_client.Client.error_response) result
+(** Get a tag by ID.
+    @param id Tag ID (required)
+    @param include_template Include template data if true *)
+
+val get_tag_by_slug :
+  t ->
+  slug:string ->
+  ?include_template:bool ->
+  unit ->
+  (tag, Http_client.Client.error_response) result
+(** Get a tag by slug.
+    @param slug Tag slug (required)
+    @param include_template Include template data if true *)
+
+val get_related_tags :
+  t ->
+  id:string ->
+  ?omit_empty:bool ->
+  ?status:status ->
+  unit ->
+  (related_tag list, Http_client.Client.error_response) result
+(** Get related tags for a tag.
+    @param id Tag ID (required)
+    @param omit_empty Omit empty related tags
+    @param status Filter by status (active, closed, all) *)
+
+val get_related_tags_by_slug :
+  t ->
+  slug:string ->
+  ?omit_empty:bool ->
+  ?status:status ->
+  unit ->
+  (related_tag list, Http_client.Client.error_response) result
+(** Get related tags for a tag by slug.
+    @param slug Tag slug (required)
+    @param omit_empty Omit empty related tags
+    @param status Filter by status (active, closed, all) *)
+
+val get_related_tag_tags :
+  t ->
+  id:string ->
+  ?omit_empty:bool ->
+  ?status:status ->
+  unit ->
+  (tag list, Http_client.Client.error_response) result
+(** Get full tag objects for tags related to a tag.
+    @param id Tag ID (required)
+    @param omit_empty Omit empty related tags
+    @param status Filter by status (active, closed, all) *)
+
+val get_related_tag_tags_by_slug :
+  t ->
+  slug:string ->
+  ?omit_empty:bool ->
+  ?status:status ->
+  unit ->
+  (tag list, Http_client.Client.error_response) result
+(** Get full tag objects for tags related to a tag by slug.
+    @param slug Tag slug (required)
+    @param omit_empty Omit empty related tags
+    @param status Filter by status (active, closed, all) *)
+
+(** {1 Events Endpoints} *)
+
+val get_events :
+  t ->
+  ?limit:Http_client.Client.Nonneg_int.t ->
+  ?offset:Http_client.Client.Nonneg_int.t ->
+  ?order:string list ->
+  ?ascending:bool ->
+  ?id:int list ->
+  ?tag_id:int ->
+  ?exclude_tag_id:int list ->
+  ?slug:string list ->
+  ?tag_slug:string ->
+  ?related_tags:bool ->
+  ?active:bool ->
+  ?archived:bool ->
+  ?featured:bool ->
+  ?cyom:bool ->
+  ?include_chat:bool ->
+  ?include_template:bool ->
+  ?recurrence:string ->
+  ?closed:bool ->
+  ?liquidity_min:float ->
+  ?liquidity_max:float ->
+  ?volume_min:float ->
+  ?volume_max:float ->
+  ?start_date_min:Http_client.Client.Timestamp.t ->
+  ?start_date_max:Http_client.Client.Timestamp.t ->
+  ?end_date_min:Http_client.Client.Timestamp.t ->
+  ?end_date_max:Http_client.Client.Timestamp.t ->
+  unit ->
+  (event list, Http_client.Client.error_response) result
+(** List events.
+    @param limit Maximum number of results (non-negative)
+    @param offset Pagination offset (non-negative)
+    @param order Fields to order by
+    @param ascending Sort ascending if true
+    @param id Filter by event IDs (array)
+    @param tag_id Filter by tag ID
+    @param exclude_tag_id Exclude events with these tag IDs (array)
+    @param slug Filter by event slugs (array)
+    @param tag_slug Filter by tag slug
+    @param related_tags Include related tags
+    @param active Filter by active status
+    @param archived Filter by archived status
+    @param featured Filter by featured status
+    @param cyom Filter by CYOM (create your own market) status
+    @param include_chat Include chat data
+    @param include_template Include template data
+    @param recurrence Filter by recurrence type
+    @param closed Filter by closed status
+    @param liquidity_min Minimum liquidity
+    @param liquidity_max Maximum liquidity
+    @param volume_min Minimum volume
+    @param volume_max Maximum volume
+    @param start_date_min Minimum start date
+    @param start_date_max Maximum start date
+    @param end_date_min Minimum end date
+    @param end_date_max Maximum end date *)
+
+val get_event :
+  t ->
+  id:int ->
+  ?include_chat:bool ->
+  ?include_template:bool ->
+  unit ->
+  (event, Http_client.Client.error_response) result
+(** Get an event by ID.
+    @param id Event ID (required)
+    @param include_chat Include chat data
+    @param include_template Include template data *)
+
+val get_event_by_slug :
+  t ->
+  slug:string ->
+  ?include_chat:bool ->
+  ?include_template:bool ->
+  unit ->
+  (event, Http_client.Client.error_response) result
+(** Get an event by slug.
+    @param slug Event slug (required)
+    @param include_chat Include chat data
+    @param include_template Include template data *)
+
+val get_event_tags :
+  t -> id:int -> unit -> (tag list, Http_client.Client.error_response) result
+(** Get tags for an event.
+    @param id Event ID (required) *)
+
+(** {1 Markets Endpoints} *)
+
+val get_markets :
+  t ->
+  ?limit:Http_client.Client.Nonneg_int.t ->
+  ?offset:Http_client.Client.Nonneg_int.t ->
+  ?order:string ->
+  ?ascending:bool ->
+  ?id:int list ->
+  ?slug:string list ->
+  ?clob_token_ids:string list ->
+  ?condition_ids:string list ->
+  ?market_maker_address:string list ->
+  ?liquidity_num_min:float ->
+  ?liquidity_num_max:float ->
+  ?volume_num_min:float ->
+  ?volume_num_max:float ->
+  ?start_date_min:Http_client.Client.Timestamp.t ->
+  ?start_date_max:Http_client.Client.Timestamp.t ->
+  ?end_date_min:Http_client.Client.Timestamp.t ->
+  ?end_date_max:Http_client.Client.Timestamp.t ->
+  ?tag_id:int ->
+  ?related_tags:bool ->
+  ?cyom:bool ->
+  ?uma_resolution_status:string ->
+  ?game_id:string ->
+  ?sports_market_types:string list ->
+  ?rewards_min_size:float ->
+  ?question_ids:string list ->
+  ?include_tag:bool ->
+  ?closed:bool ->
+  unit ->
+  (market list, Http_client.Client.error_response) result
+(** Get list of markets.
+    @param limit Maximum number of results (non-negative)
+    @param offset Pagination offset (non-negative)
+    @param order Comma-separated list of fields to order by
+    @param ascending Sort ascending if true
+    @param id Filter by market IDs (array)
+    @param slug Filter by market slugs (array)
+    @param clob_token_ids Filter by CLOB token IDs (array)
+    @param condition_ids Filter by condition IDs (array)
+    @param market_maker_address Filter by market maker addresses (array)
+    @param liquidity_num_min Minimum liquidity
+    @param liquidity_num_max Maximum liquidity
+    @param volume_num_min Minimum volume
+    @param volume_num_max Maximum volume
+    @param start_date_min Minimum start date
+    @param start_date_max Maximum start date
+    @param end_date_min Minimum end date
+    @param end_date_max Maximum end date
+    @param tag_id Filter by tag ID
+    @param related_tags Include related tags
+    @param cyom Filter by CYOM (create your own market) status
+    @param uma_resolution_status Filter by UMA resolution status
+    @param game_id Filter by game ID
+    @param sports_market_types Filter by sports market types (array)
+    @param rewards_min_size Minimum rewards size
+    @param question_ids Filter by question IDs (array)
+    @param include_tag Include tag data
+    @param closed Filter by closed status *)
+
+val get_market :
+  t ->
+  id:int ->
+  ?include_tag:bool ->
+  unit ->
+  (market, Http_client.Client.error_response) result
+(** Get a market by ID.
+    @param id Market ID (required)
+    @param include_tag Include tag data *)
+
+val get_market_by_slug :
+  t ->
+  slug:string ->
+  ?include_tag:bool ->
+  unit ->
+  (market, Http_client.Client.error_response) result
+(** Get a market by slug.
+    @param slug Market slug (required)
+    @param include_tag Include tag data *)
+
+val get_market_tags :
+  t -> id:int -> unit -> (tag list, Http_client.Client.error_response) result
+(** Get tags for a market.
+    @param id Market ID (required) *)
+
+(** {1 Series Endpoints} *)
+
+val get_series_list :
+  t ->
+  ?limit:Http_client.Client.Nonneg_int.t ->
+  ?offset:Http_client.Client.Nonneg_int.t ->
+  ?order:string ->
+  ?ascending:bool ->
+  ?slug:string list ->
+  ?categories_ids:int list ->
+  ?categories_labels:string list ->
+  ?closed:bool ->
+  ?include_chat:bool ->
+  ?recurrence:string ->
+  unit ->
+  (series list, Http_client.Client.error_response) result
+(** Get list of series.
+    @param limit Maximum number of results (non-negative)
+    @param offset Pagination offset (non-negative)
+    @param order Comma-separated list of fields to order by
+    @param ascending Sort ascending if true
+    @param slug Filter by series slugs (array)
+    @param categories_ids Filter by category IDs (array)
+    @param categories_labels Filter by category labels (array)
+    @param closed Filter by closed status
+    @param include_chat Include chat data
+    @param recurrence Filter by recurrence type *)
+
+val get_series :
+  t ->
+  id:int ->
+  ?include_chat:bool ->
+  unit ->
+  (series, Http_client.Client.error_response) result
+(** Get a series by ID.
+    @param id Series ID (required)
+    @param include_chat Include chat data *)
+
+(** {1 Comments Endpoints} *)
+
+val get_comments :
+  t ->
+  ?limit:Http_client.Client.Nonneg_int.t ->
+  ?offset:Http_client.Client.Nonneg_int.t ->
+  ?order:string ->
+  ?ascending:bool ->
+  ?parent_entity_type:parent_entity_type ->
+  ?parent_entity_id:int ->
+  ?get_positions:bool ->
+  ?holders_only:bool ->
+  unit ->
+  (comment list, Http_client.Client.error_response) result
+(** Get list of comments.
+    @param limit Maximum number of results (non-negative)
+    @param offset Pagination offset (non-negative)
+    @param order Comma-separated list of fields to order by
+    @param ascending Sort ascending if true
+    @param parent_entity_type Entity type (Event, Series, market)
+    @param parent_entity_id Entity ID
+    @param get_positions Include position data
+    @param holders_only Filter to holders only *)
+
+val get_comment :
+  t ->
+  id:int ->
+  ?get_positions:bool ->
+  unit ->
+  (comment, Http_client.Client.error_response) result
+(** Get a comment by ID.
+    @param id Comment ID (required)
+    @param get_positions Include position data *)
+
+val get_user_comments :
+  t ->
+  user_address:string ->
+  ?limit:Http_client.Client.Nonneg_int.t ->
+  ?offset:Http_client.Client.Nonneg_int.t ->
+  ?order:string ->
+  ?ascending:bool ->
+  unit ->
+  (comment list, Http_client.Client.error_response) result
+(** Get comments by user address.
+    @param user_address User address (required)
+    @param limit Maximum number of results (non-negative)
+    @param offset Pagination offset (non-negative)
+    @param order Comma-separated list of fields to order by
+    @param ascending Sort ascending if true *)
+
+(** {1 Profile Endpoints} *)
+
+val get_public_profile :
+  t ->
+  address:string ->
+  unit ->
+  (public_profile_response, Http_client.Client.error_response) result
+(** Get public profile by address.
+    @param address User address (required) *)
 
 (** {1 Search Endpoint} *)
 

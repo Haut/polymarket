@@ -3,6 +3,8 @@
 (library
  (name polymarket)
  (public_name polymarket)
+ (flags
+  (:standard -w +32))
  (libraries
   yojson
   ppx_yojson_conv_lib
@@ -20,6 +22,7 @@
   logs
   logs.fmt
   fmt
-  fmt.tty)
+  fmt.tty
+  ptime)
  (preprocess
   (pps ppx_yojson_conv ppx_deriving.show ppx_deriving.eq)))

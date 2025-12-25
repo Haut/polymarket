@@ -5,6 +5,45 @@
 
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 
+(** {1 Non-negative Integers} *)
+
+module Nonneg_int = struct
+  type t = int
+
+  let of_int n = if n >= 0 then Some n else None
+  let of_int_exn n = if n >= 0 then n else invalid_arg "must be non-negative"
+  let to_int n = n
+  let zero = 0
+  let one = 1
+end
+
+(** {1 Timestamps} *)
+
+module Timestamp = struct
+  type t = Ptime.t
+
+  let of_string s =
+    match Ptime.of_rfc3339 s with Ok (t, _, _) -> Some t | Error _ -> None
+
+  let of_string_exn s =
+    match of_string s with
+    | Some t -> t
+    | None -> invalid_arg ("invalid ISO 8601 timestamp: " ^ s)
+
+  let to_string t = Ptime.to_rfc3339 ~tz_offset_s:0 t
+  let to_ptime t = t
+  let of_ptime t = t
+
+  let t_of_yojson = function
+    | `String s -> of_string_exn s
+    | _ -> failwith "Timestamp: expected string"
+
+  let yojson_of_t t = `String (to_string t)
+  let pp fmt t = Format.fprintf fmt "%s" (to_string t)
+  let show t = to_string t
+  let equal = Ptime.equal
+end
+
 (** {1 Client Configuration} *)
 
 type t = { base_url : string; client : Cohttp_eio.Client.t; sw : Eio.Switch.t }
@@ -58,9 +97,30 @@ let add_int key value params =
   | Some v -> (key, [ string_of_int v ]) :: params
   | None -> params
 
+let add_nonneg_int key value params =
+  match value with
+  | Some v -> (key, [ string_of_int (Nonneg_int.to_int v) ]) :: params
+  | None -> params
+
 let add_float key value params =
   match value with
   | Some v -> (key, [ string_of_float v ]) :: params
+  | None -> params
+
+let add_string_array key values params =
+  match values with
+  | Some vs -> List.fold_left (fun acc v -> (key, [ v ]) :: acc) params vs
+  | None -> params
+
+let add_int_array key values params =
+  match values with
+  | Some vs ->
+      List.fold_left (fun acc v -> (key, [ string_of_int v ]) :: acc) params vs
+  | None -> params
+
+let add_timestamp key value params =
+  match value with
+  | Some v -> (key, [ Timestamp.to_string v ]) :: params
   | None -> params
 
 (** {1 HTTP Request Functions} *)

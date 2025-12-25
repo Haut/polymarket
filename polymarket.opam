@@ -37,6 +37,7 @@ depends: [
   "hex" {>= "1.5"}
   "logs" {>= "0.7"}
   "fmt" {>= "0.9"}
+  "ptime" {>= "1.0"}
   "alcotest" {>= "1.7" & with-test}
   "odoc" {with-doc}
 ]

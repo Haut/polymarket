@@ -1,71 +1,16 @@
-(** Gamma API types for Polymarket.
+(** Gamma API response types for Polymarket.
 
     These types correspond to the OpenAPI 3.0.3 schema defined in
     gamma-openapi.json for the Polymarket Gamma API
     (https://gamma-api.polymarket.com). *)
 
-(** {1 Query Parameter Enums} *)
-
-(** Status filter for events and markets *)
-type status =
-  | Active  (** Only active/open items *)
-  | Closed  (** Only closed/resolved items *)
-  | All  (** All items regardless of status *)
-
-val string_of_status : status -> string
-val status_of_yojson : Yojson.Safe.t -> status
-val yojson_of_status : status -> Yojson.Safe.t
-val pp_status : Format.formatter -> status -> unit
-val show_status : status -> string
-val equal_status : status -> status -> bool
-
-(** Parent entity type for comments *)
-type parent_entity_type =
-  | Event  (** Event entity *)
-  | Series  (** Series entity *)
-  | Market  (** Market entity *)
-
-val string_of_parent_entity_type : parent_entity_type -> string
-val parent_entity_type_of_yojson : Yojson.Safe.t -> parent_entity_type
-val yojson_of_parent_entity_type : parent_entity_type -> Yojson.Safe.t
-val pp_parent_entity_type : Format.formatter -> parent_entity_type -> unit
-val show_parent_entity_type : parent_entity_type -> string
-val equal_parent_entity_type : parent_entity_type -> parent_entity_type -> bool
-
-(** Slug size for URL slugs *)
-type slug_size =
-  | Sm  (** Small slug *)
-  | Md  (** Medium slug *)
-  | Lg  (** Large slug *)
-
-val string_of_slug_size : slug_size -> string
-val slug_size_of_yojson : Yojson.Safe.t -> slug_size
-val yojson_of_slug_size : slug_size -> Yojson.Safe.t
-val pp_slug_size : Format.formatter -> slug_size -> unit
-val show_slug_size : slug_size -> string
-val equal_slug_size : slug_size -> slug_size -> bool
-
 (** {1 Response Types} *)
 
-type pagination = { has_more : bool option; total_results : int option }
+type pagination = { has_more : bool; total_results : int }
 (** Pagination information *)
 
-type count = { count : int option }
-(** Generic count response *)
-
-type event_tweet_count = { tweet_count : int option }
-(** Event tweet count response *)
-
-type market_description = {
-  id : string option;
-  condition_id : string option;
-  market_maker_address : string option;
-  description : string option;
-}
-(** Market description response *)
-
 type image_optimization = {
-  id : string option;
+  id : string;
   image_url_source : string option;
   image_url_optimized : string option;
   image_size_kb_source : float option;
@@ -81,38 +26,35 @@ type image_optimization = {
 (** {1 Basic Domain Types} *)
 
 type team = {
-  id : int option;
+  id : int;
   name : string option;
   league : string option;
   record : string option;
   logo : string option;
   abbreviation : string option;
   alias : string option;
-  created_at : string option;
-  updated_at : string option;
-  provider_id : int option;
-  color : string option;
+  created_at : Http_client.Client.Timestamp.t option;
+  updated_at : Http_client.Client.Timestamp.t option;
 }
 (** Sports team *)
 
 type tag = {
-  id : string option;
+  id : string;
   label : string option;
   slug : string option;
   force_show : bool option;
   published_at : string option;
   created_by : int option;
   updated_by : int option;
-  created_at : string option;
-  updated_at : string option;
+  created_at : Http_client.Client.Timestamp.t option;
+  updated_at : Http_client.Client.Timestamp.t option;
   force_hide : bool option;
   is_carousel : bool option;
-  requires_translation : bool option;
 }
 (** Tag for categorization *)
 
 type related_tag = {
-  id : string option;
+  id : string;
   tag_id : int option;
   related_tag_id : int option;
   rank : int option;
@@ -133,7 +75,7 @@ type category = {
 (** Market category *)
 
 type event_creator = {
-  id : string option;
+  id : string;
   creator_name : string option;
   creator_handle : string option;
   creator_url : string option;
@@ -144,18 +86,18 @@ type event_creator = {
 (** Event creator *)
 
 type chat = {
-  id : string option;
+  id : string;
   channel_id : string option;
   channel_name : string option;
   channel_image : string option;
   live : bool option;
-  start_time : string option;
-  end_time : string option;
+  start_time : Http_client.Client.Timestamp.t option;
+  end_time : Http_client.Client.Timestamp.t option;
 }
 (** Chat channel *)
 
 type template = {
-  id : string option;
+  id : string;
   event_title : string option;
   event_slug : string option;
   event_image : string option;
@@ -202,7 +144,7 @@ type comment_profile = {
 (** Comment author profile *)
 
 type reaction = {
-  id : string option;
+  id : string;
   comment_id : int option;
   reaction_type : string option;
   icon : string option;
@@ -213,15 +155,15 @@ type reaction = {
 (** Comment reaction *)
 
 type comment = {
-  id : string option;
+  id : string;
   body : string option;
   parent_entity_type : string option;
   parent_entity_id : int option;
   parent_comment_id : string option;
   user_address : string option;
   reply_address : string option;
-  created_at : string option;
-  updated_at : string option;
+  created_at : Http_client.Client.Timestamp.t option;
+  updated_at : Http_client.Client.Timestamp.t option;
   profile : comment_profile option;
   reactions : reaction list;
   report_count : int option;
@@ -231,18 +173,11 @@ type comment = {
 
 (** {1 Profile Types} *)
 
-type public_profile_user = {
-  id : string option;
-  creator : bool option;
-  mod_ : bool option;
-}
+type public_profile_user = { id : string; creator : bool; mod_ : bool }
 (** Public profile user *)
 
-type public_profile_error = { type_ : string option; error : string option }
-(** Public profile error response *)
-
 type public_profile_response = {
-  created_at : string option;
+  created_at : Http_client.Client.Timestamp.t option;
   proxy_wallet : string option;
   profile_image : string option;
   display_username_public : bool option;
@@ -256,14 +191,14 @@ type public_profile_response = {
 (** Public profile response *)
 
 type profile = {
-  id : string option;
+  id : string;
   name : string option;
   user : int option;
   referral : string option;
   created_by : int option;
   updated_by : int option;
-  created_at : string option;
-  updated_at : string option;
+  created_at : Http_client.Client.Timestamp.t option;
+  updated_at : Http_client.Client.Timestamp.t option;
   utm_source : string option;
   utm_medium : string option;
   utm_campaign : string option;
@@ -285,7 +220,7 @@ type profile = {
 (** {1 Collection Type} *)
 
 type collection = {
-  id : string option;
+  id : string;
   ticker : string option;
   slug : string option;
   title : string option;
@@ -317,50 +252,24 @@ type collection = {
 }
 (** Collection of events/markets *)
 
-(** {1 Series Summary Type} *)
-
-type series_summary = {
-  id : string option;
-  title : string option;
-  slug : string option;
-  event_dates : string list;
-  event_weeks : int list;
-  earliest_open_week : int option;
-  earliest_open_date : string option;
-}
-(** Series summary *)
-
-(** {1 CLOB Rewards Type} *)
-
-type clob_reward = {
-  id : string option;
-  condition_id : string option;
-  asset_address : string option;
-  rewards_amount : float option;
-  rewards_daily_rate : float option;
-  start_date : string option;
-  end_date : string option;
-}
-(** CLOB reward configuration *)
-
 (** {1 Mutually Recursive Types: Market, Event, Series}
 
     These types reference each other and must be defined together. *)
 
 type market = {
-  id : string option;
+  id : string;
   question : string option;
   condition_id : string option;
   slug : string option;
   twitter_card_image : string option;
   resolution_source : string option;
-  end_date : string option;
+  end_date : Http_client.Client.Timestamp.t option;
   category : string option;
   amm_type : string option;
   liquidity : string option;
   sponsor_name : string option;
   sponsor_image : string option;
-  start_date : string option;
+  start_date : Http_client.Client.Timestamp.t option;
   x_axis_value : string option;
   y_axis_value : string option;
   denomination_token : string option;
@@ -382,8 +291,8 @@ type market = {
   market_maker_address : string option;
   created_by : int option;
   updated_by : int option;
-  created_at : string option;
-  updated_at : string option;
+  created_at : Http_client.Client.Timestamp.t option;
+  updated_at : Http_client.Client.Timestamp.t option;
   closed_time : string option;
   wide_format : bool option;
   new_ : bool option;
@@ -451,9 +360,9 @@ type market = {
   ready : bool option;
   funded : bool option;
   past_slugs : string option;
-  ready_timestamp : string option;
-  funded_timestamp : string option;
-  accepting_orders_timestamp : string option;
+  ready_timestamp : Http_client.Client.Timestamp.t option;
+  funded_timestamp : Http_client.Client.Timestamp.t option;
+  accepting_orders_timestamp : Http_client.Client.Timestamp.t option;
   competitive : float option;
   rewards_min_size : float option;
   rewards_max_spread : float option;
@@ -482,39 +391,24 @@ type market = {
   uma_resolution_statuses : string option;
   pending_deployment : bool option;
   deploying : bool option;
-  deploying_timestamp : string option;
-  scheduled_deployment_timestamp : string option;
+  deploying_timestamp : Http_client.Client.Timestamp.t option;
+  scheduled_deployment_timestamp : Http_client.Client.Timestamp.t option;
   rfq_enabled : bool option;
-  event_start_time : string option;
-  submitted_by : string option;
-  cyom : bool option;
-  pager_duty_notification_enabled : bool option;
-  approved : bool option;
-  holding_rewards_enabled : bool option;
-  fees_enabled : bool option;
-  requires_translation : bool option;
-  neg_risk : bool option;
-  neg_risk_market_id : string option;
-  neg_risk_request_id : string option;
-  clob_rewards : clob_reward list;
-  sent_discord : bool option;
-  twitter_card_location : string option;
-  twitter_card_last_refreshed : string option;
-  twitter_card_last_validated : string option;
+  event_start_time : Http_client.Client.Timestamp.t option;
 }
 (** Market *)
 
 and event = {
-  id : string option;
+  id : string;
   ticker : string option;
   slug : string option;
   title : string option;
   subtitle : string option;
   description : string option;
   resolution_source : string option;
-  start_date : string option;
-  creation_date : string option;
-  end_date : string option;
+  start_date : Http_client.Client.Timestamp.t option;
+  creation_date : Http_client.Client.Timestamp.t option;
+  end_date : Http_client.Client.Timestamp.t option;
   image : string option;
   icon : string option;
   active : bool option;
@@ -534,8 +428,8 @@ and event = {
   published_at : string option;
   created_by : string option;
   updated_by : string option;
-  created_at : string option;
-  updated_at : string option;
+  created_at : Http_client.Client.Timestamp.t option;
+  updated_at : Http_client.Client.Timestamp.t option;
   comments_enabled : bool option;
   competitive : float option;
   volume_24hr : float option;
@@ -562,14 +456,14 @@ and event = {
   collections : collection list;
   tags : tag list;
   cyom : bool option;
-  closed_time : string option;
+  closed_time : Http_client.Client.Timestamp.t option;
   show_all_outcomes : bool option;
   show_market_images : bool option;
   automatically_resolved : bool option;
   enable_neg_risk : bool option;
   automatically_active : bool option;
   event_date : string option;
-  start_time : string option;
+  start_time : Http_client.Client.Timestamp.t option;
   event_week : int option;
   series_slug : string option;
   score : string option;
@@ -577,7 +471,7 @@ and event = {
   period : string option;
   live : bool option;
   ended : bool option;
-  finished_timestamp : string option;
+  finished_timestamp : Http_client.Client.Timestamp.t option;
   gmp_chart_mode : string option;
   event_creators : event_creator list;
   tweet_count : int option;
@@ -592,19 +486,14 @@ and event = {
   carousel_map : string option;
   pending_deployment : bool option;
   deploying : bool option;
-  deploying_timestamp : string option;
-  scheduled_deployment_timestamp : string option;
+  deploying_timestamp : Http_client.Client.Timestamp.t option;
+  scheduled_deployment_timestamp : Http_client.Client.Timestamp.t option;
   game_status : string option;
-  neg_risk_augmented : bool option;
-  country_name : string option;
-  election_type : string option;
-  requires_translation : bool option;
-  game_id : string option;
 }
 (** Event *)
 
 and series = {
-  id : string option;
+  id : string;
   ticker : string option;
   slug : string option;
   title : string option;
@@ -626,14 +515,14 @@ and series = {
   published_at : string option;
   created_by : string option;
   updated_by : string option;
-  created_at : string option;
-  updated_at : string option;
+  created_at : Http_client.Client.Timestamp.t option;
+  updated_at : Http_client.Client.Timestamp.t option;
   comments_enabled : bool option;
   competitive : string option;
   volume_24hr : float option;
   volume : float option;
   liquidity : float option;
-  start_date : string option;
+  start_date : Http_client.Client.Timestamp.t option;
   pyth_token_id : string option;
   cg_asset_name : string option;
   score : int option;
@@ -643,7 +532,6 @@ and series = {
   tags : tag list;
   comment_count : int option;
   chats : chat list;
-  requires_translation : bool option;
 }
 (** Series *)
 
@@ -663,50 +551,22 @@ type search = {
 (** {1 Sports Types} *)
 
 type sports_metadata = {
-  id : int option;
-  sport : string option;
+  sport : string;
   image : string option;
   resolution : string option;
-  ordering : string option;
-  tags : string option;
-  series : string option;
-  created_at : string option;
+  ordering : string;
+  tags : string;
+  series : string;
 }
 (** Sports metadata *)
 
 type sports_market_types_response = { market_types : string list }
 (** Sports market types response *)
 
-(** {1 Request Body Types} *)
-
-type markets_information_body = {
-  id : int list option;
-  slug : string list option;
-  closed : bool option;
-  clob_token_ids : string list option;
-  condition_ids : string list option;
-  market_maker_address : string list option;
-  liquidity_num_min : float option;
-  liquidity_num_max : float option;
-  volume_num_min : float option;
-  volume_num_max : float option;
-  start_date_min : string option;
-  start_date_max : string option;
-  end_date_min : string option;
-  end_date_max : string option;
-}
-(** Markets information request body *)
-
 (** {1 JSON Conversion Functions} *)
 
 val pagination_of_yojson : Yojson.Safe.t -> pagination
 val yojson_of_pagination : pagination -> Yojson.Safe.t
-val count_of_yojson : Yojson.Safe.t -> count
-val yojson_of_count : count -> Yojson.Safe.t
-val event_tweet_count_of_yojson : Yojson.Safe.t -> event_tweet_count
-val yojson_of_event_tweet_count : event_tweet_count -> Yojson.Safe.t
-val market_description_of_yojson : Yojson.Safe.t -> market_description
-val yojson_of_market_description : market_description -> Yojson.Safe.t
 val image_optimization_of_yojson : Yojson.Safe.t -> image_optimization
 val yojson_of_image_optimization : image_optimization -> Yojson.Safe.t
 val team_of_yojson : Yojson.Safe.t -> team
@@ -735,18 +595,12 @@ val comment_of_yojson : Yojson.Safe.t -> comment
 val yojson_of_comment : comment -> Yojson.Safe.t
 val public_profile_user_of_yojson : Yojson.Safe.t -> public_profile_user
 val yojson_of_public_profile_user : public_profile_user -> Yojson.Safe.t
-val public_profile_error_of_yojson : Yojson.Safe.t -> public_profile_error
-val yojson_of_public_profile_error : public_profile_error -> Yojson.Safe.t
 val public_profile_response_of_yojson : Yojson.Safe.t -> public_profile_response
 val yojson_of_public_profile_response : public_profile_response -> Yojson.Safe.t
 val profile_of_yojson : Yojson.Safe.t -> profile
 val yojson_of_profile : profile -> Yojson.Safe.t
 val collection_of_yojson : Yojson.Safe.t -> collection
 val yojson_of_collection : collection -> Yojson.Safe.t
-val series_summary_of_yojson : Yojson.Safe.t -> series_summary
-val yojson_of_series_summary : series_summary -> Yojson.Safe.t
-val clob_reward_of_yojson : Yojson.Safe.t -> clob_reward
-val yojson_of_clob_reward : clob_reward -> Yojson.Safe.t
 val market_of_yojson : Yojson.Safe.t -> market
 val yojson_of_market : market -> Yojson.Safe.t
 val event_of_yojson : Yojson.Safe.t -> event
@@ -766,22 +620,10 @@ val sports_market_types_response_of_yojson :
 val yojson_of_sports_market_types_response :
   sports_market_types_response -> Yojson.Safe.t
 
-val markets_information_body_of_yojson :
-  Yojson.Safe.t -> markets_information_body
-
-val yojson_of_markets_information_body :
-  markets_information_body -> Yojson.Safe.t
-
 (** {1 Pretty Printing Functions} *)
 
 val pp_pagination : Format.formatter -> pagination -> unit
 val show_pagination : pagination -> string
-val pp_count : Format.formatter -> count -> unit
-val show_count : count -> string
-val pp_event_tweet_count : Format.formatter -> event_tweet_count -> unit
-val show_event_tweet_count : event_tweet_count -> string
-val pp_market_description : Format.formatter -> market_description -> unit
-val show_market_description : market_description -> string
 val pp_image_optimization : Format.formatter -> image_optimization -> unit
 val show_image_optimization : image_optimization -> string
 val pp_team : Format.formatter -> team -> unit
@@ -810,8 +652,6 @@ val pp_comment : Format.formatter -> comment -> unit
 val show_comment : comment -> string
 val pp_public_profile_user : Format.formatter -> public_profile_user -> unit
 val show_public_profile_user : public_profile_user -> string
-val pp_public_profile_error : Format.formatter -> public_profile_error -> unit
-val show_public_profile_error : public_profile_error -> string
 
 val pp_public_profile_response :
   Format.formatter -> public_profile_response -> unit
@@ -821,10 +661,6 @@ val pp_profile : Format.formatter -> profile -> unit
 val show_profile : profile -> string
 val pp_collection : Format.formatter -> collection -> unit
 val show_collection : collection -> string
-val pp_series_summary : Format.formatter -> series_summary -> unit
-val show_series_summary : series_summary -> string
-val pp_clob_reward : Format.formatter -> clob_reward -> unit
-val show_clob_reward : clob_reward -> string
 val pp_market : Format.formatter -> market -> unit
 val show_market : market -> string
 val pp_event : Format.formatter -> event -> unit
@@ -843,17 +679,9 @@ val pp_sports_market_types_response :
 
 val show_sports_market_types_response : sports_market_types_response -> string
 
-val pp_markets_information_body :
-  Format.formatter -> markets_information_body -> unit
-
-val show_markets_information_body : markets_information_body -> string
-
 (** {1 Equality Functions} *)
 
 val equal_pagination : pagination -> pagination -> bool
-val equal_count : count -> count -> bool
-val equal_event_tweet_count : event_tweet_count -> event_tweet_count -> bool
-val equal_market_description : market_description -> market_description -> bool
 val equal_image_optimization : image_optimization -> image_optimization -> bool
 val equal_team : team -> team -> bool
 val equal_tag : tag -> tag -> bool
@@ -871,16 +699,11 @@ val equal_comment : comment -> comment -> bool
 val equal_public_profile_user :
   public_profile_user -> public_profile_user -> bool
 
-val equal_public_profile_error :
-  public_profile_error -> public_profile_error -> bool
-
 val equal_public_profile_response :
   public_profile_response -> public_profile_response -> bool
 
 val equal_profile : profile -> profile -> bool
 val equal_collection : collection -> collection -> bool
-val equal_series_summary : series_summary -> series_summary -> bool
-val equal_clob_reward : clob_reward -> clob_reward -> bool
 val equal_market : market -> market -> bool
 val equal_event : event -> event -> bool
 val equal_series : series -> series -> bool
@@ -890,43 +713,3 @@ val equal_sports_metadata : sports_metadata -> sports_metadata -> bool
 
 val equal_sports_market_types_response :
   sports_market_types_response -> sports_market_types_response -> bool
-
-val equal_markets_information_body :
-  markets_information_body -> markets_information_body -> bool
-
-(** {1 Empty Constructors}
-
-    These provide convenient defaults for testing and creating fixtures. *)
-
-val empty_pagination : pagination
-val empty_count : count
-val empty_event_tweet_count : event_tweet_count
-val empty_market_description : market_description
-val empty_image_optimization : image_optimization
-val empty_team : team
-val empty_tag : tag
-val empty_related_tag : related_tag
-val empty_category : category
-val empty_event_creator : event_creator
-val empty_chat : chat
-val empty_template : template
-val empty_search_tag : search_tag
-val empty_comment_position : comment_position
-val empty_comment_profile : comment_profile
-val empty_reaction : reaction
-val empty_comment : comment
-val empty_public_profile_user : public_profile_user
-val empty_public_profile_error : public_profile_error
-val empty_public_profile_response : public_profile_response
-val empty_profile : profile
-val empty_collection : collection
-val empty_series_summary : series_summary
-val empty_clob_reward : clob_reward
-val empty_market : market
-val empty_event : event
-val empty_series : series
-val empty_events_pagination : events_pagination
-val empty_search : search
-val empty_sports_metadata : sports_metadata
-val empty_sports_market_types_response : sports_market_types_response
-val empty_markets_information_body : markets_information_body

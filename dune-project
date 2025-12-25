@@ -41,6 +41,7 @@
   (hex (>= 1.5))
   (logs (>= 0.7))
   (fmt (>= 0.9))
+  (ptime (>= 1.0))
   (alcotest (and (>= 1.7) :with-test)))
  (tags
   (polymarket prediction-market blockchain polygon api-client trading)))
