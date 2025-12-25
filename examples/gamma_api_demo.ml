@@ -22,7 +22,7 @@ let print_result name ~on_ok result =
 
 (** {1 ID Extraction Helpers} *)
 
-let first_event_id (events : Gamma_api.Types.event list) =
+let first_event_id (events : Gamma_api.Responses.event list) =
   match events with
   | [] -> None
   | e :: _ -> (
@@ -30,10 +30,10 @@ let first_event_id (events : Gamma_api.Types.event list) =
       | Some id -> ( try Some (int_of_string id) with _ -> None)
       | None -> None)
 
-let first_event_slug (events : Gamma_api.Types.event list) =
+let first_event_slug (events : Gamma_api.Responses.event list) =
   match events with [] -> None | e :: _ -> e.slug
 
-let first_market_id (markets : Gamma_api.Types.market list) =
+let first_market_id (markets : Gamma_api.Responses.market list) =
   match markets with
   | [] -> None
   | m :: _ -> (
@@ -41,22 +41,22 @@ let first_market_id (markets : Gamma_api.Types.market list) =
       | Some id -> ( try Some (int_of_string id) with _ -> None)
       | None -> None)
 
-let first_market_slug (markets : Gamma_api.Types.market list) =
+let first_market_slug (markets : Gamma_api.Responses.market list) =
   match markets with [] -> None | m :: _ -> m.slug
 
-let first_series_id (series_list : Gamma_api.Types.series list) =
+let first_series_id (series_list : Gamma_api.Responses.series list) =
   match series_list with [] -> None | s :: _ -> s.id
 
-let first_tag_id (tags : Gamma_api.Types.tag list) =
+let first_tag_id (tags : Gamma_api.Responses.tag list) =
   match tags with [] -> None | t :: _ -> t.id
 
-let first_tag_slug (tags : Gamma_api.Types.tag list) =
+let first_tag_slug (tags : Gamma_api.Responses.tag list) =
   match tags with [] -> None | t :: _ -> t.slug
 
-let first_team_id (teams : Gamma_api.Types.team list) =
+let first_team_id (teams : Gamma_api.Responses.team list) =
   match teams with [] -> None | t :: _ -> t.id
 
-let first_comment_id (comments : Gamma_api.Types.comment list) =
+let first_comment_id (comments : Gamma_api.Responses.comment list) =
   match comments with
   | [] -> None
   | c :: _ -> (
@@ -64,7 +64,7 @@ let first_comment_id (comments : Gamma_api.Types.comment list) =
       | Some id -> ( try Some (int_of_string id) with _ -> None)
       | None -> None)
 
-let first_user_address (comments : Gamma_api.Types.comment list) =
+let first_user_address (comments : Gamma_api.Responses.comment list) =
   match comments with [] -> None | c :: _ -> c.user_address
 
 (** {1 Main Demo} *)
@@ -96,7 +96,7 @@ let run_demo env =
   (match team_id with
   | Some id ->
       let team = Gamma_api.Client.get_team client ~id () in
-      print_result "get_team" team ~on_ok:(fun (t : Gamma_api.Types.team) ->
+      print_result "get_team" team ~on_ok:(fun (t : Gamma_api.Responses.team) ->
           Option.value ~default:"(no name)" t.name)
   | None -> Logger.skip "get_team" "no team ID available");
 
@@ -113,7 +113,7 @@ let run_demo env =
   (match tag_id with
   | Some id ->
       let tag = Gamma_api.Client.get_tag client ~id () in
-      print_result "get_tag" tag ~on_ok:(fun (t : Gamma_api.Types.tag) ->
+      print_result "get_tag" tag ~on_ok:(fun (t : Gamma_api.Responses.tag) ->
           Option.value ~default:"(no label)" t.label);
 
       let related = Gamma_api.Client.get_related_tags client ~id () in
@@ -126,7 +126,7 @@ let run_demo env =
   | Some slug ->
       let tag = Gamma_api.Client.get_tag_by_slug client ~slug () in
       print_result "get_tag_by_slug" tag
-        ~on_ok:(fun (t : Gamma_api.Types.tag) ->
+        ~on_ok:(fun (t : Gamma_api.Responses.tag) ->
           Option.value ~default:"(no label)" t.label)
   | None -> Logger.skip "get_tag_by_slug" "no tag slug available");
 
@@ -144,7 +144,8 @@ let run_demo env =
   (match event_id with
   | Some id ->
       let event = Gamma_api.Client.get_event client ~id () in
-      print_result "get_event" event ~on_ok:(fun (e : Gamma_api.Types.event) ->
+      print_result "get_event" event
+        ~on_ok:(fun (e : Gamma_api.Responses.event) ->
           Option.value ~default:"(no title)" e.title);
 
       let event_tags = Gamma_api.Client.get_event_tags client ~id () in
@@ -157,7 +158,7 @@ let run_demo env =
   | Some slug ->
       let event = Gamma_api.Client.get_event_by_slug client ~slug () in
       print_result "get_event_by_slug" event
-        ~on_ok:(fun (e : Gamma_api.Types.event) ->
+        ~on_ok:(fun (e : Gamma_api.Responses.event) ->
           Option.value ~default:"(no title)" e.title)
   | None -> Logger.skip "get_event_by_slug" "no event slug available");
 
@@ -176,7 +177,7 @@ let run_demo env =
   | Some id ->
       let market = Gamma_api.Client.get_market client ~id () in
       print_result "get_market" market
-        ~on_ok:(fun (m : Gamma_api.Types.market) ->
+        ~on_ok:(fun (m : Gamma_api.Responses.market) ->
           Option.value ~default:"(no question)" m.question);
 
       let market_tags = Gamma_api.Client.get_market_tags client ~id () in
@@ -184,7 +185,7 @@ let run_demo env =
 
       let description = Gamma_api.Client.get_market_description client ~id () in
       print_result "get_market_description" description
-        ~on_ok:(fun (d : Gamma_api.Types.market_description) ->
+        ~on_ok:(fun (d : Gamma_api.Responses.market_description) ->
           let desc = Option.value ~default:"(none)" d.description in
           if String.length desc > 50 then String.sub desc 0 50 ^ "..." else desc)
   | None ->
@@ -196,7 +197,7 @@ let run_demo env =
   | Some slug ->
       let market = Gamma_api.Client.get_market_by_slug client ~slug () in
       print_result "get_market_by_slug" market
-        ~on_ok:(fun (m : Gamma_api.Types.market) ->
+        ~on_ok:(fun (m : Gamma_api.Responses.market) ->
           Option.value ~default:"(no question)" m.question)
   | None -> Logger.skip "get_market_by_slug" "no market slug available");
 
@@ -213,12 +214,12 @@ let run_demo env =
   | Some id ->
       let series = Gamma_api.Client.get_series client ~id () in
       print_result "get_series" series
-        ~on_ok:(fun (s : Gamma_api.Types.series) ->
+        ~on_ok:(fun (s : Gamma_api.Responses.series) ->
           Option.value ~default:"(no title)" s.title);
 
       let summary = Gamma_api.Client.get_series_summary client ~id () in
       print_result "get_series_summary" summary
-        ~on_ok:(fun (s : Gamma_api.Types.series_summary) ->
+        ~on_ok:(fun (s : Gamma_api.Responses.series_summary) ->
           Printf.sprintf "%s (%d dates, %d weeks)"
             (Option.value ~default:"(no title)" s.title)
             (List.length s.event_dates)
@@ -234,7 +235,7 @@ let run_demo env =
     match event_id with
     | Some eid ->
         Gamma_api.Client.get_comments client
-          ~parent_entity_type:Gamma_api.Types.Event ~parent_entity_id:eid
+          ~parent_entity_type:Gamma_api.Query.Event ~parent_entity_id:eid
           ~limit:10 ()
     | None -> Error { Http_client.Client.error = "No event ID for comments" }
   in
@@ -250,7 +251,7 @@ let run_demo env =
   | Some id ->
       let comment = Gamma_api.Client.get_comment client ~id () in
       print_result "get_comment" comment
-        ~on_ok:(fun (c : Gamma_api.Types.comment) ->
+        ~on_ok:(fun (c : Gamma_api.Responses.comment) ->
           let body = Option.value ~default:"(no body)" c.body in
           if String.length body > 50 then String.sub body 0 50 ^ "..." else body)
   | None -> Logger.skip "get_comment" "no comment ID available");
@@ -271,14 +272,14 @@ let run_demo env =
     Gamma_api.Client.get_public_profile client ~address:test_address ()
   in
   print_result "get_public_profile" public_profile
-    ~on_ok:(fun (p : Gamma_api.Types.public_profile_response) ->
+    ~on_ok:(fun (p : Gamma_api.Responses.public_profile_response) ->
       Option.value ~default:"(no name)" p.name);
 
   let profile =
     Gamma_api.Client.get_profile client ~user_address:test_address ()
   in
   print_result "get_profile" profile
-    ~on_ok:(fun (p : Gamma_api.Types.profile) ->
+    ~on_ok:(fun (p : Gamma_api.Responses.profile) ->
       Option.value ~default:"(no pseudonym)" p.pseudonym);
 
   (* ===== Sports ===== *)
@@ -288,7 +289,7 @@ let run_demo env =
 
   let market_types = Gamma_api.Client.get_sports_market_types client () in
   print_result "get_sports_market_types" market_types
-    ~on_ok:(fun (r : Gamma_api.Types.sports_market_types_response) ->
+    ~on_ok:(fun (r : Gamma_api.Responses.sports_market_types_response) ->
       Printf.sprintf "%d market types" (List.length r.market_types));
 
   (* ===== Search ===== *)
@@ -297,7 +298,7 @@ let run_demo env =
     Gamma_api.Client.public_search client ~q:"election" ~limit_per_type:5 ()
   in
   print_result "public_search" search
-    ~on_ok:(fun (s : Gamma_api.Types.search) ->
+    ~on_ok:(fun (s : Gamma_api.Responses.search) ->
       let event_count =
         match s.events with Some e -> List.length e | None -> 0
       in

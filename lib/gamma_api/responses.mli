@@ -1,49 +1,8 @@
-(** Gamma API types for Polymarket.
+(** Gamma API response types for Polymarket.
 
     These types correspond to the OpenAPI 3.0.3 schema defined in
     gamma-openapi.json for the Polymarket Gamma API
     (https://gamma-api.polymarket.com). *)
-
-(** {1 Query Parameter Enums} *)
-
-(** Status filter for events and markets *)
-type status =
-  | Active  (** Only active/open items *)
-  | Closed  (** Only closed/resolved items *)
-  | All  (** All items regardless of status *)
-
-val string_of_status : status -> string
-val status_of_yojson : Yojson.Safe.t -> status
-val yojson_of_status : status -> Yojson.Safe.t
-val pp_status : Format.formatter -> status -> unit
-val show_status : status -> string
-val equal_status : status -> status -> bool
-
-(** Parent entity type for comments *)
-type parent_entity_type =
-  | Event  (** Event entity *)
-  | Series  (** Series entity *)
-  | Market  (** Market entity *)
-
-val string_of_parent_entity_type : parent_entity_type -> string
-val parent_entity_type_of_yojson : Yojson.Safe.t -> parent_entity_type
-val yojson_of_parent_entity_type : parent_entity_type -> Yojson.Safe.t
-val pp_parent_entity_type : Format.formatter -> parent_entity_type -> unit
-val show_parent_entity_type : parent_entity_type -> string
-val equal_parent_entity_type : parent_entity_type -> parent_entity_type -> bool
-
-(** Slug size for URL slugs *)
-type slug_size =
-  | Sm  (** Small slug *)
-  | Md  (** Medium slug *)
-  | Lg  (** Large slug *)
-
-val string_of_slug_size : slug_size -> string
-val slug_size_of_yojson : Yojson.Safe.t -> slug_size
-val yojson_of_slug_size : slug_size -> Yojson.Safe.t
-val pp_slug_size : Format.formatter -> slug_size -> unit
-val show_slug_size : slug_size -> string
-val equal_slug_size : slug_size -> slug_size -> bool
 
 (** {1 Response Types} *)
 
@@ -677,26 +636,6 @@ type sports_metadata = {
 type sports_market_types_response = { market_types : string list }
 (** Sports market types response *)
 
-(** {1 Request Body Types} *)
-
-type markets_information_body = {
-  id : int list option;
-  slug : string list option;
-  closed : bool option;
-  clob_token_ids : string list option;
-  condition_ids : string list option;
-  market_maker_address : string list option;
-  liquidity_num_min : float option;
-  liquidity_num_max : float option;
-  volume_num_min : float option;
-  volume_num_max : float option;
-  start_date_min : string option;
-  start_date_max : string option;
-  end_date_min : string option;
-  end_date_max : string option;
-}
-(** Markets information request body *)
-
 (** {1 JSON Conversion Functions} *)
 
 val pagination_of_yojson : Yojson.Safe.t -> pagination
@@ -765,12 +704,6 @@ val sports_market_types_response_of_yojson :
 
 val yojson_of_sports_market_types_response :
   sports_market_types_response -> Yojson.Safe.t
-
-val markets_information_body_of_yojson :
-  Yojson.Safe.t -> markets_information_body
-
-val yojson_of_markets_information_body :
-  markets_information_body -> Yojson.Safe.t
 
 (** {1 Pretty Printing Functions} *)
 
@@ -843,11 +776,6 @@ val pp_sports_market_types_response :
 
 val show_sports_market_types_response : sports_market_types_response -> string
 
-val pp_markets_information_body :
-  Format.formatter -> markets_information_body -> unit
-
-val show_markets_information_body : markets_information_body -> string
-
 (** {1 Equality Functions} *)
 
 val equal_pagination : pagination -> pagination -> bool
@@ -890,6 +818,3 @@ val equal_sports_metadata : sports_metadata -> sports_metadata -> bool
 
 val equal_sports_market_types_response :
   sports_market_types_response -> sports_market_types_response -> bool
-
-val equal_markets_information_body :
-  markets_information_body -> markets_information_body -> bool

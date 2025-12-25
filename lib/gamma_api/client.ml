@@ -3,7 +3,8 @@
     This module provides functions to interact with all public endpoints of the
     Polymarket Gamma API (https://gamma-api.polymarket.com). *)
 
-open Types
+open Query
+open Responses
 
 (** {1 Client Configuration} *)
 

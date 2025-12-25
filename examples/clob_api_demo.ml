@@ -39,9 +39,9 @@ let parse_token_ids_json ids_str =
         if String.length s >= 2 then String.sub s 1 (String.length s - 2) else s)
     |> List.filter (fun s -> String.length s > 0)
 
-let extract_markets_with_tokens (markets : Gamma_api.Types.market list) =
+let extract_markets_with_tokens (markets : Gamma_api.Responses.market list) =
   List.filter_map
-    (fun (m : Gamma_api.Types.market) ->
+    (fun (m : Gamma_api.Responses.market) ->
       match m.clob_token_ids with
       | Some ids when String.length ids > 2 ->
           let token_ids = parse_token_ids_json ids in
@@ -51,7 +51,7 @@ let extract_markets_with_tokens (markets : Gamma_api.Types.market list) =
 
 let find_market_with_orderbook clob_client markets_with_tokens =
   List.find_map
-    (fun ((m : Gamma_api.Types.market), token_ids) ->
+    (fun ((m : Gamma_api.Responses.market), token_ids) ->
       match token_ids with
       | token_id :: _ -> (
           match Clob_api.Client.get_order_book clob_client ~token_id () with

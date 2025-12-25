@@ -16,7 +16,8 @@
       | Error err -> print_endline ("Error: " ^ err.error)
     ]} *)
 
-open Types
+open Query
+open Responses
 
 (** {1 Client Configuration} *)
 
