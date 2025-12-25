@@ -1,0 +1,15 @@
+(library
+ (name polymarket_clob)
+ (public_name polymarket.clob)
+ (libraries
+  polymarket_common
+  polymarket_http
+  yojson
+  ppx_yojson_conv_lib
+  cohttp
+  digestif
+  secp256k1-internal
+  base64
+  hex)
+ (preprocess
+  (pps ppx_yojson_conv ppx_deriving.show ppx_deriving.eq)))

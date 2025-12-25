@@ -42,17 +42,17 @@ val health_check : t -> (health_response, error_response) result
 
 val get_positions :
   t ->
-  user:Common.Primitives.Address.t ->
-  ?market:Common.Primitives.Hash64.t list ->
-  ?event_id:Common.Primitives.Pos_int.t list ->
-  ?size_threshold:Common.Primitives.Nonneg_float.t ->
+  user:Polymarket_common.Primitives.Address.t ->
+  ?market:Polymarket_common.Primitives.Hash64.t list ->
+  ?event_id:Polymarket_common.Primitives.Pos_int.t list ->
+  ?size_threshold:Polymarket_common.Primitives.Nonneg_float.t ->
   ?redeemable:bool ->
   ?mergeable:bool ->
-  ?limit:Common.Primitives.Limit.t ->
-  ?offset:Common.Primitives.Offset.t ->
+  ?limit:Polymarket_common.Primitives.Limit.t ->
+  ?offset:Polymarket_common.Primitives.Offset.t ->
   ?sort_by:position_sort_by ->
   ?sort_direction:sort_direction ->
-  ?title:Common.Primitives.Bounded_string.t ->
+  ?title:Polymarket_common.Primitives.Bounded_string.t ->
   unit ->
   (position list, error_response) result
 (** Get current positions for a user.
@@ -71,14 +71,14 @@ val get_positions :
 
 val get_closed_positions :
   t ->
-  user:Common.Primitives.Address.t ->
-  ?market:Common.Primitives.Hash64.t list ->
-  ?event_id:Common.Primitives.Pos_int.t list ->
-  ?title:Common.Primitives.Bounded_string.t ->
+  user:Polymarket_common.Primitives.Address.t ->
+  ?market:Polymarket_common.Primitives.Hash64.t list ->
+  ?event_id:Polymarket_common.Primitives.Pos_int.t list ->
+  ?title:Polymarket_common.Primitives.Bounded_string.t ->
   ?sort_by:closed_position_sort_by ->
   ?sort_direction:sort_direction ->
-  ?limit:Common.Primitives.Closed_positions_limit.t ->
-  ?offset:Common.Primitives.Extended_offset.t ->
+  ?limit:Polymarket_common.Primitives.Closed_positions_limit.t ->
+  ?offset:Polymarket_common.Primitives.Extended_offset.t ->
   unit ->
   (closed_position list, error_response) result
 (** Get closed positions for a user.
@@ -95,15 +95,15 @@ val get_closed_positions :
 
 val get_trades :
   t ->
-  ?user:Common.Primitives.Address.t ->
-  ?market:Common.Primitives.Hash64.t list ->
-  ?event_id:Common.Primitives.Pos_int.t list ->
+  ?user:Polymarket_common.Primitives.Address.t ->
+  ?market:Polymarket_common.Primitives.Hash64.t list ->
+  ?event_id:Polymarket_common.Primitives.Pos_int.t list ->
   ?side:side ->
   ?filter_type:filter_type ->
-  ?filter_amount:Common.Primitives.Nonneg_float.t ->
+  ?filter_amount:Polymarket_common.Primitives.Nonneg_float.t ->
   ?taker_only:bool ->
-  ?limit:Common.Primitives.Nonneg_int.t ->
-  ?offset:Common.Primitives.Nonneg_int.t ->
+  ?limit:Polymarket_common.Primitives.Nonneg_int.t ->
+  ?offset:Polymarket_common.Primitives.Nonneg_int.t ->
   unit ->
   (trade list, error_response) result
 (** Get trades for a user or markets.
@@ -121,17 +121,17 @@ val get_trades :
 
 val get_activity :
   t ->
-  user:Common.Primitives.Address.t ->
-  ?market:Common.Primitives.Hash64.t list ->
-  ?event_id:Common.Primitives.Pos_int.t list ->
+  user:Polymarket_common.Primitives.Address.t ->
+  ?market:Polymarket_common.Primitives.Hash64.t list ->
+  ?event_id:Polymarket_common.Primitives.Pos_int.t list ->
   ?activity_types:activity_type list ->
   ?side:side ->
-  ?start_time:Common.Primitives.Nonneg_int.t ->
-  ?end_time:Common.Primitives.Nonneg_int.t ->
+  ?start_time:Polymarket_common.Primitives.Nonneg_int.t ->
+  ?end_time:Polymarket_common.Primitives.Nonneg_int.t ->
   ?sort_by:activity_sort_by ->
   ?sort_direction:sort_direction ->
-  ?limit:Common.Primitives.Limit.t ->
-  ?offset:Common.Primitives.Offset.t ->
+  ?limit:Polymarket_common.Primitives.Limit.t ->
+  ?offset:Polymarket_common.Primitives.Offset.t ->
   unit ->
   (activity list, error_response) result
 (** Get user activity (on-chain).
@@ -151,9 +151,9 @@ val get_activity :
 
 val get_holders :
   t ->
-  market:Common.Primitives.Hash64.t list ->
-  ?min_balance:Common.Primitives.Min_balance.t ->
-  ?limit:Common.Primitives.Holders_limit.t ->
+  market:Polymarket_common.Primitives.Hash64.t list ->
+  ?min_balance:Polymarket_common.Primitives.Min_balance.t ->
+  ?limit:Polymarket_common.Primitives.Holders_limit.t ->
   unit ->
   (meta_holder list, error_response) result
 (** Get top holders for markets.
@@ -165,7 +165,7 @@ val get_holders :
 
 val get_traded :
   t ->
-  user:Common.Primitives.Address.t ->
+  user:Polymarket_common.Primitives.Address.t ->
   unit ->
   (traded, error_response) result
 (** Get total markets a user has traded.
@@ -173,8 +173,8 @@ val get_traded :
 
 val get_value :
   t ->
-  user:Common.Primitives.Address.t ->
-  ?market:Common.Primitives.Hash64.t list ->
+  user:Polymarket_common.Primitives.Address.t ->
+  ?market:Polymarket_common.Primitives.Hash64.t list ->
   unit ->
   (value list, error_response) result
 (** Get total value of a user's positions.
@@ -185,7 +185,7 @@ val get_value :
 
 val get_open_interest :
   t ->
-  ?market:Common.Primitives.Hash64.t list ->
+  ?market:Polymarket_common.Primitives.Hash64.t list ->
   unit ->
   (open_interest list, error_response) result
 (** Get open interest for markets.
@@ -193,7 +193,7 @@ val get_open_interest :
 
 val get_live_volume :
   t ->
-  id:Common.Primitives.Pos_int.t ->
+  id:Polymarket_common.Primitives.Pos_int.t ->
   unit ->
   (live_volume list, error_response) result
 (** Get live volume for an event.
@@ -204,8 +204,8 @@ val get_live_volume :
 val get_builder_leaderboard :
   t ->
   ?time_period:time_period ->
-  ?limit:Common.Primitives.Builder_limit.t ->
-  ?offset:Common.Primitives.Leaderboard_offset.t ->
+  ?limit:Polymarket_common.Primitives.Builder_limit.t ->
+  ?offset:Polymarket_common.Primitives.Leaderboard_offset.t ->
   unit ->
   (leaderboard_entry list, error_response) result
 (** Get aggregated builder leaderboard.
@@ -226,10 +226,10 @@ val get_trader_leaderboard :
   ?category:leaderboard_category ->
   ?time_period:time_period ->
   ?order_by:leaderboard_order_by ->
-  ?user:Common.Primitives.Address.t ->
+  ?user:Polymarket_common.Primitives.Address.t ->
   ?user_name:string ->
-  ?limit:Common.Primitives.Leaderboard_limit.t ->
-  ?offset:Common.Primitives.Leaderboard_offset.t ->
+  ?limit:Polymarket_common.Primitives.Leaderboard_limit.t ->
+  ?offset:Polymarket_common.Primitives.Leaderboard_offset.t ->
   unit ->
   (trader_leaderboard_entry list, error_response) result
 (** Get trader leaderboard rankings.

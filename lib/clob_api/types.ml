@@ -386,22 +386,26 @@ type price_history = { history : price_point list [@default []] }
 
 (** {1 Error Response} *)
 
-type error_response = Http_client.Client.error_response = { error : string }
+type error_response = Polymarket_http.Client.error_response = { error : string }
 [@@deriving yojson, show, eq]
-(** Error response (alias to Http_client.Client.error_response) *)
+(** Error response (alias to Polymarket_http.Client.error_response) *)
 
 (** {1 Validation Functions}
 
-    These functions delegate to Common.Primitives for validation logic. This
-    ensures a single source of truth for validation rules. *)
+    These functions delegate to Polymarket_common.Primitives for validation
+    logic. This ensures a single source of truth for validation rules. *)
 
 (** Validates an address string (0x-prefixed, 40 hex chars). *)
 let is_valid_address s =
-  match Common.Primitives.Address.make s with Ok _ -> true | Error _ -> false
+  match Polymarket_common.Primitives.Address.make s with
+  | Ok _ -> true
+  | Error _ -> false
 
 (** Validates a hex signature string (0x-prefixed). *)
 let is_valid_signature s =
-  match Common.Primitives.Hash.make s with Ok _ -> true | Error _ -> false
+  match Polymarket_common.Primitives.Hash.make s with
+  | Ok _ -> true
+  | Error _ -> false
 
 (** {1 Validating Deserializers} *)
 

@@ -3,11 +3,6 @@
     This module provides a reusable HTTP client with JSON parsing and query
     parameter building utilities. *)
 
-(** {1 Re-exported Primitive Types} *)
-
-module Nonneg_int = Common.Primitives.Nonneg_int
-module Timestamp = Common.Primitives.Timestamp
-
 (** {1 Client Configuration} *)
 
 type t
@@ -25,12 +20,13 @@ val base_url : t -> string
 (** {1 Query Parameter Builders}
 
     These functions support pipe-friendly chaining with params as the last
-    argument.
+    argument. Callers are responsible for converting values to strings.
 
     Example:
     {[
       [ ("user", [ user ]) ]
-      |> add "market" market |> add_int "limit" limit
+      |> add "market" market
+      |> add "limit" (Option.map string_of_int limit)
       |> add_bool "active" active
     ]} *)
 
@@ -40,84 +36,25 @@ type params = (string * string list) list
 val add : string -> string option -> params -> params
 (** Add an optional string parameter *)
 
+val add_option : string -> ('a -> string) -> 'a option -> params -> params
+(** Add an optional parameter with a converter function.
+    {[
+      add_option "limit" string_of_int limit params add_option "timestamp"
+        Timestamp.to_string ts params
+    ]} *)
+
 val add_list : string -> ('a -> string) -> 'a list option -> params -> params
-(** Add an optional list parameter, joining with commas *)
+(** Add an optional list parameter, joining with commas.
+    {[
+      add_list "market" Hash64.to_string market params
+    ]} *)
 
 val add_bool : string -> bool option -> params -> params
-(** Add an optional boolean parameter *)
+(** Add an optional boolean parameter (renders as "true"/"false") *)
 
-val add_int : string -> int option -> params -> params
-(** Add an optional integer parameter *)
-
-val add_nonneg_int : string -> Nonneg_int.t option -> params -> params
-(** Add an optional non-negative integer parameter *)
-
-val add_float : string -> float option -> params -> params
-(** Add an optional float parameter *)
-
-val add_string_array : string -> string list option -> params -> params
-(** Add an optional string array parameter, adding each value as a separate
-    query parameter with the same key (e.g., ?league=NBA&league=NFL) *)
-
-val add_int_array : string -> int list option -> params -> params
-(** Add an optional int array parameter, adding each value as a separate query
-    parameter with the same key (e.g., ?id=1&id=2&id=3) *)
-
-val add_timestamp : string -> Timestamp.t option -> params -> params
-(** Add an optional timestamp parameter (ISO 8601 format) *)
-
-val add_pos_int :
-  string -> Common.Primitives.Pos_int.t option -> params -> params
-(** Add an optional positive integer parameter (>= 1) *)
-
-val add_pos_int_list :
-  string -> Common.Primitives.Pos_int.t list option -> params -> params
-(** Add an optional list of positive integers, joining with commas *)
-
-val add_nonneg_float :
-  string -> Common.Primitives.Nonneg_float.t option -> params -> params
-(** Add an optional non-negative float parameter (>= 0) *)
-
-val add_limit : string -> Common.Primitives.Limit.t option -> params -> params
-(** Add an optional limit parameter (0-500) *)
-
-val add_offset : string -> Common.Primitives.Offset.t option -> params -> params
-(** Add an optional offset parameter (0-10000) *)
-
-val add_bounded_string :
-  string -> Common.Primitives.Bounded_string.t option -> params -> params
-(** Add an optional bounded string parameter *)
-
-val add_holders_limit :
-  string -> Common.Primitives.Holders_limit.t option -> params -> params
-(** Add an optional holders limit parameter (0-20) *)
-
-val add_min_balance :
-  string -> Common.Primitives.Min_balance.t option -> params -> params
-(** Add an optional min balance parameter (0-999999) *)
-
-val add_closed_positions_limit :
-  string ->
-  Common.Primitives.Closed_positions_limit.t option ->
-  params ->
-  params
-(** Add an optional closed positions limit parameter (0-50) *)
-
-val add_extended_offset :
-  string -> Common.Primitives.Extended_offset.t option -> params -> params
-(** Add an optional extended offset parameter (0-100000) *)
-
-val add_leaderboard_limit :
-  string -> Common.Primitives.Leaderboard_limit.t option -> params -> params
-(** Add an optional leaderboard limit parameter (1-50) *)
-
-val add_leaderboard_offset :
-  string -> Common.Primitives.Leaderboard_offset.t option -> params -> params
-(** Add an optional leaderboard offset parameter (0-1000) *)
-
-val add_builder_limit :
-  string -> Common.Primitives.Builder_limit.t option -> params -> params
-(** Add an optional builder limit parameter (0-50) *)
+val add_each : string -> ('a -> string) -> 'a list option -> params -> params
+(** Add each value as a separate query parameter with the same key. For example,
+    [add_each "id" string_of_int (Some [1; 2])] produces [?id=1&id=2] *)
 
 (** {1 HTTP Request Functions} *)
 

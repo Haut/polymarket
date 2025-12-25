@@ -47,12 +47,12 @@ let build_l2_headers ~(credentials : Auth_types.credentials) ~address ~method_
 
 let create_api_key client ~private_key ~address ~nonce =
   let headers = build_l1_headers ~private_key ~address ~nonce in
-  Http_client.Client.post_json ~headers client "/auth/api-key"
+  Polymarket_http.Client.post_json ~headers client "/auth/api-key"
     Auth_types.api_key_response_of_yojson ~body:"{}" []
 
 let derive_api_key client ~private_key ~address ~nonce =
   let headers = build_l1_headers ~private_key ~address ~nonce in
-  Http_client.Client.get_json ~headers client "/auth/derive-api-key"
+  Polymarket_http.Client.get_json ~headers client "/auth/derive-api-key"
     Auth_types.derive_api_key_response_of_yojson []
 
 let delete_api_key client ~credentials ~address =
@@ -61,19 +61,21 @@ let delete_api_key client ~credentials ~address =
     build_l2_headers ~credentials ~address ~method_:"DELETE" ~path ~body:""
   in
   let uri =
-    Http_client.Client.build_uri (Http_client.Client.base_url client) path []
+    Polymarket_http.Client.build_uri
+      (Polymarket_http.Client.base_url client)
+      path []
   in
-  let status, body = Http_client.Client.do_delete ~headers client uri in
+  let status, body = Polymarket_http.Client.do_delete ~headers client uri in
   match Cohttp.Code.code_of_status status with
   | 200 | 204 -> Ok ()
-  | _ -> Error (Http_client.Client.parse_error body)
+  | _ -> Error (Polymarket_http.Client.parse_error body)
 
 let get_api_keys client ~credentials ~address =
   let path = "/auth/api-keys" in
   let headers =
     build_l2_headers ~credentials ~address ~method_:"GET" ~path ~body:""
   in
-  Http_client.Client.get_json_list ~headers client path
+  Polymarket_http.Client.get_json_list ~headers client path
     (fun json ->
       match json with
       | `String s -> s

@@ -1,7 +1,7 @@
 (** Tests for Common.Primitives module *)
 
 open Alcotest
-open Polymarket.Common.Primitives
+open Polymarket_common.Primitives
 
 (** {1 Address Module Tests} *)
 

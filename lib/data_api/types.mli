@@ -157,16 +157,16 @@ val string_of_activity_type : activity_type -> string
 type health_response = { data : string }
 (** Health check response *)
 
-type error_response = Http_client.Client.error_response = { error : string }
-(** Error response (alias to Http_client.Client.error_response for
+type error_response = Polymarket_http.Client.error_response = { error : string }
+(** Error response (alias to Polymarket_http.Client.error_response for
     compatibility) *)
 
 (** {1 Domain Models} *)
 
 type position = {
-  proxy_wallet : Common.Primitives.Address.t;
+  proxy_wallet : Polymarket_common.Primitives.Address.t;
   asset : string;
-  condition_id : Common.Primitives.Hash64.t;
+  condition_id : Polymarket_common.Primitives.Hash64.t;
   size : float;
   avg_price : float;
   initial_value : float;
@@ -193,9 +193,9 @@ type position = {
 (** Position in a market *)
 
 type closed_position = {
-  proxy_wallet : Common.Primitives.Address.t;
+  proxy_wallet : Polymarket_common.Primitives.Address.t;
   asset : string;
-  condition_id : Common.Primitives.Hash64.t;
+  condition_id : Polymarket_common.Primitives.Hash64.t;
   avg_price : float;
   total_bought : float;
   realized_pnl : float;
@@ -214,10 +214,10 @@ type closed_position = {
 (** Closed position in a market *)
 
 type trade = {
-  proxy_wallet : Common.Primitives.Address.t;
+  proxy_wallet : Polymarket_common.Primitives.Address.t;
   side : side;
   asset : string;
-  condition_id : Common.Primitives.Hash64.t;
+  condition_id : Polymarket_common.Primitives.Hash64.t;
   size : float;
   price : float;
   timestamp : int64;
@@ -237,9 +237,9 @@ type trade = {
 (** Trade record *)
 
 type activity = {
-  proxy_wallet : Common.Primitives.Address.t;
+  proxy_wallet : Polymarket_common.Primitives.Address.t;
   timestamp : int64;
-  condition_id : Common.Primitives.Hash64.t;
+  condition_id : Polymarket_common.Primitives.Hash64.t;
   activity_type : activity_type;
   size : float;
   usdc_size : float;
@@ -262,7 +262,7 @@ type activity = {
 (** Activity record *)
 
 type holder = {
-  proxy_wallet : Common.Primitives.Address.t;
+  proxy_wallet : Polymarket_common.Primitives.Address.t;
   bio : string;
   asset : string;
   pseudonym : string;
@@ -278,26 +278,29 @@ type holder = {
 type meta_holder = { token : string; holders : holder list }
 (** Meta holder with token and list of holders *)
 
-type traded = { user : Common.Primitives.Address.t; traded : int }
+type traded = { user : Polymarket_common.Primitives.Address.t; traded : int }
 (** Traded record *)
 
 type revision_entry = { revision : string; timestamp : int }
 (** Revision entry *)
 
 type revision_payload = {
-  question_id : Common.Primitives.Hash64.t;
+  question_id : Polymarket_common.Primitives.Hash64.t;
   revisions : revision_entry list;
 }
 (** Revision payload *)
 
-type value = { user : Common.Primitives.Address.t; value : float }
+type value = { user : Polymarket_common.Primitives.Address.t; value : float }
 (** Value record *)
 
-type open_interest = { market : Common.Primitives.Hash64.t; value : float }
+type open_interest = {
+  market : Polymarket_common.Primitives.Hash64.t;
+  value : float;
+}
 (** Open interest for a market *)
 
 type market_volume = {
-  market : Common.Primitives.Hash64.t option;
+  market : Polymarket_common.Primitives.Hash64.t option;
   value : float option;
 }
 (** Market volume *)
@@ -318,7 +321,7 @@ type leaderboard_entry = {
 (** Leaderboard entry for builders *)
 
 type builder_volume_entry = {
-  dt : Common.Primitives.Timestamp.t;
+  dt : Polymarket_common.Primitives.Timestamp.t;
   builder : string;
   builder_logo : string;
   verified : bool;
@@ -330,7 +333,7 @@ type builder_volume_entry = {
 
 type trader_leaderboard_entry = {
   rank : string;
-  proxy_wallet : Common.Primitives.Address.t;
+  proxy_wallet : Polymarket_common.Primitives.Address.t;
   user_name : string;
   vol : float;
   pnl : float;

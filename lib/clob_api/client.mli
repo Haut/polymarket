@@ -29,7 +29,7 @@ val with_credentials :
 (** Create a new client with the given credentials, keeping the same HTTP
     client. *)
 
-val http_client : t -> Http_client.Client.t
+val http_client : t -> Polymarket_http.Client.t
 (** Get the underlying HTTP client for custom requests. *)
 
 (** {1 Authentication}
@@ -40,7 +40,7 @@ val create_api_key :
   t ->
   private_key:Crypto.private_key ->
   nonce:int ->
-  (Auth_types.api_key_response, Http_client.Client.error_response) result
+  (Auth_types.api_key_response, Polymarket_http.Client.error_response) result
 (** Create a new API key using L1 wallet authentication. Does not require
     credentials on the client, but requires a private key. *)
 
@@ -48,7 +48,9 @@ val derive_api_key :
   t ->
   private_key:Crypto.private_key ->
   nonce:int ->
-  (Auth_types.derive_api_key_response, Http_client.Client.error_response) result
+  ( Auth_types.derive_api_key_response,
+    Polymarket_http.Client.error_response )
+  result
 (** Derive API key from wallet using L1 authentication. Does not require
     credentials on the client, but requires a private key. *)
 

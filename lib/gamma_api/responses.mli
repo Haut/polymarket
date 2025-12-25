@@ -33,8 +33,8 @@ type team = {
   logo : string option;
   abbreviation : string option;
   alias : string option;
-  created_at : Http_client.Client.Timestamp.t option;
-  updated_at : Http_client.Client.Timestamp.t option;
+  created_at : Polymarket_common.Primitives.Timestamp.t option;
+  updated_at : Polymarket_common.Primitives.Timestamp.t option;
 }
 (** Sports team *)
 
@@ -46,8 +46,8 @@ type tag = {
   published_at : string option;
   created_by : int option;
   updated_by : int option;
-  created_at : Http_client.Client.Timestamp.t option;
-  updated_at : Http_client.Client.Timestamp.t option;
+  created_at : Polymarket_common.Primitives.Timestamp.t option;
+  updated_at : Polymarket_common.Primitives.Timestamp.t option;
   force_hide : bool option;
   is_carousel : bool option;
 }
@@ -91,8 +91,8 @@ type chat = {
   channel_name : string option;
   channel_image : string option;
   live : bool option;
-  start_time : Http_client.Client.Timestamp.t option;
-  end_time : Http_client.Client.Timestamp.t option;
+  start_time : Polymarket_common.Primitives.Timestamp.t option;
+  end_time : Polymarket_common.Primitives.Timestamp.t option;
 }
 (** Chat channel *)
 
@@ -162,8 +162,8 @@ type comment = {
   parent_comment_id : string option;
   user_address : string option;
   reply_address : string option;
-  created_at : Http_client.Client.Timestamp.t option;
-  updated_at : Http_client.Client.Timestamp.t option;
+  created_at : Polymarket_common.Primitives.Timestamp.t option;
+  updated_at : Polymarket_common.Primitives.Timestamp.t option;
   profile : comment_profile option;
   reactions : reaction list;
   report_count : int option;
@@ -177,7 +177,7 @@ type public_profile_user = { id : string; creator : bool; mod_ : bool }
 (** Public profile user *)
 
 type public_profile_response = {
-  created_at : Http_client.Client.Timestamp.t option;
+  created_at : Polymarket_common.Primitives.Timestamp.t option;
   proxy_wallet : string option;
   profile_image : string option;
   display_username_public : bool option;
@@ -197,8 +197,8 @@ type profile = {
   referral : string option;
   created_by : int option;
   updated_by : int option;
-  created_at : Http_client.Client.Timestamp.t option;
-  updated_at : Http_client.Client.Timestamp.t option;
+  created_at : Polymarket_common.Primitives.Timestamp.t option;
+  updated_at : Polymarket_common.Primitives.Timestamp.t option;
   utm_source : string option;
   utm_medium : string option;
   utm_campaign : string option;
@@ -263,13 +263,13 @@ type market = {
   slug : string option;
   twitter_card_image : string option;
   resolution_source : string option;
-  end_date : Http_client.Client.Timestamp.t option;
+  end_date : Polymarket_common.Primitives.Timestamp.t option;
   category : string option;
   amm_type : string option;
   liquidity : string option;
   sponsor_name : string option;
   sponsor_image : string option;
-  start_date : Http_client.Client.Timestamp.t option;
+  start_date : Polymarket_common.Primitives.Timestamp.t option;
   x_axis_value : string option;
   y_axis_value : string option;
   denomination_token : string option;
@@ -291,8 +291,8 @@ type market = {
   market_maker_address : string option;
   created_by : int option;
   updated_by : int option;
-  created_at : Http_client.Client.Timestamp.t option;
-  updated_at : Http_client.Client.Timestamp.t option;
+  created_at : Polymarket_common.Primitives.Timestamp.t option;
+  updated_at : Polymarket_common.Primitives.Timestamp.t option;
   closed_time : string option;
   wide_format : bool option;
   new_ : bool option;
@@ -360,9 +360,9 @@ type market = {
   ready : bool option;
   funded : bool option;
   past_slugs : string option;
-  ready_timestamp : Http_client.Client.Timestamp.t option;
-  funded_timestamp : Http_client.Client.Timestamp.t option;
-  accepting_orders_timestamp : Http_client.Client.Timestamp.t option;
+  ready_timestamp : Polymarket_common.Primitives.Timestamp.t option;
+  funded_timestamp : Polymarket_common.Primitives.Timestamp.t option;
+  accepting_orders_timestamp : Polymarket_common.Primitives.Timestamp.t option;
   competitive : float option;
   rewards_min_size : float option;
   rewards_max_spread : float option;
@@ -391,10 +391,11 @@ type market = {
   uma_resolution_statuses : string option;
   pending_deployment : bool option;
   deploying : bool option;
-  deploying_timestamp : Http_client.Client.Timestamp.t option;
-  scheduled_deployment_timestamp : Http_client.Client.Timestamp.t option;
+  deploying_timestamp : Polymarket_common.Primitives.Timestamp.t option;
+  scheduled_deployment_timestamp :
+    Polymarket_common.Primitives.Timestamp.t option;
   rfq_enabled : bool option;
-  event_start_time : Http_client.Client.Timestamp.t option;
+  event_start_time : Polymarket_common.Primitives.Timestamp.t option;
 }
 (** Market *)
 
@@ -406,9 +407,9 @@ and event = {
   subtitle : string option;
   description : string option;
   resolution_source : string option;
-  start_date : Http_client.Client.Timestamp.t option;
-  creation_date : Http_client.Client.Timestamp.t option;
-  end_date : Http_client.Client.Timestamp.t option;
+  start_date : Polymarket_common.Primitives.Timestamp.t option;
+  creation_date : Polymarket_common.Primitives.Timestamp.t option;
+  end_date : Polymarket_common.Primitives.Timestamp.t option;
   image : string option;
   icon : string option;
   active : bool option;
@@ -428,8 +429,8 @@ and event = {
   published_at : string option;
   created_by : string option;
   updated_by : string option;
-  created_at : Http_client.Client.Timestamp.t option;
-  updated_at : Http_client.Client.Timestamp.t option;
+  created_at : Polymarket_common.Primitives.Timestamp.t option;
+  updated_at : Polymarket_common.Primitives.Timestamp.t option;
   comments_enabled : bool option;
   competitive : float option;
   volume_24hr : float option;
@@ -456,14 +457,14 @@ and event = {
   collections : collection list;
   tags : tag list;
   cyom : bool option;
-  closed_time : Http_client.Client.Timestamp.t option;
+  closed_time : Polymarket_common.Primitives.Timestamp.t option;
   show_all_outcomes : bool option;
   show_market_images : bool option;
   automatically_resolved : bool option;
   enable_neg_risk : bool option;
   automatically_active : bool option;
   event_date : string option;
-  start_time : Http_client.Client.Timestamp.t option;
+  start_time : Polymarket_common.Primitives.Timestamp.t option;
   event_week : int option;
   series_slug : string option;
   score : string option;
@@ -471,7 +472,7 @@ and event = {
   period : string option;
   live : bool option;
   ended : bool option;
-  finished_timestamp : Http_client.Client.Timestamp.t option;
+  finished_timestamp : Polymarket_common.Primitives.Timestamp.t option;
   gmp_chart_mode : string option;
   event_creators : event_creator list;
   tweet_count : int option;
@@ -486,8 +487,9 @@ and event = {
   carousel_map : string option;
   pending_deployment : bool option;
   deploying : bool option;
-  deploying_timestamp : Http_client.Client.Timestamp.t option;
-  scheduled_deployment_timestamp : Http_client.Client.Timestamp.t option;
+  deploying_timestamp : Polymarket_common.Primitives.Timestamp.t option;
+  scheduled_deployment_timestamp :
+    Polymarket_common.Primitives.Timestamp.t option;
   game_status : string option;
 }
 (** Event *)
@@ -515,14 +517,14 @@ and series = {
   published_at : string option;
   created_by : string option;
   updated_by : string option;
-  created_at : Http_client.Client.Timestamp.t option;
-  updated_at : Http_client.Client.Timestamp.t option;
+  created_at : Polymarket_common.Primitives.Timestamp.t option;
+  updated_at : Polymarket_common.Primitives.Timestamp.t option;
   comments_enabled : bool option;
   competitive : string option;
   volume_24hr : float option;
   volume : float option;
   liquidity : float option;
-  start_date : Http_client.Client.Timestamp.t option;
+  start_date : Polymarket_common.Primitives.Timestamp.t option;
   pyth_token_id : string option;
   cg_asset_name : string option;
   score : int option;

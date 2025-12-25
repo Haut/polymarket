@@ -1,6 +1,6 @@
 (** Tests for the Crypto module. *)
 
-open Polymarket.Clob_api
+open Polymarket_clob
 
 (** {1 Test Helpers} *)
 

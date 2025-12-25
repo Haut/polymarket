@@ -151,17 +151,17 @@ let yojson_of_activity_type t = `String (string_of_activity_type t)
 type health_response = { data : string } [@@deriving yojson, show, eq]
 (** Health check response *)
 
-type error_response = Http_client.Client.error_response = { error : string }
+type error_response = Polymarket_http.Client.error_response = { error : string }
 [@@deriving yojson, show, eq]
-(** Error response (alias to Http_client.Client.error_response for
+(** Error response (alias to Polymarket_http.Client.error_response for
     compatibility) *)
 
 (** {1 Domain Models} *)
 
 type position = {
-  proxy_wallet : Common.Primitives.Address.t; [@key "proxyWallet"]
+  proxy_wallet : Polymarket_common.Primitives.Address.t; [@key "proxyWallet"]
   asset : string;
-  condition_id : Common.Primitives.Hash64.t; [@key "conditionId"]
+  condition_id : Polymarket_common.Primitives.Hash64.t; [@key "conditionId"]
   size : float;
   avg_price : float; [@key "avgPrice"]
   initial_value : float; [@key "initialValue"]
@@ -189,9 +189,9 @@ type position = {
 (** Position in a market *)
 
 type closed_position = {
-  proxy_wallet : Common.Primitives.Address.t; [@key "proxyWallet"]
+  proxy_wallet : Polymarket_common.Primitives.Address.t; [@key "proxyWallet"]
   asset : string;
-  condition_id : Common.Primitives.Hash64.t; [@key "conditionId"]
+  condition_id : Polymarket_common.Primitives.Hash64.t; [@key "conditionId"]
   avg_price : float; [@key "avgPrice"]
   total_bought : float; [@key "totalBought"]
   realized_pnl : float; [@key "realizedPnl"]
@@ -211,10 +211,10 @@ type closed_position = {
 (** Closed position in a market *)
 
 type trade = {
-  proxy_wallet : Common.Primitives.Address.t; [@key "proxyWallet"]
+  proxy_wallet : Polymarket_common.Primitives.Address.t; [@key "proxyWallet"]
   side : side;
   asset : string;
-  condition_id : Common.Primitives.Hash64.t; [@key "conditionId"]
+  condition_id : Polymarket_common.Primitives.Hash64.t; [@key "conditionId"]
   size : float;
   price : float;
   timestamp : int64;
@@ -235,9 +235,9 @@ type trade = {
 (** Trade record *)
 
 type activity = {
-  proxy_wallet : Common.Primitives.Address.t; [@key "proxyWallet"]
+  proxy_wallet : Polymarket_common.Primitives.Address.t; [@key "proxyWallet"]
   timestamp : int64;
-  condition_id : Common.Primitives.Hash64.t; [@key "conditionId"]
+  condition_id : Polymarket_common.Primitives.Hash64.t; [@key "conditionId"]
   activity_type : activity_type; [@key "type"]
   size : float;
   usdc_size : float; [@key "usdcSize"]
@@ -261,7 +261,7 @@ type activity = {
 (** Activity record *)
 
 type holder = {
-  proxy_wallet : Common.Primitives.Address.t; [@key "proxyWallet"]
+  proxy_wallet : Polymarket_common.Primitives.Address.t; [@key "proxyWallet"]
   bio : string;
   asset : string;
   pseudonym : string;
@@ -279,7 +279,7 @@ type meta_holder = { token : string; holders : holder list }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Meta holder with token and list of holders *)
 
-type traded = { user : Common.Primitives.Address.t; traded : int }
+type traded = { user : Polymarket_common.Primitives.Address.t; traded : int }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Traded record *)
 
@@ -288,22 +288,25 @@ type revision_entry = { revision : string; timestamp : int }
 (** Revision entry *)
 
 type revision_payload = {
-  question_id : Common.Primitives.Hash64.t; [@key "questionID"]
+  question_id : Polymarket_common.Primitives.Hash64.t; [@key "questionID"]
   revisions : revision_entry list;
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Revision payload *)
 
-type value = { user : Common.Primitives.Address.t; value : float }
+type value = { user : Polymarket_common.Primitives.Address.t; value : float }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Value record *)
 
-type open_interest = { market : Common.Primitives.Hash64.t; value : float }
+type open_interest = {
+  market : Polymarket_common.Primitives.Hash64.t;
+  value : float;
+}
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Open interest for a market *)
 
 type market_volume = {
-  market : Common.Primitives.Hash64.t option; [@yojson.option]
+  market : Polymarket_common.Primitives.Hash64.t option; [@yojson.option]
   value : float option; [@yojson.option]
 }
 [@@deriving yojson, show, eq]
@@ -350,7 +353,7 @@ type leaderboard_entry = {
 (** Leaderboard entry for builders *)
 
 type builder_volume_entry = {
-  dt : Common.Primitives.Timestamp.t;
+  dt : Polymarket_common.Primitives.Timestamp.t;
   builder : string;
   builder_logo : string; [@key "builderLogo"]
   verified : bool;
@@ -363,7 +366,7 @@ type builder_volume_entry = {
 
 type trader_leaderboard_entry = {
   rank : string;
-  proxy_wallet : Common.Primitives.Address.t; [@key "proxyWallet"]
+  proxy_wallet : Polymarket_common.Primitives.Address.t; [@key "proxyWallet"]
   user_name : string; [@key "userName"]
   vol : float;
   pnl : float;

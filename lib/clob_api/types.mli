@@ -370,8 +370,8 @@ val equal_price_history : price_history -> price_history -> bool
 
 (** {1 Error Response} *)
 
-type error_response = Http_client.Client.error_response = { error : string }
-(** Error response (alias to Http_client.Client.error_response) *)
+type error_response = Polymarket_http.Client.error_response = { error : string }
+(** Error response (alias to Polymarket_http.Client.error_response) *)
 
 val error_response_of_yojson : Yojson.Safe.t -> error_response
 val yojson_of_error_response : error_response -> Yojson.Safe.t

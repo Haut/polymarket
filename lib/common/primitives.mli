@@ -163,6 +163,9 @@ module Nonneg_int : sig
   val to_int : t -> int
   (** Extract the underlying int *)
 
+  val to_string : t -> string
+  (** Convert to string *)
+
   val zero : t
   val one : t
 end
@@ -184,6 +187,9 @@ module Pos_int : sig
   val to_int : t -> int
   (** Extract the underlying int *)
 
+  val to_string : t -> string
+  (** Convert to string *)
+
   val one : t
 end
 
@@ -203,6 +209,9 @@ module Nonneg_float : sig
 
   val to_float : t -> float
   (** Extract the underlying float *)
+
+  val to_string : t -> string
+  (** Convert to string *)
 
   val zero : t
 end
@@ -225,6 +234,9 @@ module Limit : sig
 
   val to_int : t -> int
   (** Extract the underlying int *)
+
+  val to_string : t -> string
+  (** Convert to string *)
 
   val default : t
   (** Default value (100) *)
@@ -249,6 +261,9 @@ module Offset : sig
   val to_int : t -> int
   (** Extract the underlying int *)
 
+  val to_string : t -> string
+  (** Convert to string *)
+
   val default : t
   (** Default value (0) *)
 end
@@ -271,6 +286,9 @@ module Holders_limit : sig
 
   val to_int : t -> int
   (** Extract the underlying int *)
+
+  val to_string : t -> string
+  (** Convert to string *)
 
   val default : t
   (** Default value (20) *)
@@ -295,6 +313,9 @@ module Min_balance : sig
   val to_int : t -> int
   (** Extract the underlying int *)
 
+  val to_string : t -> string
+  (** Convert to string *)
+
   val default : t
   (** Default value (1) *)
 end
@@ -317,6 +338,9 @@ module Closed_positions_limit : sig
 
   val to_int : t -> int
   (** Extract the underlying int *)
+
+  val to_string : t -> string
+  (** Convert to string *)
 
   val default : t
   (** Default value (10) *)
@@ -341,6 +365,9 @@ module Extended_offset : sig
   val to_int : t -> int
   (** Extract the underlying int *)
 
+  val to_string : t -> string
+  (** Convert to string *)
+
   val default : t
   (** Default value (0) *)
 end
@@ -363,6 +390,9 @@ module Leaderboard_limit : sig
 
   val to_int : t -> int
   (** Extract the underlying int *)
+
+  val to_string : t -> string
+  (** Convert to string *)
 
   val default : t
   (** Default value (25) *)
@@ -387,6 +417,9 @@ module Leaderboard_offset : sig
   val to_int : t -> int
   (** Extract the underlying int *)
 
+  val to_string : t -> string
+  (** Convert to string *)
+
   val default : t
   (** Default value (0) *)
 end
@@ -409,6 +442,9 @@ module Builder_limit : sig
 
   val to_int : t -> int
   (** Extract the underlying int *)
+
+  val to_string : t -> string
+  (** Convert to string *)
 
   val default : t
   (** Default value (25) *)

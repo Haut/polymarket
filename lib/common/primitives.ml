@@ -128,6 +128,7 @@ module Nonneg_int = struct
   let of_int n = if n >= 0 then Some n else None
   let of_int_exn n = if n >= 0 then n else invalid_arg "must be non-negative"
   let to_int n = n
+  let to_string n = string_of_int n
   let zero = 0
   let one = 1
 end
@@ -140,6 +141,7 @@ module Pos_int = struct
   let of_int n = if n >= 1 then Some n else None
   let of_int_exn n = if n >= 1 then n else invalid_arg "must be positive (>= 1)"
   let to_int n = n
+  let to_string n = string_of_int n
   let one = 1
 end
 
@@ -154,6 +156,7 @@ module Nonneg_float = struct
     if n >= 0.0 then n else invalid_arg "must be non-negative"
 
   let to_float n = n
+  let to_string n = string_of_float n
   let zero = 0.0
 end
 
@@ -173,6 +176,7 @@ module Limit = struct
         (Printf.sprintf "limit must be between %d and %d" min_value max_value)
 
   let to_int n = n
+  let to_string n = string_of_int n
   let default = 100
 end
 
@@ -192,6 +196,7 @@ module Offset = struct
         (Printf.sprintf "offset must be between %d and %d" min_value max_value)
 
   let to_int n = n
+  let to_string n = string_of_int n
   let default = 0
 end
 
@@ -212,6 +217,7 @@ module Holders_limit = struct
            max_value)
 
   let to_int n = n
+  let to_string n = string_of_int n
   let default = 20
 end
 
@@ -232,6 +238,7 @@ module Min_balance = struct
            max_value)
 
   let to_int n = n
+  let to_string n = string_of_int n
   let default = 1
 end
 
@@ -252,6 +259,7 @@ module Closed_positions_limit = struct
            min_value max_value)
 
   let to_int n = n
+  let to_string n = string_of_int n
   let default = 10
 end
 
@@ -271,6 +279,7 @@ module Extended_offset = struct
         (Printf.sprintf "offset must be between %d and %d" min_value max_value)
 
   let to_int n = n
+  let to_string n = string_of_int n
   let default = 0
 end
 
@@ -291,6 +300,7 @@ module Leaderboard_limit = struct
            max_value)
 
   let to_int n = n
+  let to_string n = string_of_int n
   let default = 25
 end
 
@@ -311,6 +321,7 @@ module Leaderboard_offset = struct
            max_value)
 
   let to_int n = n
+  let to_string n = string_of_int n
   let default = 0
 end
 
@@ -331,6 +342,7 @@ module Builder_limit = struct
            max_value)
 
   let to_int n = n
+  let to_string n = string_of_int n
   let default = 25
 end
 

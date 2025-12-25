@@ -1,3 +1,3 @@
 (library
  (name test_common)
- (libraries polymarket alcotest test_utils))
+ (libraries polymarket_common polymarket_http alcotest test_utils))

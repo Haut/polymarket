@@ -1,28 +1,9 @@
-(include_subdirs qualified)
-
 (library
  (name polymarket)
  (public_name polymarket)
- (flags
-  (:standard -w +32))
  (libraries
-  yojson
-  ppx_yojson_conv_lib
-  cohttp-eio
-  eio_main
-  uri
-  tls
-  tls-eio
-  ca-certs
-  mirage-crypto-rng-eio
-  digestif
-  secp256k1-internal
-  base64
-  hex
-  logs
-  logs.fmt
-  fmt
-  fmt.tty
-  ptime)
- (preprocess
-  (pps ppx_yojson_conv ppx_deriving.show ppx_deriving.eq)))
+  polymarket_common
+  polymarket_http
+  polymarket_clob
+  polymarket_data
+  polymarket_gamma))
