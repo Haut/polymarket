@@ -76,39 +76,89 @@ val get_sports_market_types :
 
 val get_tags :
   t ->
-  ?id:string ->
-  ?label:string ->
-  ?slug:string ->
-  ?force_show:bool ->
-  ?limit:int ->
-  ?offset:int ->
+  ?limit:Http_client.Client.Nonneg_int.t ->
+  ?offset:Http_client.Client.Nonneg_int.t ->
+  ?order:string list ->
+  ?ascending:bool ->
+  ?include_template:bool ->
+  ?is_carousel:bool ->
   unit ->
   (tag list, Http_client.Client.error_response) result
 (** Get list of tags.
-    @param id Tag ID to filter by
-    @param label Tag label to filter by
-    @param slug Tag slug to filter by
-    @param force_show Filter by force_show flag
-    @param limit Maximum results
-    @param offset Pagination offset *)
+    @param limit Maximum number of results (non-negative)
+    @param offset Pagination offset (non-negative)
+    @param order Fields to order by
+    @param ascending Sort ascending if true
+    @param include_template Include template tags if true
+    @param is_carousel Filter by carousel flag *)
 
 val get_tag :
-  t -> id:string -> unit -> (tag, Http_client.Client.error_response) result
+  t ->
+  id:string ->
+  ?include_template:bool ->
+  unit ->
+  (tag, Http_client.Client.error_response) result
 (** Get a tag by ID.
-    @param id Tag ID (required) *)
+    @param id Tag ID (required)
+    @param include_template Include template data if true *)
 
 val get_tag_by_slug :
-  t -> slug:string -> unit -> (tag, Http_client.Client.error_response) result
+  t ->
+  slug:string ->
+  ?include_template:bool ->
+  unit ->
+  (tag, Http_client.Client.error_response) result
 (** Get a tag by slug.
-    @param slug Tag slug (required) *)
+    @param slug Tag slug (required)
+    @param include_template Include template data if true *)
 
 val get_related_tags :
   t ->
   id:string ->
+  ?omit_empty:bool ->
+  ?status:status ->
   unit ->
   (related_tag list, Http_client.Client.error_response) result
 (** Get related tags for a tag.
-    @param id Tag ID (required) *)
+    @param id Tag ID (required)
+    @param omit_empty Omit empty related tags
+    @param status Filter by status (active, closed, all) *)
+
+val get_related_tags_by_slug :
+  t ->
+  slug:string ->
+  ?omit_empty:bool ->
+  ?status:status ->
+  unit ->
+  (related_tag list, Http_client.Client.error_response) result
+(** Get related tags for a tag by slug.
+    @param slug Tag slug (required)
+    @param omit_empty Omit empty related tags
+    @param status Filter by status (active, closed, all) *)
+
+val get_related_tag_tags :
+  t ->
+  id:string ->
+  ?omit_empty:bool ->
+  ?status:status ->
+  unit ->
+  (tag list, Http_client.Client.error_response) result
+(** Get full tag objects for tags related to a tag.
+    @param id Tag ID (required)
+    @param omit_empty Omit empty related tags
+    @param status Filter by status (active, closed, all) *)
+
+val get_related_tag_tags_by_slug :
+  t ->
+  slug:string ->
+  ?omit_empty:bool ->
+  ?status:status ->
+  unit ->
+  (tag list, Http_client.Client.error_response) result
+(** Get full tag objects for tags related to a tag by slug.
+    @param slug Tag slug (required)
+    @param omit_empty Omit empty related tags
+    @param status Filter by status (active, closed, all) *)
 
 (** {1 Events Endpoints} *)
 

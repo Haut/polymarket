@@ -43,31 +43,60 @@ let get_sports_market_types t () =
 
 (** {1 Tags Endpoints} *)
 
-let get_tags t ?id ?label ?slug ?force_show ?limit ?offset () =
+let get_tags t ?limit ?offset ?order ?ascending ?include_template ?is_carousel
+    () =
   []
-  |> Http_client.Client.add "id" id
-  |> Http_client.Client.add "label" label
-  |> Http_client.Client.add "slug" slug
-  |> Http_client.Client.add_bool "force_show" force_show
-  |> Http_client.Client.add_int "limit" limit
-  |> Http_client.Client.add_int "offset" offset
+  |> Http_client.Client.add_nonneg_int "limit" limit
+  |> Http_client.Client.add_nonneg_int "offset" offset
+  |> Http_client.Client.add_string_array "order" order
+  |> Http_client.Client.add_bool "ascending" ascending
+  |> Http_client.Client.add_bool "include_template" include_template
+  |> Http_client.Client.add_bool "is_carousel" is_carousel
   |> Http_client.Client.get_json_list t "/tags" tag_of_yojson
 
-let get_tag t ~id () =
+let get_tag t ~id ?include_template () =
   []
+  |> Http_client.Client.add_bool "include_template" include_template
   |> Http_client.Client.get_json t (Printf.sprintf "/tags/%s" id) tag_of_yojson
 
-let get_tag_by_slug t ~slug () =
+let get_tag_by_slug t ~slug ?include_template () =
   []
+  |> Http_client.Client.add_bool "include_template" include_template
   |> Http_client.Client.get_json t
        (Printf.sprintf "/tags/slug/%s" slug)
        tag_of_yojson
 
-let get_related_tags t ~id () =
+let get_related_tags t ~id ?omit_empty ?status () =
   []
+  |> Http_client.Client.add_bool "omit_empty" omit_empty
+  |> Http_client.Client.add "status" (Option.map string_of_status status)
   |> Http_client.Client.get_json_list t
        (Printf.sprintf "/tags/%s/related-tags" id)
        related_tag_of_yojson
+
+let get_related_tags_by_slug t ~slug ?omit_empty ?status () =
+  []
+  |> Http_client.Client.add_bool "omit_empty" omit_empty
+  |> Http_client.Client.add "status" (Option.map string_of_status status)
+  |> Http_client.Client.get_json_list t
+       (Printf.sprintf "/tags/slug/%s/related-tags" slug)
+       related_tag_of_yojson
+
+let get_related_tag_tags t ~id ?omit_empty ?status () =
+  []
+  |> Http_client.Client.add_bool "omit_empty" omit_empty
+  |> Http_client.Client.add "status" (Option.map string_of_status status)
+  |> Http_client.Client.get_json_list t
+       (Printf.sprintf "/tags/%s/related-tags/tags" id)
+       tag_of_yojson
+
+let get_related_tag_tags_by_slug t ~slug ?omit_empty ?status () =
+  []
+  |> Http_client.Client.add_bool "omit_empty" omit_empty
+  |> Http_client.Client.add "status" (Option.map string_of_status status)
+  |> Http_client.Client.get_json_list t
+       (Printf.sprintf "/tags/slug/%s/related-tags/tags" slug)
+       tag_of_yojson
 
 (** {1 Events Endpoints} *)
 
