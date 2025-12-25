@@ -4,7 +4,8 @@ OCaml client library for the [Polymarket](https://polymarket.com) prediction mar
 
 ## Features
 
-- Full coverage of the Polymarket Data API and Gamma API
+- Full coverage of the Polymarket Data API, Gamma API, and CLOB API
+- L1 (EIP-712 wallet signing) and L2 (HMAC-SHA256) authentication for CLOB API
 - Type-safe interface with OCaml variant types for enums
 - Built on [Eio](https://github.com/ocaml-multicore/eio) for efficient concurrent I/O
 - TLS support for secure API connections
@@ -168,6 +169,80 @@ match Gamma_api.Client.public_search client ~q:"election" ~limit_per_type:5 () w
   Printf.printf "Error: %s\n" err.error
 ```
 
+## CLOB API Examples
+
+The CLOB (Central Limit Order Book) API provides access to order books, pricing, and authenticated trading endpoints.
+
+### Get Order Book
+
+```ocaml
+let client = Clob_api.Client.create ~sw ~net:(Eio.Stdenv.net env) () in
+let token_id = "12345..." in (* Token ID from Gamma API *)
+match Clob_api.Client.get_order_book client ~token_id () with
+| Ok book ->
+  Printf.printf "Best bid: %s, Best ask: %s\n"
+    (Option.value ~default:"N/A" book.best_bid)
+    (Option.value ~default:"N/A" book.best_ask)
+| Error err ->
+  Printf.printf "Error: %s\n" err.error
+```
+
+### Get Price and Midpoint
+
+```ocaml
+(* Get price for a specific side *)
+match Clob_api.Client.get_price client ~token_id ~side:Clob_api.Types.BUY () with
+| Ok price -> Printf.printf "Price: %s\n" price.price
+| Error err -> Printf.printf "Error: %s\n" err.error
+
+(* Get midpoint price *)
+match Clob_api.Client.get_midpoint client ~token_id () with
+| Ok mid -> Printf.printf "Midpoint: %s\n" mid.mid
+| Error err -> Printf.printf "Error: %s\n" err.error
+```
+
+### Authentication
+
+The CLOB API supports two authentication levels:
+- **L1 (Wallet)**: EIP-712 signing with your Ethereum private key for API key management
+- **L2 (API Key)**: HMAC-SHA256 signing with API credentials for trading endpoints
+
+```ocaml
+(* Derive API credentials from wallet *)
+let private_key = "your_private_key_hex_without_0x" in
+let nonce = int_of_float (Unix.gettimeofday () *. 1000.0) mod 1000000 in
+match Clob_api.Client.derive_api_key client ~private_key ~nonce with
+| Ok resp ->
+  let creds = Clob_api.Auth_types.credentials_of_derive_response resp in
+  let address = Clob_api.Crypto.private_key_to_address private_key in
+  (* Create authenticated client *)
+  let auth_client = Clob_api.Client.with_credentials client ~credentials:creds ~address in
+  (* Now use auth_client for authenticated endpoints *)
+  ()
+| Error err ->
+  Printf.printf "Error: %s\n" err.error
+```
+
+### Authenticated Endpoints
+
+Once you have an authenticated client, you can access trading endpoints:
+
+```ocaml
+(* Get your open orders *)
+match Clob_api.Client.get_orders auth_client () with
+| Ok orders ->
+  List.iter (fun order ->
+    Printf.printf "Order: %s @ %s\n" order.id order.price
+  ) orders
+| Error err ->
+  Printf.printf "Error: %s\n" err.error
+
+(* Cancel all orders *)
+match Clob_api.Client.cancel_all auth_client () with
+| Ok resp -> Printf.printf "Cancelled: %b\n" resp.canceled
+| Error err -> Printf.printf "Error: %s\n" err.error
+```
+
 ## Logging
 
 The library includes structured logging via `Common.Logger`. Enable it by setting the `POLYMARKET_LOG_LEVEL` environment variable:
@@ -205,10 +280,17 @@ Polymarket
 │   ├── Client      (* API client functions *)
 │   ├── Types       (* Response types *)
 │   └── Params      (* Query parameter types *)
-└── Gamma_api       (* Gamma API client *)
+├── Gamma_api       (* Gamma API client *)
+│   ├── Client      (* API client functions *)
+│   ├── Types       (* Response types *)
+│   └── Params      (* Query parameter types *)
+└── Clob_api        (* CLOB API client *)
     ├── Client      (* API client functions *)
     ├── Types       (* Response types *)
-    └── Params      (* Query parameter types *)
+    ├── Params      (* Query parameter types *)
+    ├── Auth        (* L1/L2 authentication *)
+    ├── Auth_types  (* Credential types *)
+    └── Crypto      (* Signing and hashing *)
 ```
 
 ### Data API Endpoints
@@ -261,6 +343,41 @@ Polymarket
 | `GET /sports/market-types` | `get_sports_market_types` | Get sports market types |
 | `GET /search` | `public_search` | Search events, tags, profiles |
 
+### CLOB API Endpoints
+
+#### Public Endpoints
+
+| Endpoint | Function | Description |
+|----------|----------|-------------|
+| `GET /book` | `get_order_book` | Get order book for a token |
+| `POST /books` | `get_order_books` | Get order books for multiple tokens |
+| `GET /price` | `get_price` | Get price for a token and side |
+| `GET /midpoint` | `get_midpoint` | Get midpoint price for a token |
+| `POST /prices` | `get_prices` | Get prices for multiple tokens |
+| `POST /spreads` | `get_spreads` | Get spreads for multiple tokens |
+| `GET /prices-history` | `get_price_history` | Get price history for a market |
+
+#### Authenticated Endpoints (L1 - Wallet)
+
+| Endpoint | Function | Description |
+|----------|----------|-------------|
+| `POST /auth/api-key` | `create_api_key` | Create new API credentials |
+| `GET /auth/derive-api-key` | `derive_api_key` | Derive API credentials from wallet |
+
+#### Authenticated Endpoints (L2 - API Key)
+
+| Endpoint | Function | Description |
+|----------|----------|-------------|
+| `POST /order` | `create_order` | Submit a new order |
+| `POST /orders` | `create_orders` | Submit multiple orders |
+| `GET /data/order/{id}` | `get_order` | Get order by ID |
+| `GET /data/orders` | `get_orders` | Get open orders |
+| `DELETE /order` | `cancel_order` | Cancel an order |
+| `DELETE /orders` | `cancel_orders` | Cancel multiple orders |
+| `DELETE /cancel-all` | `cancel_all` | Cancel all orders |
+| `DELETE /cancel-market-orders` | `cancel_market_orders` | Cancel orders for a market |
+| `GET /data/trades` | `get_trades` | Get trade history |
+
 ### Type Reference
 
 #### Data API Enums
@@ -281,6 +398,14 @@ Polymarket
 | `status` | `Active`, `Closed`, `All` |
 | `slug_size` | `Full`, `Slim` |
 | `parent_entity_type` | `Event`, `Series`, `Market` |
+
+#### CLOB API Enums
+
+| Type | Values |
+|------|--------|
+| `order_side` | `BUY`, `SELL` |
+| `order_type` | `GTC`, `GTD`, `FOK` |
+| `time_interval` | `MAX`, `ONE_WEEK`, `ONE_DAY`, `SIX_HOURS`, `ONE_HOUR` |
 
 #### Primitive Types
 
@@ -323,6 +448,12 @@ dune exec examples/data_api_demo.exe
 # Gamma API demo
 dune exec examples/gamma_api_demo.exe
 
+# CLOB API demo
+dune exec examples/clob_api_demo.exe
+
+# CLOB API demo with private key for authentication
+POLY_PRIVATE_KEY=your_private_key_hex dune exec examples/clob_api_demo.exe
+
 # With debug logging enabled
 POLYMARKET_LOG_LEVEL=debug dune exec examples/data_api_demo.exe
 ```
@@ -350,10 +481,18 @@ polymarket/
 │   │   ├── client.ml     # API client
 │   │   ├── params.ml     # Query parameters
 │   │   └── types.ml      # Response types
+│   ├── clob_api/         # CLOB API implementation
+│   │   ├── client.ml     # API client
+│   │   ├── types.ml      # Response types
+│   │   ├── params.ml     # Query parameters
+│   │   ├── auth.ml       # L1/L2 authentication
+│   │   ├── auth_types.ml # Credential types
+│   │   └── crypto.ml     # Signing and hashing
 │   └── polymarket.ml     # Main module
 ├── examples/
 │   ├── data_api_demo.ml  # Data API live demo
 │   ├── gamma_api_demo.ml # Gamma API live demo
+│   ├── clob_api_demo.ml  # CLOB API live demo
 │   └── logger.ml         # Demo logging utilities
 ├── test/                 # Test suite
 ├── CHANGELOG.md

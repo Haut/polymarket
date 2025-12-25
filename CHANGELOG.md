@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- CLOB API client with order book, pricing, and trading endpoints
+- L1 authentication (EIP-712 wallet signing) for API key management
+- L2 authentication (HMAC-SHA256) for authenticated trading endpoints
+- Crypto module with keccak256, HMAC-SHA256, secp256k1 signing, and address derivation
+- CLOB API demo (`examples/clob_api_demo.ml`)
+- POST and DELETE methods with custom headers to Http_client
 - Gamma API client with full endpoint coverage (teams, tags, events, markets, series, comments, profiles, sports, search)
 - Structured logging via `Common.Logger` with configurable log levels (debug, info, off)
 - `POLYMARKET_LOG_LEVEL` environment variable for controlling log output
