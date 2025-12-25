@@ -69,16 +69,53 @@ let build_uri base_url path params =
   let uri = Uri.of_string (base_url ^ path) in
   Uri.add_query_params uri params
 
-let do_get t uri =
+let do_get ?(headers = []) t uri =
   Common.Logger.log_request ~method_:"GET" ~uri;
   try
-    let resp, body = Cohttp_eio.Client.get ~sw:t.sw t.client uri in
+    let headers = Cohttp.Header.of_list headers in
+    let resp, body = Cohttp_eio.Client.get ~sw:t.sw ~headers t.client uri in
     let status = Cohttp.Response.status resp in
     let body_str = Eio.Buf_read.(parse_exn take_all) body ~max_size:max_int in
     Common.Logger.log_response ~method_:"GET" ~uri ~status ~body:body_str;
     (status, body_str)
   with exn ->
     Common.Logger.log_error ~method_:"GET" ~uri ~exn;
+    ( `Internal_server_error,
+      Printf.sprintf {|{"error": "Request failed: %s"}|}
+        (Printexc.to_string exn) )
+
+let do_post ?(headers = []) t uri ~body:request_body =
+  Common.Logger.log_request ~method_:"POST" ~uri;
+  try
+    let all_headers = ("Content-Type", "application/json") :: headers in
+    let headers = Cohttp.Header.of_list all_headers in
+    let body = Cohttp_eio.Body.of_string request_body in
+    let resp, resp_body =
+      Cohttp_eio.Client.post ~sw:t.sw ~headers ~body t.client uri
+    in
+    let status = Cohttp.Response.status resp in
+    let body_str =
+      Eio.Buf_read.(parse_exn take_all) resp_body ~max_size:max_int
+    in
+    Common.Logger.log_response ~method_:"POST" ~uri ~status ~body:body_str;
+    (status, body_str)
+  with exn ->
+    Common.Logger.log_error ~method_:"POST" ~uri ~exn;
+    ( `Internal_server_error,
+      Printf.sprintf {|{"error": "Request failed: %s"}|}
+        (Printexc.to_string exn) )
+
+let do_delete ?(headers = []) t uri =
+  Common.Logger.log_request ~method_:"DELETE" ~uri;
+  try
+    let headers = Cohttp.Header.of_list headers in
+    let resp, body = Cohttp_eio.Client.delete ~sw:t.sw ~headers t.client uri in
+    let status = Cohttp.Response.status resp in
+    let body_str = Eio.Buf_read.(parse_exn take_all) body ~max_size:max_int in
+    Common.Logger.log_response ~method_:"DELETE" ~uri ~status ~body:body_str;
+    (status, body_str)
+  with exn ->
+    Common.Logger.log_error ~method_:"DELETE" ~uri ~exn;
     ( `Internal_server_error,
       Printf.sprintf {|{"error": "Request failed: %s"}|}
         (Printexc.to_string exn) )
@@ -132,22 +169,43 @@ let handle_response status body parse_fn error_parser =
   | 200 -> parse_fn body
   | _ -> Error (error_parser body)
 
-let request t path parse_fn error_parser params =
+let request ?(headers = []) t path parse_fn error_parser params =
   let uri = build_uri t.base_url path params in
-  let status, body = do_get t uri in
+  let status, body = do_get ~headers t uri in
   handle_response status body parse_fn error_parser
 
 (** {1 Convenient JSON Request Helpers} *)
 
-let get_json t path parser params =
-  request t path
+let get_json ?(headers = []) t path parser params =
+  request ~headers t path
     (fun body -> parse_json parser body |> Result.map_error to_error)
     parse_error params
 
-let get_json_list t path parser params =
-  request t path
+let get_json_list ?(headers = []) t path parser params =
+  request ~headers t path
     (fun body -> parse_json_list parser body |> Result.map_error to_error)
     parse_error params
 
-let get_text t path params =
-  request t path (fun body -> Ok body) parse_error params
+let get_text ?(headers = []) t path params =
+  request ~headers t path (fun body -> Ok body) parse_error params
+
+let post_json ?(headers = []) t path parser ~body params =
+  let uri = build_uri t.base_url path params in
+  let status, resp_body = do_post ~headers t uri ~body in
+  handle_response status resp_body
+    (fun body -> parse_json parser body |> Result.map_error to_error)
+    parse_error
+
+let post_json_list ?(headers = []) t path parser ~body params =
+  let uri = build_uri t.base_url path params in
+  let status, resp_body = do_post ~headers t uri ~body in
+  handle_response status resp_body
+    (fun body -> parse_json_list parser body |> Result.map_error to_error)
+    parse_error
+
+let delete_json ?(headers = []) t path parser params =
+  let uri = build_uri t.base_url path params in
+  let status, body = do_delete ~headers t uri in
+  handle_response status body
+    (fun body -> parse_json parser body |> Result.map_error to_error)
+    parse_error

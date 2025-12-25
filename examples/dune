@@ -7,3 +7,8 @@
  (name gamma_api_demo)
  (modules gamma_api_demo logger)
  (libraries polymarket unix eio_main mirage-crypto-rng.unix logs))
+
+(executable
+ (name clob_api_demo)
+ (modules clob_api_demo logger)
+ (libraries polymarket unix eio_main mirage-crypto-rng.unix logs))

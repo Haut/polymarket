@@ -1,0 +1,3 @@
+(library
+ (name test_clob_api)
+ (libraries polymarket alcotest hex))

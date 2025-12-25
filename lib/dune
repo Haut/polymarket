@@ -13,6 +13,10 @@
   tls-eio
   ca-certs
   mirage-crypto-rng-eio
+  digestif
+  secp256k1-internal
+  base64
+  hex
   logs
   logs.fmt
   fmt

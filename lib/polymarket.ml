@@ -11,3 +11,6 @@ module Data_api = Data_api
 
 module Gamma_api = Gamma_api
 (** Gamma API client for markets, events, series, and search *)
+
+module Clob_api = Clob_api
+(** CLOB API client for order books, pricing, and timeseries *)
