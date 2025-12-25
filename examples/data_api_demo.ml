@@ -44,47 +44,56 @@ let run_demo env =
   Logger.header "Health Check";
   let health = Data_api.Client.health_check client in
   (match health with
-  | Ok resp -> (
+  | Ok resp ->
       Logger.ok "health_check" "passed";
-      match resp.data with
-      | Some d -> Logger.info "DATA" [ ("value", d) ]
-      | None -> ())
+      Logger.info "DATA" [ ("value", resp.data) ]
   | Error err -> Logger.error "health_check" err.error);
 
   (* Positions *)
   Logger.header "Positions";
   let positions =
-    Data_api.Client.get_positions client ~user:sample_user ~limit:5 ()
+    Data_api.Client.get_positions client ~user:sample_user
+      ~limit:(Common.Primitives.Limit.of_int_exn 5)
+      ()
   in
   print_result_count "get_positions" positions;
   (match positions with
   | Ok items when List.length items > 0 ->
       let pos = List.hd items in
-      Logger.info "FIRST"
-        [ ("position", Option.value ~default:"(no title)" pos.title) ]
+      Logger.info "FIRST" [ ("position", pos.title) ]
   | _ -> ());
 
   (* Trades *)
   Logger.header "Trades";
-  let trades = Data_api.Client.get_trades client ~limit:5 () in
+  let trades =
+    Data_api.Client.get_trades client
+      ~limit:(Common.Primitives.Nonneg_int.of_int_exn 5)
+      ()
+  in
   print_result_count "get_trades (all)" trades;
 
   let user_trades =
-    Data_api.Client.get_trades client ~user:sample_user ~limit:5 ()
+    Data_api.Client.get_trades client ~user:sample_user
+      ~limit:(Common.Primitives.Nonneg_int.of_int_exn 5)
+      ()
   in
   print_result_count "get_trades (by user)" user_trades;
 
   (* Activity *)
   Logger.header "Activity";
   let activity =
-    Data_api.Client.get_activity client ~user:sample_user ~limit:5 ()
+    Data_api.Client.get_activity client ~user:sample_user
+      ~limit:(Common.Primitives.Limit.of_int_exn 5)
+      ()
   in
   print_result_count "get_activity" activity;
 
   (* Holders *)
   Logger.header "Holders";
   let holders =
-    Data_api.Client.get_holders client ~market:[ sample_market ] ~limit:5 ()
+    Data_api.Client.get_holders client ~market:[ sample_market ]
+      ~limit:(Common.Primitives.Holders_limit.of_int_exn 5)
+      ()
   in
   print_result_count "get_holders" holders;
 
@@ -94,8 +103,7 @@ let run_demo env =
   (match traded with
   | Ok t ->
       Logger.ok "get_traded"
-        (Printf.sprintf "user has traded %d markets"
-           (Option.value ~default:0 t.traded))
+        (Printf.sprintf "user has traded %d markets" t.traded)
   | Error err -> Logger.error "get_traded" err.error);
 
   (* Value *)
@@ -115,13 +123,19 @@ let run_demo env =
 
   (* Live Volume *)
   Logger.header "Live Volume";
-  let volume = Data_api.Client.get_live_volume client ~id:sample_event_id () in
+  let volume =
+    Data_api.Client.get_live_volume client
+      ~id:(Common.Primitives.Pos_int.of_int_exn sample_event_id)
+      ()
+  in
   print_result_count "get_live_volume" volume;
 
   (* Closed Positions *)
   Logger.header "Closed Positions";
   let closed =
-    Data_api.Client.get_closed_positions client ~user:sample_user ~limit:5 ()
+    Data_api.Client.get_closed_positions client ~user:sample_user
+      ~limit:(Common.Primitives.Closed_positions_limit.of_int_exn 5)
+      ()
   in
   print_result_count "get_closed_positions" closed;
 
@@ -129,14 +143,15 @@ let run_demo env =
   Logger.header "Builder Leaderboard";
   let builders =
     Data_api.Client.get_builder_leaderboard client
-      ~time_period:Data_api.Types.WEEK ~limit:5 ()
+      ~time_period:Data_api.Types.WEEK
+      ~limit:(Common.Primitives.Builder_limit.of_int_exn 5)
+      ()
   in
   print_result_count "get_builder_leaderboard" builders;
   (match builders with
   | Ok items when List.length items > 0 ->
       let b = List.hd items in
-      Logger.info "TOP"
-        [ ("builder", Option.value ~default:"(unknown)" b.builder) ]
+      Logger.info "TOP" [ ("builder", b.builder) ]
   | _ -> ());
 
   (* Builder Volume *)
@@ -152,17 +167,15 @@ let run_demo env =
   let traders =
     Data_api.Client.get_trader_leaderboard client
       ~category:Data_api.Types.OVERALL ~time_period:Data_api.Types.WEEK
-      ~order_by:Data_api.Types.PNL ~limit:5 ()
+      ~order_by:Data_api.Types.PNL
+      ~limit:(Common.Primitives.Leaderboard_limit.of_int_exn 5)
+      ()
   in
   print_result_count "get_trader_leaderboard" traders;
   (match traders with
   | Ok items when List.length items > 0 ->
       let t = List.hd items in
-      Logger.info "TOP"
-        [
-          ("trader", Option.value ~default:"(anonymous)" t.user_name);
-          ("rank", Option.value ~default:"?" t.rank);
-        ]
+      Logger.info "TOP" [ ("trader", t.user_name); ("rank", t.rank) ]
   | _ -> ());
 
   (* Summary *)

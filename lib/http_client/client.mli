@@ -3,56 +3,10 @@
     This module provides a reusable HTTP client with JSON parsing and query
     parameter building utilities. *)
 
-(** {1 Non-negative Integers} *)
+(** {1 Re-exported Primitive Types} *)
 
-module Nonneg_int : sig
-  type t
-  (** A non-negative integer (>= 0) *)
-
-  val of_int : int -> t option
-  (** Create from int, returns None if negative *)
-
-  val of_int_exn : int -> t
-  (** Create from int, raises if negative *)
-
-  val to_int : t -> int
-  (** Extract the underlying int *)
-
-  val zero : t
-  val one : t
-end
-
-(** {1 Timestamps} *)
-
-module Timestamp : sig
-  type t
-  (** An ISO 8601 timestamp (e.g., "2023-11-07T05:31:56Z") *)
-
-  val of_string : string -> t option
-  (** Parse from ISO 8601 string *)
-
-  val of_string_exn : string -> t
-  (** Parse from ISO 8601 string, raises on invalid format *)
-
-  val to_string : t -> string
-  (** Convert to ISO 8601 string *)
-
-  val to_ptime : t -> Ptime.t
-  (** Get the underlying Ptime.t *)
-
-  val of_ptime : Ptime.t -> t
-  (** Create from Ptime.t *)
-
-  val t_of_yojson : Yojson.Safe.t -> t
-  (** Parse from JSON string *)
-
-  val yojson_of_t : t -> Yojson.Safe.t
-  (** Convert to JSON string *)
-
-  val pp : Format.formatter -> t -> unit
-  val show : t -> string
-  val equal : t -> t -> bool
-end
+module Nonneg_int = Common.Primitives.Nonneg_int
+module Timestamp = Common.Primitives.Timestamp
 
 (** {1 Client Configuration} *)
 
@@ -111,6 +65,59 @@ val add_int_array : string -> int list option -> params -> params
 
 val add_timestamp : string -> Timestamp.t option -> params -> params
 (** Add an optional timestamp parameter (ISO 8601 format) *)
+
+val add_pos_int :
+  string -> Common.Primitives.Pos_int.t option -> params -> params
+(** Add an optional positive integer parameter (>= 1) *)
+
+val add_pos_int_list :
+  string -> Common.Primitives.Pos_int.t list option -> params -> params
+(** Add an optional list of positive integers, joining with commas *)
+
+val add_nonneg_float :
+  string -> Common.Primitives.Nonneg_float.t option -> params -> params
+(** Add an optional non-negative float parameter (>= 0) *)
+
+val add_limit : string -> Common.Primitives.Limit.t option -> params -> params
+(** Add an optional limit parameter (0-500) *)
+
+val add_offset : string -> Common.Primitives.Offset.t option -> params -> params
+(** Add an optional offset parameter (0-10000) *)
+
+val add_bounded_string :
+  string -> Common.Primitives.Bounded_string.t option -> params -> params
+(** Add an optional bounded string parameter *)
+
+val add_holders_limit :
+  string -> Common.Primitives.Holders_limit.t option -> params -> params
+(** Add an optional holders limit parameter (0-20) *)
+
+val add_min_balance :
+  string -> Common.Primitives.Min_balance.t option -> params -> params
+(** Add an optional min balance parameter (0-999999) *)
+
+val add_closed_positions_limit :
+  string ->
+  Common.Primitives.Closed_positions_limit.t option ->
+  params ->
+  params
+(** Add an optional closed positions limit parameter (0-50) *)
+
+val add_extended_offset :
+  string -> Common.Primitives.Extended_offset.t option -> params -> params
+(** Add an optional extended offset parameter (0-100000) *)
+
+val add_leaderboard_limit :
+  string -> Common.Primitives.Leaderboard_limit.t option -> params -> params
+(** Add an optional leaderboard limit parameter (1-50) *)
+
+val add_leaderboard_offset :
+  string -> Common.Primitives.Leaderboard_offset.t option -> params -> params
+(** Add an optional leaderboard offset parameter (0-1000) *)
+
+val add_builder_limit :
+  string -> Common.Primitives.Builder_limit.t option -> params -> params
+(** Add an optional builder limit parameter (0-50) *)
 
 (** {1 HTTP Request Functions} *)
 
