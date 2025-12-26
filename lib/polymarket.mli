@@ -55,7 +55,21 @@
 module Gamma : sig
   (** Gamma API client for markets, events, series, and search.
 
-      Combines client functions and types from {!Polymarket_gamma}. *)
+      {2 Module-based Enums}
+
+      Query parameter enums use a module-based pattern for type safety:
+
+      {[
+        (* Filter events by status *)
+        let events = Gamma.get_events client ~status:Gamma.Status.Active () in
+
+        (* Get comments for an event *)
+        let comments =
+          Gamma.get_comments client
+            ~parent_entity_type:Gamma.Parent_entity_type.Event
+            ~parent_entity_id:123 ()
+        in
+      ]} *)
 
   include module type of Polymarket_gamma.Client
   include module type of Polymarket_gamma.Types
