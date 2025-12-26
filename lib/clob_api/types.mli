@@ -35,96 +35,89 @@ val equal_token_id : token_id -> token_id -> bool
 exception Invalid_address of string
 exception Invalid_signature of string
 
-(** {1 Query Parameter Enums} *)
+(** {1 Enum Modules} *)
 
-type time_interval =
-  | MIN_1
-  | MIN_5
-  | MIN_15
-  | HOUR_1
-  | HOUR_6
-  | DAY_1
-  | WEEK_1
-  | MAX  (** Time interval for price history queries *)
+module Side : sig
+  type t = Buy | Sell
 
-val string_of_time_interval : time_interval -> string
-(** Convert time interval to API string representation *)
+  val to_string : t -> string
+  val of_string : string -> t
+  val t_of_yojson : Yojson.Safe.t -> t
+  val yojson_of_t : t -> Yojson.Safe.t
+  val pp : Format.formatter -> t -> unit
+  val show : t -> string
+  val equal : t -> t -> bool
+end
 
-val time_interval_of_string : string -> time_interval
-(** Parse time interval from API string representation *)
+module Order_type : sig
+  type t =
+    | Gtc
+    | Gtd
+    | Fok
+    | Fak
+        (** Gtc: Good Till Cancelled, Gtd: Good Till Date, Fok: Fill or Kill,
+            Fak: Fill and Kill *)
 
-val pp_time_interval : Format.formatter -> time_interval -> unit
-val show_time_interval : time_interval -> string
-val equal_time_interval : time_interval -> time_interval -> bool
+  val to_string : t -> string
+  val of_string : string -> t
+  val t_of_yojson : Yojson.Safe.t -> t
+  val yojson_of_t : t -> Yojson.Safe.t
+  val pp : Format.formatter -> t -> unit
+  val show : t -> string
+  val equal : t -> t -> bool
+end
 
-(** {1 Domain Enums} *)
+module Interval : sig
+  type t = Min_1 | Min_5 | Min_15 | Hour_1 | Hour_6 | Day_1 | Week_1 | Max
 
-(** Order side enum *)
-type order_side = BUY | SELL
+  val to_string : t -> string
+  val of_string : string -> t
+  val pp : Format.formatter -> t -> unit
+  val show : t -> string
+  val equal : t -> t -> bool
+end
 
-val string_of_order_side : order_side -> string
-val order_side_of_string : string -> order_side
-val order_side_of_yojson : Yojson.Safe.t -> order_side
-val yojson_of_order_side : order_side -> Yojson.Safe.t
-val pp_order_side : Format.formatter -> order_side -> unit
-val show_order_side : order_side -> string
-val equal_order_side : order_side -> order_side -> bool
+module Status : sig
+  type t = Live | Matched | Delayed | Unmatched | Cancelled | Expired
 
-(** Order type enum - time in force *)
-type order_type =
-  | GTC
-  | GTD
-  | FOK
-  | FAK
-      (** GTC: Good Till Cancelled GTD: Good Till Date FOK: Fill or Kill FAK:
-          Fill and Kill *)
+  val to_string : t -> string
+  val of_string : string -> t
+  val t_of_yojson : Yojson.Safe.t -> t
+  val yojson_of_t : t -> Yojson.Safe.t
+  val pp : Format.formatter -> t -> unit
+  val show : t -> string
+  val equal : t -> t -> bool
+end
 
-val string_of_order_type : order_type -> string
-val order_type_of_string : string -> order_type
-val order_type_of_yojson : Yojson.Safe.t -> order_type
-val yojson_of_order_type : order_type -> Yojson.Safe.t
-val pp_order_type : Format.formatter -> order_type -> unit
-val show_order_type : order_type -> string
-val equal_order_type : order_type -> order_type -> bool
+module Signature_type : sig
+  type t =
+    | Eoa
+    | Poly_proxy
+    | Poly_gnosis_safe
+        (** Eoa: EIP712 from externally owned account (0), Poly_proxy: EIP712
+            from Polymarket proxy wallet signer (1), Poly_gnosis_safe: EIP712
+            from Polymarket Gnosis Safe signer (2) *)
 
-(** Signature type enum *)
-type signature_type =
-  | EOA
-  | POLY_PROXY
-  | POLY_GNOSIS_SAFE
-      (** EOA: EIP712 signature from externally owned account (0) POLY_PROXY:
-          EIP712 from Polymarket proxy wallet signer (1) POLY_GNOSIS_SAFE:
-          EIP712 from Polymarket Gnosis Safe signer (2) *)
+  val to_int : t -> int
+  val of_int : int -> t
+  val t_of_yojson : Yojson.Safe.t -> t
+  val yojson_of_t : t -> Yojson.Safe.t
+  val pp : Format.formatter -> t -> unit
+  val show : t -> string
+  val equal : t -> t -> bool
+end
 
-val int_of_signature_type : signature_type -> int
-val signature_type_of_int : int -> signature_type
-val signature_type_of_yojson : Yojson.Safe.t -> signature_type
-val yojson_of_signature_type : signature_type -> Yojson.Safe.t
-val pp_signature_type : Format.formatter -> signature_type -> unit
-val show_signature_type : signature_type -> string
-val equal_signature_type : signature_type -> signature_type -> bool
+module Trade_type : sig
+  type t = Taker | Maker
 
-(** Order status enum *)
-type order_status = LIVE | MATCHED | DELAYED | UNMATCHED | CANCELLED | EXPIRED
-
-val string_of_order_status : order_status -> string
-val order_status_of_string : string -> order_status
-val order_status_of_yojson : Yojson.Safe.t -> order_status
-val yojson_of_order_status : order_status -> Yojson.Safe.t
-val pp_order_status : Format.formatter -> order_status -> unit
-val show_order_status : order_status -> string
-val equal_order_status : order_status -> order_status -> bool
-
-(** Trade type enum *)
-type trade_type = TAKER | MAKER
-
-val string_of_trade_type : trade_type -> string
-val trade_type_of_string : string -> trade_type
-val trade_type_of_yojson : Yojson.Safe.t -> trade_type
-val yojson_of_trade_type : trade_type -> Yojson.Safe.t
-val pp_trade_type : Format.formatter -> trade_type -> unit
-val show_trade_type : trade_type -> string
-val equal_trade_type : trade_type -> trade_type -> bool
+  val to_string : t -> string
+  val of_string : string -> t
+  val t_of_yojson : Yojson.Safe.t -> t
+  val yojson_of_t : t -> Yojson.Safe.t
+  val pp : Format.formatter -> t -> unit
+  val show : t -> string
+  val equal : t -> t -> bool
+end
 
 (** {1 Order Book Types} *)
 
@@ -169,8 +162,8 @@ type signed_order = {
   expiration : string option;
   nonce : string option;
   fee_rate_bps : string option;
-  side : order_side option;
-  signature_type : signature_type option;
+  side : Side.t option;
+  signature_type : Signature_type.t option;
   signature : signature option;
 }
 (** Cryptographically signed order for the CLOB *)
@@ -184,7 +177,7 @@ val equal_signed_order : signed_order -> signed_order -> bool
 type order_request = {
   order : signed_order option;
   owner : string option;
-  order_type : order_type option;
+  order_type : Order_type.t option;
 }
 (** Request body for creating an order *)
 
@@ -199,7 +192,7 @@ type create_order_response = {
   error_msg : string option;
   order_id : string option;
   order_hashes : string list;
-  status : order_status option;
+  status : Status.t option;
 }
 (** Response from creating an order *)
 
@@ -215,18 +208,18 @@ val equal_create_order_response :
 
 type open_order = {
   id : string option;
-  status : order_status option;
+  status : Status.t option;
   market : string option;
   asset_id : token_id option;
   original_size : string option;
   size_matched : string option;
   price : string option;
-  side : order_side option;
+  side : Side.t option;
   outcome : string option;
   maker_address : address option;
   owner : string option;
   expiration : string option;
-  order_type : order_type option;
+  order_type : Order_type.t option;
   created_at : string option;
   associate_trades : string list;
 }
@@ -263,7 +256,7 @@ type maker_order_fill = {
   price : string option;
   asset_id : token_id option;
   outcome : string option;
-  side : order_side option;
+  side : Side.t option;
 }
 (** Maker order that was filled in a trade *)
 
@@ -278,7 +271,7 @@ type clob_trade = {
   taker_order_id : string option;
   market : string option;
   asset_id : token_id option;
-  side : order_side option;
+  side : Side.t option;
   size : string option;
   fee_rate_bps : string option;
   price : string option;
@@ -291,7 +284,7 @@ type clob_trade = {
   transaction_hash : string option;
   bucket_index : int option;
   maker_orders : maker_order_fill list;
-  trade_type : trade_type option;
+  trade_type : Trade_type.t option;
 }
 (** A trade on the CLOB *)
 

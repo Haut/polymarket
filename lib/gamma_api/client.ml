@@ -3,8 +3,7 @@
     This module provides functions to interact with all public endpoints of the
     Polymarket Gamma API (https://gamma-api.polymarket.com). *)
 
-open Query
-open Responses
+open Types
 module P = Polymarket_common.Primitives
 module H = Polymarket_http.Client
 
@@ -68,7 +67,7 @@ let get_tag_by_slug t ~slug ?include_template () =
 let get_related_tags t ~id ?omit_empty ?status () =
   []
   |> H.add_bool "omit_empty" omit_empty
-  |> H.add_option "status" string_of_status status
+  |> H.add_option "status" Status.to_string status
   |> H.get_json_list t
        (Printf.sprintf "/tags/%s/related-tags" id)
        related_tag_of_yojson
@@ -76,7 +75,7 @@ let get_related_tags t ~id ?omit_empty ?status () =
 let get_related_tags_by_slug t ~slug ?omit_empty ?status () =
   []
   |> H.add_bool "omit_empty" omit_empty
-  |> H.add_option "status" string_of_status status
+  |> H.add_option "status" Status.to_string status
   |> H.get_json_list t
        (Printf.sprintf "/tags/slug/%s/related-tags" slug)
        related_tag_of_yojson
@@ -84,7 +83,7 @@ let get_related_tags_by_slug t ~slug ?omit_empty ?status () =
 let get_related_tag_tags t ~id ?omit_empty ?status () =
   []
   |> H.add_bool "omit_empty" omit_empty
-  |> H.add_option "status" string_of_status status
+  |> H.add_option "status" Status.to_string status
   |> H.get_json_list t
        (Printf.sprintf "/tags/%s/related-tags/tags" id)
        tag_of_yojson
@@ -92,7 +91,7 @@ let get_related_tag_tags t ~id ?omit_empty ?status () =
 let get_related_tag_tags_by_slug t ~slug ?omit_empty ?status () =
   []
   |> H.add_bool "omit_empty" omit_empty
-  |> H.add_option "status" string_of_status status
+  |> H.add_option "status" Status.to_string status
   |> H.get_json_list t
        (Printf.sprintf "/tags/slug/%s/related-tags/tags" slug)
        tag_of_yojson
@@ -230,7 +229,7 @@ let get_comments t ?limit ?offset ?order ?ascending ?parent_entity_type
   |> H.add_option "offset" P.Nonneg_int.to_string offset
   |> H.add "order" order
   |> H.add_bool "ascending" ascending
-  |> H.add_option "parent_entity_type" string_of_parent_entity_type
+  |> H.add_option "parent_entity_type" Parent_entity_type.to_string
        parent_entity_type
   |> H.add_option "parent_entity_id" string_of_int parent_entity_id
   |> H.add_bool "get_positions" get_positions

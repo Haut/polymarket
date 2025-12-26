@@ -55,18 +55,49 @@
 module Gamma : sig
   (** Gamma API client for markets, events, series, and search.
 
-      Combines client functions, response types, and query enums from
-      {!Polymarket_gamma}. *)
+      {2 Module-based Enums}
+
+      Query parameter enums use a module-based pattern for type safety:
+
+      {[
+        (* Filter events by status *)
+        let events = Gamma.get_events client ~status:Gamma.Status.Active () in
+
+        (* Get comments for an event *)
+        let comments =
+          Gamma.get_comments client
+            ~parent_entity_type:Gamma.Parent_entity_type.Event
+            ~parent_entity_id:123 ()
+        in
+      ]} *)
 
   include module type of Polymarket_gamma.Client
-  include module type of Polymarket_gamma.Responses
-  include module type of Polymarket_gamma.Query
+  include module type of Polymarket_gamma.Types
 end
 
 module Data : sig
   (** Data API client for positions, trades, activity, and leaderboards.
 
-      Combines client functions and response types from {!Polymarket_data}. *)
+      {2 Module-based Enums}
+
+      Query parameter enums use a module-based pattern for type safety:
+
+      {[
+        (* Get positions sorted by cash PnL *)
+        let positions =
+          Data.get_positions client ~user
+            ~sort_by:Data.Position_sort_by.Cashpnl
+            ~sort_direction:Data.Sort_direction.Desc ()
+        in
+
+        (* Get trader leaderboard *)
+        let leaders =
+          Data.get_trader_leaderboard client
+            ~category:Data.Leaderboard_category.Politics
+            ~time_period:Data.Time_period.Week
+            ~order_by:Data.Leaderboard_order_by.Pnl ()
+        in
+      ]} *)
 
   include module type of Polymarket_data.Client
   include module type of Polymarket_data.Types
@@ -74,8 +105,6 @@ end
 
 module Clob : sig
   (** CLOB API client for order books, pricing, and trading.
-
-      Combines client functions and types from {!Polymarket_clob}.
 
       {2 Typestate Authentication}
 
@@ -90,6 +119,9 @@ module Clob : sig
         (* Create unauthenticated client *)
         let client = Clob.Unauthed.create ~sw ~net () in
 
+        (* Get price with scoped enum *)
+        let price = Clob.Unauthed.get_price client ~token_id ~side:Clob.Types.Side.Buy () in
+
         (* Upgrade to L1 with private key *)
         let l1 = Clob.upgrade_to_l1 client ~private_key in
 
@@ -100,12 +132,10 @@ module Clob : sig
       ]} *)
 
   include module type of Polymarket_clob.Client
-  include module type of Polymarket_clob.Types
+  module Types = Polymarket_clob.Types
   module Auth = Polymarket_clob.Auth
   module Auth_types = Polymarket_clob.Auth_types
   module Crypto = Polymarket_clob.Crypto
-
-  (** {2 Typestate Client Types} *)
 
   type unauthed = Polymarket_clob.Client_typestate.unauthed
   type l1 = Polymarket_clob.Client_typestate.l1

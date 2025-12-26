@@ -59,7 +59,7 @@ let get_order_books t ~token_ids () =
 (** {1 Pricing} *)
 
 let get_price t ~token_id ~side () =
-  [ ("token_id", [ token_id ]); ("side", [ string_of_order_side side ]) ]
+  [ ("token_id", [ token_id ]); ("side", [ Side.to_string side ]) ]
   |> H.get_json t.http "/price" price_response_of_yojson
 
 let get_midpoint t ~token_id () =
@@ -74,7 +74,7 @@ let get_prices t ~requests () =
            `Assoc
              [
                ("token_id", `String token_id);
-               ("side", `String (string_of_order_side side));
+               ("side", `String (Side.to_string side));
              ])
          requests)
     |> Yojson.Safe.to_string
@@ -94,7 +94,7 @@ let get_price_history t ~market ?start_ts ?end_ts ?interval ?fidelity () =
   [ ("market", [ market ]) ]
   |> H.add_option "startTs" string_of_int start_ts
   |> H.add_option "endTs" string_of_int end_ts
-  |> H.add_option "interval" string_of_time_interval interval
+  |> H.add_option "interval" Interval.to_string interval
   |> H.add_option "fidelity" string_of_int fidelity
   |> H.get_json t.http "/prices-history" price_history_of_yojson
 
@@ -107,7 +107,7 @@ let create_order t ~order ~owner ~order_type () =
       [
         ("order", yojson_of_signed_order order);
         ("owner", `String owner);
-        ("orderType", `String (string_of_order_type order_type));
+        ("orderType", `String (Order_type.to_string order_type));
       ]
     |> Yojson.Safe.to_string
   in
@@ -124,7 +124,7 @@ let create_orders t ~orders () =
              [
                ("order", yojson_of_signed_order order);
                ("owner", `String owner);
-               ("orderType", `String (string_of_order_type order_type));
+               ("orderType", `String (Order_type.to_string order_type));
              ])
          orders)
     |> Yojson.Safe.to_string

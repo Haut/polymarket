@@ -8,143 +8,214 @@ open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 
 (** {1 Query Parameter Enums} *)
 
-type sort_direction = ASC | DESC [@@deriving yojson, show, eq]
+module Sort_direction = struct
+  type t = Asc | Desc [@@deriving yojson, show, eq]
 
-let string_of_sort_direction = function ASC -> "ASC" | DESC -> "DESC"
+  let to_string = function Asc -> "ASC" | Desc -> "DESC"
 
-type position_sort_by =
-  | CURRENT
-  | INITIAL
-  | TOKENS
-  | CASHPNL
-  | PERCENTPNL
-  | TITLE
-  | RESOLVING
-  | PRICE
-  | AVGPRICE
-[@@deriving yojson, show, eq]
+  let of_string = function
+    | "ASC" | "asc" -> Asc
+    | "DESC" | "desc" -> Desc
+    | s -> failwith ("Unknown sort_direction: " ^ s)
+end
 
-let string_of_position_sort_by = function
-  | CURRENT -> "CURRENT"
-  | INITIAL -> "INITIAL"
-  | TOKENS -> "TOKENS"
-  | CASHPNL -> "CASHPNL"
-  | PERCENTPNL -> "PERCENTPNL"
-  | TITLE -> "TITLE"
-  | RESOLVING -> "RESOLVING"
-  | PRICE -> "PRICE"
-  | AVGPRICE -> "AVGPRICE"
+module Position_sort_by = struct
+  type t =
+    | Current
+    | Initial
+    | Tokens
+    | Cashpnl
+    | Percentpnl
+    | Title
+    | Resolving
+    | Price
+    | Avgprice
+  [@@deriving yojson, show, eq]
 
-type filter_type = CASH | TOKENS_FILTER [@@deriving yojson, show, eq]
+  let to_string = function
+    | Current -> "CURRENT"
+    | Initial -> "INITIAL"
+    | Tokens -> "TOKENS"
+    | Cashpnl -> "CASHPNL"
+    | Percentpnl -> "PERCENTPNL"
+    | Title -> "TITLE"
+    | Resolving -> "RESOLVING"
+    | Price -> "PRICE"
+    | Avgprice -> "AVGPRICE"
 
-let string_of_filter_type = function
-  | CASH -> "CASH"
-  | TOKENS_FILTER -> "TOKENS"
+  let of_string = function
+    | "CURRENT" | "current" -> Current
+    | "INITIAL" | "initial" -> Initial
+    | "TOKENS" | "tokens" -> Tokens
+    | "CASHPNL" | "cashpnl" -> Cashpnl
+    | "PERCENTPNL" | "percentpnl" -> Percentpnl
+    | "TITLE" | "title" -> Title
+    | "RESOLVING" | "resolving" -> Resolving
+    | "PRICE" | "price" -> Price
+    | "AVGPRICE" | "avgprice" -> Avgprice
+    | s -> failwith ("Unknown position_sort_by: " ^ s)
+end
 
-type activity_sort_by = TIMESTAMP | TOKENS_SORT | CASH_SORT
-[@@deriving yojson, show, eq]
+module Filter_type = struct
+  type t = Cash | Tokens [@@deriving yojson, show, eq]
 
-let string_of_activity_sort_by = function
-  | TIMESTAMP -> "TIMESTAMP"
-  | TOKENS_SORT -> "TOKENS"
-  | CASH_SORT -> "CASH"
+  let to_string = function Cash -> "CASH" | Tokens -> "TOKENS"
 
-type closed_position_sort_by =
-  | REALIZEDPNL
-  | TITLE_SORT
-  | PRICE_SORT
-  | AVGPRICE_SORT
-  | TIMESTAMP_SORT
-[@@deriving yojson, show, eq]
+  let of_string = function
+    | "CASH" | "cash" -> Cash
+    | "TOKENS" | "tokens" -> Tokens
+    | s -> failwith ("Unknown filter_type: " ^ s)
+end
 
-let string_of_closed_position_sort_by = function
-  | REALIZEDPNL -> "REALIZEDPNL"
-  | TITLE_SORT -> "TITLE"
-  | PRICE_SORT -> "PRICE"
-  | AVGPRICE_SORT -> "AVGPRICE"
-  | TIMESTAMP_SORT -> "TIMESTAMP"
+module Activity_sort_by = struct
+  type t = Timestamp | Tokens | Cash [@@deriving yojson, show, eq]
 
-type time_period = DAY | WEEK | MONTH | ALL [@@deriving yojson, show, eq]
+  let to_string = function
+    | Timestamp -> "TIMESTAMP"
+    | Tokens -> "TOKENS"
+    | Cash -> "CASH"
 
-let string_of_time_period = function
-  | DAY -> "DAY"
-  | WEEK -> "WEEK"
-  | MONTH -> "MONTH"
-  | ALL -> "ALL"
+  let of_string = function
+    | "TIMESTAMP" | "timestamp" -> Timestamp
+    | "TOKENS" | "tokens" -> Tokens
+    | "CASH" | "cash" -> Cash
+    | s -> failwith ("Unknown activity_sort_by: " ^ s)
+end
 
-type leaderboard_category =
-  | OVERALL
-  | POLITICS
-  | SPORTS
-  | CRYPTO
-  | CULTURE
-  | MENTIONS
-  | WEATHER
-  | ECONOMICS
-  | TECH
-  | FINANCE
-[@@deriving yojson, show, eq]
+module Closed_position_sort_by = struct
+  type t = Realizedpnl | Title | Price | Avgprice | Timestamp
+  [@@deriving yojson, show, eq]
 
-let string_of_leaderboard_category = function
-  | OVERALL -> "OVERALL"
-  | POLITICS -> "POLITICS"
-  | SPORTS -> "SPORTS"
-  | CRYPTO -> "CRYPTO"
-  | CULTURE -> "CULTURE"
-  | MENTIONS -> "MENTIONS"
-  | WEATHER -> "WEATHER"
-  | ECONOMICS -> "ECONOMICS"
-  | TECH -> "TECH"
-  | FINANCE -> "FINANCE"
+  let to_string = function
+    | Realizedpnl -> "REALIZEDPNL"
+    | Title -> "TITLE"
+    | Price -> "PRICE"
+    | Avgprice -> "AVGPRICE"
+    | Timestamp -> "TIMESTAMP"
 
-type leaderboard_order_by = PNL | VOL [@@deriving yojson, show, eq]
+  let of_string = function
+    | "REALIZEDPNL" | "realizedpnl" -> Realizedpnl
+    | "TITLE" | "title" -> Title
+    | "PRICE" | "price" -> Price
+    | "AVGPRICE" | "avgprice" -> Avgprice
+    | "TIMESTAMP" | "timestamp" -> Timestamp
+    | s -> failwith ("Unknown closed_position_sort_by: " ^ s)
+end
 
-let string_of_leaderboard_order_by = function PNL -> "PNL" | VOL -> "VOL"
+module Time_period = struct
+  type t = Day | Week | Month | All [@@deriving yojson, show, eq]
+
+  let to_string = function
+    | Day -> "DAY"
+    | Week -> "WEEK"
+    | Month -> "MONTH"
+    | All -> "ALL"
+
+  let of_string = function
+    | "DAY" | "day" -> Day
+    | "WEEK" | "week" -> Week
+    | "MONTH" | "month" -> Month
+    | "ALL" | "all" -> All
+    | s -> failwith ("Unknown time_period: " ^ s)
+end
+
+module Leaderboard_category = struct
+  type t =
+    | Overall
+    | Politics
+    | Sports
+    | Crypto
+    | Culture
+    | Mentions
+    | Weather
+    | Economics
+    | Tech
+    | Finance
+  [@@deriving yojson, show, eq]
+
+  let to_string = function
+    | Overall -> "OVERALL"
+    | Politics -> "POLITICS"
+    | Sports -> "SPORTS"
+    | Crypto -> "CRYPTO"
+    | Culture -> "CULTURE"
+    | Mentions -> "MENTIONS"
+    | Weather -> "WEATHER"
+    | Economics -> "ECONOMICS"
+    | Tech -> "TECH"
+    | Finance -> "FINANCE"
+
+  let of_string = function
+    | "OVERALL" | "overall" -> Overall
+    | "POLITICS" | "politics" -> Politics
+    | "SPORTS" | "sports" -> Sports
+    | "CRYPTO" | "crypto" -> Crypto
+    | "CULTURE" | "culture" -> Culture
+    | "MENTIONS" | "mentions" -> Mentions
+    | "WEATHER" | "weather" -> Weather
+    | "ECONOMICS" | "economics" -> Economics
+    | "TECH" | "tech" -> Tech
+    | "FINANCE" | "finance" -> Finance
+    | s -> failwith ("Unknown leaderboard_category: " ^ s)
+end
+
+module Leaderboard_order_by = struct
+  type t = Pnl | Vol [@@deriving yojson, show, eq]
+
+  let to_string = function Pnl -> "PNL" | Vol -> "VOL"
+
+  let of_string = function
+    | "PNL" | "pnl" -> Pnl
+    | "VOL" | "vol" -> Vol
+    | s -> failwith ("Unknown leaderboard_order_by: " ^ s)
+end
 
 (** {1 Domain Enums} *)
 
-(** Trade side enum *)
-type side = BUY | SELL [@@deriving show, eq]
+module Side = struct
+  type t = Buy | Sell [@@deriving show, eq]
 
-let string_of_side = function BUY -> "BUY" | SELL -> "SELL"
+  let to_string = function Buy -> "BUY" | Sell -> "SELL"
 
-let side_of_string = function
-  | "BUY" | "buy" -> BUY
-  | "SELL" | "sell" -> SELL
-  | s -> failwith ("Unknown side: " ^ s)
+  let of_string = function
+    | "BUY" | "buy" -> Buy
+    | "SELL" | "sell" -> Sell
+    | s -> failwith ("Unknown side: " ^ s)
 
-let side_of_yojson = function
-  | `String s -> side_of_string s
-  | _ -> failwith "side_of_yojson: expected string"
+  let t_of_yojson = function
+    | `String s -> of_string s
+    | _ -> failwith "Side.t_of_yojson: expected string"
 
-let yojson_of_side side = `String (string_of_side side)
+  let yojson_of_t side = `String (to_string side)
+end
 
-(** Activity type enum *)
-type activity_type = TRADE | SPLIT | MERGE | REDEEM | REWARD | CONVERSION
-[@@deriving show, eq]
+module Activity_type = struct
+  type t = Trade | Split | Merge | Redeem | Reward | Conversion
+  [@@deriving show, eq]
 
-let string_of_activity_type = function
-  | TRADE -> "TRADE"
-  | SPLIT -> "SPLIT"
-  | MERGE -> "MERGE"
-  | REDEEM -> "REDEEM"
-  | REWARD -> "REWARD"
-  | CONVERSION -> "CONVERSION"
+  let to_string = function
+    | Trade -> "TRADE"
+    | Split -> "SPLIT"
+    | Merge -> "MERGE"
+    | Redeem -> "REDEEM"
+    | Reward -> "REWARD"
+    | Conversion -> "CONVERSION"
 
-let activity_type_of_string = function
-  | "TRADE" | "trade" -> TRADE
-  | "SPLIT" | "split" -> SPLIT
-  | "MERGE" | "merge" -> MERGE
-  | "REDEEM" | "redeem" -> REDEEM
-  | "REWARD" | "reward" -> REWARD
-  | "CONVERSION" | "conversion" -> CONVERSION
-  | s -> failwith ("Unknown activity_type: " ^ s)
+  let of_string = function
+    | "TRADE" | "trade" -> Trade
+    | "SPLIT" | "split" -> Split
+    | "MERGE" | "merge" -> Merge
+    | "REDEEM" | "redeem" -> Redeem
+    | "REWARD" | "reward" -> Reward
+    | "CONVERSION" | "conversion" -> Conversion
+    | s -> failwith ("Unknown activity_type: " ^ s)
 
-let activity_type_of_yojson = function
-  | `String s -> activity_type_of_string s
-  | _ -> failwith "activity_type_of_yojson: expected string"
+  let t_of_yojson = function
+    | `String s -> of_string s
+    | _ -> failwith "Activity_type.t_of_yojson: expected string"
 
-let yojson_of_activity_type t = `String (string_of_activity_type t)
+  let yojson_of_t t = `String (to_string t)
+end
 
 (** {1 Response Types} *)
 
@@ -212,7 +283,7 @@ type closed_position = {
 
 type trade = {
   proxy_wallet : Polymarket_common.Primitives.Address.t; [@key "proxyWallet"]
-  side : side;
+  side : Side.t;
   asset : string;
   condition_id : Polymarket_common.Primitives.Hash64.t; [@key "conditionId"]
   size : float;
@@ -238,13 +309,13 @@ type activity = {
   proxy_wallet : Polymarket_common.Primitives.Address.t; [@key "proxyWallet"]
   timestamp : int64;
   condition_id : Polymarket_common.Primitives.Hash64.t; [@key "conditionId"]
-  activity_type : activity_type; [@key "type"]
+  activity_type : Activity_type.t; [@key "type"]
   size : float;
   usdc_size : float; [@key "usdcSize"]
   transaction_hash : string; [@key "transactionHash"]
   price : float;
   asset : string;
-  side : side;
+  side : Side.t;
   outcome_index : int; [@key "outcomeIndex"]
   title : string;
   slug : string;

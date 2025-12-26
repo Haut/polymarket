@@ -33,8 +33,8 @@ let get_positions t ~user ?market ?event_id ?size_threshold ?redeemable
   |> H.add_bool "mergeable" mergeable
   |> H.add_option "limit" P.Limit.to_string limit
   |> H.add_option "offset" P.Offset.to_string offset
-  |> H.add_option "sortBy" string_of_position_sort_by sort_by
-  |> H.add_option "sortDirection" string_of_sort_direction sort_direction
+  |> H.add_option "sortBy" Position_sort_by.to_string sort_by
+  |> H.add_option "sortDirection" Sort_direction.to_string sort_direction
   |> H.add_option "title" P.Bounded_string.to_string title
   |> H.get_json_list t "/positions" position_of_yojson
 
@@ -46,12 +46,12 @@ let get_trades t ?user ?market ?event_id ?side ?filter_type ?filter_amount
   |> H.add_option "limit" P.Nonneg_int.to_string limit
   |> H.add_option "offset" P.Nonneg_int.to_string offset
   |> H.add_bool "takerOnly" taker_only
-  |> H.add_option "filterType" string_of_filter_type filter_type
+  |> H.add_option "filterType" Filter_type.to_string filter_type
   |> H.add_option "filterAmount" P.Nonneg_float.to_string filter_amount
   |> H.add_list "market" P.Hash64.to_string market
   |> H.add_list "eventId" P.Pos_int.to_string event_id
   |> H.add_option "user" P.Address.to_string user
-  |> H.add_option "side" string_of_side side
+  |> H.add_option "side" Side.to_string side
   |> H.get_json_list t "/trades" trade_of_yojson
 
 (** {1 Activity Endpoint} *)
@@ -63,12 +63,12 @@ let get_activity t ~user ?market ?event_id ?activity_types ?side ?start_time
   |> H.add_option "offset" P.Offset.to_string offset
   |> H.add_list "market" P.Hash64.to_string market
   |> H.add_list "eventId" P.Pos_int.to_string event_id
-  |> H.add_list "type" string_of_activity_type activity_types
+  |> H.add_list "type" Activity_type.to_string activity_types
   |> H.add_option "start" P.Nonneg_int.to_string start_time
   |> H.add_option "end" P.Nonneg_int.to_string end_time
-  |> H.add_option "sortBy" string_of_activity_sort_by sort_by
-  |> H.add_option "sortDirection" string_of_sort_direction sort_direction
-  |> H.add_option "side" string_of_side side
+  |> H.add_option "sortBy" Activity_sort_by.to_string sort_by
+  |> H.add_option "sortDirection" Sort_direction.to_string sort_direction
+  |> H.add_option "side" Side.to_string side
   |> H.get_json_list t "/activity" activity_of_yojson
 
 (** {1 Holders Endpoint} *)
@@ -97,8 +97,8 @@ let get_closed_positions t ~user ?market ?event_id ?title ?sort_by
   |> H.add_list "eventId" P.Pos_int.to_string event_id
   |> H.add_option "limit" P.Closed_positions_limit.to_string limit
   |> H.add_option "offset" P.Extended_offset.to_string offset
-  |> H.add_option "sortBy" string_of_closed_position_sort_by sort_by
-  |> H.add_option "sortDirection" string_of_sort_direction sort_direction
+  |> H.add_option "sortBy" Closed_position_sort_by.to_string sort_by
+  |> H.add_option "sortDirection" Sort_direction.to_string sort_direction
   |> H.get_json_list t "/closed-positions" closed_position_of_yojson
 
 (** {1 Trader Leaderboard Endpoint} *)
@@ -106,9 +106,9 @@ let get_closed_positions t ~user ?market ?event_id ?title ?sort_by
 let get_trader_leaderboard t ?category ?time_period ?order_by ?user ?user_name
     ?limit ?offset () =
   []
-  |> H.add_option "category" string_of_leaderboard_category category
-  |> H.add_option "timePeriod" string_of_time_period time_period
-  |> H.add_option "orderBy" string_of_leaderboard_order_by order_by
+  |> H.add_option "category" Leaderboard_category.to_string category
+  |> H.add_option "timePeriod" Time_period.to_string time_period
+  |> H.add_option "orderBy" Leaderboard_order_by.to_string order_by
   |> H.add_option "user" P.Address.to_string user
   |> H.add "userName" user_name
   |> H.add_option "limit" P.Leaderboard_limit.to_string limit
@@ -138,7 +138,7 @@ let get_live_volume t ~id () =
 
 let get_builder_leaderboard t ?time_period ?limit ?offset () =
   []
-  |> H.add_option "timePeriod" string_of_time_period time_period
+  |> H.add_option "timePeriod" Time_period.to_string time_period
   |> H.add_option "limit" P.Builder_limit.to_string limit
   |> H.add_option "offset" P.Leaderboard_offset.to_string offset
   |> H.get_json_list t "/v1/builders/leaderboard" leaderboard_entry_of_yojson
@@ -147,5 +147,5 @@ let get_builder_leaderboard t ?time_period ?limit ?offset () =
 
 let get_builder_volume t ?time_period () =
   []
-  |> H.add_option "timePeriod" string_of_time_period time_period
+  |> H.add_option "timePeriod" Time_period.to_string time_period
   |> H.get_json_list t "/v1/builders/volume" builder_volume_entry_of_yojson

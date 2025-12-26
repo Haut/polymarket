@@ -16,8 +16,7 @@
       | Error err -> print_endline ("Error: " ^ err.error)
     ]} *)
 
-open Query
-open Responses
+open Types
 
 (** {1 Client Configuration} *)
 
@@ -125,7 +124,7 @@ val get_related_tags :
   t ->
   id:string ->
   ?omit_empty:bool ->
-  ?status:status ->
+  ?status:Status.t ->
   unit ->
   (related_tag list, Polymarket_http.Client.error_response) result
 (** Get related tags for a tag.
@@ -137,7 +136,7 @@ val get_related_tags_by_slug :
   t ->
   slug:string ->
   ?omit_empty:bool ->
-  ?status:status ->
+  ?status:Status.t ->
   unit ->
   (related_tag list, Polymarket_http.Client.error_response) result
 (** Get related tags for a tag by slug.
@@ -149,7 +148,7 @@ val get_related_tag_tags :
   t ->
   id:string ->
   ?omit_empty:bool ->
-  ?status:status ->
+  ?status:Status.t ->
   unit ->
   (tag list, Polymarket_http.Client.error_response) result
 (** Get full tag objects for tags related to a tag.
@@ -161,7 +160,7 @@ val get_related_tag_tags_by_slug :
   t ->
   slug:string ->
   ?omit_empty:bool ->
-  ?status:status ->
+  ?status:Status.t ->
   unit ->
   (tag list, Polymarket_http.Client.error_response) result
 (** Get full tag objects for tags related to a tag by slug.
@@ -397,7 +396,7 @@ val get_comments :
   ?offset:Polymarket_common.Primitives.Nonneg_int.t ->
   ?order:string ->
   ?ascending:bool ->
-  ?parent_entity_type:parent_entity_type ->
+  ?parent_entity_type:Parent_entity_type.t ->
   ?parent_entity_id:int ->
   ?get_positions:bool ->
   ?holders_only:bool ->

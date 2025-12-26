@@ -10,11 +10,10 @@
 module Gamma = struct
   (** Gamma API client for markets, events, series, and search.
 
-      Combines client functions, response types, and query enums. *)
+      Combines client functions and types. *)
 
   include Polymarket_gamma.Client
-  include Polymarket_gamma.Responses
-  include Polymarket_gamma.Query
+  include Polymarket_gamma.Types
 end
 
 module Data = struct
@@ -27,19 +26,15 @@ module Data = struct
 end
 
 module Clob = struct
-  (** CLOB API client for order books, pricing, and trading.
-
-      Combines client functions and types. *)
+  (** CLOB API client for order books, pricing, and trading. *)
 
   include Polymarket_clob.Client
-  include Polymarket_clob.Types
+  module Types = Polymarket_clob.Types
   module Auth = Polymarket_clob.Auth
   module Auth_types = Polymarket_clob.Auth_types
   module Crypto = Polymarket_clob.Crypto
 
   type unauthed = Polymarket_clob.Client_typestate.unauthed
-  (** Typestate client types and modules *)
-
   type l1 = Polymarket_clob.Client_typestate.l1
   type l2 = Polymarket_clob.Client_typestate.l2
 

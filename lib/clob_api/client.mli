@@ -75,7 +75,7 @@ val get_order_books :
 val get_price :
   t ->
   token_id:string ->
-  side:Types.order_side ->
+  side:Types.Side.t ->
   unit ->
   (Types.price_response, Types.error_response) result
 
@@ -87,7 +87,7 @@ val get_midpoint :
 
 val get_prices :
   t ->
-  requests:(string * Types.order_side) list ->
+  requests:(string * Types.Side.t) list ->
   unit ->
   (Types.prices_response, Types.error_response) result
 
@@ -104,7 +104,7 @@ val get_price_history :
   market:string ->
   ?start_ts:int ->
   ?end_ts:int ->
-  ?interval:Types.time_interval ->
+  ?interval:Types.Interval.t ->
   ?fidelity:int ->
   unit ->
   (Types.price_history, Types.error_response) result
@@ -115,13 +115,13 @@ val create_order :
   t ->
   order:Types.signed_order ->
   owner:string ->
-  order_type:Types.order_type ->
+  order_type:Types.Order_type.t ->
   unit ->
   (Types.create_order_response, Types.error_response) result
 
 val create_orders :
   t ->
-  orders:(Types.signed_order * string * Types.order_type) list ->
+  orders:(Types.signed_order * string * Types.Order_type.t) list ->
   unit ->
   (Types.create_order_response list, Types.error_response) result
 

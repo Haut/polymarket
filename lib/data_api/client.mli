@@ -57,8 +57,8 @@ val get_positions :
   ?mergeable:bool ->
   ?limit:Polymarket_common.Primitives.Limit.t ->
   ?offset:Polymarket_common.Primitives.Offset.t ->
-  ?sort_by:position_sort_by ->
-  ?sort_direction:sort_direction ->
+  ?sort_by:Position_sort_by.t ->
+  ?sort_direction:Sort_direction.t ->
   ?title:Polymarket_common.Primitives.Bounded_string.t ->
   unit ->
   (position list, error_response) result
@@ -82,8 +82,8 @@ val get_closed_positions :
   ?market:Polymarket_common.Primitives.Hash64.t list ->
   ?event_id:Polymarket_common.Primitives.Pos_int.t list ->
   ?title:Polymarket_common.Primitives.Bounded_string.t ->
-  ?sort_by:closed_position_sort_by ->
-  ?sort_direction:sort_direction ->
+  ?sort_by:Closed_position_sort_by.t ->
+  ?sort_direction:Sort_direction.t ->
   ?limit:Polymarket_common.Primitives.Closed_positions_limit.t ->
   ?offset:Polymarket_common.Primitives.Extended_offset.t ->
   unit ->
@@ -105,8 +105,8 @@ val get_trades :
   ?user:Polymarket_common.Primitives.Address.t ->
   ?market:Polymarket_common.Primitives.Hash64.t list ->
   ?event_id:Polymarket_common.Primitives.Pos_int.t list ->
-  ?side:side ->
-  ?filter_type:filter_type ->
+  ?side:Side.t ->
+  ?filter_type:Filter_type.t ->
   ?filter_amount:Polymarket_common.Primitives.Nonneg_float.t ->
   ?taker_only:bool ->
   ?limit:Polymarket_common.Primitives.Nonneg_int.t ->
@@ -131,12 +131,12 @@ val get_activity :
   user:Polymarket_common.Primitives.Address.t ->
   ?market:Polymarket_common.Primitives.Hash64.t list ->
   ?event_id:Polymarket_common.Primitives.Pos_int.t list ->
-  ?activity_types:activity_type list ->
-  ?side:side ->
+  ?activity_types:Activity_type.t list ->
+  ?side:Side.t ->
   ?start_time:Polymarket_common.Primitives.Nonneg_int.t ->
   ?end_time:Polymarket_common.Primitives.Nonneg_int.t ->
-  ?sort_by:activity_sort_by ->
-  ?sort_direction:sort_direction ->
+  ?sort_by:Activity_sort_by.t ->
+  ?sort_direction:Sort_direction.t ->
   ?limit:Polymarket_common.Primitives.Limit.t ->
   ?offset:Polymarket_common.Primitives.Offset.t ->
   unit ->
@@ -210,7 +210,7 @@ val get_live_volume :
 
 val get_builder_leaderboard :
   t ->
-  ?time_period:time_period ->
+  ?time_period:Time_period.t ->
   ?limit:Polymarket_common.Primitives.Builder_limit.t ->
   ?offset:Polymarket_common.Primitives.Leaderboard_offset.t ->
   unit ->
@@ -222,7 +222,7 @@ val get_builder_leaderboard :
 
 val get_builder_volume :
   t ->
-  ?time_period:time_period ->
+  ?time_period:Time_period.t ->
   unit ->
   (builder_volume_entry list, error_response) result
 (** Get daily builder volume time-series.
@@ -230,9 +230,9 @@ val get_builder_volume :
 
 val get_trader_leaderboard :
   t ->
-  ?category:leaderboard_category ->
-  ?time_period:time_period ->
-  ?order_by:leaderboard_order_by ->
+  ?category:Leaderboard_category.t ->
+  ?time_period:Time_period.t ->
+  ?order_by:Leaderboard_order_by.t ->
   ?user:Polymarket_common.Primitives.Address.t ->
   ?user_name:string ->
   ?limit:Polymarket_common.Primitives.Leaderboard_limit.t ->
