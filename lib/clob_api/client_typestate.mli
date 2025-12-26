@@ -86,7 +86,7 @@ module Unauthed : sig
   val get_price :
     t ->
     token_id:string ->
-    side:Types.order_side ->
+    side:Types.Side.t ->
     unit ->
     (Types.price_response, Types.error_response) result
 
@@ -98,7 +98,7 @@ module Unauthed : sig
 
   val get_prices :
     t ->
-    requests:(string * Types.order_side) list ->
+    requests:(string * Types.Side.t) list ->
     unit ->
     (Types.prices_response, Types.error_response) result
 
@@ -115,7 +115,7 @@ module Unauthed : sig
     market:string ->
     ?start_ts:int ->
     ?end_ts:int ->
-    ?interval:Types.time_interval ->
+    ?interval:Types.Interval.t ->
     ?fidelity:int ->
     unit ->
     (Types.price_history, Types.error_response) result
@@ -185,7 +185,7 @@ module L1 : sig
   val get_price :
     t ->
     token_id:string ->
-    side:Types.order_side ->
+    side:Types.Side.t ->
     unit ->
     (Types.price_response, Types.error_response) result
 
@@ -197,7 +197,7 @@ module L1 : sig
 
   val get_prices :
     t ->
-    requests:(string * Types.order_side) list ->
+    requests:(string * Types.Side.t) list ->
     unit ->
     (Types.prices_response, Types.error_response) result
 
@@ -214,7 +214,7 @@ module L1 : sig
     market:string ->
     ?start_ts:int ->
     ?end_ts:int ->
-    ?interval:Types.time_interval ->
+    ?interval:Types.Interval.t ->
     ?fidelity:int ->
     unit ->
     (Types.price_history, Types.error_response) result
@@ -273,14 +273,14 @@ module L2 : sig
     t ->
     order:Types.signed_order ->
     owner:string ->
-    order_type:Types.order_type ->
+    order_type:Types.Order_type.t ->
     unit ->
     (Types.create_order_response, Types.error_response) result
   (** Create a new order on the CLOB. *)
 
   val create_orders :
     t ->
-    orders:(Types.signed_order * string * Types.order_type) list ->
+    orders:(Types.signed_order * string * Types.Order_type.t) list ->
     unit ->
     (Types.create_order_response list, Types.error_response) result
   (** Create multiple orders on the CLOB. *)
@@ -361,7 +361,7 @@ module L2 : sig
   val get_price :
     t ->
     token_id:string ->
-    side:Types.order_side ->
+    side:Types.Side.t ->
     unit ->
     (Types.price_response, Types.error_response) result
 
@@ -373,7 +373,7 @@ module L2 : sig
 
   val get_prices :
     t ->
-    requests:(string * Types.order_side) list ->
+    requests:(string * Types.Side.t) list ->
     unit ->
     (Types.prices_response, Types.error_response) result
 
@@ -390,7 +390,7 @@ module L2 : sig
     market:string ->
     ?start_ts:int ->
     ?end_ts:int ->
-    ?interval:Types.time_interval ->
+    ?interval:Types.Interval.t ->
     ?fidelity:int ->
     unit ->
     (Types.price_history, Types.error_response) result

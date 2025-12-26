@@ -151,7 +151,7 @@ let run_demo env =
         Clob.Unauthed.get_order_book unauthed_client ~token_id ()
       in
       print_result "get_order_book" order_book
-        ~on_ok:(fun (ob : Clob.order_book_summary) ->
+        ~on_ok:(fun (ob : Clob.Types.order_book_summary) ->
           Printf.sprintf "%d bids, %d asks" (List.length ob.bids)
             (List.length ob.asks));
 
@@ -171,28 +171,30 @@ let run_demo env =
       (* ===== Pricing (Unauthed) ===== *)
       Logger.header "Pricing (Unauthed)";
       let price_buy =
-        Clob.Unauthed.get_price unauthed_client ~token_id ~side:Clob.BUY ()
+        Clob.Unauthed.get_price unauthed_client ~token_id
+          ~side:Clob.Types.Side.Buy ()
       in
       print_result "get_price (BUY)" price_buy
-        ~on_ok:(fun (p : Clob.price_response) ->
+        ~on_ok:(fun (p : Clob.Types.price_response) ->
           Option.value ~default:"(no price)" p.price);
 
       let price_sell =
-        Clob.Unauthed.get_price unauthed_client ~token_id ~side:Clob.SELL ()
+        Clob.Unauthed.get_price unauthed_client ~token_id
+          ~side:Clob.Types.Side.Sell ()
       in
       print_result "get_price (SELL)" price_sell
-        ~on_ok:(fun (p : Clob.price_response) ->
+        ~on_ok:(fun (p : Clob.Types.price_response) ->
           Option.value ~default:"(no price)" p.price);
 
       let midpoint = Clob.Unauthed.get_midpoint unauthed_client ~token_id () in
       print_result "get_midpoint" midpoint
-        ~on_ok:(fun (m : Clob.midpoint_response) ->
+        ~on_ok:(fun (m : Clob.Types.midpoint_response) ->
           Option.value ~default:"(no mid)" m.mid);
 
       (* Batch prices *)
       let requests =
         List.filteri (fun i _ -> i < 3) all_token_ids
-        |> List.map (fun tid -> (tid, Clob.BUY))
+        |> List.map (fun tid -> (tid, Clob.Types.Side.Buy))
       in
       if List.length requests > 0 then
         let prices = Clob.Unauthed.get_prices unauthed_client ~requests () in
@@ -216,10 +218,10 @@ let run_demo env =
       | Some cond_id ->
           let history =
             Clob.Unauthed.get_price_history unauthed_client ~market:cond_id
-              ~interval:Clob.DAY_1 ()
+              ~interval:Clob.Types.Interval.Day_1 ()
           in
           print_result "get_price_history" history
-            ~on_ok:(fun (h : Clob.price_history) ->
+            ~on_ok:(fun (h : Clob.Types.price_history) ->
               Printf.sprintf "%d price points" (List.length h.history))
       | None ->
           Logger.skip "get_price_history" "no market condition ID available");

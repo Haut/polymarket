@@ -75,8 +75,6 @@ end
 module Clob : sig
   (** CLOB API client for order books, pricing, and trading.
 
-      Combines client functions and types from {!Polymarket_clob}.
-
       {2 Typestate Authentication}
 
       The CLOB client uses a typestate pattern to enforce authentication
@@ -90,6 +88,9 @@ module Clob : sig
         (* Create unauthenticated client *)
         let client = Clob.Unauthed.create ~sw ~net () in
 
+        (* Get price with scoped enum *)
+        let price = Clob.Unauthed.get_price client ~token_id ~side:Clob.Types.Side.Buy () in
+
         (* Upgrade to L1 with private key *)
         let l1 = Clob.upgrade_to_l1 client ~private_key in
 
@@ -100,12 +101,10 @@ module Clob : sig
       ]} *)
 
   include module type of Polymarket_clob.Client
-  include module type of Polymarket_clob.Types
+  module Types = Polymarket_clob.Types
   module Auth = Polymarket_clob.Auth
   module Auth_types = Polymarket_clob.Auth_types
   module Crypto = Polymarket_clob.Crypto
-
-  (** {2 Typestate Client Types} *)
 
   type unauthed = Polymarket_clob.Client_typestate.unauthed
   type l1 = Polymarket_clob.Client_typestate.l1

@@ -245,7 +245,7 @@ match Clob.Unauthed.get_order_book client ~token_id () with
 
 ```ocaml
 (* Get price for a specific side *)
-match Clob.Unauthed.get_price client ~token_id ~side:Clob.BUY () with
+match Clob.Unauthed.get_price client ~token_id ~side:Clob.Types.BUY () with
 | Ok price -> Printf.printf "Price: %s\n" (Option.value ~default:"N/A" price.price)
 | Error err -> Printf.printf "Error: %s\n" err.Http.error
 
@@ -352,9 +352,11 @@ Polymarket
 ├── Gamma         (* Markets, events, series, search *)
 ├── Data          (* Positions, trades, activity, leaderboards *)
 ├── Clob          (* Order books, pricing, trading *)
-│   ├── Typestate (* Typestate client: Unauthed, L1, L2 *)
+│   ├── Unauthed  (* Public endpoints client *)
+│   ├── L1        (* Wallet auth client *)
+│   ├── L2        (* API key auth client *)
+│   ├── Types     (* order_side, order_type, time_interval, etc. *)
 │   ├── Auth      (* L1/L2 authentication *)
-│   ├── Auth_types(* Credential types *)
 │   └── Crypto    (* Signing and hashing *)
 ├── Http          (* HTTP client utilities *)
 ├── Rate_limiter  (* Rate limiting with GCRA algorithm *)

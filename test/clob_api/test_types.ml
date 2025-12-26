@@ -62,168 +62,204 @@ let test_signature_invalid () =
       Alcotest.(check bool) desc false (is_valid_signature sig_))
     invalid_cases
 
-(** {1 Order Side Tests} *)
+(** {1 Side Tests} *)
 
-let test_order_side_string_roundtrip () =
-  let sides = [ BUY; SELL ] in
+let test_side_string_roundtrip () =
+  let sides = [ Side.Buy; Side.Sell ] in
   List.iter
     (fun side ->
-      let str = string_of_order_side side in
-      let result = order_side_of_string str in
+      let str = Side.to_string side in
+      let result = Side.of_string str in
       Alcotest.(check bool)
-        (Printf.sprintf "order_side %s roundtrip" str)
-        true
-        (equal_order_side side result))
+        (Printf.sprintf "Side %s roundtrip" str)
+        true (Side.equal side result))
     sides
 
-let test_order_side_string_values () =
-  Alcotest.(check string) "BUY" "BUY" (string_of_order_side BUY);
-  Alcotest.(check string) "SELL" "SELL" (string_of_order_side SELL)
+let test_side_string_values () =
+  Alcotest.(check string) "BUY" "BUY" (Side.to_string Side.Buy);
+  Alcotest.(check string) "SELL" "SELL" (Side.to_string Side.Sell)
 
-let test_order_side_json_roundtrip () =
-  let sides = [ BUY; SELL ] in
+let test_side_json_roundtrip () =
+  let sides = [ Side.Buy; Side.Sell ] in
   List.iter
     (fun side ->
-      let json = yojson_of_order_side side in
-      let result = order_side_of_yojson json in
+      let json = Side.yojson_of_t side in
+      let result = Side.t_of_yojson json in
       Alcotest.(check bool)
-        (Printf.sprintf "order_side JSON roundtrip %s" (show_order_side side))
-        true
-        (equal_order_side side result))
+        (Printf.sprintf "Side JSON roundtrip %s" (Side.show side))
+        true (Side.equal side result))
     sides
 
 (** {1 Order Type Tests} *)
 
 let test_order_type_string_roundtrip () =
-  let types = [ GTC; GTD; FOK; FAK ] in
+  let types =
+    [ Order_type.Gtc; Order_type.Gtd; Order_type.Fok; Order_type.Fak ]
+  in
   List.iter
     (fun ot ->
-      let str = string_of_order_type ot in
-      let result = order_type_of_string str in
+      let str = Order_type.to_string ot in
+      let result = Order_type.of_string str in
       Alcotest.(check bool)
-        (Printf.sprintf "order_type %s roundtrip" str)
+        (Printf.sprintf "Order_type %s roundtrip" str)
         true
-        (equal_order_type ot result))
+        (Order_type.equal ot result))
     types
 
 let test_order_type_string_values () =
-  Alcotest.(check string) "GTC" "GTC" (string_of_order_type GTC);
-  Alcotest.(check string) "GTD" "GTD" (string_of_order_type GTD);
-  Alcotest.(check string) "FOK" "FOK" (string_of_order_type FOK);
-  Alcotest.(check string) "FAK" "FAK" (string_of_order_type FAK)
+  Alcotest.(check string) "GTC" "GTC" (Order_type.to_string Order_type.Gtc);
+  Alcotest.(check string) "GTD" "GTD" (Order_type.to_string Order_type.Gtd);
+  Alcotest.(check string) "FOK" "FOK" (Order_type.to_string Order_type.Fok);
+  Alcotest.(check string) "FAK" "FAK" (Order_type.to_string Order_type.Fak)
 
 let test_order_type_json_roundtrip () =
-  let types = [ GTC; GTD; FOK; FAK ] in
+  let types =
+    [ Order_type.Gtc; Order_type.Gtd; Order_type.Fok; Order_type.Fak ]
+  in
   List.iter
     (fun ot ->
-      let json = yojson_of_order_type ot in
-      let result = order_type_of_yojson json in
+      let json = Order_type.yojson_of_t ot in
+      let result = Order_type.t_of_yojson json in
       Alcotest.(check bool)
-        (Printf.sprintf "order_type JSON roundtrip %s" (show_order_type ot))
+        (Printf.sprintf "Order_type JSON roundtrip %s" (Order_type.show ot))
         true
-        (equal_order_type ot result))
+        (Order_type.equal ot result))
     types
 
 (** {1 Signature Type Tests} *)
 
 let test_signature_type_int_roundtrip () =
-  let types = [ EOA; POLY_PROXY; POLY_GNOSIS_SAFE ] in
+  let types =
+    [
+      Signature_type.Eoa;
+      Signature_type.Poly_proxy;
+      Signature_type.Poly_gnosis_safe;
+    ]
+  in
   List.iter
     (fun st ->
-      let i = int_of_signature_type st in
-      let result = signature_type_of_int i in
+      let i = Signature_type.to_int st in
+      let result = Signature_type.of_int i in
       Alcotest.(check bool)
-        (Printf.sprintf "signature_type %d roundtrip" i)
+        (Printf.sprintf "Signature_type %d roundtrip" i)
         true
-        (equal_signature_type st result))
+        (Signature_type.equal st result))
     types
 
 let test_signature_type_int_values () =
-  Alcotest.(check int) "EOA" 0 (int_of_signature_type EOA);
-  Alcotest.(check int) "POLY_PROXY" 1 (int_of_signature_type POLY_PROXY);
+  Alcotest.(check int) "Eoa" 0 (Signature_type.to_int Signature_type.Eoa);
   Alcotest.(check int)
-    "POLY_GNOSIS_SAFE" 2
-    (int_of_signature_type POLY_GNOSIS_SAFE)
+    "Poly_proxy" 1
+    (Signature_type.to_int Signature_type.Poly_proxy);
+  Alcotest.(check int)
+    "Poly_gnosis_safe" 2
+    (Signature_type.to_int Signature_type.Poly_gnosis_safe)
 
 let test_signature_type_json_roundtrip () =
-  let types = [ EOA; POLY_PROXY; POLY_GNOSIS_SAFE ] in
+  let types =
+    [
+      Signature_type.Eoa;
+      Signature_type.Poly_proxy;
+      Signature_type.Poly_gnosis_safe;
+    ]
+  in
   List.iter
     (fun st ->
-      let json = yojson_of_signature_type st in
-      let result = signature_type_of_yojson json in
+      let json = Signature_type.yojson_of_t st in
+      let result = Signature_type.t_of_yojson json in
       Alcotest.(check bool)
-        (Printf.sprintf "signature_type JSON roundtrip %s"
-           (show_signature_type st))
+        (Printf.sprintf "Signature_type JSON roundtrip %s"
+           (Signature_type.show st))
         true
-        (equal_signature_type st result))
+        (Signature_type.equal st result))
     types
 
-(** {1 Order Status Tests} *)
+(** {1 Status Tests} *)
 
-let test_order_status_string_roundtrip () =
-  let statuses = [ LIVE; MATCHED; DELAYED; UNMATCHED; CANCELLED; EXPIRED ] in
+let test_status_string_roundtrip () =
+  let statuses =
+    [
+      Status.Live;
+      Status.Matched;
+      Status.Delayed;
+      Status.Unmatched;
+      Status.Cancelled;
+      Status.Expired;
+    ]
+  in
   List.iter
     (fun st ->
-      let str = string_of_order_status st in
-      let result = order_status_of_string str in
+      let str = Status.to_string st in
+      let result = Status.of_string str in
       Alcotest.(check bool)
-        (Printf.sprintf "order_status %s roundtrip" str)
-        true
-        (equal_order_status st result))
+        (Printf.sprintf "Status %s roundtrip" str)
+        true (Status.equal st result))
     statuses
 
-let test_order_status_string_values () =
-  Alcotest.(check string) "LIVE" "LIVE" (string_of_order_status LIVE);
-  Alcotest.(check string) "MATCHED" "MATCHED" (string_of_order_status MATCHED);
-  Alcotest.(check string) "DELAYED" "DELAYED" (string_of_order_status DELAYED);
+let test_status_string_values () =
+  Alcotest.(check string) "LIVE" "LIVE" (Status.to_string Status.Live);
+  Alcotest.(check string) "MATCHED" "MATCHED" (Status.to_string Status.Matched);
+  Alcotest.(check string) "DELAYED" "DELAYED" (Status.to_string Status.Delayed);
   Alcotest.(check string)
     "UNMATCHED" "UNMATCHED"
-    (string_of_order_status UNMATCHED);
+    (Status.to_string Status.Unmatched);
   Alcotest.(check string)
     "CANCELLED" "CANCELLED"
-    (string_of_order_status CANCELLED);
-  Alcotest.(check string) "EXPIRED" "EXPIRED" (string_of_order_status EXPIRED)
+    (Status.to_string Status.Cancelled);
+  Alcotest.(check string) "EXPIRED" "EXPIRED" (Status.to_string Status.Expired)
 
-let test_order_status_json_roundtrip () =
-  let statuses = [ LIVE; MATCHED; DELAYED; UNMATCHED; CANCELLED; EXPIRED ] in
+let test_status_json_roundtrip () =
+  let statuses =
+    [
+      Status.Live;
+      Status.Matched;
+      Status.Delayed;
+      Status.Unmatched;
+      Status.Cancelled;
+      Status.Expired;
+    ]
+  in
   List.iter
     (fun st ->
-      let json = yojson_of_order_status st in
-      let result = order_status_of_yojson json in
+      let json = Status.yojson_of_t st in
+      let result = Status.t_of_yojson json in
       Alcotest.(check bool)
-        (Printf.sprintf "order_status JSON roundtrip %s" (show_order_status st))
-        true
-        (equal_order_status st result))
+        (Printf.sprintf "Status JSON roundtrip %s" (Status.show st))
+        true (Status.equal st result))
     statuses
 
 (** {1 Trade Type Tests} *)
 
 let test_trade_type_string_roundtrip () =
-  let types = [ TAKER; MAKER ] in
+  let types = [ Trade_type.Taker; Trade_type.Maker ] in
   List.iter
     (fun tt ->
-      let str = string_of_trade_type tt in
-      let result = trade_type_of_string str in
+      let str = Trade_type.to_string tt in
+      let result = Trade_type.of_string str in
       Alcotest.(check bool)
-        (Printf.sprintf "trade_type %s roundtrip" str)
+        (Printf.sprintf "Trade_type %s roundtrip" str)
         true
-        (equal_trade_type tt result))
+        (Trade_type.equal tt result))
     types
 
 let test_trade_type_string_values () =
-  Alcotest.(check string) "TAKER" "TAKER" (string_of_trade_type TAKER);
-  Alcotest.(check string) "MAKER" "MAKER" (string_of_trade_type MAKER)
+  Alcotest.(check string)
+    "TAKER" "TAKER"
+    (Trade_type.to_string Trade_type.Taker);
+  Alcotest.(check string)
+    "MAKER" "MAKER"
+    (Trade_type.to_string Trade_type.Maker)
 
 let test_trade_type_json_roundtrip () =
-  let types = [ TAKER; MAKER ] in
+  let types = [ Trade_type.Taker; Trade_type.Maker ] in
   List.iter
     (fun tt ->
-      let json = yojson_of_trade_type tt in
-      let result = trade_type_of_yojson json in
+      let json = Trade_type.yojson_of_t tt in
+      let result = Trade_type.t_of_yojson json in
       Alcotest.(check bool)
-        (Printf.sprintf "trade_type JSON roundtrip %s" (show_trade_type tt))
+        (Printf.sprintf "Trade_type JSON roundtrip %s" (Trade_type.show tt))
         true
-        (equal_trade_type tt result))
+        (Trade_type.equal tt result))
     types
 
 (** {1 Validating Deserializer Tests} *)
@@ -300,31 +336,31 @@ let tests =
         ("valid signatures", `Quick, test_signature_valid);
         ("invalid signatures", `Quick, test_signature_invalid);
       ] );
-    ( "order_side",
+    ( "Side",
       [
-        ("string roundtrip", `Quick, test_order_side_string_roundtrip);
-        ("string values", `Quick, test_order_side_string_values);
-        ("JSON roundtrip", `Quick, test_order_side_json_roundtrip);
+        ("string roundtrip", `Quick, test_side_string_roundtrip);
+        ("string values", `Quick, test_side_string_values);
+        ("JSON roundtrip", `Quick, test_side_json_roundtrip);
       ] );
-    ( "order_type",
+    ( "Order_type",
       [
         ("string roundtrip", `Quick, test_order_type_string_roundtrip);
         ("string values", `Quick, test_order_type_string_values);
         ("JSON roundtrip", `Quick, test_order_type_json_roundtrip);
       ] );
-    ( "signature_type",
+    ( "Signature_type",
       [
         ("int roundtrip", `Quick, test_signature_type_int_roundtrip);
         ("int values", `Quick, test_signature_type_int_values);
         ("JSON roundtrip", `Quick, test_signature_type_json_roundtrip);
       ] );
-    ( "order_status",
+    ( "Status",
       [
-        ("string roundtrip", `Quick, test_order_status_string_roundtrip);
-        ("string values", `Quick, test_order_status_string_values);
-        ("JSON roundtrip", `Quick, test_order_status_json_roundtrip);
+        ("string roundtrip", `Quick, test_status_string_roundtrip);
+        ("string values", `Quick, test_status_string_values);
+        ("JSON roundtrip", `Quick, test_status_json_roundtrip);
       ] );
-    ( "trade_type",
+    ( "Trade_type",
       [
         ("string roundtrip", `Quick, test_trade_type_string_roundtrip);
         ("string values", `Quick, test_trade_type_string_values);

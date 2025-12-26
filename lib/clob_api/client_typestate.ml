@@ -29,7 +29,7 @@ module Internal = struct
   (** {2 Pricing} *)
 
   let get_price http ~token_id ~side () =
-    [ ("token_id", [ token_id ]); ("side", [ string_of_order_side side ]) ]
+    [ ("token_id", [ token_id ]); ("side", [ Side.to_string side ]) ]
     |> H.get_json http "/price" price_response_of_yojson
 
   let get_midpoint http ~token_id () =
@@ -44,7 +44,7 @@ module Internal = struct
              `Assoc
                [
                  ("token_id", `String token_id);
-                 ("side", `String (string_of_order_side side));
+                 ("side", `String (Side.to_string side));
                ])
            requests)
       |> Yojson.Safe.to_string
@@ -64,7 +64,7 @@ module Internal = struct
     [ ("market", [ market ]) ]
     |> H.add_option "startTs" string_of_int start_ts
     |> H.add_option "endTs" string_of_int end_ts
-    |> H.add_option "interval" string_of_time_interval interval
+    |> H.add_option "interval" Interval.to_string interval
     |> H.add_option "fidelity" string_of_int fidelity
     |> H.get_json http "/prices-history" price_history_of_yojson
 
@@ -82,7 +82,7 @@ module Internal = struct
         [
           ("order", yojson_of_signed_order order);
           ("owner", `String owner);
-          ("orderType", `String (string_of_order_type order_type));
+          ("orderType", `String (Order_type.to_string order_type));
         ]
       |> Yojson.Safe.to_string
     in
@@ -101,7 +101,7 @@ module Internal = struct
                [
                  ("order", yojson_of_signed_order order);
                  ("owner", `String owner);
-                 ("orderType", `String (string_of_order_type order_type));
+                 ("orderType", `String (Order_type.to_string order_type));
                ])
            orders)
       |> Yojson.Safe.to_string
