@@ -245,7 +245,7 @@ match Clob.Unauthed.get_order_book client ~token_id () with
 
 ```ocaml
 (* Get price for a specific side *)
-match Clob.Unauthed.get_price client ~token_id ~side:Clob.Types.BUY () with
+match Clob.Unauthed.get_price client ~token_id ~side:Clob.Types.Side.Buy () with
 | Ok price -> Printf.printf "Price: %s\n" (Option.value ~default:"N/A" price.price)
 | Error err -> Printf.printf "Error: %s\n" err.Http.error
 
@@ -474,21 +474,21 @@ Polymarket
 | `leaderboard_category` | `OVERALL`, `POLITICS`, `SPORTS`, `CRYPTO`, `CULTURE`, `MENTIONS`, `WEATHER`, `ECONOMICS`, `TECH`, `FINANCE` |
 | `position_sort_by` | `CURRENT`, `INITIAL`, `TOKENS`, `CASHPNL`, `PERCENTPNL`, `TITLE`, `RESOLVING`, `PRICE`, `AVGPRICE` |
 
-#### Gamma API Enums
+#### Gamma API Enums (Module-based)
 
-| Type | Values |
-|------|--------|
-| `status` | `Active`, `Closed`, `All` |
-| `slug_size` | `Full`, `Slim` |
-| `parent_entity_type` | `Event`, `Series`, `Market` |
+| Module | Type | Values |
+|--------|------|--------|
+| `Gamma.Status` | `t` | `Active`, `Closed`, `All` |
+| `Gamma.Slug_size` | `t` | `Sm`, `Md`, `Lg` |
+| `Gamma.Parent_entity_type` | `t` | `Event`, `Series`, `Market` |
 
-#### CLOB API Enums
+#### CLOB API Enums (Module-based)
 
-| Type | Values |
-|------|--------|
-| `order_side` | `BUY`, `SELL` |
-| `order_type` | `GTC`, `GTD`, `FOK` |
-| `time_interval` | `MAX`, `ONE_WEEK`, `ONE_DAY`, `SIX_HOURS`, `ONE_HOUR` |
+| Module | Type | Values |
+|--------|------|--------|
+| `Clob.Types.Side` | `t` | `Buy`, `Sell` |
+| `Clob.Types.Order_type` | `t` | `Gtc`, `Gtd`, `Fok` |
+| `Clob.Types.Time_interval` | `t` | `Max`, `One_week`, `One_day`, `Six_hours`, `One_hour` |
 
 ## Sub-Libraries
 
@@ -581,12 +581,11 @@ polymarket/
 │   │   └── types.ml      # Response types and enums
 │   ├── gamma_api/        # Gamma API implementation
 │   │   ├── client.ml     # API client
-│   │   ├── query.ml      # Query parameter types
-│   │   └── responses.ml  # Response types
+│   │   └── types.ml      # Types and module-based enums
 │   ├── clob_api/         # CLOB API implementation
 │   │   ├── client.ml     # API client (optional credentials)
 │   │   ├── client_typestate.ml  # Typestate client (compile-time auth)
-│   │   ├── types.ml      # Response types
+│   │   ├── types.ml      # Types and module-based enums
 │   │   ├── auth.ml       # L1/L2 authentication
 │   │   ├── auth_types.ml # Credential types
 │   │   └── crypto.ml     # Signing and hashing
