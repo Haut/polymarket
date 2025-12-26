@@ -10,11 +10,10 @@
 module Gamma = struct
   (** Gamma API client for markets, events, series, and search.
 
-      Combines client functions, response types, and query enums. *)
+      Combines client functions and types. *)
 
   include Polymarket_gamma.Client
-  include Polymarket_gamma.Responses
-  include Polymarket_gamma.Query
+  include Polymarket_gamma.Types
 end
 
 module Data = struct

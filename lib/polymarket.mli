@@ -55,12 +55,10 @@
 module Gamma : sig
   (** Gamma API client for markets, events, series, and search.
 
-      Combines client functions, response types, and query enums from
-      {!Polymarket_gamma}. *)
+      Combines client functions and types from {!Polymarket_gamma}. *)
 
   include module type of Polymarket_gamma.Client
-  include module type of Polymarket_gamma.Responses
-  include module type of Polymarket_gamma.Query
+  include module type of Polymarket_gamma.Types
 end
 
 module Data : sig

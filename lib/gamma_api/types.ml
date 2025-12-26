@@ -1,10 +1,65 @@
-(** Gamma API response types for Polymarket.
+(** Gamma API types for Polymarket.
 
-    These types correspond to the OpenAPI 3.0.3 schema defined in
-    gamma-openapi.json for the Polymarket Gamma API
+    These types correspond to the Polymarket Gamma API
     (https://gamma-api.polymarket.com). *)
 
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
+
+(** {1 Enum Modules} *)
+
+module Status = struct
+  (** Status filter for events and markets *)
+  type t =
+    | Active  (** Only active/open items *)
+    | Closed  (** Only closed/resolved items *)
+    | All  (** All items regardless of status *)
+
+  let to_string = function
+    | Active -> "active"
+    | Closed -> "closed"
+    | All -> "all"
+
+  let of_string = function
+    | "active" | "Active" -> Active
+    | "closed" | "Closed" -> Closed
+    | "all" | "All" -> All
+    | s -> failwith ("Unknown status: " ^ s)
+end
+
+module Parent_entity_type = struct
+  (** Parent entity type for comments *)
+  type t =
+    | Event  (** Event entity *)
+    | Series  (** Series entity *)
+    | Market  (** Market entity *)
+
+  let to_string = function
+    | Event -> "Event"
+    | Series -> "Series"
+    | Market -> "market"
+
+  let of_string = function
+    | "Event" | "event" -> Event
+    | "Series" | "series" -> Series
+    | "Market" | "market" -> Market
+    | s -> failwith ("Unknown parent_entity_type: " ^ s)
+end
+
+module Slug_size = struct
+  (** Slug size for URL slugs *)
+  type t =
+    | Sm  (** Small slug *)
+    | Md  (** Medium slug *)
+    | Lg  (** Large slug *)
+
+  let to_string = function Sm -> "sm" | Md -> "md" | Lg -> "lg"
+
+  let of_string = function
+    | "sm" | "Sm" -> Sm
+    | "md" | "Md" -> Md
+    | "lg" | "Lg" -> Lg
+    | s -> failwith ("Unknown slug_size: " ^ s)
+end
 
 (** {1 Response Types} *)
 
