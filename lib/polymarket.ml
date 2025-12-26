@@ -41,6 +41,9 @@ end
 module Http = Polymarket_http.Client
 (** HTTP client utilities for making API requests. *)
 
+module Rate_limiter = Polymarket_rate_limiter.Rate_limiter
+(** Route-based rate limiting middleware. *)
+
 (** {1 Primitive Types}
 
     Validated types for addresses, hashes, and numeric constraints. These are

@@ -5,6 +5,7 @@
     - {!Data}: Positions, trades, activity, and leaderboards
       (data-api.polymarket.com)
     - {!Clob}: Order books, pricing, and trading (clob.polymarket.com)
+    - {!Rate_limiter}: Route-based rate limiting middleware
 
     {2 Example Usage}
 
@@ -15,6 +16,18 @@
       match Polymarket.Gamma.get_events client () with
       | Ok events -> List.iter (fun e -> print_endline e.title) events
       | Error err -> print_endline ("Error: " ^ err.error)
+    ]}
+
+    {2 Rate Limiting}
+
+    Pass a clock to enable automatic rate limiting with Polymarket API presets:
+
+    {[
+      let client =
+        Polymarket.Gamma.create ~sw ~net:(Eio.Stdenv.net env)
+          ~clock:(Eio.Stdenv.clock env) ()
+      in
+      (* Requests are now automatically rate limited *)
     ]}
 
     {2 Validated Primitive Types}
@@ -32,6 +45,7 @@
     For finer-grained control, you can depend on sub-libraries directly:
     - [polymarket.common]: Shared primitives and logging
     - [polymarket.http]: HTTP client utilities
+    - [polymarket.rate_limiter]: Rate limiting middleware
     - [polymarket.gamma]: Gamma API client
     - [polymarket.data]: Data API client
     - [polymarket.clob]: CLOB API client *)
@@ -72,6 +86,9 @@ end
 
 module Http = Polymarket_http.Client
 (** HTTP client utilities for making API requests. *)
+
+module Rate_limiter = Polymarket_rate_limiter.Rate_limiter
+(** Route-based rate limiting middleware for HTTP clients. *)
 
 (** {1 Primitive Types}
 

@@ -14,8 +14,8 @@ module P = Polymarket_common.Primitives
 
 let default_base_url = "https://data-api.polymarket.com"
 
-let create ?(base_url = default_base_url) ~sw ~net () =
-  H.create ~base_url ~sw ~net ()
+let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter () =
+  H.create ~base_url ~sw ~net ~rate_limiter ()
 
 (** {1 Health Endpoint} *)
 

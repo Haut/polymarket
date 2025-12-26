@@ -14,8 +14,8 @@ type t = Polymarket_http.Client.t
 
 let default_base_url = "https://gamma-api.polymarket.com"
 
-let create ?(base_url = default_base_url) ~sw ~net () =
-  H.create ~base_url ~sw ~net ()
+let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter () =
+  H.create ~base_url ~sw ~net ~rate_limiter ()
 
 (** {1 Health Endpoint} *)
 

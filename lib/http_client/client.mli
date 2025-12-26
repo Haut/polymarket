@@ -8,11 +8,18 @@
 type t
 (** The client type holding connection configuration *)
 
-val create : base_url:string -> sw:Eio.Switch.t -> net:_ Eio.Net.t -> unit -> t
+val create :
+  base_url:string ->
+  sw:Eio.Switch.t ->
+  net:_ Eio.Net.t ->
+  rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
+  unit ->
+  t
 (** Create a new client instance.
     @param base_url The API base URL
     @param sw The Eio switch for resource management
-    @param net The Eio network capability *)
+    @param net The Eio network capability
+    @param rate_limiter Shared rate limiter for enforcing API limits *)
 
 val base_url : t -> string
 (** Get the base URL of the client *)

@@ -4,12 +4,18 @@
     parameter building utilities. *)
 
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
+module R = Polymarket_rate_limiter.Rate_limiter
 
 (** {1 Client Configuration} *)
 
-type t = { base_url : string; client : Cohttp_eio.Client.t; sw : Eio.Switch.t }
+type t = {
+  base_url : string;
+  client : Cohttp_eio.Client.t;
+  sw : Eio.Switch.t;
+  rate_limiter : R.t;
+}
 
-let create ~base_url ~sw ~net () =
+let create ~base_url ~sw ~net ~rate_limiter () =
   let authenticator =
     match Ca_certs.authenticator () with
     | Ok x -> x
@@ -29,7 +35,7 @@ let create ~base_url ~sw ~net () =
       Tls_eio.client_of_flow ?host tls_config raw
   in
   let client = Cohttp_eio.Client.make ~https:(Some https) net in
-  { base_url; client; sw }
+  { base_url; client; sw; rate_limiter }
 
 let base_url t = t.base_url
 
@@ -68,7 +74,11 @@ let build_uri base_url path params =
   let uri = Uri.of_string (base_url ^ path) in
   Uri.add_query_params uri params
 
+let apply_rate_limit t ~method_ ~uri =
+  R.before_request t.rate_limiter ~method_ ~uri
+
 let do_get ?(headers = []) t uri =
+  apply_rate_limit t ~method_:"GET" ~uri;
   Polymarket_common.Logger.log_request ~method_:"GET" ~uri;
   try
     let headers = Cohttp.Header.of_list headers in
@@ -85,6 +95,7 @@ let do_get ?(headers = []) t uri =
         (Printexc.to_string exn) )
 
 let do_post ?(headers = []) t uri ~body:request_body =
+  apply_rate_limit t ~method_:"POST" ~uri;
   Polymarket_common.Logger.log_request ~method_:"POST" ~uri;
   try
     let all_headers = ("Content-Type", "application/json") :: headers in
@@ -107,6 +118,7 @@ let do_post ?(headers = []) t uri ~body:request_body =
         (Printexc.to_string exn) )
 
 let do_delete ?(headers = []) t uri =
+  apply_rate_limit t ~method_:"DELETE" ~uri;
   Polymarket_common.Logger.log_request ~method_:"DELETE" ~uri;
   try
     let headers = Cohttp.Header.of_list headers in

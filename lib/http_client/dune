@@ -3,6 +3,7 @@
  (public_name polymarket.http)
  (libraries
   polymarket_common
+  polymarket_rate_limiter
   yojson
   ppx_yojson_conv_lib
   cohttp-eio

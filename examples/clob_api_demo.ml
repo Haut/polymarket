@@ -68,15 +68,19 @@ let run_demo env =
   Logger.setup ();
   Eio.Switch.run @@ fun sw ->
   let net = Eio.Stdenv.net env in
+  let clock = Eio.Stdenv.clock env in
 
   Logger.info "START"
     [ ("demo", "CLOB API"); ("base_url", Clob.default_base_url) ];
 
-  let clob_client = Clob.create ~sw ~net () in
+  (* Create shared rate limiter with Polymarket presets *)
+  let rate_limiter = Rate_limiter.create_polymarket ~clock () in
+
+  let clob_client = Clob.create ~sw ~net ~rate_limiter () in
 
   (* First, get markets from Gamma API to find token IDs with active order books *)
   Logger.header "Setup: Finding Active Markets";
-  let gamma_client = Gamma.create ~sw ~net () in
+  let gamma_client = Gamma.create ~sw ~net ~rate_limiter () in
   (* Filter for non-closed markets with volume to find ones with order books *)
   let markets =
     Gamma.get_markets gamma_client ~limit:(Nonneg_int.of_int_exn 50)

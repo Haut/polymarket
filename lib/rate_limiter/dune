@@ -1,0 +1,6 @@
+(library
+ (name polymarket_rate_limiter)
+ (public_name polymarket.rate_limiter)
+ (libraries eio uri)
+ (preprocess
+  (pps ppx_deriving.show ppx_deriving.eq)))
