@@ -75,13 +75,54 @@ end
 module Clob : sig
   (** CLOB API client for order books, pricing, and trading.
 
-      Combines client functions and types from {!Polymarket_clob}. *)
+      Combines client functions and types from {!Polymarket_clob}.
+
+      {2 Typestate Authentication}
+
+      The CLOB client uses a typestate pattern to enforce authentication
+      requirements at compile time:
+
+      - {!Unauthed}: Public endpoints only (order book, pricing, timeseries)
+      - {!L1}: Wallet authentication (create/derive API keys) + public endpoints
+      - {!L2}: API key authentication (orders, trades) + L1 + public endpoints
+
+      {[
+        (* Create unauthenticated client *)
+        let client = Clob.Unauthed.create ~sw ~net () in
+
+        (* Upgrade to L1 with private key *)
+        let l1 = Clob.upgrade_to_l1 client ~private_key in
+
+        (* Derive API key to get L2 client *)
+        match Clob.L1.derive_api_key l1 ~nonce with
+        | Ok (l2, resp) -> Clob.L2.get_orders l2 ()
+        | Error _ -> ...
+      ]} *)
 
   include module type of Polymarket_clob.Client
   include module type of Polymarket_clob.Types
   module Auth = Polymarket_clob.Auth
   module Auth_types = Polymarket_clob.Auth_types
   module Crypto = Polymarket_clob.Crypto
+
+  (** {2 Typestate Client Types} *)
+
+  type unauthed = Polymarket_clob.Client_typestate.unauthed
+  type l1 = Polymarket_clob.Client_typestate.l1
+  type l2 = Polymarket_clob.Client_typestate.l2
+
+  module Unauthed = Polymarket_clob.Client_typestate.Unauthed
+  module L1 = Polymarket_clob.Client_typestate.L1
+  module L2 = Polymarket_clob.Client_typestate.L2
+
+  val upgrade_to_l1 : unauthed -> private_key:string -> l1
+
+  val upgrade_to_l2 :
+    l1 -> credentials:Polymarket_clob.Auth_types.credentials -> l2
+
+  val l2_to_l1 : l2 -> l1
+  val l2_to_unauthed : l2 -> unauthed
+  val l1_to_unauthed : l1 -> unauthed
 end
 
 module Http = Polymarket_http.Client

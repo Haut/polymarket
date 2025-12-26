@@ -177,17 +177,66 @@ match Gamma.public_search client ~q:"election" ~limit_per_type:5 () with
 
 The CLOB (Central Limit Order Book) API provides access to order books, pricing, and authenticated trading endpoints.
 
+### Typestate Authentication (Recommended)
+
+The CLOB client uses a **typestate pattern** to enforce authentication requirements at compile time. Three client types exist:
+
+- `Clob.Unauthed.t`: Public endpoints only (order book, pricing, timeseries)
+- `Clob.L1.t`: L1 wallet authentication (create/derive API keys) + public
+- `Clob.L2.t`: L2 API key authentication (orders, trades) + L1 + public
+
+```ocaml
+open Polymarket
+
+(* Start with an unauthenticated client for public data *)
+let client = Clob.Unauthed.create ~sw ~net ~rate_limiter () in
+
+(* Get order book - works on Unauthed client *)
+match Clob.Unauthed.get_order_book client ~token_id () with
+| Ok book -> Printf.printf "Bids: %d, Asks: %d\n"
+    (List.length book.bids) (List.length book.asks)
+| Error err -> Printf.printf "Error: %s\n" err.Http.error
+
+(* Upgrade to L1 with private key *)
+let l1_client = Clob.upgrade_to_l1 client ~private_key in
+Printf.printf "Address: %s\n" (Clob.L1.address l1_client);
+
+(* Derive API credentials and auto-upgrade to L2 *)
+match Clob.L1.derive_api_key l1_client ~nonce:0 with
+| Ok (l2_client, _resp) ->
+    (* L2 client can access authenticated endpoints *)
+    let _ = Clob.L2.get_orders l2_client () in
+    let _ = Clob.L2.get_trades l2_client () in
+    (* L2 can also call public endpoints *)
+    let _ = Clob.L2.get_midpoint l2_client ~token_id () in
+    ()
+| Error err -> Printf.printf "Error: %s\n" err.Http.error
+```
+
+### State Transitions
+
+```ocaml
+(* Upgrade functions *)
+val Clob.upgrade_to_l1 : unauthed -> private_key:string -> l1
+val Clob.upgrade_to_l2 : l1 -> credentials:Auth_types.credentials -> l2
+val Clob.L1.derive_api_key : l1 -> nonce:int -> (l2 * response, error) result
+
+(* Downgrade functions *)
+val Clob.l2_to_l1 : l2 -> l1
+val Clob.l2_to_unauthed : l2 -> unauthed
+val Clob.l1_to_unauthed : l1 -> unauthed
+```
+
 ### Get Order Book
 
 ```ocaml
 let rate_limiter = Rate_limiter.create_polymarket ~clock () in
-let client = Clob.create ~sw ~net ~rate_limiter () in
+let client = Clob.Unauthed.create ~sw ~net ~rate_limiter () in
 let token_id = "12345..." in (* Token ID from Gamma API *)
-match Clob.get_order_book client ~token_id () with
+match Clob.Unauthed.get_order_book client ~token_id () with
 | Ok book ->
-  Printf.printf "Best bid: %s, Best ask: %s\n"
-    (Option.value ~default:"N/A" book.best_bid)
-    (Option.value ~default:"N/A" book.best_ask)
+  Printf.printf "Bids: %d, Asks: %d\n"
+    (List.length book.bids) (List.length book.asks)
 | Error err ->
   Printf.printf "Error: %s\n" err.Http.error
 ```
@@ -196,56 +245,49 @@ match Clob.get_order_book client ~token_id () with
 
 ```ocaml
 (* Get price for a specific side *)
-match Clob.get_price client ~token_id ~side:Clob.BUY () with
-| Ok price -> Printf.printf "Price: %s\n" price.price
+match Clob.Unauthed.get_price client ~token_id ~side:Clob.BUY () with
+| Ok price -> Printf.printf "Price: %s\n" (Option.value ~default:"N/A" price.price)
 | Error err -> Printf.printf "Error: %s\n" err.Http.error
 
 (* Get midpoint price *)
-match Clob.get_midpoint client ~token_id () with
-| Ok mid -> Printf.printf "Midpoint: %s\n" mid.mid
+match Clob.Unauthed.get_midpoint client ~token_id () with
+| Ok mid -> Printf.printf "Midpoint: %s\n" (Option.value ~default:"N/A" mid.mid)
 | Error err -> Printf.printf "Error: %s\n" err.Http.error
 ```
 
-### Authentication
+### L2 Authenticated Endpoints
 
-The CLOB API supports two authentication levels:
-- **L1 (Wallet)**: EIP-712 signing with your Ethereum private key for API key management
-- **L2 (API Key)**: HMAC-SHA256 signing with API credentials for trading endpoints
-
-```ocaml
-(* Derive API credentials from wallet *)
-let private_key = "your_private_key_hex_without_0x" in
-let nonce = int_of_float (Unix.gettimeofday () *. 1000.0) mod 1000000 in
-match Clob.derive_api_key client ~private_key ~nonce with
-| Ok resp ->
-  let creds = Clob.Auth_types.credentials_of_derive_response resp in
-  let address = Clob.Crypto.private_key_to_address private_key in
-  (* Create authenticated client *)
-  let auth_client = Clob.with_credentials client ~credentials:creds ~address in
-  (* Now use auth_client for authenticated endpoints *)
-  ()
-| Error err ->
-  Printf.printf "Error: %s\n" err.Http.error
-```
-
-### Authenticated Endpoints
-
-Once you have an authenticated client, you can access trading endpoints:
+Once you have an L2 client, you can access trading endpoints:
 
 ```ocaml
 (* Get your open orders *)
-match Clob.get_orders auth_client () with
+match Clob.L2.get_orders l2_client () with
 | Ok orders ->
   List.iter (fun order ->
-    Printf.printf "Order: %s @ %s\n" order.id order.price
+    Printf.printf "Order: %s @ %s\n"
+      (Option.value ~default:"" order.id)
+      (Option.value ~default:"" order.price)
   ) orders
 | Error err ->
   Printf.printf "Error: %s\n" err.Http.error
 
 (* Cancel all orders *)
-match Clob.cancel_all auth_client () with
-| Ok resp -> Printf.printf "Cancelled: %b\n" resp.canceled
+match Clob.L2.cancel_all l2_client () with
+| Ok resp -> Printf.printf "Cancelled: %d orders\n" (List.length resp.canceled)
 | Error err -> Printf.printf "Error: %s\n" err.Http.error
+```
+
+### Legacy Client
+
+The original client with optional credentials is still available:
+
+```ocaml
+let client = Clob.create ~sw ~net ~rate_limiter () in
+(* Public endpoints work without credentials *)
+let _ = Clob.get_order_book client ~token_id () in
+(* Authenticated endpoints require with_credentials *)
+let auth_client = Clob.with_credentials client ~credentials ~address in
+let _ = Clob.get_orders auth_client () in
 ```
 
 ## Rate Limiting
@@ -310,6 +352,7 @@ Polymarket
 ├── Gamma         (* Markets, events, series, search *)
 ├── Data          (* Positions, trades, activity, leaderboards *)
 ├── Clob          (* Order books, pricing, trading *)
+│   ├── Typestate (* Typestate client: Unauthed, L1, L2 *)
 │   ├── Auth      (* L1/L2 authentication *)
 │   ├── Auth_types(* Credential types *)
 │   └── Crypto    (* Signing and hashing *)
@@ -539,7 +582,8 @@ polymarket/
 │   │   ├── query.ml      # Query parameter types
 │   │   └── responses.ml  # Response types
 │   ├── clob_api/         # CLOB API implementation
-│   │   ├── client.ml     # API client
+│   │   ├── client.ml     # API client (optional credentials)
+│   │   ├── client_typestate.ml  # Typestate client (compile-time auth)
 │   │   ├── types.ml      # Response types
 │   │   ├── auth.ml       # L1/L2 authentication
 │   │   ├── auth_types.ml # Credential types
