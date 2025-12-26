@@ -9,6 +9,7 @@ OCaml client library for the [Polymarket](https://polymarket.com) prediction mar
 - Type-safe interface with validated primitive types and OCaml variant types
 - Built on [Eio](https://github.com/ocaml-multicore/eio) for efficient concurrent I/O
 - TLS support for secure API connections
+- Built-in rate limiting with official Polymarket API limits (GCRA algorithm)
 - Comprehensive error handling with result types
 - JSON serialization via ppx_yojson_conv
 - Pretty printing and equality functions for all types
@@ -42,9 +43,14 @@ let () =
 
   Eio_main.run @@ fun env ->
   Eio.Switch.run @@ fun sw ->
+  let net = Eio.Stdenv.net env in
+  let clock = Eio.Stdenv.clock env in
+
+  (* Create a shared rate limiter with Polymarket presets *)
+  let rate_limiter = Rate_limiter.create_polymarket ~clock () in
 
   (* Create a client *)
-  let client = Gamma.create ~sw ~net:(Eio.Stdenv.net env) () in
+  let client = Gamma.create ~sw ~net ~rate_limiter () in
 
   (* Get active markets *)
   match Gamma.get_markets client ~active:true ~limit:(Nonneg_int.of_int_exn 10) () with
@@ -131,7 +137,8 @@ The Gamma API provides access to markets, events, series, and search functionali
 ### Get Active Markets
 
 ```ocaml
-let client = Gamma.create ~sw ~net:(Eio.Stdenv.net env) () in
+let rate_limiter = Rate_limiter.create_polymarket ~clock () in
+let client = Gamma.create ~sw ~net ~rate_limiter () in
 match Gamma.get_markets client ~active:true ~limit:(Nonneg_int.of_int_exn 10) () with
 | Ok markets ->
   List.iter (fun (m : Gamma.market) ->
@@ -173,7 +180,8 @@ The CLOB (Central Limit Order Book) API provides access to order books, pricing,
 ### Get Order Book
 
 ```ocaml
-let client = Clob.create ~sw ~net:(Eio.Stdenv.net env) () in
+let rate_limiter = Rate_limiter.create_polymarket ~clock () in
+let client = Clob.create ~sw ~net ~rate_limiter () in
 let token_id = "12345..." in (* Token ID from Gamma API *)
 match Clob.get_order_book client ~token_id () with
 | Ok book ->
@@ -240,6 +248,57 @@ match Clob.cancel_all auth_client () with
 | Error err -> Printf.printf "Error: %s\n" err.Http.error
 ```
 
+## Rate Limiting
+
+The library includes built-in rate limiting that matches the official [Polymarket API rate limits](https://docs.polymarket.com/#/api-rate-limits). A shared rate limiter enforces limits across all API clients.
+
+### Creating a Shared Rate Limiter
+
+Create a single rate limiter and share it across all clients to properly enforce global rate limits:
+
+```ocaml
+open Polymarket
+
+Eio_main.run @@ fun env ->
+Eio.Switch.run @@ fun sw ->
+let net = Eio.Stdenv.net env in
+let clock = Eio.Stdenv.clock env in
+
+(* Create a shared rate limiter with Polymarket presets *)
+let rate_limiter = Rate_limiter.create_polymarket ~clock () in
+
+(* Share the same rate limiter across all clients *)
+let gamma_client = Gamma.create ~sw ~net ~rate_limiter () in
+let data_client = Data.create ~sw ~net ~rate_limiter () in
+let clob_client = Clob.create ~sw ~net ~rate_limiter () in
+(* All clients now share rate limit state *)
+```
+
+### Rate Limit Behavior
+
+When a rate limit is exceeded, the client can either delay (sleep) until the request can proceed, or return an error immediately. The default behavior is `Delay`, which is recommended for Cloudflare-protected APIs.
+
+```ocaml
+open Polymarket
+
+(* Default: Delay behavior (sleeps until request can proceed) *)
+let rate_limiter = Rate_limiter.create_polymarket ~clock () in
+
+(* Or explicitly specify Error behavior *)
+let rate_limiter = Rate_limiter.create_polymarket ~clock ~behavior:Rate_limiter.Error () in
+```
+
+### Configured Limits
+
+The library includes pre-configured limits for all Polymarket APIs:
+
+| API | General Limit | Notable Endpoint Limits |
+|-----|---------------|------------------------|
+| Data API | 1000/10s | `/trades`: 200/10s, `/positions`: 150/10s |
+| Gamma API | 4000/10s | `/events`: 300/10s, `/markets`: 300/10s |
+| CLOB API | 9000/10s | Trading endpoints with burst + sustained limits |
+| Global | 15000/10s | Applies across all APIs |
+
 ## API Reference
 
 ### Module Structure
@@ -255,6 +314,7 @@ Polymarket
 │   ├── Auth_types(* Credential types *)
 │   └── Crypto    (* Signing and hashing *)
 ├── Http          (* HTTP client utilities *)
+├── Rate_limiter  (* Rate limiting with GCRA algorithm *)
 └── Primitives    (* Validated types: Address, Hash64, Limit, etc. *)
 ```
 
@@ -393,7 +453,8 @@ For finer-grained control, you can depend on individual sub-libraries:
 |---------|-------------|
 | `polymarket` | Main library with flattened API (recommended) |
 | `polymarket.common` | Shared primitives (`Address`, `Hash64`, etc.) and utilities |
-| `polymarket.http` | HTTP client with TLS support |
+| `polymarket.http` | HTTP client with TLS support and rate limiting |
+| `polymarket.rate_limiter` | GCRA-based rate limiter (used internally by http) |
 | `polymarket.gamma` | Gamma API client only |
 | `polymarket.data` | Data API client only |
 | `polymarket.clob` | CLOB API client only |
@@ -462,7 +523,14 @@ polymarket/
 │   │   ├── logger.ml     # Structured logging
 │   │   └── primitives.ml # Validated types (Address, Hash64, Limit, etc.)
 │   ├── http_client/      # HTTP client
-│   │   └── client.ml     # TLS-enabled HTTP requests
+│   │   └── client.ml     # TLS-enabled HTTP requests with rate limiting
+│   ├── rate_limiter/     # GCRA-based rate limiter
+│   │   ├── rate_limiter.ml  # Main rate limiter module
+│   │   ├── presets.ml    # Polymarket API rate limit configs
+│   │   ├── gcra.ml       # Generic Cell Rate Algorithm
+│   │   ├── state.ml      # Thread-safe state management
+│   │   ├── matcher.ml    # Route matching logic
+│   │   └── builder.ml    # Route configuration builder
 │   ├── data_api/         # Data API implementation
 │   │   ├── client.ml     # API client
 │   │   └── types.ml      # Response types and enums

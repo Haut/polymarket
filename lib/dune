@@ -4,6 +4,7 @@
  (libraries
   polymarket_common
   polymarket_http
+  polymarket_rate_limiter
   polymarket_clob
   polymarket_data
   polymarket_gamma))

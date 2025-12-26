@@ -32,12 +32,16 @@ let run_demo env =
   Logger.setup ();
   Eio.Switch.run @@ fun sw ->
   let net = Eio.Stdenv.net env in
+  let clock = Eio.Stdenv.clock env in
 
   Logger.info "START"
     [ ("demo", "Data API"); ("base_url", Data.default_base_url) ];
 
+  (* Create shared rate limiter with Polymarket presets *)
+  let rate_limiter = Rate_limiter.create_polymarket ~clock () in
+
   (* Create the client *)
-  let client = Data.create ~sw ~net () in
+  let client = Data.create ~sw ~net ~rate_limiter () in
 
   (* Health Check *)
   Logger.header "Health Check";

@@ -14,6 +14,7 @@ val create :
   ?address:string ->
   sw:Eio.Switch.t ->
   net:_ Eio.Net.t ->
+  rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
   unit ->
   t
 (** Create a new CLOB API client.
@@ -22,7 +23,8 @@ val create :
     @param address
       Optional Ethereum address (required if credentials are provided)
     @param sw The Eio switch for resource management
-    @param net The Eio network capability *)
+    @param net The Eio network capability
+    @param rate_limiter Shared rate limiter for enforcing API limits *)
 
 val with_credentials :
   t -> credentials:Auth_types.credentials -> address:string -> t

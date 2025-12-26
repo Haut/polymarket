@@ -14,8 +14,9 @@ type t = {
 
 let default_base_url = "https://clob.polymarket.com"
 
-let create ?(base_url = default_base_url) ?credentials ?address ~sw ~net () =
-  let http = H.create ~base_url ~sw ~net () in
+let create ?(base_url = default_base_url) ?credentials ?address ~sw ~net
+    ~rate_limiter () =
+  let http = H.create ~base_url ~sw ~net ~rate_limiter () in
   { http; credentials; address }
 
 let with_credentials t ~credentials ~address =

@@ -56,11 +56,14 @@ let run_demo env =
   Logger.setup ();
   Eio.Switch.run @@ fun sw ->
   let net = Eio.Stdenv.net env in
+  let clock = Eio.Stdenv.clock env in
 
   Logger.info "START"
     [ ("demo", "Gamma API"); ("base_url", Gamma.default_base_url) ];
 
-  let client = Gamma.create ~sw ~net () in
+  (* Create shared rate limiter with Polymarket presets *)
+  let rate_limiter = Rate_limiter.create_polymarket ~clock () in
+  let client = Gamma.create ~sw ~net ~rate_limiter () in
 
   (* ===== Health Check ===== *)
   Logger.header "Health Check";
