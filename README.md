@@ -75,8 +75,8 @@ let user_address = Address.make_exn "0x1a9a6f917a87a4f02c33f8530c6a8998f1bc8d59"
 match Data.get_positions client
   ~user:user_address
   ~limit:(Limit.of_int_exn 10)
-  ~sort_by:Data.CASHPNL
-  ~sort_direction:Data.DESC
+  ~sort_by:Data.Position_sort_by.Cashpnl
+  ~sort_direction:Data.Sort_direction.Desc
   ()
 with
 | Ok positions ->
@@ -95,7 +95,7 @@ with
 ```ocaml
 match Data.get_trades client
   ~user:user_address
-  ~side:Data.BUY
+  ~side:Data.Side.Buy
   ~limit:(Nonneg_int.of_int_exn 20)
   ()
 with
@@ -113,9 +113,9 @@ with
 
 ```ocaml
 match Data.get_trader_leaderboard client
-  ~category:Data.POLITICS
-  ~time_period:Data.WEEK
-  ~order_by:Data.PNL
+  ~category:Data.Leaderboard_category.Politics
+  ~time_period:Data.Time_period.Week
+  ~order_by:Data.Leaderboard_order_by.Pnl
   ~limit:(Leaderboard_limit.of_int_exn 10)
   ()
 with
@@ -463,16 +463,16 @@ Polymarket
 | `Offset.t` | Pagination offset (0-10000) | `Offset.of_int_exn 0` |
 | `Timestamp.t` | Unix timestamp | `Timestamp.of_float_exn 1234567890.0` |
 
-#### Data API Enums
+#### Data API Enums (Module-based)
 
-| Type | Values |
-|------|--------|
-| `side` | `BUY`, `SELL` |
-| `activity_type` | `TRADE`, `SPLIT`, `MERGE`, `REDEEM`, `REWARD`, `CONVERSION` |
-| `sort_direction` | `ASC`, `DESC` |
-| `time_period` | `DAY`, `WEEK`, `MONTH`, `ALL` |
-| `leaderboard_category` | `OVERALL`, `POLITICS`, `SPORTS`, `CRYPTO`, `CULTURE`, `MENTIONS`, `WEATHER`, `ECONOMICS`, `TECH`, `FINANCE` |
-| `position_sort_by` | `CURRENT`, `INITIAL`, `TOKENS`, `CASHPNL`, `PERCENTPNL`, `TITLE`, `RESOLVING`, `PRICE`, `AVGPRICE` |
+| Module | Type | Values |
+|--------|------|--------|
+| `Data.Side` | `t` | `Buy`, `Sell` |
+| `Data.Activity_type` | `t` | `Trade`, `Split`, `Merge`, `Redeem`, `Reward`, `Conversion` |
+| `Data.Sort_direction` | `t` | `Asc`, `Desc` |
+| `Data.Time_period` | `t` | `Day`, `Week`, `Month`, `All` |
+| `Data.Leaderboard_category` | `t` | `Overall`, `Politics`, `Sports`, `Crypto`, `Culture`, `Mentions`, `Weather`, `Economics`, `Tech`, `Finance` |
+| `Data.Position_sort_by` | `t` | `Current`, `Initial`, `Tokens`, `Cashpnl`, `Percentpnl`, `Title`, `Resolving`, `Price`, `Avgprice` |
 
 #### Gamma API Enums (Module-based)
 

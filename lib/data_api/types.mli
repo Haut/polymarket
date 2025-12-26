@@ -6,158 +6,112 @@
 
 (** {1 Query Parameter Enums} *)
 
-(** Sort direction for paginated results *)
-type sort_direction =
-  | ASC  (** Ascending order *)
-  | DESC  (** Descending order *)
+module Sort_direction : sig
+  type t = Asc | Desc [@@deriving yojson, show, eq]
 
-val string_of_sort_direction : sort_direction -> string
-val sort_direction_of_yojson : Yojson.Safe.t -> sort_direction
-val yojson_of_sort_direction : sort_direction -> Yojson.Safe.t
-val pp_sort_direction : Format.formatter -> sort_direction -> unit
-val show_sort_direction : sort_direction -> string
-val equal_sort_direction : sort_direction -> sort_direction -> bool
+  val to_string : t -> string
+  val of_string : string -> t
+end
 
-(** Sort field for positions endpoint *)
-type position_sort_by =
-  | CURRENT  (** Current value *)
-  | INITIAL  (** Initial value *)
-  | TOKENS  (** Number of tokens *)
-  | CASHPNL  (** Cash profit/loss *)
-  | PERCENTPNL  (** Percent profit/loss *)
-  | TITLE  (** Title alphabetically *)
-  | RESOLVING  (** Resolving status *)
-  | PRICE  (** Current price *)
-  | AVGPRICE  (** Average price *)
+module Position_sort_by : sig
+  type t =
+    | Current
+    | Initial
+    | Tokens
+    | Cashpnl
+    | Percentpnl
+    | Title
+    | Resolving
+    | Price
+    | Avgprice
+  [@@deriving yojson, show, eq]
 
-val string_of_position_sort_by : position_sort_by -> string
-val position_sort_by_of_yojson : Yojson.Safe.t -> position_sort_by
-val yojson_of_position_sort_by : position_sort_by -> Yojson.Safe.t
-val pp_position_sort_by : Format.formatter -> position_sort_by -> unit
-val show_position_sort_by : position_sort_by -> string
-val equal_position_sort_by : position_sort_by -> position_sort_by -> bool
+  val to_string : t -> string
+  val of_string : string -> t
+end
 
-(** Filter type for trades endpoint *)
-type filter_type =
-  | CASH  (** Filter by cash amount *)
-  | TOKENS_FILTER  (** Filter by token amount *)
+module Filter_type : sig
+  type t = Cash | Tokens [@@deriving yojson, show, eq]
 
-val string_of_filter_type : filter_type -> string
-val filter_type_of_yojson : Yojson.Safe.t -> filter_type
-val yojson_of_filter_type : filter_type -> Yojson.Safe.t
-val pp_filter_type : Format.formatter -> filter_type -> unit
-val show_filter_type : filter_type -> string
-val equal_filter_type : filter_type -> filter_type -> bool
+  val to_string : t -> string
+  val of_string : string -> t
+end
 
-(** Sort field for activity endpoint *)
-type activity_sort_by =
-  | TIMESTAMP  (** Timestamp *)
-  | TOKENS_SORT  (** Token amount *)
-  | CASH_SORT  (** Cash amount *)
+module Activity_sort_by : sig
+  type t = Timestamp | Tokens | Cash [@@deriving yojson, show, eq]
 
-val string_of_activity_sort_by : activity_sort_by -> string
-val activity_sort_by_of_yojson : Yojson.Safe.t -> activity_sort_by
-val yojson_of_activity_sort_by : activity_sort_by -> Yojson.Safe.t
-val pp_activity_sort_by : Format.formatter -> activity_sort_by -> unit
-val show_activity_sort_by : activity_sort_by -> string
-val equal_activity_sort_by : activity_sort_by -> activity_sort_by -> bool
+  val to_string : t -> string
+  val of_string : string -> t
+end
 
-(** Sort field for closed positions endpoint *)
-type closed_position_sort_by =
-  | REALIZEDPNL  (** Realized profit/loss *)
-  | TITLE_SORT  (** Title alphabetically *)
-  | PRICE_SORT  (** Price *)
-  | AVGPRICE_SORT  (** Average price *)
-  | TIMESTAMP_SORT  (** Timestamp *)
+module Closed_position_sort_by : sig
+  type t = Realizedpnl | Title | Price | Avgprice | Timestamp
+  [@@deriving yojson, show, eq]
 
-val string_of_closed_position_sort_by : closed_position_sort_by -> string
-val closed_position_sort_by_of_yojson : Yojson.Safe.t -> closed_position_sort_by
-val yojson_of_closed_position_sort_by : closed_position_sort_by -> Yojson.Safe.t
+  val to_string : t -> string
+  val of_string : string -> t
+end
 
-val pp_closed_position_sort_by :
-  Format.formatter -> closed_position_sort_by -> unit
+module Time_period : sig
+  type t = Day | Week | Month | All [@@deriving yojson, show, eq]
 
-val show_closed_position_sort_by : closed_position_sort_by -> string
+  val to_string : t -> string
+  val of_string : string -> t
+end
 
-val equal_closed_position_sort_by :
-  closed_position_sort_by -> closed_position_sort_by -> bool
+module Leaderboard_category : sig
+  type t =
+    | Overall
+    | Politics
+    | Sports
+    | Crypto
+    | Culture
+    | Mentions
+    | Weather
+    | Economics
+    | Tech
+    | Finance
+  [@@deriving yojson, show, eq]
 
-(** Time period for aggregated data *)
-type time_period =
-  | DAY  (** Last 24 hours *)
-  | WEEK  (** Last 7 days *)
-  | MONTH  (** Last 30 days *)
-  | ALL  (** All time *)
+  val to_string : t -> string
+  val of_string : string -> t
+end
 
-val string_of_time_period : time_period -> string
-val time_period_of_yojson : Yojson.Safe.t -> time_period
-val yojson_of_time_period : time_period -> Yojson.Safe.t
-val pp_time_period : Format.formatter -> time_period -> unit
-val show_time_period : time_period -> string
-val equal_time_period : time_period -> time_period -> bool
+module Leaderboard_order_by : sig
+  type t = Pnl | Vol [@@deriving yojson, show, eq]
 
-(** Market category for leaderboard filtering *)
-type leaderboard_category =
-  | OVERALL  (** All markets *)
-  | POLITICS  (** Political markets *)
-  | SPORTS  (** Sports markets *)
-  | CRYPTO  (** Cryptocurrency markets *)
-  | CULTURE  (** Culture/entertainment markets *)
-  | MENTIONS  (** Social mentions markets *)
-  | WEATHER  (** Weather markets *)
-  | ECONOMICS  (** Economics markets *)
-  | TECH  (** Technology markets *)
-  | FINANCE  (** Finance markets *)
-
-val string_of_leaderboard_category : leaderboard_category -> string
-val leaderboard_category_of_yojson : Yojson.Safe.t -> leaderboard_category
-val yojson_of_leaderboard_category : leaderboard_category -> Yojson.Safe.t
-val pp_leaderboard_category : Format.formatter -> leaderboard_category -> unit
-val show_leaderboard_category : leaderboard_category -> string
-
-val equal_leaderboard_category :
-  leaderboard_category -> leaderboard_category -> bool
-
-(** Ordering criteria for trader leaderboard *)
-type leaderboard_order_by =
-  | PNL  (** Order by profit/loss *)
-  | VOL  (** Order by volume *)
-
-val string_of_leaderboard_order_by : leaderboard_order_by -> string
-val leaderboard_order_by_of_yojson : Yojson.Safe.t -> leaderboard_order_by
-val yojson_of_leaderboard_order_by : leaderboard_order_by -> Yojson.Safe.t
-val pp_leaderboard_order_by : Format.formatter -> leaderboard_order_by -> unit
-val show_leaderboard_order_by : leaderboard_order_by -> string
-
-val equal_leaderboard_order_by :
-  leaderboard_order_by -> leaderboard_order_by -> bool
+  val to_string : t -> string
+  val of_string : string -> t
+end
 
 (** {1 Domain Enums} *)
 
-(** Trade side enum *)
-type side =
-  | BUY  (** Buy side of a trade *)
-  | SELL  (** Sell side of a trade *)
+module Side : sig
+  type t = Buy | Sell [@@deriving show, eq]
 
-val string_of_side : side -> string
+  val to_string : t -> string
+  val of_string : string -> t
+  val t_of_yojson : Yojson.Safe.t -> t
+  val yojson_of_t : t -> Yojson.Safe.t
+end
 
-(** Activity type enum *)
-type activity_type =
-  | TRADE  (** A trade activity *)
-  | SPLIT  (** A position split *)
-  | MERGE  (** A position merge *)
-  | REDEEM  (** A redemption *)
-  | REWARD  (** A reward *)
-  | CONVERSION  (** A conversion *)
+module Activity_type : sig
+  type t = Trade | Split | Merge | Redeem | Reward | Conversion
+  [@@deriving show, eq]
 
-val string_of_activity_type : activity_type -> string
+  val to_string : t -> string
+  val of_string : string -> t
+  val t_of_yojson : Yojson.Safe.t -> t
+  val yojson_of_t : t -> Yojson.Safe.t
+end
 
 (** {1 Response Types} *)
 
-type health_response = { data : string }
+type health_response = { data : string } [@@deriving yojson, show, eq]
 (** Health check response *)
 
 type error_response = Polymarket_http.Client.error_response = { error : string }
+[@@deriving yojson, show, eq]
 (** Error response (alias to Polymarket_http.Client.error_response for
     compatibility) *)
 
@@ -190,6 +144,7 @@ type position = {
   end_date : string;
   negative_risk : bool;
 }
+[@@deriving yojson, show, eq]
 (** Position in a market *)
 
 type closed_position = {
@@ -211,11 +166,12 @@ type closed_position = {
   opposite_asset : string;
   end_date : string;
 }
+[@@deriving yojson, show, eq]
 (** Closed position in a market *)
 
 type trade = {
   proxy_wallet : Polymarket_common.Primitives.Address.t;
-  side : side;
+  side : Side.t;
   asset : string;
   condition_id : Polymarket_common.Primitives.Hash64.t;
   size : float;
@@ -234,19 +190,20 @@ type trade = {
   profile_image_optimized : string;
   transaction_hash : string;
 }
+[@@deriving yojson, show, eq]
 (** Trade record *)
 
 type activity = {
   proxy_wallet : Polymarket_common.Primitives.Address.t;
   timestamp : int64;
   condition_id : Polymarket_common.Primitives.Hash64.t;
-  activity_type : activity_type;
+  activity_type : Activity_type.t;
   size : float;
   usdc_size : float;
   transaction_hash : string;
   price : float;
   asset : string;
-  side : side;
+  side : Side.t;
   outcome_index : int;
   title : string;
   slug : string;
@@ -259,6 +216,7 @@ type activity = {
   profile_image : string;
   profile_image_optimized : string;
 }
+[@@deriving yojson, show, eq]
 (** Activity record *)
 
 type holder = {
@@ -273,39 +231,48 @@ type holder = {
   profile_image : string;
   profile_image_optimized : string;
 }
+[@@deriving yojson, show, eq]
 (** Holder of a position *)
 
 type meta_holder = { token : string; holders : holder list }
+[@@deriving yojson, show, eq]
 (** Meta holder with token and list of holders *)
 
 type traded = { user : Polymarket_common.Primitives.Address.t; traded : int }
+[@@deriving yojson, show, eq]
 (** Traded record *)
 
 type revision_entry = { revision : string; timestamp : int }
+[@@deriving yojson, show, eq]
 (** Revision entry *)
 
 type revision_payload = {
   question_id : Polymarket_common.Primitives.Hash64.t;
   revisions : revision_entry list;
 }
+[@@deriving yojson, show, eq]
 (** Revision payload *)
 
 type value = { user : Polymarket_common.Primitives.Address.t; value : float }
+[@@deriving yojson, show, eq]
 (** Value record *)
 
 type open_interest = {
   market : Polymarket_common.Primitives.Hash64.t;
   value : float;
 }
+[@@deriving yojson, show, eq]
 (** Open interest for a market *)
 
 type market_volume = {
   market : Polymarket_common.Primitives.Hash64.t option;
   value : float option;
 }
+[@@deriving yojson, show, eq]
 (** Market volume *)
 
 type live_volume = { total : float option; markets : market_volume list }
+[@@deriving yojson, show, eq]
 (** Live volume *)
 
 (** {1 Leaderboard Types} *)
@@ -318,6 +285,7 @@ type leaderboard_entry = {
   verified : bool;
   builder_logo : string;
 }
+[@@deriving yojson, show, eq]
 (** Leaderboard entry for builders *)
 
 type builder_volume_entry = {
@@ -329,6 +297,7 @@ type builder_volume_entry = {
   active_users : int;
   rank : string;
 }
+[@@deriving yojson, show, eq]
 (** Builder volume entry *)
 
 type trader_leaderboard_entry = {
@@ -341,125 +310,5 @@ type trader_leaderboard_entry = {
   x_username : string;
   verified_badge : bool;
 }
+[@@deriving yojson, show, eq]
 (** Trader leaderboard entry *)
-
-(** {1 JSON Conversion Functions} *)
-
-val side_of_yojson : Yojson.Safe.t -> side
-val yojson_of_side : side -> Yojson.Safe.t
-val activity_type_of_yojson : Yojson.Safe.t -> activity_type
-val yojson_of_activity_type : activity_type -> Yojson.Safe.t
-
-(** {1 Pretty Printing Functions} *)
-
-val pp_side : Format.formatter -> side -> unit
-val show_side : side -> string
-val pp_activity_type : Format.formatter -> activity_type -> unit
-val show_activity_type : activity_type -> string
-val pp_health_response : Format.formatter -> health_response -> unit
-val show_health_response : health_response -> string
-val pp_error_response : Format.formatter -> error_response -> unit
-val show_error_response : error_response -> string
-val pp_position : Format.formatter -> position -> unit
-val show_position : position -> string
-val pp_closed_position : Format.formatter -> closed_position -> unit
-val show_closed_position : closed_position -> string
-val pp_trade : Format.formatter -> trade -> unit
-val show_trade : trade -> string
-val pp_activity : Format.formatter -> activity -> unit
-val show_activity : activity -> string
-val pp_holder : Format.formatter -> holder -> unit
-val show_holder : holder -> string
-val pp_meta_holder : Format.formatter -> meta_holder -> unit
-val show_meta_holder : meta_holder -> string
-val pp_traded : Format.formatter -> traded -> unit
-val show_traded : traded -> string
-val pp_revision_entry : Format.formatter -> revision_entry -> unit
-val show_revision_entry : revision_entry -> string
-val pp_revision_payload : Format.formatter -> revision_payload -> unit
-val show_revision_payload : revision_payload -> string
-val pp_value : Format.formatter -> value -> unit
-val show_value : value -> string
-val pp_open_interest : Format.formatter -> open_interest -> unit
-val show_open_interest : open_interest -> string
-val pp_market_volume : Format.formatter -> market_volume -> unit
-val show_market_volume : market_volume -> string
-val pp_live_volume : Format.formatter -> live_volume -> unit
-val show_live_volume : live_volume -> string
-val pp_leaderboard_entry : Format.formatter -> leaderboard_entry -> unit
-val show_leaderboard_entry : leaderboard_entry -> string
-val pp_builder_volume_entry : Format.formatter -> builder_volume_entry -> unit
-val show_builder_volume_entry : builder_volume_entry -> string
-
-val pp_trader_leaderboard_entry :
-  Format.formatter -> trader_leaderboard_entry -> unit
-
-val show_trader_leaderboard_entry : trader_leaderboard_entry -> string
-
-(** {1 Equality Functions} *)
-
-val equal_side : side -> side -> bool
-val equal_activity_type : activity_type -> activity_type -> bool
-val equal_health_response : health_response -> health_response -> bool
-val equal_error_response : error_response -> error_response -> bool
-val equal_position : position -> position -> bool
-val equal_closed_position : closed_position -> closed_position -> bool
-val equal_trade : trade -> trade -> bool
-val equal_activity : activity -> activity -> bool
-val equal_holder : holder -> holder -> bool
-val equal_meta_holder : meta_holder -> meta_holder -> bool
-val equal_traded : traded -> traded -> bool
-val equal_revision_entry : revision_entry -> revision_entry -> bool
-val equal_revision_payload : revision_payload -> revision_payload -> bool
-val equal_value : value -> value -> bool
-val equal_open_interest : open_interest -> open_interest -> bool
-val equal_market_volume : market_volume -> market_volume -> bool
-val equal_live_volume : live_volume -> live_volume -> bool
-val equal_leaderboard_entry : leaderboard_entry -> leaderboard_entry -> bool
-
-val equal_builder_volume_entry :
-  builder_volume_entry -> builder_volume_entry -> bool
-
-val equal_trader_leaderboard_entry :
-  trader_leaderboard_entry -> trader_leaderboard_entry -> bool
-
-val health_response_of_yojson : Yojson.Safe.t -> health_response
-val yojson_of_health_response : health_response -> Yojson.Safe.t
-val error_response_of_yojson : Yojson.Safe.t -> error_response
-val yojson_of_error_response : error_response -> Yojson.Safe.t
-val position_of_yojson : Yojson.Safe.t -> position
-val yojson_of_position : position -> Yojson.Safe.t
-val closed_position_of_yojson : Yojson.Safe.t -> closed_position
-val yojson_of_closed_position : closed_position -> Yojson.Safe.t
-val trade_of_yojson : Yojson.Safe.t -> trade
-val yojson_of_trade : trade -> Yojson.Safe.t
-val activity_of_yojson : Yojson.Safe.t -> activity
-val yojson_of_activity : activity -> Yojson.Safe.t
-val holder_of_yojson : Yojson.Safe.t -> holder
-val yojson_of_holder : holder -> Yojson.Safe.t
-val meta_holder_of_yojson : Yojson.Safe.t -> meta_holder
-val yojson_of_meta_holder : meta_holder -> Yojson.Safe.t
-val traded_of_yojson : Yojson.Safe.t -> traded
-val yojson_of_traded : traded -> Yojson.Safe.t
-val revision_entry_of_yojson : Yojson.Safe.t -> revision_entry
-val yojson_of_revision_entry : revision_entry -> Yojson.Safe.t
-val revision_payload_of_yojson : Yojson.Safe.t -> revision_payload
-val yojson_of_revision_payload : revision_payload -> Yojson.Safe.t
-val value_of_yojson : Yojson.Safe.t -> value
-val yojson_of_value : value -> Yojson.Safe.t
-val open_interest_of_yojson : Yojson.Safe.t -> open_interest
-val yojson_of_open_interest : open_interest -> Yojson.Safe.t
-val market_volume_of_yojson : Yojson.Safe.t -> market_volume
-val yojson_of_market_volume : market_volume -> Yojson.Safe.t
-val live_volume_of_yojson : Yojson.Safe.t -> live_volume
-val yojson_of_live_volume : live_volume -> Yojson.Safe.t
-val leaderboard_entry_of_yojson : Yojson.Safe.t -> leaderboard_entry
-val yojson_of_leaderboard_entry : leaderboard_entry -> Yojson.Safe.t
-val builder_volume_entry_of_yojson : Yojson.Safe.t -> builder_volume_entry
-val yojson_of_builder_volume_entry : builder_volume_entry -> Yojson.Safe.t
-
-val trader_leaderboard_entry_of_yojson :
-  Yojson.Safe.t -> trader_leaderboard_entry
-
-val yojson_of_trader_leaderboard_entry :
-  trader_leaderboard_entry -> Yojson.Safe.t

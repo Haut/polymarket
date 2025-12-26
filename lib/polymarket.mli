@@ -78,7 +78,26 @@ end
 module Data : sig
   (** Data API client for positions, trades, activity, and leaderboards.
 
-      Combines client functions and response types from {!Polymarket_data}. *)
+      {2 Module-based Enums}
+
+      Query parameter enums use a module-based pattern for type safety:
+
+      {[
+        (* Get positions sorted by cash PnL *)
+        let positions =
+          Data.get_positions client ~user
+            ~sort_by:Data.Position_sort_by.Cashpnl
+            ~sort_direction:Data.Sort_direction.Desc ()
+        in
+
+        (* Get trader leaderboard *)
+        let leaders =
+          Data.get_trader_leaderboard client
+            ~category:Data.Leaderboard_category.Politics
+            ~time_period:Data.Time_period.Week
+            ~order_by:Data.Leaderboard_order_by.Pnl ()
+        in
+      ]} *)
 
   include module type of Polymarket_data.Client
   include module type of Polymarket_data.Types

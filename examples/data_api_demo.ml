@@ -131,7 +131,7 @@ let run_demo env =
   (* Builder Leaderboard *)
   Logger.header "Builder Leaderboard";
   let builders =
-    Data.get_builder_leaderboard client ~time_period:Data.WEEK
+    Data.get_builder_leaderboard client ~time_period:Data.Time_period.Week
       ~limit:(Builder_limit.of_int_exn 5)
       ()
   in
@@ -144,14 +144,17 @@ let run_demo env =
 
   (* Builder Volume *)
   Logger.header "Builder Volume";
-  let builder_vol = Data.get_builder_volume client ~time_period:Data.WEEK () in
+  let builder_vol =
+    Data.get_builder_volume client ~time_period:Data.Time_period.Week ()
+  in
   print_result_count "get_builder_volume" builder_vol;
 
   (* Trader Leaderboard *)
   Logger.header "Trader Leaderboard";
   let traders =
-    Data.get_trader_leaderboard client ~category:Data.OVERALL
-      ~time_period:Data.WEEK ~order_by:Data.PNL
+    Data.get_trader_leaderboard client
+      ~category:Data.Leaderboard_category.Overall
+      ~time_period:Data.Time_period.Week ~order_by:Data.Leaderboard_order_by.Pnl
       ~limit:(Leaderboard_limit.of_int_exn 5)
       ()
   in
