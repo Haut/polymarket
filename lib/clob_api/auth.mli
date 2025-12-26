@@ -40,22 +40,24 @@ val build_l2_headers :
 (** {1 Auth Endpoints} *)
 
 val create_api_key :
-  Http_client.Client.t ->
+  Polymarket_http.Client.t ->
   private_key:Crypto.private_key ->
   address:string ->
   nonce:int ->
-  (Auth_types.api_key_response, Http_client.Client.error_response) result
+  (Auth_types.api_key_response, Polymarket_http.Client.error_response) result
 (** Create a new API key using L1 authentication.
     @param private_key The Ethereum private key (hex, without 0x prefix)
     @param address The Ethereum address (hex, with 0x prefix)
     @param nonce A unique nonce for this request *)
 
 val derive_api_key :
-  Http_client.Client.t ->
+  Polymarket_http.Client.t ->
   private_key:Crypto.private_key ->
   address:string ->
   nonce:int ->
-  (Auth_types.derive_api_key_response, Http_client.Client.error_response) result
+  ( Auth_types.derive_api_key_response,
+    Polymarket_http.Client.error_response )
+  result
 (** Derive API key from existing credentials using L1 authentication. Unlike
     create_api_key, this returns the same key for the same nonce.
     @param private_key The Ethereum private key (hex, without 0x prefix)
@@ -63,19 +65,19 @@ val derive_api_key :
     @param nonce A unique nonce for this request *)
 
 val delete_api_key :
-  Http_client.Client.t ->
+  Polymarket_http.Client.t ->
   credentials:Auth_types.credentials ->
   address:string ->
-  (unit, Http_client.Client.error_response) result
+  (unit, Polymarket_http.Client.error_response) result
 (** Delete an API key using L2 authentication.
     @param credentials The API credentials to delete
     @param address The Ethereum address (hex, with 0x prefix) *)
 
 val get_api_keys :
-  Http_client.Client.t ->
+  Polymarket_http.Client.t ->
   credentials:Auth_types.credentials ->
   address:string ->
-  (string list, Http_client.Client.error_response) result
+  (string list, Polymarket_http.Client.error_response) result
 (** Get all API keys for the account using L2 authentication.
     @param credentials The API credentials
     @param address The Ethereum address (hex, with 0x prefix)

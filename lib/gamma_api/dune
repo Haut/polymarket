@@ -1,0 +1,11 @@
+(library
+ (name polymarket_gamma)
+ (public_name polymarket.gamma)
+ (libraries
+  polymarket_common
+  polymarket_http
+  yojson
+  ppx_yojson_conv_lib
+  ptime)
+ (preprocess
+  (pps ppx_yojson_conv ppx_deriving.show ppx_deriving.eq)))

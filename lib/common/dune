@@ -1,0 +1,6 @@
+(library
+ (name polymarket_common)
+ (public_name polymarket.common)
+ (libraries yojson ppx_yojson_conv_lib logs logs.fmt fmt ptime uri cohttp)
+ (preprocess
+  (pps ppx_yojson_conv ppx_deriving.show ppx_deriving.eq)))

@@ -3,57 +3,6 @@
     This module provides a reusable HTTP client with JSON parsing and query
     parameter building utilities. *)
 
-(** {1 Non-negative Integers} *)
-
-module Nonneg_int : sig
-  type t
-  (** A non-negative integer (>= 0) *)
-
-  val of_int : int -> t option
-  (** Create from int, returns None if negative *)
-
-  val of_int_exn : int -> t
-  (** Create from int, raises if negative *)
-
-  val to_int : t -> int
-  (** Extract the underlying int *)
-
-  val zero : t
-  val one : t
-end
-
-(** {1 Timestamps} *)
-
-module Timestamp : sig
-  type t
-  (** An ISO 8601 timestamp (e.g., "2023-11-07T05:31:56Z") *)
-
-  val of_string : string -> t option
-  (** Parse from ISO 8601 string *)
-
-  val of_string_exn : string -> t
-  (** Parse from ISO 8601 string, raises on invalid format *)
-
-  val to_string : t -> string
-  (** Convert to ISO 8601 string *)
-
-  val to_ptime : t -> Ptime.t
-  (** Get the underlying Ptime.t *)
-
-  val of_ptime : Ptime.t -> t
-  (** Create from Ptime.t *)
-
-  val t_of_yojson : Yojson.Safe.t -> t
-  (** Parse from JSON string *)
-
-  val yojson_of_t : t -> Yojson.Safe.t
-  (** Convert to JSON string *)
-
-  val pp : Format.formatter -> t -> unit
-  val show : t -> string
-  val equal : t -> t -> bool
-end
-
 (** {1 Client Configuration} *)
 
 type t
@@ -71,12 +20,13 @@ val base_url : t -> string
 (** {1 Query Parameter Builders}
 
     These functions support pipe-friendly chaining with params as the last
-    argument.
+    argument. Callers are responsible for converting values to strings.
 
     Example:
     {[
       [ ("user", [ user ]) ]
-      |> add "market" market |> add_int "limit" limit
+      |> add "market" market
+      |> add "limit" (Option.map string_of_int limit)
       |> add_bool "active" active
     ]} *)
 
@@ -86,31 +36,25 @@ type params = (string * string list) list
 val add : string -> string option -> params -> params
 (** Add an optional string parameter *)
 
+val add_option : string -> ('a -> string) -> 'a option -> params -> params
+(** Add an optional parameter with a converter function.
+    {[
+      add_option "limit" string_of_int limit params add_option "timestamp"
+        Timestamp.to_string ts params
+    ]} *)
+
 val add_list : string -> ('a -> string) -> 'a list option -> params -> params
-(** Add an optional list parameter, joining with commas *)
+(** Add an optional list parameter, joining with commas.
+    {[
+      add_list "market" Hash64.to_string market params
+    ]} *)
 
 val add_bool : string -> bool option -> params -> params
-(** Add an optional boolean parameter *)
+(** Add an optional boolean parameter (renders as "true"/"false") *)
 
-val add_int : string -> int option -> params -> params
-(** Add an optional integer parameter *)
-
-val add_nonneg_int : string -> Nonneg_int.t option -> params -> params
-(** Add an optional non-negative integer parameter *)
-
-val add_float : string -> float option -> params -> params
-(** Add an optional float parameter *)
-
-val add_string_array : string -> string list option -> params -> params
-(** Add an optional string array parameter, adding each value as a separate
-    query parameter with the same key (e.g., ?league=NBA&league=NFL) *)
-
-val add_int_array : string -> int list option -> params -> params
-(** Add an optional int array parameter, adding each value as a separate query
-    parameter with the same key (e.g., ?id=1&id=2&id=3) *)
-
-val add_timestamp : string -> Timestamp.t option -> params -> params
-(** Add an optional timestamp parameter (ISO 8601 format) *)
+val add_each : string -> ('a -> string) -> 'a list option -> params -> params
+(** Add each value as a separate query parameter with the same key. For example,
+    [add_each "id" string_of_int (Some [1; 2])] produces [?id=1&id=2] *)
 
 (** {1 HTTP Request Functions} *)
 

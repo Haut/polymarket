@@ -5,45 +5,6 @@
 
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 
-(** {1 Non-negative Integers} *)
-
-module Nonneg_int = struct
-  type t = int
-
-  let of_int n = if n >= 0 then Some n else None
-  let of_int_exn n = if n >= 0 then n else invalid_arg "must be non-negative"
-  let to_int n = n
-  let zero = 0
-  let one = 1
-end
-
-(** {1 Timestamps} *)
-
-module Timestamp = struct
-  type t = Ptime.t
-
-  let of_string s =
-    match Ptime.of_rfc3339 s with Ok (t, _, _) -> Some t | Error _ -> None
-
-  let of_string_exn s =
-    match of_string s with
-    | Some t -> t
-    | None -> invalid_arg ("invalid ISO 8601 timestamp: " ^ s)
-
-  let to_string t = Ptime.to_rfc3339 ~tz_offset_s:0 t
-  let to_ptime t = t
-  let of_ptime t = t
-
-  let t_of_yojson = function
-    | `String s -> of_string_exn s
-    | _ -> failwith "Timestamp: expected string"
-
-  let yojson_of_t t = `String (to_string t)
-  let pp fmt t = Format.fprintf fmt "%s" (to_string t)
-  let show t = to_string t
-  let equal = Ptime.equal
-end
-
 (** {1 Client Configuration} *)
 
 type t = { base_url : string; client : Cohttp_eio.Client.t; sw : Eio.Switch.t }
@@ -79,6 +40,9 @@ type params = (string * string list) list
 let add key value params =
   match value with Some v -> (key, [ v ]) :: params | None -> params
 
+let add_option key to_string value params =
+  match value with Some v -> (key, [ to_string v ]) :: params | None -> params
+
 let add_list key to_string values params =
   match values with
   | Some vs when vs <> [] ->
@@ -92,35 +56,10 @@ let add_bool key value params =
   | Some false -> (key, [ "false" ]) :: params
   | None -> params
 
-let add_int key value params =
-  match value with
-  | Some v -> (key, [ string_of_int v ]) :: params
-  | None -> params
-
-let add_nonneg_int key value params =
-  match value with
-  | Some v -> (key, [ string_of_int (Nonneg_int.to_int v) ]) :: params
-  | None -> params
-
-let add_float key value params =
-  match value with
-  | Some v -> (key, [ string_of_float v ]) :: params
-  | None -> params
-
-let add_string_array key values params =
-  match values with
-  | Some vs -> List.fold_left (fun acc v -> (key, [ v ]) :: acc) params vs
-  | None -> params
-
-let add_int_array key values params =
+let add_each key to_string values params =
   match values with
   | Some vs ->
-      List.fold_left (fun acc v -> (key, [ string_of_int v ]) :: acc) params vs
-  | None -> params
-
-let add_timestamp key value params =
-  match value with
-  | Some v -> (key, [ Timestamp.to_string v ]) :: params
+      List.fold_left (fun acc v -> (key, [ to_string v ]) :: acc) params vs
   | None -> params
 
 (** {1 HTTP Request Functions} *)
@@ -130,22 +69,23 @@ let build_uri base_url path params =
   Uri.add_query_params uri params
 
 let do_get ?(headers = []) t uri =
-  Common.Logger.log_request ~method_:"GET" ~uri;
+  Polymarket_common.Logger.log_request ~method_:"GET" ~uri;
   try
     let headers = Cohttp.Header.of_list headers in
     let resp, body = Cohttp_eio.Client.get ~sw:t.sw ~headers t.client uri in
     let status = Cohttp.Response.status resp in
     let body_str = Eio.Buf_read.(parse_exn take_all) body ~max_size:max_int in
-    Common.Logger.log_response ~method_:"GET" ~uri ~status ~body:body_str;
+    Polymarket_common.Logger.log_response ~method_:"GET" ~uri ~status
+      ~body:body_str;
     (status, body_str)
   with exn ->
-    Common.Logger.log_error ~method_:"GET" ~uri ~exn;
+    Polymarket_common.Logger.log_error ~method_:"GET" ~uri ~exn;
     ( `Internal_server_error,
       Printf.sprintf {|{"error": "Request failed: %s"}|}
         (Printexc.to_string exn) )
 
 let do_post ?(headers = []) t uri ~body:request_body =
-  Common.Logger.log_request ~method_:"POST" ~uri;
+  Polymarket_common.Logger.log_request ~method_:"POST" ~uri;
   try
     let all_headers = ("Content-Type", "application/json") :: headers in
     let headers = Cohttp.Header.of_list all_headers in
@@ -157,25 +97,27 @@ let do_post ?(headers = []) t uri ~body:request_body =
     let body_str =
       Eio.Buf_read.(parse_exn take_all) resp_body ~max_size:max_int
     in
-    Common.Logger.log_response ~method_:"POST" ~uri ~status ~body:body_str;
+    Polymarket_common.Logger.log_response ~method_:"POST" ~uri ~status
+      ~body:body_str;
     (status, body_str)
   with exn ->
-    Common.Logger.log_error ~method_:"POST" ~uri ~exn;
+    Polymarket_common.Logger.log_error ~method_:"POST" ~uri ~exn;
     ( `Internal_server_error,
       Printf.sprintf {|{"error": "Request failed: %s"}|}
         (Printexc.to_string exn) )
 
 let do_delete ?(headers = []) t uri =
-  Common.Logger.log_request ~method_:"DELETE" ~uri;
+  Polymarket_common.Logger.log_request ~method_:"DELETE" ~uri;
   try
     let headers = Cohttp.Header.of_list headers in
     let resp, body = Cohttp_eio.Client.delete ~sw:t.sw ~headers t.client uri in
     let status = Cohttp.Response.status resp in
     let body_str = Eio.Buf_read.(parse_exn take_all) body ~max_size:max_int in
-    Common.Logger.log_response ~method_:"DELETE" ~uri ~status ~body:body_str;
+    Polymarket_common.Logger.log_response ~method_:"DELETE" ~uri ~status
+      ~body:body_str;
     (status, body_str)
   with exn ->
-    Common.Logger.log_error ~method_:"DELETE" ~uri ~exn;
+    Polymarket_common.Logger.log_error ~method_:"DELETE" ~uri ~exn;
     ( `Internal_server_error,
       Printf.sprintf {|{"error": "Request failed: %s"}|}
         (Printexc.to_string exn) )

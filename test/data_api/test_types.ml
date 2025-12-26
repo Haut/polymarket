@@ -6,7 +6,7 @@
 (** {1 Side Enum Tests} *)
 
 let test_side_roundtrip () =
-  let open Polymarket.Data_api.Types in
+  let open Polymarket_data.Types in
   let sides = [ BUY; SELL ] in
   List.iter
     (fun side ->
@@ -16,14 +16,14 @@ let test_side_roundtrip () =
     sides
 
 let test_side_string_conversion () =
-  let open Polymarket.Data_api.Types in
+  let open Polymarket_data.Types in
   Alcotest.(check string) "BUY -> string" "BUY" (string_of_side BUY);
   Alcotest.(check string) "SELL -> string" "SELL" (string_of_side SELL)
 
 (** {1 Activity Type Enum Tests} *)
 
 let test_activity_type_roundtrip () =
-  let open Polymarket.Data_api.Types in
+  let open Polymarket_data.Types in
   let types = [ TRADE; SPLIT; MERGE; REDEEM; REWARD; CONVERSION ] in
   List.iter
     (fun t ->

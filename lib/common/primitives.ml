@@ -50,6 +50,7 @@ module Address = struct
 
   let to_yojson t = `String t
   let yojson_of t = to_yojson t
+  let yojson_of_t = yojson_of
   let t_of_yojson = of_yojson_exn
 end
 
@@ -79,6 +80,7 @@ module Hash64 = struct
 
   let to_yojson t = `String t
   let yojson_of t = to_yojson t
+  let yojson_of_t = yojson_of
   let t_of_yojson = of_yojson_exn
 end
 
@@ -114,5 +116,275 @@ module Hash = struct
 
   let to_yojson t = `String t
   let yojson_of t = to_yojson t
+  let yojson_of_t = yojson_of
   let t_of_yojson = of_yojson_exn
+end
+
+(** {1 Non-negative Integers} *)
+
+module Nonneg_int = struct
+  type t = int
+
+  let of_int n = if n >= 0 then Some n else None
+  let of_int_exn n = if n >= 0 then n else invalid_arg "must be non-negative"
+  let to_int n = n
+  let to_string n = string_of_int n
+  let zero = 0
+  let one = 1
+end
+
+(** {1 Positive Integers} *)
+
+module Pos_int = struct
+  type t = int
+
+  let of_int n = if n >= 1 then Some n else None
+  let of_int_exn n = if n >= 1 then n else invalid_arg "must be positive (>= 1)"
+  let to_int n = n
+  let to_string n = string_of_int n
+  let one = 1
+end
+
+(** {1 Non-negative Floats} *)
+
+module Nonneg_float = struct
+  type t = float
+
+  let of_float n = if n >= 0.0 then Some n else None
+
+  let of_float_exn n =
+    if n >= 0.0 then n else invalid_arg "must be non-negative"
+
+  let to_float n = n
+  let to_string n = string_of_float n
+  let zero = 0.0
+end
+
+(** {1 Limit} *)
+
+module Limit = struct
+  type t = int
+
+  let min_value = 0
+  let max_value = 500
+  let of_int n = if n >= min_value && n <= max_value then Some n else None
+
+  let of_int_exn n =
+    if n >= min_value && n <= max_value then n
+    else
+      invalid_arg
+        (Printf.sprintf "limit must be between %d and %d" min_value max_value)
+
+  let to_int n = n
+  let to_string n = string_of_int n
+  let default = 100
+end
+
+(** {1 Offset} *)
+
+module Offset = struct
+  type t = int
+
+  let min_value = 0
+  let max_value = 10000
+  let of_int n = if n >= min_value && n <= max_value then Some n else None
+
+  let of_int_exn n =
+    if n >= min_value && n <= max_value then n
+    else
+      invalid_arg
+        (Printf.sprintf "offset must be between %d and %d" min_value max_value)
+
+  let to_int n = n
+  let to_string n = string_of_int n
+  let default = 0
+end
+
+(** {1 Holders Limit} *)
+
+module Holders_limit = struct
+  type t = int
+
+  let min_value = 0
+  let max_value = 20
+  let of_int n = if n >= min_value && n <= max_value then Some n else None
+
+  let of_int_exn n =
+    if n >= min_value && n <= max_value then n
+    else
+      invalid_arg
+        (Printf.sprintf "holders limit must be between %d and %d" min_value
+           max_value)
+
+  let to_int n = n
+  let to_string n = string_of_int n
+  let default = 20
+end
+
+(** {1 Min Balance} *)
+
+module Min_balance = struct
+  type t = int
+
+  let min_value = 0
+  let max_value = 999999
+  let of_int n = if n >= min_value && n <= max_value then Some n else None
+
+  let of_int_exn n =
+    if n >= min_value && n <= max_value then n
+    else
+      invalid_arg
+        (Printf.sprintf "min_balance must be between %d and %d" min_value
+           max_value)
+
+  let to_int n = n
+  let to_string n = string_of_int n
+  let default = 1
+end
+
+(** {1 Closed Positions Limit} *)
+
+module Closed_positions_limit = struct
+  type t = int
+
+  let min_value = 0
+  let max_value = 50
+  let of_int n = if n >= min_value && n <= max_value then Some n else None
+
+  let of_int_exn n =
+    if n >= min_value && n <= max_value then n
+    else
+      invalid_arg
+        (Printf.sprintf "closed positions limit must be between %d and %d"
+           min_value max_value)
+
+  let to_int n = n
+  let to_string n = string_of_int n
+  let default = 10
+end
+
+(** {1 Extended Offset} *)
+
+module Extended_offset = struct
+  type t = int
+
+  let min_value = 0
+  let max_value = 100000
+  let of_int n = if n >= min_value && n <= max_value then Some n else None
+
+  let of_int_exn n =
+    if n >= min_value && n <= max_value then n
+    else
+      invalid_arg
+        (Printf.sprintf "offset must be between %d and %d" min_value max_value)
+
+  let to_int n = n
+  let to_string n = string_of_int n
+  let default = 0
+end
+
+(** {1 Leaderboard Limit} *)
+
+module Leaderboard_limit = struct
+  type t = int
+
+  let min_value = 1
+  let max_value = 50
+  let of_int n = if n >= min_value && n <= max_value then Some n else None
+
+  let of_int_exn n =
+    if n >= min_value && n <= max_value then n
+    else
+      invalid_arg
+        (Printf.sprintf "leaderboard limit must be between %d and %d" min_value
+           max_value)
+
+  let to_int n = n
+  let to_string n = string_of_int n
+  let default = 25
+end
+
+(** {1 Leaderboard Offset} *)
+
+module Leaderboard_offset = struct
+  type t = int
+
+  let min_value = 0
+  let max_value = 1000
+  let of_int n = if n >= min_value && n <= max_value then Some n else None
+
+  let of_int_exn n =
+    if n >= min_value && n <= max_value then n
+    else
+      invalid_arg
+        (Printf.sprintf "leaderboard offset must be between %d and %d" min_value
+           max_value)
+
+  let to_int n = n
+  let to_string n = string_of_int n
+  let default = 0
+end
+
+(** {1 Builder Limit} *)
+
+module Builder_limit = struct
+  type t = int
+
+  let min_value = 0
+  let max_value = 50
+  let of_int n = if n >= min_value && n <= max_value then Some n else None
+
+  let of_int_exn n =
+    if n >= min_value && n <= max_value then n
+    else
+      invalid_arg
+        (Printf.sprintf "builder limit must be between %d and %d" min_value
+           max_value)
+
+  let to_int n = n
+  let to_string n = string_of_int n
+  let default = 25
+end
+
+(** {1 Bounded String} *)
+
+module Bounded_string = struct
+  type t = string
+
+  let of_string ~max_length s =
+    if String.length s <= max_length then Some s else None
+
+  let of_string_exn ~max_length s =
+    if String.length s <= max_length then s
+    else
+      invalid_arg (Printf.sprintf "string exceeds max length of %d" max_length)
+
+  let to_string t = t
+end
+
+(** {1 Timestamps} *)
+
+module Timestamp = struct
+  type t = Ptime.t
+
+  let of_string s =
+    match Ptime.of_rfc3339 s with Ok (t, _, _) -> Some t | Error _ -> None
+
+  let of_string_exn s =
+    match of_string s with
+    | Some t -> t
+    | None -> invalid_arg ("invalid ISO 8601 timestamp: " ^ s)
+
+  let to_string t = Ptime.to_rfc3339 ~tz_offset_s:0 t
+  let to_ptime t = t
+  let of_ptime t = t
+
+  let t_of_yojson = function
+    | `String s -> of_string_exn s
+    | _ -> failwith "Timestamp: expected string"
+
+  let yojson_of_t t = `String (to_string t)
+  let pp fmt t = Format.fprintf fmt "%s" (to_string t)
+  let show t = to_string t
+  let equal = Ptime.equal
 end

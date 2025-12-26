@@ -6,16 +6,6 @@
 
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 
-(** {1 Primitive Types} *)
-
-type address = string [@@deriving yojson, show, eq]
-(** User Profile Address (0x-prefixed, 40 hex chars).
-    Pattern: ^0x[a-fA-F0-9]{40}$ *)
-
-type hash64 = string [@@deriving yojson, show, eq]
-(** 0x-prefixed 64-hex string.
-    Pattern: ^0x[a-fA-F0-9]{64}$ *)
-
 (** {1 Query Parameter Enums} *)
 
 type sort_direction = ASC | DESC [@@deriving yojson, show, eq]
@@ -158,183 +148,165 @@ let yojson_of_activity_type t = `String (string_of_activity_type t)
 
 (** {1 Response Types} *)
 
-type health_response = { data : string option [@yojson.option] }
-[@@deriving yojson, show, eq]
+type health_response = { data : string } [@@deriving yojson, show, eq]
 (** Health check response *)
 
-type error_response = Http_client.Client.error_response = { error : string }
+type error_response = Polymarket_http.Client.error_response = { error : string }
 [@@deriving yojson, show, eq]
-(** Error response (alias to Http_client.Client.error_response for
+(** Error response (alias to Polymarket_http.Client.error_response for
     compatibility) *)
 
 (** {1 Domain Models} *)
 
 type position = {
-  proxy_wallet : address option; [@yojson.option] [@key "proxyWallet"]
-  asset : string option; [@yojson.option]
-  condition_id : hash64 option; [@yojson.option] [@key "conditionId"]
-  size : float option; [@yojson.option]
-  avg_price : float option; [@yojson.option] [@key "avgPrice"]
-  initial_value : float option; [@yojson.option] [@key "initialValue"]
-  current_value : float option; [@yojson.option] [@key "currentValue"]
-  cash_pnl : float option; [@yojson.option] [@key "cashPnl"]
-  percent_pnl : float option; [@yojson.option] [@key "percentPnl"]
-  total_bought : float option; [@yojson.option] [@key "totalBought"]
-  realized_pnl : float option; [@yojson.option] [@key "realizedPnl"]
-  percent_realized_pnl : float option;
-      [@yojson.option] [@key "percentRealizedPnl"]
-  cur_price : float option; [@yojson.option] [@key "curPrice"]
-  redeemable : bool option; [@yojson.option]
-  mergeable : bool option; [@yojson.option]
-  title : string option; [@yojson.option]
-  slug : string option; [@yojson.option]
-  icon : string option; [@yojson.option]
-  event_slug : string option; [@yojson.option] [@key "eventSlug"]
-  outcome : string option; [@yojson.option]
-  outcome_index : int option; [@yojson.option] [@key "outcomeIndex"]
-  opposite_outcome : string option; [@yojson.option] [@key "oppositeOutcome"]
-  opposite_asset : string option; [@yojson.option] [@key "oppositeAsset"]
-  end_date : string option; [@yojson.option] [@key "endDate"]
-  negative_risk : bool option; [@yojson.option] [@key "negativeRisk"]
+  proxy_wallet : Polymarket_common.Primitives.Address.t; [@key "proxyWallet"]
+  asset : string;
+  condition_id : Polymarket_common.Primitives.Hash64.t; [@key "conditionId"]
+  size : float;
+  avg_price : float; [@key "avgPrice"]
+  initial_value : float; [@key "initialValue"]
+  current_value : float; [@key "currentValue"]
+  cash_pnl : float; [@key "cashPnl"]
+  percent_pnl : float; [@key "percentPnl"]
+  total_bought : float; [@key "totalBought"]
+  realized_pnl : float; [@key "realizedPnl"]
+  percent_realized_pnl : float; [@key "percentRealizedPnl"]
+  cur_price : float; [@key "curPrice"]
+  redeemable : bool;
+  mergeable : bool;
+  title : string;
+  slug : string;
+  icon : string;
+  event_slug : string; [@key "eventSlug"]
+  outcome : string;
+  outcome_index : int; [@key "outcomeIndex"]
+  opposite_outcome : string; [@key "oppositeOutcome"]
+  opposite_asset : string; [@key "oppositeAsset"]
+  end_date : string; [@key "endDate"]
+  negative_risk : bool; [@key "negativeRisk"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Position in a market *)
 
 type closed_position = {
-  proxy_wallet : address option; [@yojson.option] [@key "proxyWallet"]
-  asset : string option; [@yojson.option]
-  condition_id : hash64 option; [@yojson.option] [@key "conditionId"]
-  avg_price : float option; [@yojson.option] [@key "avgPrice"]
-  total_bought : float option; [@yojson.option] [@key "totalBought"]
-  realized_pnl : float option; [@yojson.option] [@key "realizedPnl"]
-  cur_price : float option; [@yojson.option] [@key "curPrice"]
-  timestamp : int64 option; [@yojson.option]
-  title : string option; [@yojson.option]
-  slug : string option; [@yojson.option]
-  icon : string option; [@yojson.option]
-  event_slug : string option; [@yojson.option] [@key "eventSlug"]
-  outcome : string option; [@yojson.option]
-  outcome_index : int option; [@yojson.option] [@key "outcomeIndex"]
-  opposite_outcome : string option; [@yojson.option] [@key "oppositeOutcome"]
-  opposite_asset : string option; [@yojson.option] [@key "oppositeAsset"]
-  end_date : string option; [@yojson.option] [@key "endDate"]
+  proxy_wallet : Polymarket_common.Primitives.Address.t; [@key "proxyWallet"]
+  asset : string;
+  condition_id : Polymarket_common.Primitives.Hash64.t; [@key "conditionId"]
+  avg_price : float; [@key "avgPrice"]
+  total_bought : float; [@key "totalBought"]
+  realized_pnl : float; [@key "realizedPnl"]
+  cur_price : float; [@key "curPrice"]
+  timestamp : int64;
+  title : string;
+  slug : string;
+  icon : string;
+  event_slug : string; [@key "eventSlug"]
+  outcome : string;
+  outcome_index : int; [@key "outcomeIndex"]
+  opposite_outcome : string; [@key "oppositeOutcome"]
+  opposite_asset : string; [@key "oppositeAsset"]
+  end_date : string; [@key "endDate"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Closed position in a market *)
 
 type trade = {
-  proxy_wallet : address option; [@yojson.option] [@key "proxyWallet"]
-  side : side option; [@yojson.option]
-  asset : string option; [@yojson.option]
-  condition_id : hash64 option; [@yojson.option] [@key "conditionId"]
-  size : float option; [@yojson.option]
-  price : float option; [@yojson.option]
-  timestamp : int64 option; [@yojson.option]
-  title : string option; [@yojson.option]
-  slug : string option; [@yojson.option]
-  icon : string option; [@yojson.option]
-  event_slug : string option; [@yojson.option] [@key "eventSlug"]
-  outcome : string option; [@yojson.option]
-  outcome_index : int option; [@yojson.option] [@key "outcomeIndex"]
-  name : string option; [@yojson.option]
-  pseudonym : string option; [@yojson.option]
-  bio : string option; [@yojson.option]
-  profile_image : string option; [@yojson.option] [@key "profileImage"]
-  profile_image_optimized : string option;
-      [@yojson.option] [@key "profileImageOptimized"]
-  transaction_hash : string option; [@yojson.option] [@key "transactionHash"]
+  proxy_wallet : Polymarket_common.Primitives.Address.t; [@key "proxyWallet"]
+  side : side;
+  asset : string;
+  condition_id : Polymarket_common.Primitives.Hash64.t; [@key "conditionId"]
+  size : float;
+  price : float;
+  timestamp : int64;
+  title : string;
+  slug : string;
+  icon : string;
+  event_slug : string; [@key "eventSlug"]
+  outcome : string;
+  outcome_index : int; [@key "outcomeIndex"]
+  name : string;
+  pseudonym : string;
+  bio : string;
+  profile_image : string; [@key "profileImage"]
+  profile_image_optimized : string; [@key "profileImageOptimized"]
+  transaction_hash : string; [@key "transactionHash"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Trade record *)
 
 type activity = {
-  proxy_wallet : address option; [@yojson.option] [@key "proxyWallet"]
-  timestamp : int64 option; [@yojson.option]
-  condition_id : hash64 option; [@yojson.option] [@key "conditionId"]
-  activity_type : activity_type option; [@yojson.option] [@key "type"]
-  size : float option; [@yojson.option]
-  usdc_size : float option; [@yojson.option] [@key "usdcSize"]
-  transaction_hash : string option; [@yojson.option] [@key "transactionHash"]
-  price : float option; [@yojson.option]
-  asset : string option; [@yojson.option]
-  side : side option; [@yojson.option]
-  outcome_index : int option; [@yojson.option] [@key "outcomeIndex"]
-  title : string option; [@yojson.option]
-  slug : string option; [@yojson.option]
-  icon : string option; [@yojson.option]
-  event_slug : string option; [@yojson.option] [@key "eventSlug"]
-  outcome : string option; [@yojson.option]
-  name : string option; [@yojson.option]
-  pseudonym : string option; [@yojson.option]
-  bio : string option; [@yojson.option]
-  profile_image : string option; [@yojson.option] [@key "profileImage"]
-  profile_image_optimized : string option;
-      [@yojson.option] [@key "profileImageOptimized"]
+  proxy_wallet : Polymarket_common.Primitives.Address.t; [@key "proxyWallet"]
+  timestamp : int64;
+  condition_id : Polymarket_common.Primitives.Hash64.t; [@key "conditionId"]
+  activity_type : activity_type; [@key "type"]
+  size : float;
+  usdc_size : float; [@key "usdcSize"]
+  transaction_hash : string; [@key "transactionHash"]
+  price : float;
+  asset : string;
+  side : side;
+  outcome_index : int; [@key "outcomeIndex"]
+  title : string;
+  slug : string;
+  icon : string;
+  event_slug : string; [@key "eventSlug"]
+  outcome : string;
+  name : string;
+  pseudonym : string;
+  bio : string;
+  profile_image : string; [@key "profileImage"]
+  profile_image_optimized : string; [@key "profileImageOptimized"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Activity record *)
 
 type holder = {
-  proxy_wallet : address option; [@yojson.option] [@key "proxyWallet"]
-  bio : string option; [@yojson.option]
-  asset : string option; [@yojson.option]
-  pseudonym : string option; [@yojson.option]
-  amount : float option; [@yojson.option]
-  display_username_public : bool option;
-      [@yojson.option] [@key "displayUsernamePublic"]
-  outcome_index : int option; [@yojson.option] [@key "outcomeIndex"]
-  name : string option; [@yojson.option]
-  profile_image : string option; [@yojson.option] [@key "profileImage"]
-  profile_image_optimized : string option;
-      [@yojson.option] [@key "profileImageOptimized"]
+  proxy_wallet : Polymarket_common.Primitives.Address.t; [@key "proxyWallet"]
+  bio : string;
+  asset : string;
+  pseudonym : string;
+  amount : float;
+  display_username_public : bool; [@key "displayUsernamePublic"]
+  outcome_index : int; [@key "outcomeIndex"]
+  name : string;
+  profile_image : string; [@key "profileImage"]
+  profile_image_optimized : string; [@key "profileImageOptimized"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Holder of a position *)
 
-type meta_holder = {
-  token : string option; [@yojson.option]
-  holders : holder list option; [@yojson.option]
-}
-[@@deriving yojson, show, eq]
+type meta_holder = { token : string; holders : holder list }
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Meta holder with token and list of holders *)
 
-type traded = {
-  user : address option; [@yojson.option]
-  traded : int option; [@yojson.option]
-}
-[@@deriving yojson, show, eq]
+type traded = { user : Polymarket_common.Primitives.Address.t; traded : int }
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Traded record *)
 
-type revision_entry = {
-  revision : string option; [@yojson.option]
-  timestamp : int option; [@yojson.option]
-}
-[@@deriving yojson, show, eq]
+type revision_entry = { revision : string; timestamp : int }
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Revision entry *)
 
 type revision_payload = {
-  question_id : hash64 option; [@yojson.option] [@key "questionID"]
-  revisions : revision_entry list option; [@yojson.option]
+  question_id : Polymarket_common.Primitives.Hash64.t; [@key "questionID"]
+  revisions : revision_entry list;
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Revision payload *)
 
-type value = {
-  user : address option; [@yojson.option]
-  value : float option; [@yojson.option]
-}
-[@@deriving yojson, show, eq]
+type value = { user : Polymarket_common.Primitives.Address.t; value : float }
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Value record *)
 
 type open_interest = {
-  market : hash64 option; [@yojson.option]
-  value : float option; [@yojson.option]
+  market : Polymarket_common.Primitives.Hash64.t;
+  value : float;
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Open interest for a market *)
 
 type market_volume = {
-  market : hash64 option; [@yojson.option]
+  market : Polymarket_common.Primitives.Hash64.t option; [@yojson.option]
   value : float option; [@yojson.option]
 }
 [@@deriving yojson, show, eq]
@@ -367,48 +339,40 @@ let live_volume_of_yojson json =
       { total; markets }
   | _ -> failwith "live_volume_of_yojson: expected object"
 
-type other_size = {
-  id : int option; [@yojson.option]
-  user : address option; [@yojson.option]
-  size : float option; [@yojson.option]
-}
-[@@deriving yojson, show, eq]
-(** Other size record *)
-
 (** {1 Leaderboard Types} *)
 
 type leaderboard_entry = {
-  rank : string option; [@yojson.option]
-  builder : string option; [@yojson.option]
-  volume : float option; [@yojson.option]
-  active_users : int option; [@yojson.option] [@key "activeUsers"]
-  verified : bool option; [@yojson.option]
-  builder_logo : string option; [@yojson.option] [@key "builderLogo"]
+  rank : string;
+  builder : string;
+  volume : float;
+  active_users : int; [@key "activeUsers"]
+  verified : bool;
+  builder_logo : string; [@key "builderLogo"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Leaderboard entry for builders *)
 
 type builder_volume_entry = {
-  dt : string option; [@yojson.option]
-  builder : string option; [@yojson.option]
-  builder_logo : string option; [@yojson.option] [@key "builderLogo"]
-  verified : bool option; [@yojson.option]
-  volume : float option; [@yojson.option]
-  active_users : int option; [@yojson.option] [@key "activeUsers"]
-  rank : string option; [@yojson.option]
+  dt : Polymarket_common.Primitives.Timestamp.t;
+  builder : string;
+  builder_logo : string; [@key "builderLogo"]
+  verified : bool;
+  volume : float;
+  active_users : int; [@key "activeUsers"]
+  rank : string;
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Builder volume entry *)
 
 type trader_leaderboard_entry = {
-  rank : string option; [@yojson.option]
-  proxy_wallet : address option; [@yojson.option] [@key "proxyWallet"]
-  user_name : string option; [@yojson.option] [@key "userName"]
-  vol : float option; [@yojson.option]
-  pnl : float option; [@yojson.option]
-  profile_image : string option; [@yojson.option] [@key "profileImage"]
-  x_username : string option; [@yojson.option] [@key "xUsername"]
-  verified_badge : bool option; [@yojson.option] [@key "verifiedBadge"]
+  rank : string;
+  proxy_wallet : Polymarket_common.Primitives.Address.t; [@key "proxyWallet"]
+  user_name : string; [@key "userName"]
+  vol : float;
+  pnl : float;
+  profile_image : string; [@key "profileImage"]
+  x_username : string; [@key "xUsername"]
+  verified_badge : bool; [@key "verifiedBadge"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Trader leaderboard entry *)

@@ -1,6 +1,6 @@
 (** Unit tests for Common.Http_client module *)
 
-open Polymarket.Http_client.Client
+open Polymarket_http.Client
 
 let params_testable =
   Alcotest.testable
@@ -79,46 +79,20 @@ let test_add_bool_none () =
   let result = [] |> add_bool "flag" None in
   Alcotest.(check params_testable) "returns empty for None" [] result
 
-let test_add_int_some () =
-  let result = [] |> add_int "count" (Some 42) in
-  Alcotest.(check params_testable) "adds int" [ ("count", [ "42" ]) ] result
+let test_add_each_some () =
+  let result = [] |> add_each "id" string_of_int (Some [ 1; 2; 3 ]) in
+  Alcotest.(check params_testable)
+    "adds each value"
+    [ ("id", [ "3" ]); ("id", [ "2" ]); ("id", [ "1" ]) ]
+    result
 
-let test_add_int_none () =
-  let result = [] |> add_int "count" None in
+let test_add_each_none () =
+  let result = [] |> add_each "id" string_of_int None in
   Alcotest.(check params_testable) "returns empty for None" [] result
 
-let test_add_int_negative () =
-  let result = [] |> add_int "offset" (Some (-10)) in
-  Alcotest.(check params_testable)
-    "handles negative"
-    [ ("offset", [ "-10" ]) ]
-    result
-
-let test_add_int_zero () =
-  let result = [] |> add_int "count" (Some 0) in
-  Alcotest.(check params_testable) "handles zero" [ ("count", [ "0" ]) ] result
-
-let test_add_float_some () =
-  let result = [] |> add_float "price" (Some 3.14) in
-  Alcotest.(check params_testable) "adds float" [ ("price", [ "3.14" ]) ] result
-
-let test_add_float_none () =
-  let result = [] |> add_float "price" None in
-  Alcotest.(check params_testable) "returns empty for None" [] result
-
-let test_add_float_integer () =
-  let result = [] |> add_float "amount" (Some 100.0) in
-  Alcotest.(check params_testable)
-    "handles integer float"
-    [ ("amount", [ "100." ]) ]
-    result
-
-let test_add_float_negative () =
-  let result = [] |> add_float "price" (Some (-5.5)) in
-  Alcotest.(check params_testable)
-    "handles negative"
-    [ ("price", [ "-5.5" ]) ]
-    result
+let test_add_each_empty () =
+  let result = [] |> add_each "id" string_of_int (Some []) in
+  Alcotest.(check params_testable) "returns empty for empty list" [] result
 
 (** {1 URI Building Tests} *)
 
@@ -279,19 +253,11 @@ let tests =
         ("false", `Quick, test_add_bool_false);
         ("None", `Quick, test_add_bool_none);
       ] );
-    ( "add_int",
+    ( "add_each",
       [
-        ("Some", `Quick, test_add_int_some);
-        ("None", `Quick, test_add_int_none);
-        ("negative", `Quick, test_add_int_negative);
-        ("zero", `Quick, test_add_int_zero);
-      ] );
-    ( "add_float",
-      [
-        ("Some", `Quick, test_add_float_some);
-        ("None", `Quick, test_add_float_none);
-        ("integer value", `Quick, test_add_float_integer);
-        ("negative", `Quick, test_add_float_negative);
+        ("Some", `Quick, test_add_each_some);
+        ("None", `Quick, test_add_each_none);
+        ("empty list", `Quick, test_add_each_empty);
       ] );
     ( "build_uri",
       [

@@ -7,159 +7,145 @@ open Types
 
 (** {1 Client Configuration} *)
 
-type t = Http_client.Client.t
+type t = Polymarket_http.Client.t
+
+module H = Polymarket_http.Client
+module P = Polymarket_common.Primitives
 
 let default_base_url = "https://data-api.polymarket.com"
 
 let create ?(base_url = default_base_url) ~sw ~net () =
-  Http_client.Client.create ~base_url ~sw ~net ()
+  H.create ~base_url ~sw ~net ()
 
 (** {1 Health Endpoint} *)
 
-let health_check t =
-  [] |> Http_client.Client.get_json t "/" health_response_of_yojson
+let health_check t = [] |> H.get_json t "/" health_response_of_yojson
 
 (** {1 Positions Endpoint} *)
 
 let get_positions t ~user ?market ?event_id ?size_threshold ?redeemable
     ?mergeable ?limit ?offset ?sort_by ?sort_direction ?title () =
-  [ ("user", [ user ]) ]
-  |> Http_client.Client.add_list "market" Fun.id market
-  |> Http_client.Client.add_list "eventId" string_of_int event_id
-  |> Http_client.Client.add_float "sizeThreshold" size_threshold
-  |> Http_client.Client.add_bool "redeemable" redeemable
-  |> Http_client.Client.add_bool "mergeable" mergeable
-  |> Http_client.Client.add_int "limit" limit
-  |> Http_client.Client.add_int "offset" offset
-  |> Http_client.Client.add "sortBy"
-       (Option.map string_of_position_sort_by sort_by)
-  |> Http_client.Client.add "sortDirection"
-       (Option.map string_of_sort_direction sort_direction)
-  |> Http_client.Client.add "title" title
-  |> Http_client.Client.get_json_list t "/positions" position_of_yojson
+  [ ("user", [ P.Address.to_string user ]) ]
+  |> H.add_list "market" P.Hash64.to_string market
+  |> H.add_list "eventId" P.Pos_int.to_string event_id
+  |> H.add_option "sizeThreshold" P.Nonneg_float.to_string size_threshold
+  |> H.add_bool "redeemable" redeemable
+  |> H.add_bool "mergeable" mergeable
+  |> H.add_option "limit" P.Limit.to_string limit
+  |> H.add_option "offset" P.Offset.to_string offset
+  |> H.add_option "sortBy" string_of_position_sort_by sort_by
+  |> H.add_option "sortDirection" string_of_sort_direction sort_direction
+  |> H.add_option "title" P.Bounded_string.to_string title
+  |> H.get_json_list t "/positions" position_of_yojson
 
 (** {1 Trades Endpoint} *)
 
 let get_trades t ?user ?market ?event_id ?side ?filter_type ?filter_amount
     ?taker_only ?limit ?offset () =
   []
-  |> Http_client.Client.add "user" user
-  |> Http_client.Client.add_list "market" Fun.id market
-  |> Http_client.Client.add_list "eventId" string_of_int event_id
-  |> Http_client.Client.add "side" (Option.map string_of_side side)
-  |> Http_client.Client.add "filterType"
-       (Option.map string_of_filter_type filter_type)
-  |> Http_client.Client.add_float "filterAmount" filter_amount
-  |> Http_client.Client.add_bool "takerOnly" taker_only
-  |> Http_client.Client.add_int "limit" limit
-  |> Http_client.Client.add_int "offset" offset
-  |> Http_client.Client.get_json_list t "/trades" trade_of_yojson
+  |> H.add_option "limit" P.Nonneg_int.to_string limit
+  |> H.add_option "offset" P.Nonneg_int.to_string offset
+  |> H.add_bool "takerOnly" taker_only
+  |> H.add_option "filterType" string_of_filter_type filter_type
+  |> H.add_option "filterAmount" P.Nonneg_float.to_string filter_amount
+  |> H.add_list "market" P.Hash64.to_string market
+  |> H.add_list "eventId" P.Pos_int.to_string event_id
+  |> H.add_option "user" P.Address.to_string user
+  |> H.add_option "side" string_of_side side
+  |> H.get_json_list t "/trades" trade_of_yojson
 
 (** {1 Activity Endpoint} *)
 
 let get_activity t ~user ?market ?event_id ?activity_types ?side ?start_time
     ?end_time ?sort_by ?sort_direction ?limit ?offset () =
-  [ ("user", [ user ]) ]
-  |> Http_client.Client.add_list "market" Fun.id market
-  |> Http_client.Client.add_list "eventId" string_of_int event_id
-  |> Http_client.Client.add_list "type" string_of_activity_type activity_types
-  |> Http_client.Client.add "side" (Option.map string_of_side side)
-  |> Http_client.Client.add_int "start" start_time
-  |> Http_client.Client.add_int "end" end_time
-  |> Http_client.Client.add "sortBy"
-       (Option.map string_of_activity_sort_by sort_by)
-  |> Http_client.Client.add "sortDirection"
-       (Option.map string_of_sort_direction sort_direction)
-  |> Http_client.Client.add_int "limit" limit
-  |> Http_client.Client.add_int "offset" offset
-  |> Http_client.Client.get_json_list t "/activity" activity_of_yojson
+  [ ("user", [ P.Address.to_string user ]) ]
+  |> H.add_option "limit" P.Limit.to_string limit
+  |> H.add_option "offset" P.Offset.to_string offset
+  |> H.add_list "market" P.Hash64.to_string market
+  |> H.add_list "eventId" P.Pos_int.to_string event_id
+  |> H.add_list "type" string_of_activity_type activity_types
+  |> H.add_option "start" P.Nonneg_int.to_string start_time
+  |> H.add_option "end" P.Nonneg_int.to_string end_time
+  |> H.add_option "sortBy" string_of_activity_sort_by sort_by
+  |> H.add_option "sortDirection" string_of_sort_direction sort_direction
+  |> H.add_option "side" string_of_side side
+  |> H.get_json_list t "/activity" activity_of_yojson
 
 (** {1 Holders Endpoint} *)
 
 let get_holders t ~market ?min_balance ?limit () =
   []
-  |> Http_client.Client.add_list "market" Fun.id (Some market)
-  |> Http_client.Client.add_int "minBalance" min_balance
-  |> Http_client.Client.add_int "limit" limit
-  |> Http_client.Client.get_json_list t "/holders" meta_holder_of_yojson
-
-(** {1 Traded Endpoint} *)
-
-let get_traded t ~user () =
-  [ ("user", [ user ]) ]
-  |> Http_client.Client.get_json t "/traded" traded_of_yojson
+  |> H.add_option "limit" P.Holders_limit.to_string limit
+  |> H.add_list "market" P.Hash64.to_string (Some market)
+  |> H.add_option "minBalance" P.Min_balance.to_string min_balance
+  |> H.get_json_list t "/holders" meta_holder_of_yojson
 
 (** {1 Value Endpoint} *)
 
 let get_value t ~user ?market () =
-  [ ("user", [ user ]) ]
-  |> Http_client.Client.add_list "market" Fun.id market
-  |> Http_client.Client.get_json_list t "/value" value_of_yojson
-
-(** {1 Open Interest Endpoint} *)
-
-let get_open_interest t ?market () =
-  []
-  |> Http_client.Client.add_list "market" Fun.id market
-  |> Http_client.Client.get_json_list t "/oi" open_interest_of_yojson
-
-(** {1 Live Volume Endpoint} *)
-
-let get_live_volume t ~id () =
-  [ ("id", [ string_of_int id ]) ]
-  |> Http_client.Client.get_json_list t "/live-volume" live_volume_of_yojson
+  [ ("user", [ P.Address.to_string user ]) ]
+  |> H.add_list "market" P.Hash64.to_string market
+  |> H.get_json_list t "/value" value_of_yojson
 
 (** {1 Closed Positions Endpoint} *)
 
 let get_closed_positions t ~user ?market ?event_id ?title ?sort_by
     ?sort_direction ?limit ?offset () =
-  [ ("user", [ user ]) ]
-  |> Http_client.Client.add_list "market" Fun.id market
-  |> Http_client.Client.add_list "eventId" string_of_int event_id
-  |> Http_client.Client.add "title" title
-  |> Http_client.Client.add "sortBy"
-       (Option.map string_of_closed_position_sort_by sort_by)
-  |> Http_client.Client.add "sortDirection"
-       (Option.map string_of_sort_direction sort_direction)
-  |> Http_client.Client.add_int "limit" limit
-  |> Http_client.Client.add_int "offset" offset
-  |> Http_client.Client.get_json_list t "/closed-positions"
-       closed_position_of_yojson
-
-(** {1 Builder Leaderboard Endpoint} *)
-
-let get_builder_leaderboard t ?time_period ?limit ?offset () =
-  []
-  |> Http_client.Client.add "timePeriod"
-       (Option.map string_of_time_period time_period)
-  |> Http_client.Client.add_int "limit" limit
-  |> Http_client.Client.add_int "offset" offset
-  |> Http_client.Client.get_json_list t "/v1/builders/leaderboard"
-       leaderboard_entry_of_yojson
-
-(** {1 Builder Volume Endpoint} *)
-
-let get_builder_volume t ?time_period () =
-  []
-  |> Http_client.Client.add "timePeriod"
-       (Option.map string_of_time_period time_period)
-  |> Http_client.Client.get_json_list t "/v1/builders/volume"
-       builder_volume_entry_of_yojson
+  [ ("user", [ P.Address.to_string user ]) ]
+  |> H.add_list "market" P.Hash64.to_string market
+  |> H.add_option "title" P.Bounded_string.to_string title
+  |> H.add_list "eventId" P.Pos_int.to_string event_id
+  |> H.add_option "limit" P.Closed_positions_limit.to_string limit
+  |> H.add_option "offset" P.Extended_offset.to_string offset
+  |> H.add_option "sortBy" string_of_closed_position_sort_by sort_by
+  |> H.add_option "sortDirection" string_of_sort_direction sort_direction
+  |> H.get_json_list t "/closed-positions" closed_position_of_yojson
 
 (** {1 Trader Leaderboard Endpoint} *)
 
 let get_trader_leaderboard t ?category ?time_period ?order_by ?user ?user_name
     ?limit ?offset () =
   []
-  |> Http_client.Client.add "category"
-       (Option.map string_of_leaderboard_category category)
-  |> Http_client.Client.add "timePeriod"
-       (Option.map string_of_time_period time_period)
-  |> Http_client.Client.add "orderBy"
-       (Option.map string_of_leaderboard_order_by order_by)
-  |> Http_client.Client.add "user" user
-  |> Http_client.Client.add "userName" user_name
-  |> Http_client.Client.add_int "limit" limit
-  |> Http_client.Client.add_int "offset" offset
-  |> Http_client.Client.get_json_list t "/v1/leaderboard"
-       trader_leaderboard_entry_of_yojson
+  |> H.add_option "category" string_of_leaderboard_category category
+  |> H.add_option "timePeriod" string_of_time_period time_period
+  |> H.add_option "orderBy" string_of_leaderboard_order_by order_by
+  |> H.add_option "user" P.Address.to_string user
+  |> H.add "userName" user_name
+  |> H.add_option "limit" P.Leaderboard_limit.to_string limit
+  |> H.add_option "offset" P.Leaderboard_offset.to_string offset
+  |> H.get_json_list t "/v1/leaderboard" trader_leaderboard_entry_of_yojson
+
+(** {1 Traded Endpoint} *)
+
+let get_traded t ~user () =
+  [ ("user", [ P.Address.to_string user ]) ]
+  |> H.get_json t "/traded" traded_of_yojson
+
+(** {1 Open Interest Endpoint} *)
+
+let get_open_interest t ?market () =
+  []
+  |> H.add_list "market" P.Hash64.to_string market
+  |> H.get_json_list t "/oi" open_interest_of_yojson
+
+(** {1 Live Volume Endpoint} *)
+
+let get_live_volume t ~id () =
+  [ ("id", [ P.Pos_int.to_string id ]) ]
+  |> H.get_json_list t "/live-volume" live_volume_of_yojson
+
+(** {1 Builder Leaderboard Endpoint} *)
+
+let get_builder_leaderboard t ?time_period ?limit ?offset () =
+  []
+  |> H.add_option "timePeriod" string_of_time_period time_period
+  |> H.add_option "limit" P.Builder_limit.to_string limit
+  |> H.add_option "offset" P.Leaderboard_offset.to_string offset
+  |> H.get_json_list t "/v1/builders/leaderboard" leaderboard_entry_of_yojson
+
+(** {1 Builder Volume Endpoint} *)
+
+let get_builder_volume t ?time_period () =
+  []
+  |> H.add_option "timePeriod" string_of_time_period time_period
+  |> H.get_json_list t "/v1/builders/volume" builder_volume_entry_of_yojson

@@ -4,14 +4,6 @@
     data-api-openapi.yaml for the Polymarket Data API
     (https://data-api.polymarket.com). *)
 
-(** {1 Primitive Types} *)
-
-type address = string
-(** User Profile Address (0x-prefixed, 40 hex chars). *)
-
-type hash64 = string
-(** 0x-prefixed 64-hex string. *)
-
 (** {1 Query Parameter Enums} *)
 
 (** Sort direction for paginated results *)
@@ -162,202 +154,197 @@ val string_of_activity_type : activity_type -> string
 
 (** {1 Response Types} *)
 
-type health_response = { data : string option }
+type health_response = { data : string }
 (** Health check response *)
 
-type error_response = Http_client.Client.error_response = { error : string }
-(** Error response (alias to Http_client.Client.error_response for
+type error_response = Polymarket_http.Client.error_response = { error : string }
+(** Error response (alias to Polymarket_http.Client.error_response for
     compatibility) *)
 
 (** {1 Domain Models} *)
 
 type position = {
-  proxy_wallet : address option;
-  asset : string option;
-  condition_id : hash64 option;
-  size : float option;
-  avg_price : float option;
-  initial_value : float option;
-  current_value : float option;
-  cash_pnl : float option;
-  percent_pnl : float option;
-  total_bought : float option;
-  realized_pnl : float option;
-  percent_realized_pnl : float option;
-  cur_price : float option;
-  redeemable : bool option;
-  mergeable : bool option;
-  title : string option;
-  slug : string option;
-  icon : string option;
-  event_slug : string option;
-  outcome : string option;
-  outcome_index : int option;
-  opposite_outcome : string option;
-  opposite_asset : string option;
-  end_date : string option;
-  negative_risk : bool option;
+  proxy_wallet : Polymarket_common.Primitives.Address.t;
+  asset : string;
+  condition_id : Polymarket_common.Primitives.Hash64.t;
+  size : float;
+  avg_price : float;
+  initial_value : float;
+  current_value : float;
+  cash_pnl : float;
+  percent_pnl : float;
+  total_bought : float;
+  realized_pnl : float;
+  percent_realized_pnl : float;
+  cur_price : float;
+  redeemable : bool;
+  mergeable : bool;
+  title : string;
+  slug : string;
+  icon : string;
+  event_slug : string;
+  outcome : string;
+  outcome_index : int;
+  opposite_outcome : string;
+  opposite_asset : string;
+  end_date : string;
+  negative_risk : bool;
 }
 (** Position in a market *)
 
 type closed_position = {
-  proxy_wallet : address option;
-  asset : string option;
-  condition_id : hash64 option;
-  avg_price : float option;
-  total_bought : float option;
-  realized_pnl : float option;
-  cur_price : float option;
-  timestamp : int64 option;
-  title : string option;
-  slug : string option;
-  icon : string option;
-  event_slug : string option;
-  outcome : string option;
-  outcome_index : int option;
-  opposite_outcome : string option;
-  opposite_asset : string option;
-  end_date : string option;
+  proxy_wallet : Polymarket_common.Primitives.Address.t;
+  asset : string;
+  condition_id : Polymarket_common.Primitives.Hash64.t;
+  avg_price : float;
+  total_bought : float;
+  realized_pnl : float;
+  cur_price : float;
+  timestamp : int64;
+  title : string;
+  slug : string;
+  icon : string;
+  event_slug : string;
+  outcome : string;
+  outcome_index : int;
+  opposite_outcome : string;
+  opposite_asset : string;
+  end_date : string;
 }
 (** Closed position in a market *)
 
 type trade = {
-  proxy_wallet : address option;
-  side : side option;
-  asset : string option;
-  condition_id : hash64 option;
-  size : float option;
-  price : float option;
-  timestamp : int64 option;
-  title : string option;
-  slug : string option;
-  icon : string option;
-  event_slug : string option;
-  outcome : string option;
-  outcome_index : int option;
-  name : string option;
-  pseudonym : string option;
-  bio : string option;
-  profile_image : string option;
-  profile_image_optimized : string option;
-  transaction_hash : string option;
+  proxy_wallet : Polymarket_common.Primitives.Address.t;
+  side : side;
+  asset : string;
+  condition_id : Polymarket_common.Primitives.Hash64.t;
+  size : float;
+  price : float;
+  timestamp : int64;
+  title : string;
+  slug : string;
+  icon : string;
+  event_slug : string;
+  outcome : string;
+  outcome_index : int;
+  name : string;
+  pseudonym : string;
+  bio : string;
+  profile_image : string;
+  profile_image_optimized : string;
+  transaction_hash : string;
 }
 (** Trade record *)
 
 type activity = {
-  proxy_wallet : address option;
-  timestamp : int64 option;
-  condition_id : hash64 option;
-  activity_type : activity_type option;
-  size : float option;
-  usdc_size : float option;
-  transaction_hash : string option;
-  price : float option;
-  asset : string option;
-  side : side option;
-  outcome_index : int option;
-  title : string option;
-  slug : string option;
-  icon : string option;
-  event_slug : string option;
-  outcome : string option;
-  name : string option;
-  pseudonym : string option;
-  bio : string option;
-  profile_image : string option;
-  profile_image_optimized : string option;
+  proxy_wallet : Polymarket_common.Primitives.Address.t;
+  timestamp : int64;
+  condition_id : Polymarket_common.Primitives.Hash64.t;
+  activity_type : activity_type;
+  size : float;
+  usdc_size : float;
+  transaction_hash : string;
+  price : float;
+  asset : string;
+  side : side;
+  outcome_index : int;
+  title : string;
+  slug : string;
+  icon : string;
+  event_slug : string;
+  outcome : string;
+  name : string;
+  pseudonym : string;
+  bio : string;
+  profile_image : string;
+  profile_image_optimized : string;
 }
 (** Activity record *)
 
 type holder = {
-  proxy_wallet : address option;
-  bio : string option;
-  asset : string option;
-  pseudonym : string option;
-  amount : float option;
-  display_username_public : bool option;
-  outcome_index : int option;
-  name : string option;
-  profile_image : string option;
-  profile_image_optimized : string option;
+  proxy_wallet : Polymarket_common.Primitives.Address.t;
+  bio : string;
+  asset : string;
+  pseudonym : string;
+  amount : float;
+  display_username_public : bool;
+  outcome_index : int;
+  name : string;
+  profile_image : string;
+  profile_image_optimized : string;
 }
 (** Holder of a position *)
 
-type meta_holder = { token : string option; holders : holder list option }
+type meta_holder = { token : string; holders : holder list }
 (** Meta holder with token and list of holders *)
 
-type traded = { user : address option; traded : int option }
+type traded = { user : Polymarket_common.Primitives.Address.t; traded : int }
 (** Traded record *)
 
-type revision_entry = { revision : string option; timestamp : int option }
+type revision_entry = { revision : string; timestamp : int }
 (** Revision entry *)
 
 type revision_payload = {
-  question_id : hash64 option;
-  revisions : revision_entry list option;
+  question_id : Polymarket_common.Primitives.Hash64.t;
+  revisions : revision_entry list;
 }
 (** Revision payload *)
 
-type value = { user : address option; value : float option }
+type value = { user : Polymarket_common.Primitives.Address.t; value : float }
 (** Value record *)
 
-type open_interest = { market : hash64 option; value : float option }
+type open_interest = {
+  market : Polymarket_common.Primitives.Hash64.t;
+  value : float;
+}
 (** Open interest for a market *)
 
-type market_volume = { market : hash64 option; value : float option }
+type market_volume = {
+  market : Polymarket_common.Primitives.Hash64.t option;
+  value : float option;
+}
 (** Market volume *)
 
 type live_volume = { total : float option; markets : market_volume list }
 (** Live volume *)
 
-type other_size = {
-  id : int option;
-  user : address option;
-  size : float option;
-}
-(** Other size record *)
-
 (** {1 Leaderboard Types} *)
 
 type leaderboard_entry = {
-  rank : string option;
-  builder : string option;
-  volume : float option;
-  active_users : int option;
-  verified : bool option;
-  builder_logo : string option;
+  rank : string;
+  builder : string;
+  volume : float;
+  active_users : int;
+  verified : bool;
+  builder_logo : string;
 }
 (** Leaderboard entry for builders *)
 
 type builder_volume_entry = {
-  dt : string option;
-  builder : string option;
-  builder_logo : string option;
-  verified : bool option;
-  volume : float option;
-  active_users : int option;
-  rank : string option;
+  dt : Polymarket_common.Primitives.Timestamp.t;
+  builder : string;
+  builder_logo : string;
+  verified : bool;
+  volume : float;
+  active_users : int;
+  rank : string;
 }
 (** Builder volume entry *)
 
 type trader_leaderboard_entry = {
-  rank : string option;
-  proxy_wallet : address option;
-  user_name : string option;
-  vol : float option;
-  pnl : float option;
-  profile_image : string option;
-  x_username : string option;
-  verified_badge : bool option;
+  rank : string;
+  proxy_wallet : Polymarket_common.Primitives.Address.t;
+  user_name : string;
+  vol : float;
+  pnl : float;
+  profile_image : string;
+  x_username : string;
+  verified_badge : bool;
 }
 (** Trader leaderboard entry *)
 
 (** {1 JSON Conversion Functions} *)
 
-val address_of_yojson : Yojson.Safe.t -> address
-val yojson_of_address : address -> Yojson.Safe.t
-val hash64_of_yojson : Yojson.Safe.t -> hash64
-val yojson_of_hash64 : hash64 -> Yojson.Safe.t
 val side_of_yojson : Yojson.Safe.t -> side
 val yojson_of_side : side -> Yojson.Safe.t
 val activity_type_of_yojson : Yojson.Safe.t -> activity_type
@@ -365,10 +352,6 @@ val yojson_of_activity_type : activity_type -> Yojson.Safe.t
 
 (** {1 Pretty Printing Functions} *)
 
-val pp_address : Format.formatter -> address -> unit
-val show_address : address -> string
-val pp_hash64 : Format.formatter -> hash64 -> unit
-val show_hash64 : hash64 -> string
 val pp_side : Format.formatter -> side -> unit
 val show_side : side -> string
 val pp_activity_type : Format.formatter -> activity_type -> unit
@@ -403,8 +386,6 @@ val pp_market_volume : Format.formatter -> market_volume -> unit
 val show_market_volume : market_volume -> string
 val pp_live_volume : Format.formatter -> live_volume -> unit
 val show_live_volume : live_volume -> string
-val pp_other_size : Format.formatter -> other_size -> unit
-val show_other_size : other_size -> string
 val pp_leaderboard_entry : Format.formatter -> leaderboard_entry -> unit
 val show_leaderboard_entry : leaderboard_entry -> string
 val pp_builder_volume_entry : Format.formatter -> builder_volume_entry -> unit
@@ -417,8 +398,6 @@ val show_trader_leaderboard_entry : trader_leaderboard_entry -> string
 
 (** {1 Equality Functions} *)
 
-val equal_address : address -> address -> bool
-val equal_hash64 : hash64 -> hash64 -> bool
 val equal_side : side -> side -> bool
 val equal_activity_type : activity_type -> activity_type -> bool
 val equal_health_response : health_response -> health_response -> bool
@@ -436,7 +415,6 @@ val equal_value : value -> value -> bool
 val equal_open_interest : open_interest -> open_interest -> bool
 val equal_market_volume : market_volume -> market_volume -> bool
 val equal_live_volume : live_volume -> live_volume -> bool
-val equal_other_size : other_size -> other_size -> bool
 val equal_leaderboard_entry : leaderboard_entry -> leaderboard_entry -> bool
 
 val equal_builder_volume_entry :
@@ -475,8 +453,6 @@ val market_volume_of_yojson : Yojson.Safe.t -> market_volume
 val yojson_of_market_volume : market_volume -> Yojson.Safe.t
 val live_volume_of_yojson : Yojson.Safe.t -> live_volume
 val yojson_of_live_volume : live_volume -> Yojson.Safe.t
-val other_size_of_yojson : Yojson.Safe.t -> other_size
-val yojson_of_other_size : other_size -> Yojson.Safe.t
 val leaderboard_entry_of_yojson : Yojson.Safe.t -> leaderboard_entry
 val yojson_of_leaderboard_entry : leaderboard_entry -> Yojson.Safe.t
 val builder_volume_entry_of_yojson : Yojson.Safe.t -> builder_volume_entry

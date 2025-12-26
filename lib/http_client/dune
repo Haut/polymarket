@@ -1,0 +1,15 @@
+(library
+ (name polymarket_http)
+ (public_name polymarket.http)
+ (libraries
+  polymarket_common
+  yojson
+  ppx_yojson_conv_lib
+  cohttp-eio
+  eio_main
+  uri
+  tls
+  tls-eio
+  ca-certs)
+ (preprocess
+  (pps ppx_yojson_conv ppx_deriving.show ppx_deriving.eq)))
