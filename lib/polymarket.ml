@@ -36,6 +36,22 @@ module Clob = struct
   module Auth = Polymarket_clob.Auth
   module Auth_types = Polymarket_clob.Auth_types
   module Crypto = Polymarket_clob.Crypto
+
+  type unauthed = Polymarket_clob.Client_typestate.unauthed
+  (** Typestate client types and modules *)
+
+  type l1 = Polymarket_clob.Client_typestate.l1
+  type l2 = Polymarket_clob.Client_typestate.l2
+
+  module Unauthed = Polymarket_clob.Client_typestate.Unauthed
+  module L1 = Polymarket_clob.Client_typestate.L1
+  module L2 = Polymarket_clob.Client_typestate.L2
+
+  let upgrade_to_l1 = Polymarket_clob.Client_typestate.upgrade_to_l1
+  let upgrade_to_l2 = Polymarket_clob.Client_typestate.upgrade_to_l2
+  let l2_to_l1 = Polymarket_clob.Client_typestate.l2_to_l1
+  let l2_to_unauthed = Polymarket_clob.Client_typestate.l2_to_unauthed
+  let l1_to_unauthed = Polymarket_clob.Client_typestate.l1_to_unauthed
 end
 
 module Http = Polymarket_http.Client

@@ -1,17 +1,20 @@
-(** Live demo of the Polymarket CLOB API client.
+(** Live demo of the Polymarket CLOB API client with typestate authentication.
 
-    This example calls all read-only CLOB API endpoints and prints the results.
+    This example demonstrates the typestate CLOB client that enforces
+    authentication requirements at compile time:
+    - Unauthed: Public endpoints only (order book, pricing, timeseries)
+    - L1: Wallet authentication (create/derive API keys) + public endpoints
+    - L2: API key authentication (orders, trades) + L1 + public endpoints
+
     Run with: dune exec examples/clob_api_demo.exe
 
     The demo first fetches markets from the Gamma API to discover valid token
     IDs, then uses those to test CLOB endpoints.
 
-    To test authenticated endpoints, set these environment variables:
+    To test authenticated endpoints, set this environment variable:
     - POLY_PRIVATE_KEY: Your Ethereum private key (hex, without 0x prefix)
-    - POLY_ADDRESS: Your Ethereum address (hex, with 0x prefix)
 
-    Or use derive_api_key/create_api_key to get credentials from a private key.
-*)
+    Or the demo will use a well-known test key (do not use with real funds). *)
 
 open Polymarket
 
@@ -54,7 +57,7 @@ let find_market_with_orderbook clob_client markets_with_tokens =
     (fun ((m : Gamma.market), token_ids) ->
       match token_ids with
       | token_id :: _ -> (
-          match Clob.get_order_book clob_client ~token_id () with
+          match Clob.Unauthed.get_order_book clob_client ~token_id () with
           | Ok ob when List.length ob.bids > 0 || List.length ob.asks > 0 ->
               Some (m, token_ids, ob)
           | Ok _ -> None (* Empty order book *)
@@ -71,12 +74,13 @@ let run_demo env =
   let clock = Eio.Stdenv.clock env in
 
   Logger.info "START"
-    [ ("demo", "CLOB API"); ("base_url", Clob.default_base_url) ];
+    [ ("demo", "CLOB API (Typestate)"); ("base_url", Clob.default_base_url) ];
 
   (* Create shared rate limiter with Polymarket presets *)
   let rate_limiter = Rate_limiter.create_polymarket ~clock () in
 
-  let clob_client = Clob.create ~sw ~net ~rate_limiter () in
+  (* Create an unauthenticated client for public endpoints *)
+  let unauthed_client = Clob.Unauthed.create ~sw ~net ~rate_limiter () in
 
   (* First, get markets from Gamma API to find token IDs with active order books *)
   Logger.header "Setup: Finding Active Markets";
@@ -103,7 +107,7 @@ let run_demo env =
   Logger.info "SEARCH"
     [ ("action", "looking for market with active order book") ];
   let active_market =
-    find_market_with_orderbook clob_client markets_with_tokens
+    find_market_with_orderbook unauthed_client markets_with_tokens
   in
 
   match active_market with
@@ -117,12 +121,14 @@ let run_demo env =
         Logger.header "Batch Endpoints (with inactive tokens)";
         let token_ids_subset = List.filteri (fun i _ -> i < 3) all_token_ids in
         let order_books =
-          Clob.get_order_books clob_client ~token_ids:token_ids_subset ()
+          Clob.Unauthed.get_order_books unauthed_client
+            ~token_ids:token_ids_subset ()
         in
         print_result_count "get_order_books" order_books;
 
         let spreads =
-          Clob.get_spreads clob_client ~token_ids:token_ids_subset ()
+          Clob.Unauthed.get_spreads unauthed_client ~token_ids:token_ids_subset
+            ()
         in
         print_result "get_spreads" spreads ~on_ok:(fun s ->
             Printf.sprintf "%d spread entries" (List.length s)))
@@ -139,9 +145,11 @@ let run_demo env =
             String.sub token_id 0 (min 20 (String.length token_id)) ^ "..." );
         ];
 
-      (* ===== Order Book ===== *)
-      Logger.header "Order Book";
-      let order_book = Clob.get_order_book clob_client ~token_id () in
+      (* ===== Order Book (Unauthed) ===== *)
+      Logger.header "Order Book (Unauthed)";
+      let order_book =
+        Clob.Unauthed.get_order_book unauthed_client ~token_id ()
+      in
       print_result "get_order_book" order_book
         ~on_ok:(fun (ob : Clob.order_book_summary) ->
           Printf.sprintf "%d bids, %d asks" (List.length ob.bids)
@@ -154,26 +162,29 @@ let run_demo env =
       let token_ids_subset = List.filteri (fun i _ -> i < 5) all_token_ids in
       if List.length token_ids_subset > 1 then
         let order_books =
-          Clob.get_order_books clob_client ~token_ids:token_ids_subset ()
+          Clob.Unauthed.get_order_books unauthed_client
+            ~token_ids:token_ids_subset ()
         in
         print_result_count "get_order_books" order_books
       else Logger.skip "get_order_books" "need multiple token IDs";
 
-      (* ===== Pricing ===== *)
-      Logger.header "Pricing";
-      let price_buy = Clob.get_price clob_client ~token_id ~side:Clob.BUY () in
+      (* ===== Pricing (Unauthed) ===== *)
+      Logger.header "Pricing (Unauthed)";
+      let price_buy =
+        Clob.Unauthed.get_price unauthed_client ~token_id ~side:Clob.BUY ()
+      in
       print_result "get_price (BUY)" price_buy
         ~on_ok:(fun (p : Clob.price_response) ->
           Option.value ~default:"(no price)" p.price);
 
       let price_sell =
-        Clob.get_price clob_client ~token_id ~side:Clob.SELL ()
+        Clob.Unauthed.get_price unauthed_client ~token_id ~side:Clob.SELL ()
       in
       print_result "get_price (SELL)" price_sell
         ~on_ok:(fun (p : Clob.price_response) ->
           Option.value ~default:"(no price)" p.price);
 
-      let midpoint = Clob.get_midpoint clob_client ~token_id () in
+      let midpoint = Clob.Unauthed.get_midpoint unauthed_client ~token_id () in
       print_result "get_midpoint" midpoint
         ~on_ok:(fun (m : Clob.midpoint_response) ->
           Option.value ~default:"(no mid)" m.mid);
@@ -184,7 +195,7 @@ let run_demo env =
         |> List.map (fun tid -> (tid, Clob.BUY))
       in
       if List.length requests > 0 then
-        let prices = Clob.get_prices clob_client ~requests () in
+        let prices = Clob.Unauthed.get_prices unauthed_client ~requests () in
         print_result "get_prices" prices ~on_ok:(fun p ->
             Printf.sprintf "%d price entries" (List.length p))
       else Logger.skip "get_prices" "no token IDs for batch request";
@@ -192,18 +203,19 @@ let run_demo env =
       (* Spreads *)
       if List.length token_ids_subset > 0 then
         let spreads =
-          Clob.get_spreads clob_client ~token_ids:token_ids_subset ()
+          Clob.Unauthed.get_spreads unauthed_client ~token_ids:token_ids_subset
+            ()
         in
         print_result "get_spreads" spreads ~on_ok:(fun s ->
             Printf.sprintf "%d spread entries" (List.length s))
       else Logger.skip "get_spreads" "no token IDs available";
 
-      (* ===== Timeseries ===== *)
-      Logger.header "Timeseries";
+      (* ===== Timeseries (Unauthed) ===== *)
+      Logger.header "Timeseries (Unauthed)";
       (match market.condition_id with
       | Some cond_id ->
           let history =
-            Clob.get_price_history clob_client ~market:cond_id
+            Clob.Unauthed.get_price_history unauthed_client ~market:cond_id
               ~interval:Clob.DAY_1 ()
           in
           print_result "get_price_history" history
@@ -212,8 +224,8 @@ let run_demo env =
       | None ->
           Logger.skip "get_price_history" "no market condition ID available");
 
-      (* ===== Authenticated Endpoints ===== *)
-      Logger.header "Authenticated Endpoints";
+      (* ===== L1 Authentication (Wallet) ===== *)
+      Logger.header "L1 Authentication (Wallet)";
       (* Use test private key or env var *)
       let private_key =
         match Sys.getenv_opt "POLY_PRIVATE_KEY" with
@@ -222,32 +234,51 @@ let run_demo env =
         | None ->
             "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
       in
-      let address = Clob.Crypto.private_key_to_address private_key in
-      Logger.info "AUTH" [ ("address", address) ];
-      (* Derive API key from private key *)
+
+      (* Upgrade to L1 client with private key *)
+      let l1_client = Clob.upgrade_to_l1 unauthed_client ~private_key in
+      let address = Clob.L1.address l1_client in
+      Logger.info "UPGRADE" [ ("level", "L1"); ("address", address) ];
+
+      (* L1 can still call public endpoints *)
+      let _ = Clob.L1.get_midpoint l1_client ~token_id () in
+      Logger.ok "L1.get_midpoint" "public endpoints still accessible";
+
+      (* Derive API key to upgrade to L2 *)
       let nonce = int_of_float (Unix.gettimeofday () *. 1000.0) mod 1000000 in
-      (match Clob.derive_api_key clob_client ~private_key ~nonce with
-      | Ok resp ->
+      (match Clob.L1.derive_api_key l1_client ~nonce with
+      | Ok (l2_client, resp) ->
           Logger.ok "derive_api_key"
             (Printf.sprintf "api_key=%s..." (String.sub resp.api_key 0 8));
-          (* Create authenticated client *)
-          let credentials =
-            Clob.Auth_types.credentials_of_derive_response resp
-          in
-          let auth_client =
-            Clob.with_credentials clob_client ~credentials ~address
-          in
-          (* Test authenticated endpoints *)
-          let orders = Clob.get_orders auth_client () in
+
+          (* ===== L2 Authentication (API Key) ===== *)
+          Logger.header "L2 Authentication (API Key)";
+          Logger.info "UPGRADE" [ ("level", "L2"); ("via", "derive_api_key") ];
+
+          (* L2 can call authenticated endpoints *)
+          let orders = Clob.L2.get_orders l2_client () in
           print_result "get_orders" orders ~on_ok:(fun o ->
               Printf.sprintf "%d orders" (List.length o));
-          let trades = Clob.get_trades auth_client () in
+
+          let trades = Clob.L2.get_trades l2_client () in
           print_result "get_trades" trades ~on_ok:(fun t ->
-              Printf.sprintf "%d trades" (List.length t))
+              Printf.sprintf "%d trades" (List.length t));
+
+          (* L2 can also call public endpoints *)
+          let _ = Clob.L2.get_midpoint l2_client ~token_id () in
+          Logger.ok "L2.get_midpoint" "public endpoints still accessible";
+
+          (* Demonstrate downgrade *)
+          Logger.header "State Transitions";
+          let _l1_again = Clob.l2_to_l1 l2_client in
+          Logger.ok "l2_to_l1" "downgraded to L1";
+          let _unauthed_again = Clob.l2_to_unauthed l2_client in
+          Logger.ok "l2_to_unauthed" "downgraded to Unauthed"
       | Error err ->
           Logger.error "derive_api_key" err.Http.error;
           Logger.skip "get_orders" "could not derive API key";
           Logger.skip "get_trades" "could not derive API key");
+
       Logger.skip "create_order" "requires signed order";
       Logger.skip "cancel_order" "requires order ID";
 
