@@ -6,11 +6,10 @@ OCaml client library for the [Polymarket](https://polymarket.com) prediction mar
 
 - Full coverage of the Polymarket Data API, Gamma API, and CLOB API
 - L1 (EIP-712 wallet signing) and L2 (HMAC-SHA256) authentication for CLOB API
-- Type-safe interface with OCaml variant types for enums
+- Type-safe interface with validated primitive types and OCaml variant types
 - Built on [Eio](https://github.com/ocaml-multicore/eio) for efficient concurrent I/O
 - TLS support for secure API connections
 - Comprehensive error handling with result types
-- Structured logging with configurable log levels
 - JSON serialization via ppx_yojson_conv
 - Pretty printing and equality functions for all types
 
@@ -41,39 +40,37 @@ let () =
   (* Initialize RNG for TLS *)
   Mirage_crypto_rng_unix.use_default ();
 
-  (* Optional: Enable logging (levels: debug, info, off) *)
-  (* Common.Logger.setup () reads POLYMARKET_LOG_LEVEL env var *)
-  Common.Logger.setup ();
-
   Eio_main.run @@ fun env ->
   Eio.Switch.run @@ fun sw ->
 
   (* Create a client *)
-  let client = Data_api.Client.create
-    ~sw
-    ~net:(Eio.Stdenv.net env)
-    ()
-  in
+  let client = Gamma.create ~sw ~net:(Eio.Stdenv.net env) () in
 
-  (* Check API health *)
-  match Data_api.Client.health_check client with
-  | Ok response ->
-    print_endline (Option.value ~default:"OK" response.data)
+  (* Get active markets *)
+  match Gamma.get_markets client ~active:true ~limit:(Nonneg_int.of_int_exn 10) () with
+  | Ok markets ->
+    List.iter (fun (m : Gamma.market) ->
+      print_endline (Option.value ~default:"(no question)" m.question)
+    ) markets
   | Error err ->
-    print_endline ("Error: " ^ err.error)
+    print_endline ("Error: " ^ err.Http.error)
 ```
+
+The library uses validated primitive types like `Address.t`, `Hash64.t`, `Limit.t`, and `Nonneg_int.t` for type safety. Create them with `*.of_int_exn`, `*.make_exn`, or handle errors with `*.of_int`, `*.make`.
 
 ## Data API Examples
 
 ### Get User Positions
 
 ```ocaml
-let user_address = "0x1a9a6f917a87a4f02c33f8530c6a8998f1bc8d59" in
-match Data_api.Client.get_positions client
+open Polymarket
+
+let user_address = Address.make_exn "0x1a9a6f917a87a4f02c33f8530c6a8998f1bc8d59" in
+match Data.get_positions client
   ~user:user_address
-  ~limit:10
-  ~sort_by:Data_api.Types.CASHPNL
-  ~sort_direction:Data_api.Types.DESC
+  ~limit:(Limit.of_int_exn 10)
+  ~sort_by:Data.CASHPNL
+  ~sort_direction:Data.DESC
   ()
 with
 | Ok positions ->
@@ -84,16 +81,16 @@ with
        |> Option.value ~default:"N/A")
   ) positions
 | Error err ->
-  Printf.printf "Error: %s\n" err.error
+  Printf.printf "Error: %s\n" err.Http.error
 ```
 
 ### Get Recent Trades
 
 ```ocaml
-match Data_api.Client.get_trades client
+match Data.get_trades client
   ~user:user_address
-  ~side:Data_api.Types.BUY
-  ~limit:20
+  ~side:Data.BUY
+  ~limit:(Nonneg_int.of_int_exn 20)
   ()
 with
 | Ok trades ->
@@ -103,17 +100,17 @@ with
       (Option.value ~default:0.0 trade.price)
   ) trades
 | Error err ->
-  Printf.printf "Error: %s\n" err.error
+  Printf.printf "Error: %s\n" err.Http.error
 ```
 
 ### Get Trader Leaderboard
 
 ```ocaml
-match Data_api.Client.get_trader_leaderboard client
-  ~category:Data_api.Types.POLITICS
-  ~time_period:Data_api.Types.WEEK
-  ~order_by:Data_api.Types.PNL
-  ~limit:10
+match Data.get_trader_leaderboard client
+  ~category:Data.POLITICS
+  ~time_period:Data.WEEK
+  ~order_by:Data.PNL
+  ~limit:(Leaderboard_limit.of_int_exn 10)
   ()
 with
 | Ok leaders ->
@@ -124,7 +121,7 @@ with
       (Option.value ~default:0.0 entry.pnl)
   ) leaders
 | Error err ->
-  Printf.printf "Error: %s\n" err.error
+  Printf.printf "Error: %s\n" err.Http.error
 ```
 
 ## Gamma API Examples
@@ -134,39 +131,39 @@ The Gamma API provides access to markets, events, series, and search functionali
 ### Get Active Markets
 
 ```ocaml
-let client = Gamma_api.Client.create ~sw ~net:(Eio.Stdenv.net env) () in
-match Gamma_api.Client.get_markets client ~active:true ~limit:10 () with
+let client = Gamma.create ~sw ~net:(Eio.Stdenv.net env) () in
+match Gamma.get_markets client ~active:true ~limit:(Nonneg_int.of_int_exn 10) () with
 | Ok markets ->
-  List.iter (fun (m : Gamma_api.Types.market) ->
+  List.iter (fun (m : Gamma.market) ->
     Printf.printf "Market: %s\n"
       (Option.value ~default:"(no question)" m.question)
   ) markets
 | Error err ->
-  Printf.printf "Error: %s\n" err.error
+  Printf.printf "Error: %s\n" err.Http.error
 ```
 
 ### Get Events by Tag
 
 ```ocaml
-match Gamma_api.Client.get_events client ~tag_slug:"politics" ~limit:10 () with
+match Gamma.get_events client ~tag_slug:"politics" ~limit:(Nonneg_int.of_int_exn 10) () with
 | Ok events ->
-  List.iter (fun (e : Gamma_api.Types.event) ->
+  List.iter (fun (e : Gamma.event) ->
     Printf.printf "Event: %s\n"
       (Option.value ~default:"(no title)" e.title)
   ) events
 | Error err ->
-  Printf.printf "Error: %s\n" err.error
+  Printf.printf "Error: %s\n" err.Http.error
 ```
 
 ### Search
 
 ```ocaml
-match Gamma_api.Client.public_search client ~q:"election" ~limit_per_type:5 () with
+match Gamma.public_search client ~q:"election" ~limit_per_type:5 () with
 | Ok search ->
   let event_count = match search.events with Some e -> List.length e | None -> 0 in
   Printf.printf "Found %d events\n" event_count
 | Error err ->
-  Printf.printf "Error: %s\n" err.error
+  Printf.printf "Error: %s\n" err.Http.error
 ```
 
 ## CLOB API Examples
@@ -176,29 +173,29 @@ The CLOB (Central Limit Order Book) API provides access to order books, pricing,
 ### Get Order Book
 
 ```ocaml
-let client = Clob_api.Client.create ~sw ~net:(Eio.Stdenv.net env) () in
+let client = Clob.create ~sw ~net:(Eio.Stdenv.net env) () in
 let token_id = "12345..." in (* Token ID from Gamma API *)
-match Clob_api.Client.get_order_book client ~token_id () with
+match Clob.get_order_book client ~token_id () with
 | Ok book ->
   Printf.printf "Best bid: %s, Best ask: %s\n"
     (Option.value ~default:"N/A" book.best_bid)
     (Option.value ~default:"N/A" book.best_ask)
 | Error err ->
-  Printf.printf "Error: %s\n" err.error
+  Printf.printf "Error: %s\n" err.Http.error
 ```
 
 ### Get Price and Midpoint
 
 ```ocaml
 (* Get price for a specific side *)
-match Clob_api.Client.get_price client ~token_id ~side:Clob_api.Types.BUY () with
+match Clob.get_price client ~token_id ~side:Clob.BUY () with
 | Ok price -> Printf.printf "Price: %s\n" price.price
-| Error err -> Printf.printf "Error: %s\n" err.error
+| Error err -> Printf.printf "Error: %s\n" err.Http.error
 
 (* Get midpoint price *)
-match Clob_api.Client.get_midpoint client ~token_id () with
+match Clob.get_midpoint client ~token_id () with
 | Ok mid -> Printf.printf "Midpoint: %s\n" mid.mid
-| Error err -> Printf.printf "Error: %s\n" err.error
+| Error err -> Printf.printf "Error: %s\n" err.Http.error
 ```
 
 ### Authentication
@@ -211,16 +208,16 @@ The CLOB API supports two authentication levels:
 (* Derive API credentials from wallet *)
 let private_key = "your_private_key_hex_without_0x" in
 let nonce = int_of_float (Unix.gettimeofday () *. 1000.0) mod 1000000 in
-match Clob_api.Client.derive_api_key client ~private_key ~nonce with
+match Clob.derive_api_key client ~private_key ~nonce with
 | Ok resp ->
-  let creds = Clob_api.Auth_types.credentials_of_derive_response resp in
-  let address = Clob_api.Crypto.private_key_to_address private_key in
+  let creds = Clob.Auth_types.credentials_of_derive_response resp in
+  let address = Clob.Crypto.private_key_to_address private_key in
   (* Create authenticated client *)
-  let auth_client = Clob_api.Client.with_credentials client ~credentials:creds ~address in
+  let auth_client = Clob.with_credentials client ~credentials:creds ~address in
   (* Now use auth_client for authenticated endpoints *)
   ()
 | Error err ->
-  Printf.printf "Error: %s\n" err.error
+  Printf.printf "Error: %s\n" err.Http.error
 ```
 
 ### Authenticated Endpoints
@@ -229,68 +226,36 @@ Once you have an authenticated client, you can access trading endpoints:
 
 ```ocaml
 (* Get your open orders *)
-match Clob_api.Client.get_orders auth_client () with
+match Clob.get_orders auth_client () with
 | Ok orders ->
   List.iter (fun order ->
     Printf.printf "Order: %s @ %s\n" order.id order.price
   ) orders
 | Error err ->
-  Printf.printf "Error: %s\n" err.error
+  Printf.printf "Error: %s\n" err.Http.error
 
 (* Cancel all orders *)
-match Clob_api.Client.cancel_all auth_client () with
+match Clob.cancel_all auth_client () with
 | Ok resp -> Printf.printf "Cancelled: %b\n" resp.canceled
-| Error err -> Printf.printf "Error: %s\n" err.error
-```
-
-## Logging
-
-The library includes structured logging via `Common.Logger`. Enable it by setting the `POLYMARKET_LOG_LEVEL` environment variable:
-
-```bash
-# Debug level - detailed logging including HTTP response bodies
-POLYMARKET_LOG_LEVEL=debug dune exec examples/data_api_demo.exe
-
-# Info level - request URLs and response status codes
-POLYMARKET_LOG_LEVEL=info dune exec examples/data_api_demo.exe
-
-# Off (default) - no logging
-dune exec examples/data_api_demo.exe
-```
-
-Log messages follow a structured format:
-
-```
-[HTTP_CLIENT] [REQUEST] method="GET" url="https://..."
-[HTTP_CLIENT] [RESPONSE] method="GET" url="..." status="200"
-[DATA_API] [CALL] endpoint="/positions" user="0x..."
+| Error err -> Printf.printf "Error: %s\n" err.Http.error
 ```
 
 ## API Reference
 
 ### Module Structure
 
+The library provides a flattened API through three main modules:
+
 ```
 Polymarket
-├── Common          (* Shared utilities *)
-│   └── Logger      (* Structured logging *)
-├── Http_client     (* HTTP client with TLS support *)
-│   └── Client      (* HTTP request functions *)
-├── Data_api        (* Data API client *)
-│   ├── Client      (* API client functions *)
-│   ├── Types       (* Response types *)
-│   └── Params      (* Query parameter types *)
-├── Gamma_api       (* Gamma API client *)
-│   ├── Client      (* API client functions *)
-│   ├── Types       (* Response types *)
-│   └── Params      (* Query parameter types *)
-└── Clob_api        (* CLOB API client *)
-    ├── Client      (* API client functions *)
-    ├── Types       (* Response types *)
-    ├── Params      (* Query parameter types *)
-    ├── Auth        (* L1/L2 authentication *)
-    ├── Auth_types  (* Credential types *)
-    └── Crypto      (* Signing and hashing *)
+├── Gamma         (* Markets, events, series, search *)
+├── Data          (* Positions, trades, activity, leaderboards *)
+├── Clob          (* Order books, pricing, trading *)
+│   ├── Auth      (* L1/L2 authentication *)
+│   ├── Auth_types(* Credential types *)
+│   └── Crypto    (* Signing and hashing *)
+├── Http          (* HTTP client utilities *)
+└── Primitives    (* Validated types: Address, Hash64, Limit, etc. *)
 ```
 
 ### Data API Endpoints
@@ -380,6 +345,19 @@ Polymarket
 
 ### Type Reference
 
+#### Validated Primitive Types
+
+| Type | Description | Creation |
+|------|-------------|----------|
+| `Address.t` | Ethereum address (0x + 40 hex chars) | `Address.make_exn "0x..."` |
+| `Hash64.t` | 64-character hex hash | `Hash64.make_exn "0x..."` |
+| `Hash.t` | Variable-length hex string | `Hash.make_exn "0x..."` |
+| `Nonneg_int.t` | Non-negative integer | `Nonneg_int.of_int_exn 5` |
+| `Pos_int.t` | Positive integer | `Pos_int.of_int_exn 1` |
+| `Limit.t` | Pagination limit (1-1000) | `Limit.of_int_exn 100` |
+| `Offset.t` | Pagination offset (0-10000) | `Offset.of_int_exn 0` |
+| `Timestamp.t` | Unix timestamp | `Timestamp.of_float_exn 1234567890.0` |
+
 #### Data API Enums
 
 | Type | Values |
@@ -407,12 +385,26 @@ Polymarket
 | `order_type` | `GTC`, `GTD`, `FOK` |
 | `time_interval` | `MAX`, `ONE_WEEK`, `ONE_DAY`, `SIX_HOURS`, `ONE_HOUR` |
 
-#### Primitive Types
+## Sub-Libraries
 
-| Type | Description | Pattern |
-|------|-------------|---------|
-| `address` | Ethereum address | `^0x[a-fA-F0-9]{40}$` |
-| `hash64` | 64-character hex hash | `^0x[a-fA-F0-9]{64}$` |
+For finer-grained control, you can depend on individual sub-libraries:
+
+| Library | Description |
+|---------|-------------|
+| `polymarket` | Main library with flattened API (recommended) |
+| `polymarket.common` | Shared primitives (`Address`, `Hash64`, etc.) and utilities |
+| `polymarket.http` | HTTP client with TLS support |
+| `polymarket.gamma` | Gamma API client only |
+| `polymarket.data` | Data API client only |
+| `polymarket.clob` | CLOB API client only |
+
+To use a sub-library, add it to your dune file:
+
+```lisp
+(executable
+ (name my_app)
+ (libraries polymarket.gamma polymarket.common))
+```
 
 ## Development
 
@@ -453,9 +445,6 @@ dune exec examples/clob_api_demo.exe
 
 # CLOB API demo with private key for authentication
 POLY_PRIVATE_KEY=your_private_key_hex dune exec examples/clob_api_demo.exe
-
-# With debug logging enabled
-POLYMARKET_LOG_LEVEL=debug dune exec examples/data_api_demo.exe
 ```
 
 ### Code Formatting
@@ -470,25 +459,25 @@ dune fmt
 polymarket/
 ├── lib/
 │   ├── common/           # Shared utilities
-│   │   └── logger.ml     # Structured logging
+│   │   ├── logger.ml     # Structured logging
+│   │   └── primitives.ml # Validated types (Address, Hash64, Limit, etc.)
 │   ├── http_client/      # HTTP client
 │   │   └── client.ml     # TLS-enabled HTTP requests
 │   ├── data_api/         # Data API implementation
 │   │   ├── client.ml     # API client
-│   │   ├── params.ml     # Query parameters
-│   │   └── types.ml      # Response types
+│   │   └── types.ml      # Response types and enums
 │   ├── gamma_api/        # Gamma API implementation
 │   │   ├── client.ml     # API client
-│   │   ├── params.ml     # Query parameters
-│   │   └── types.ml      # Response types
+│   │   ├── query.ml      # Query parameter types
+│   │   └── responses.ml  # Response types
 │   ├── clob_api/         # CLOB API implementation
 │   │   ├── client.ml     # API client
 │   │   ├── types.ml      # Response types
-│   │   ├── params.ml     # Query parameters
 │   │   ├── auth.ml       # L1/L2 authentication
 │   │   ├── auth_types.ml # Credential types
 │   │   └── crypto.ml     # Signing and hashing
-│   └── polymarket.ml     # Main module
+│   ├── polymarket.ml     # Main module (flattened API)
+│   └── polymarket.mli    # Public interface
 ├── examples/
 │   ├── data_api_demo.ml  # Data API live demo
 │   ├── gamma_api_demo.ml # Gamma API live demo
