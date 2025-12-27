@@ -2,6 +2,8 @@
 
 module Logger = Polymarket_common.Logger
 
+let section = "WSS"
+
 (** Default WebSocket endpoint *)
 let default_host = "ws-subscriptions-clob.polymarket.com"
 
@@ -91,9 +93,9 @@ let connect_internal t =
   let host = t.config.host in
   let port = t.config.port in
   let resource = resource_path t in
+  let url = Printf.sprintf "wss://%s:%d%s" host port resource in
 
-  Logger.log_info ~section:"WSS" ~event:"CONNECT"
-    [ ("host", host); ("port", string_of_int port); ("resource", resource) ];
+  Logger.log_info ~section ~event:"CONNECT" [ ("url", url) ];
 
   (* Resolve address *)
   let addr =
@@ -113,7 +115,7 @@ let connect_internal t =
   let ssl_sock = Eio_ssl.Context.ssl_socket ssl_context in
   (* Configure SNI and ALPN for HTTP/1.1 WebSocket compatibility *)
   configure_ssl_socket ssl_sock host;
-  Logger.log_info ~section:"WSS" ~event:"TLS" [ ("status", "handshake_start") ];
+  Logger.log_debug ~section ~event:"TLS_HANDSHAKE" [];
   let tls_socket = Eio_ssl.connect ssl_context in
 
   (* Log negotiated ALPN protocol *)
@@ -122,8 +124,7 @@ let connect_internal t =
     | Some proto -> proto
     | None -> "none"
   in
-  Logger.log_info ~section:"WSS" ~event:"TLS"
-    [ ("status", "connected"); ("alpn", alpn_proto) ];
+  Logger.log_info ~section ~event:"TLS_CONNECTED" [ ("alpn", alpn_proto) ];
 
   (* Fail fast if HTTP/2 was negotiated - WebSocket requires HTTP/1.1 *)
   if alpn_proto = "h2" then
@@ -137,7 +138,7 @@ let connect_internal t =
     t.wsd <- Some wsd;
     t.state <- Connected;
     Eio.Promise.resolve set_connected ();
-    Logger.log_info ~section:"WSS" ~event:"CONNECTED" [];
+    Logger.log_info ~section ~event:"CONNECTED" [];
 
     (* Frame handler *)
     let frame ~opcode ~is_fin:_ ~len payload =
@@ -157,15 +158,11 @@ let connect_internal t =
           in
           schedule_read ()
       | `Ping ->
-          Logger.log_debug ~section:"WSS" ~event:"PING"
-            [ ("direction", "recv") ];
+          Logger.log_debug ~section ~event:"PING_RECV" [];
           Httpun_ws.Wsd.send_pong wsd
-      | `Pong ->
-          Logger.log_debug ~section:"WSS" ~event:"PONG"
-            [ ("direction", "recv") ]
+      | `Pong -> Logger.log_debug ~section ~event:"PONG_RECV" []
       | `Connection_close ->
-          Logger.log_info ~section:"WSS" ~event:"CLOSE"
-            [ ("reason", "server_initiated") ];
+          Logger.log_info ~section ~event:"CLOSED_BY_SERVER" [];
           t.state <- Disconnected;
           Httpun_ws.Payload.close payload
       | `Continuation | `Other _ -> ()
@@ -174,7 +171,7 @@ let connect_internal t =
     let eof ?error () =
       (match error with
       | Some (`Exn exn) ->
-          Logger.log_err ~section:"WSS" ~event:"ERROR"
+          Logger.log_err ~section ~event:"ERROR"
             [ ("error", Printexc.to_string exn) ]
       | None -> ());
       t.state <- Disconnected;
@@ -213,7 +210,7 @@ let connect_internal t =
             (Httpun.Status.to_string resp.Httpun.Response.status)
             headers_str !body_content
     in
-    Logger.log_err ~section:"WSS" ~event:"ERROR" [ ("error", msg) ];
+    Logger.log_err ~section ~event:"CONN_ERROR" [ ("error", msg) ];
     t.state <- Disconnected
   in
 
@@ -257,18 +254,17 @@ let send t msg =
       let bytes = Bytes.of_string msg in
       Httpun_ws.Wsd.send_bytes wsd ~kind:`Text bytes ~off:0
         ~len:(Bytes.length bytes);
-      Logger.log_debug ~section:"WSS" ~event:"SEND"
-        [ ("len", string_of_int (String.length msg)) ]
+      Logger.log_debug ~section ~event:"SENT" [ ("msg", msg) ]
   | None ->
-      Logger.log_warn ~section:"WSS" ~event:"SEND"
-        [ ("error", "not_connected") ]
+      Logger.log_warn ~section ~event:"SEND_FAILED"
+        [ ("reason", "not connected") ]
 
 (** Send ping to keep connection alive *)
 let send_ping t =
   match t.wsd with
   | Some wsd ->
       Httpun_ws.Wsd.send_ping wsd;
-      Logger.log_debug ~section:"WSS" ~event:"PING" [ ("direction", "send") ]
+      Logger.log_debug ~section ~event:"PING_SENT" []
   | None -> ()
 
 (** Check if connected *)
@@ -288,8 +284,7 @@ let close t =
       Httpun_ws.Wsd.close wsd;
       t.wsd <- None;
       t.state <- Disconnected;
-      Logger.log_info ~section:"WSS" ~event:"CLOSE"
-        [ ("reason", "client_initiated") ]
+      Logger.log_info ~section ~event:"CLOSED" []
   | None -> ()
 
 (** Check if connection is closed *)
@@ -306,14 +301,13 @@ let rec connect_with_retry t =
     match t.subscription_msg with
     | Some msg ->
         send t msg;
-        Logger.log_info ~section:"WSS" ~event:"SUBSCRIBE"
-          [ ("status", "resubscribed") ]
+        Logger.log_info ~section ~event:"RESUBSCRIBED" []
     | None -> ()
   with exn ->
-    Logger.log_warn ~section:"WSS" ~event:"RECONNECT"
+    Logger.log_warn ~section ~event:"CONN_FAILED"
       [
         ("error", Printexc.to_string exn);
-        ("backoff_sec", Printf.sprintf "%.1f" backoff);
+        ("retry_in", Printf.sprintf "%.1fs" backoff);
       ];
     t.state <- Reconnecting (min (backoff *. 2.0) t.config.max_backoff);
     Eio_unix.sleep backoff;
@@ -330,10 +324,9 @@ let run_with_reconnect t ~on_disconnect =
       (* Check connection status periodically *)
       Eio_unix.sleep 1.0
     done;
-    Logger.log_info ~section:"WSS" ~event:"MONITOR"
-      [ ("status", "stopped"); ("reason", "closed") ]
+    Logger.log_info ~section ~event:"MONITOR_STOPPED" []
   with Eio.Cancel.Cancelled _ ->
-    Logger.log_debug ~section:"WSS" ~event:"MONITOR" [ ("status", "cancelled") ]
+    Logger.log_debug ~section ~event:"MONITOR_CANCELLED" []
 
 (** Start keepalive ping loop *)
 let start_keepalive t ~interval =
@@ -343,8 +336,6 @@ let start_keepalive t ~interval =
           Eio_unix.sleep interval;
           if is_connected t then send_ping t
         done;
-        Logger.log_debug ~section:"WSS" ~event:"KEEPALIVE"
-          [ ("status", "stopped"); ("reason", "closed") ]
+        Logger.log_debug ~section ~event:"KEEPALIVE_STOPPED" []
       with Eio.Cancel.Cancelled _ ->
-        Logger.log_debug ~section:"WSS" ~event:"KEEPALIVE"
-          [ ("status", "cancelled") ])
+        Logger.log_debug ~section ~event:"KEEPALIVE_CANCELLED" [])

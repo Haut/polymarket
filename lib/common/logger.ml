@@ -37,16 +37,10 @@ let setup () =
             None
         | some_level -> some_level)
   in
-  (* Only set log level for our sources, not globally (to avoid third-party noise) *)
-  Logs.Src.set_level src log_level;
-  (* Also set for WSS sources *)
-  List.iter
-    (fun s ->
-      if
-        String.length (Logs.Src.name s) >= 11
-        && String.sub (Logs.Src.name s) 0 11 = "polymarket."
-      then Logs.Src.set_level s log_level)
-    (Logs.Src.list ())
+  (* Set default log level for all sources *)
+  Logs.set_level log_level;
+  (* Also set explicitly for this source *)
+  Logs.Src.set_level src log_level
 
 (** {1 Structured Logging} *)
 

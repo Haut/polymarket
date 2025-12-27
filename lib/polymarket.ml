@@ -28,25 +28,26 @@ end
 module Clob = struct
   (** CLOB API client for order books, pricing, and trading. *)
 
-  include Polymarket_clob.Client
+  let default_base_url = Polymarket_clob.Client.default_base_url
+
   module Types = Polymarket_clob.Types
   module Auth = Polymarket_clob.Auth
   module Auth_types = Polymarket_clob.Auth_types
   module Crypto = Polymarket_clob.Crypto
 
-  type unauthed = Polymarket_clob.Client_typestate.unauthed
-  type l1 = Polymarket_clob.Client_typestate.l1
-  type l2 = Polymarket_clob.Client_typestate.l2
+  type unauthed = Polymarket_clob.Client.unauthed
+  type l1 = Polymarket_clob.Client.l1
+  type l2 = Polymarket_clob.Client.l2
 
-  module Unauthed = Polymarket_clob.Client_typestate.Unauthed
-  module L1 = Polymarket_clob.Client_typestate.L1
-  module L2 = Polymarket_clob.Client_typestate.L2
+  module Unauthed = Polymarket_clob.Client.Unauthed
+  module L1 = Polymarket_clob.Client.L1
+  module L2 = Polymarket_clob.Client.L2
 
-  let upgrade_to_l1 = Polymarket_clob.Client_typestate.upgrade_to_l1
-  let upgrade_to_l2 = Polymarket_clob.Client_typestate.upgrade_to_l2
-  let l2_to_l1 = Polymarket_clob.Client_typestate.l2_to_l1
-  let l2_to_unauthed = Polymarket_clob.Client_typestate.l2_to_unauthed
-  let l1_to_unauthed = Polymarket_clob.Client_typestate.l1_to_unauthed
+  let upgrade_to_l1 = Polymarket_clob.Client.upgrade_to_l1
+  let upgrade_to_l2 = Polymarket_clob.Client.upgrade_to_l2
+  let l2_to_l1 = Polymarket_clob.Client.l2_to_l1
+  let l2_to_unauthed = Polymarket_clob.Client.l2_to_unauthed
+  let l1_to_unauthed = Polymarket_clob.Client.l1_to_unauthed
 end
 
 module Http = Polymarket_http.Client

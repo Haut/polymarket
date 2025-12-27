@@ -4,6 +4,8 @@
 
 module Logger = Polymarket_common.Logger
 
+let section = "WSS"
+
 (** Keepalive interval in seconds *)
 let keepalive_interval = 10.0
 
@@ -39,21 +41,21 @@ module Market = struct
             let msgs = Types.parse_message ~channel:Types.Channel.Market raw in
             List.iter (fun msg -> Eio.Stream.add message_stream msg) msgs
           done;
-          Logger.log_debug ~section:"WSS" ~event:"PARSER"
-            [ ("channel", "market"); ("status", "stopped") ]
+          Logger.log_debug ~section ~event:"PARSER_STOPPED"
+            [ ("channel", "market") ]
         with
         | Eio.Cancel.Cancelled _ ->
-            Logger.log_debug ~section:"WSS" ~event:"PARSER"
-              [ ("channel", "market"); ("status", "cancelled") ]
+            Logger.log_debug ~section ~event:"PARSER_CANCELLED"
+              [ ("channel", "market") ]
         | exn ->
-            Logger.log_err ~section:"WSS" ~event:"PARSER"
+            Logger.log_err ~section ~event:"PARSER_ERROR"
               [ ("channel", "market"); ("error", Printexc.to_string exn) ]);
 
     (* Start reconnection monitor in background *)
     Eio.Fiber.fork ~sw (fun () ->
         Connection.run_with_reconnect conn ~on_disconnect:(fun () ->
-            Logger.log_info ~section:"WSS" ~event:"DISCONNECT"
-              [ ("channel", "market"); ("action", "reconnecting") ]));
+            Logger.log_info ~section ~event:"RECONNECTING"
+              [ ("channel", "market") ]));
 
     { conn; message_stream; asset_ids }
 
@@ -107,21 +109,21 @@ module User = struct
             let msgs = Types.parse_message ~channel:Types.Channel.User raw in
             List.iter (fun msg -> Eio.Stream.add message_stream msg) msgs
           done;
-          Logger.log_debug ~section:"WSS" ~event:"PARSER"
-            [ ("channel", "user"); ("status", "stopped") ]
+          Logger.log_debug ~section ~event:"PARSER_STOPPED"
+            [ ("channel", "user") ]
         with
         | Eio.Cancel.Cancelled _ ->
-            Logger.log_debug ~section:"WSS" ~event:"PARSER"
-              [ ("channel", "user"); ("status", "cancelled") ]
+            Logger.log_debug ~section ~event:"PARSER_CANCELLED"
+              [ ("channel", "user") ]
         | exn ->
-            Logger.log_err ~section:"WSS" ~event:"PARSER"
+            Logger.log_err ~section ~event:"PARSER_ERROR"
               [ ("channel", "user"); ("error", Printexc.to_string exn) ]);
 
     (* Start reconnection monitor in background *)
     Eio.Fiber.fork ~sw (fun () ->
         Connection.run_with_reconnect conn ~on_disconnect:(fun () ->
-            Logger.log_info ~section:"WSS" ~event:"DISCONNECT"
-              [ ("channel", "user"); ("action", "reconnecting") ]));
+            Logger.log_info ~section ~event:"RECONNECTING"
+              [ ("channel", "user") ]));
 
     { conn; message_stream }
 
