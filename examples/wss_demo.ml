@@ -8,34 +8,56 @@
 
 open Polymarket
 
-(** BTC 15-minute up/down market token IDs (11:15AM-11:30AM ET) *)
+(** BTC 15-minute up/down market token IDs (11:30AM-11:45AM ET) *)
 let btc_15m_tokens =
   [
-    "26060244286464519668811473204271758681039108505277070711042957949579613021410";
-    "82687937324480524188563760165060496550572104948772493241341448161316962449821";
+    "90537656988681332190152553956251798703285617329864967215099855163235832712503";
+    "17777926850952096189805690713073409186209077885446432345429015819936583971311";
   ]
 
-(** Format a market message for display *)
-let format_message = function
+(** Log a market message with structured format *)
+let log_message n = function
   | Wss.Types.Market (Book msg) ->
-      Printf.sprintf "[BOOK] asset=%s bids=%d asks=%d"
-        (String.sub msg.asset_id 0 (min 16 (String.length msg.asset_id)))
-        (List.length msg.bids) (List.length msg.asks)
+      Logger.info "BOOK"
+        [
+          ("n", string_of_int n);
+          ( "asset",
+            String.sub msg.asset_id 0 (min 16 (String.length msg.asset_id)) );
+          ("bids", string_of_int (List.length msg.bids));
+          ("asks", string_of_int (List.length msg.asks));
+        ]
   | Wss.Types.Market (Price_change msg) ->
-      Printf.sprintf "[PRICE] market=%s changes=%d"
-        (String.sub msg.market 0 (min 16 (String.length msg.market)))
-        (List.length msg.price_changes)
+      Logger.info "PRICE"
+        [
+          ("n", string_of_int n);
+          ("market", String.sub msg.market 0 (min 16 (String.length msg.market)));
+          ("changes", string_of_int (List.length msg.price_changes));
+        ]
   | Wss.Types.Market (Last_trade_price msg) ->
-      Printf.sprintf "[TRADE] price=%s size=%s side=%s" msg.price msg.size
-        msg.side
+      Logger.info "TRADE"
+        [
+          ("n", string_of_int n);
+          ("price", msg.price);
+          ("size", msg.size);
+          ("side", msg.side);
+        ]
   | Wss.Types.Market (Tick_size_change msg) ->
-      Printf.sprintf "[TICK] old=%s new=%s" msg.old_tick_size msg.new_tick_size
+      Logger.info "TICK"
+        [
+          ("n", string_of_int n);
+          ("old", msg.old_tick_size);
+          ("new", msg.new_tick_size);
+        ]
   | Wss.Types.Market (Best_bid_ask msg) ->
-      Printf.sprintf "[BBA] bid=%s ask=%s" msg.best_bid msg.best_ask
-  | Wss.Types.User _ -> "[USER] (unexpected)"
+      Logger.info "BBA"
+        [ ("n", string_of_int n); ("bid", msg.best_bid); ("ask", msg.best_ask) ]
+  | Wss.Types.User _ -> Logger.info "USER" [ ("n", string_of_int n) ]
   | Wss.Types.Unknown raw ->
-      Printf.sprintf "[UNKNOWN] %s"
-        (String.sub raw 0 (min 50 (String.length raw)))
+      Logger.info "UNKNOWN"
+        [
+          ("n", string_of_int n);
+          ("raw", String.sub raw 0 (min 50 (String.length raw)));
+        ]
 
 let run_demo env =
   Logger.setup ();
@@ -59,8 +81,7 @@ let run_demo env =
      while true do
        let msg = Eio.Stream.take stream in
        incr count;
-       let formatted = format_message msg in
-       Logger.info "MSG" [ ("n", string_of_int !count); ("data", formatted) ];
+       log_message !count msg;
        (* Stop after 50 messages for demo purposes *)
        if !count >= 50 then begin
          Logger.info "LIMIT" [ ("message", "reached 50 messages, stopping") ];
