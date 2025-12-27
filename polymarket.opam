@@ -55,4 +55,3 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/haut/polymarket.git"
-available: os-distribution != "cygwin"
