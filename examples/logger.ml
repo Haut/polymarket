@@ -26,14 +26,24 @@ let pp_header ppf (level, _header) =
   | Logs.Warning -> Format.fprintf ppf "%s [WARN]" ts
   | _ -> Format.fprintf ppf "%s" ts
 
+let is_polymarket_source src =
+  let name = Logs.Src.name src in
+  name = "demo"
+  || (String.length name >= 10 && String.sub name 0 10 = "polymarket")
+
 let make_reporter ppf =
-  let report _src level ~over k msgf =
-    let k _ =
+  let report src level ~over k msgf =
+    if is_polymarket_source src then
+      let k _ =
+        over ();
+        k ()
+      in
+      msgf @@ fun ?header:_ ?tags:_ fmt ->
+      Format.kfprintf k ppf ("%a @[" ^^ fmt ^^ "@]@.") pp_header (level, None)
+    else begin
       over ();
       k ()
-    in
-    msgf @@ fun ?header:_ ?tags:_ fmt ->
-    Format.kfprintf k ppf ("%a @[" ^^ fmt ^^ "@]@.") pp_header (level, None)
+    end
   in
   { Logs.report }
 

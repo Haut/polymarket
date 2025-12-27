@@ -37,7 +37,7 @@ let setup () =
             None
         | some_level -> some_level)
   in
-  (* Set default log level for all sources (including wss, etc) *)
+  (* Set default log level for all sources *)
   Logs.set_level log_level;
   (* Also set explicitly for this source *)
   Logs.Src.set_level src log_level

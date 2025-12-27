@@ -2,9 +2,9 @@
 
     Provides typed streaming access to Market and User channels. *)
 
-let src = Logs.Src.create "polymarket.wss.client" ~doc:"Polymarket WSS client"
+module Logger = Polymarket_common.Logger
 
-module Log = (val Logs.src_log src : Logs.LOG)
+let section = "WSS"
 
 (** Keepalive interval in seconds *)
 let keepalive_interval = 10.0
@@ -41,18 +41,21 @@ module Market = struct
             let msgs = Types.parse_message ~channel:Types.Channel.Market raw in
             List.iter (fun msg -> Eio.Stream.add message_stream msg) msgs
           done;
-          Log.debug (fun m -> m "Market message parser stopped")
+          Logger.log_debug ~section ~event:"PARSER_STOPPED"
+            [ ("channel", "market") ]
         with
         | Eio.Cancel.Cancelled _ ->
-            Log.debug (fun m -> m "Market message parser cancelled")
+            Logger.log_debug ~section ~event:"PARSER_CANCELLED"
+              [ ("channel", "market") ]
         | exn ->
-            Log.err (fun m ->
-                m "Market message parser error: %s" (Printexc.to_string exn)));
+            Logger.log_err ~section ~event:"PARSER_ERROR"
+              [ ("channel", "market"); ("error", Printexc.to_string exn) ]);
 
     (* Start reconnection monitor in background *)
     Eio.Fiber.fork ~sw (fun () ->
         Connection.run_with_reconnect conn ~on_disconnect:(fun () ->
-            Log.info (fun m -> m "Market channel disconnected, reconnecting...")));
+            Logger.log_info ~section ~event:"RECONNECTING"
+              [ ("channel", "market") ]));
 
     { conn; message_stream; asset_ids }
 
@@ -106,18 +109,21 @@ module User = struct
             let msgs = Types.parse_message ~channel:Types.Channel.User raw in
             List.iter (fun msg -> Eio.Stream.add message_stream msg) msgs
           done;
-          Log.debug (fun m -> m "User message parser stopped")
+          Logger.log_debug ~section ~event:"PARSER_STOPPED"
+            [ ("channel", "user") ]
         with
         | Eio.Cancel.Cancelled _ ->
-            Log.debug (fun m -> m "User message parser cancelled")
+            Logger.log_debug ~section ~event:"PARSER_CANCELLED"
+              [ ("channel", "user") ]
         | exn ->
-            Log.err (fun m ->
-                m "User message parser error: %s" (Printexc.to_string exn)));
+            Logger.log_err ~section ~event:"PARSER_ERROR"
+              [ ("channel", "user"); ("error", Printexc.to_string exn) ]);
 
     (* Start reconnection monitor in background *)
     Eio.Fiber.fork ~sw (fun () ->
         Connection.run_with_reconnect conn ~on_disconnect:(fun () ->
-            Log.info (fun m -> m "User channel disconnected, reconnecting...")));
+            Logger.log_info ~section ~event:"RECONNECTING"
+              [ ("channel", "user") ]));
 
     { conn; message_stream }
 
