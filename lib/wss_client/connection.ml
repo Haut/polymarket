@@ -1,8 +1,6 @@
 (** Low-level WebSocket connection management with reconnection support. *)
 
-let src = Logs.Src.create "polymarket.wss" ~doc:"Polymarket WSS client"
-
-module Log = (val Logs.src_log src : Logs.LOG)
+module Logger = Polymarket_common.Logger
 
 (** Default WebSocket endpoint *)
 let default_host = "ws-subscriptions-clob.polymarket.com"
@@ -94,7 +92,8 @@ let connect_internal t =
   let port = t.config.port in
   let resource = resource_path t in
 
-  Log.info (fun m -> m "Connecting to wss://%s:%d%s" host port resource);
+  Logger.log_info ~section:"WSS" ~event:"CONNECT"
+    [ ("host", host); ("port", string_of_int port); ("resource", resource) ];
 
   (* Resolve address *)
   let addr =
@@ -114,7 +113,7 @@ let connect_internal t =
   let ssl_sock = Eio_ssl.Context.ssl_socket ssl_context in
   (* Configure SNI and ALPN for HTTP/1.1 WebSocket compatibility *)
   configure_ssl_socket ssl_sock host;
-  Log.info (fun m -> m "Starting TLS handshake...");
+  Logger.log_info ~section:"WSS" ~event:"TLS" [ ("status", "handshake_start") ];
   let tls_socket = Eio_ssl.connect ssl_context in
 
   (* Log negotiated ALPN protocol *)
@@ -123,7 +122,8 @@ let connect_internal t =
     | Some proto -> proto
     | None -> "none"
   in
-  Log.info (fun m -> m "TLS connected. ALPN negotiated: %s" alpn_proto);
+  Logger.log_info ~section:"WSS" ~event:"TLS"
+    [ ("status", "connected"); ("alpn", alpn_proto) ];
 
   (* Fail fast if HTTP/2 was negotiated - WebSocket requires HTTP/1.1 *)
   if alpn_proto = "h2" then
@@ -137,7 +137,7 @@ let connect_internal t =
     t.wsd <- Some wsd;
     t.state <- Connected;
     Eio.Promise.resolve set_connected ();
-    Log.info (fun m -> m "WebSocket connected");
+    Logger.log_info ~section:"WSS" ~event:"CONNECTED" [];
 
     (* Frame handler *)
     let frame ~opcode ~is_fin:_ ~len payload =
@@ -157,11 +157,15 @@ let connect_internal t =
           in
           schedule_read ()
       | `Ping ->
-          Log.debug (fun m -> m "Received PING");
+          Logger.log_debug ~section:"WSS" ~event:"PING"
+            [ ("direction", "recv") ];
           Httpun_ws.Wsd.send_pong wsd
-      | `Pong -> Log.debug (fun m -> m "Received PONG")
+      | `Pong ->
+          Logger.log_debug ~section:"WSS" ~event:"PONG"
+            [ ("direction", "recv") ]
       | `Connection_close ->
-          Log.info (fun m -> m "Connection closed by server");
+          Logger.log_info ~section:"WSS" ~event:"CLOSE"
+            [ ("reason", "server_initiated") ];
           t.state <- Disconnected;
           Httpun_ws.Payload.close payload
       | `Continuation | `Other _ -> ()
@@ -170,7 +174,8 @@ let connect_internal t =
     let eof ?error () =
       (match error with
       | Some (`Exn exn) ->
-          Log.err (fun m -> m "WebSocket error: %s" (Printexc.to_string exn))
+          Logger.log_err ~section:"WSS" ~event:"ERROR"
+            [ ("error", Printexc.to_string exn) ]
       | None -> ());
       t.state <- Disconnected;
       t.wsd <- None
@@ -208,7 +213,7 @@ let connect_internal t =
             (Httpun.Status.to_string resp.Httpun.Response.status)
             headers_str !body_content
     in
-    Log.err (fun m -> m "Connection error: %s" msg);
+    Logger.log_err ~section:"WSS" ~event:"ERROR" [ ("error", msg) ];
     t.state <- Disconnected
   in
 
@@ -252,15 +257,18 @@ let send t msg =
       let bytes = Bytes.of_string msg in
       Httpun_ws.Wsd.send_bytes wsd ~kind:`Text bytes ~off:0
         ~len:(Bytes.length bytes);
-      Log.debug (fun m -> m "Sent: %s" msg)
-  | None -> Log.warn (fun m -> m "Cannot send: not connected")
+      Logger.log_debug ~section:"WSS" ~event:"SEND"
+        [ ("len", string_of_int (String.length msg)) ]
+  | None ->
+      Logger.log_warn ~section:"WSS" ~event:"SEND"
+        [ ("error", "not_connected") ]
 
 (** Send ping to keep connection alive *)
 let send_ping t =
   match t.wsd with
   | Some wsd ->
       Httpun_ws.Wsd.send_ping wsd;
-      Log.debug (fun m -> m "Sent PING")
+      Logger.log_debug ~section:"WSS" ~event:"PING" [ ("direction", "send") ]
   | None -> ()
 
 (** Check if connected *)
@@ -280,7 +288,8 @@ let close t =
       Httpun_ws.Wsd.close wsd;
       t.wsd <- None;
       t.state <- Disconnected;
-      Log.info (fun m -> m "Connection closed")
+      Logger.log_info ~section:"WSS" ~event:"CLOSE"
+        [ ("reason", "client_initiated") ]
   | None -> ()
 
 (** Check if connection is closed *)
@@ -297,12 +306,15 @@ let rec connect_with_retry t =
     match t.subscription_msg with
     | Some msg ->
         send t msg;
-        Log.info (fun m -> m "Resubscribed after reconnect")
+        Logger.log_info ~section:"WSS" ~event:"SUBSCRIBE"
+          [ ("status", "resubscribed") ]
     | None -> ()
   with exn ->
-    Log.warn (fun m ->
-        m "Connection failed (%s), retrying in %.1fs" (Printexc.to_string exn)
-          backoff);
+    Logger.log_warn ~section:"WSS" ~event:"RECONNECT"
+      [
+        ("error", Printexc.to_string exn);
+        ("backoff_sec", Printf.sprintf "%.1f" backoff);
+      ];
     t.state <- Reconnecting (min (backoff *. 2.0) t.config.max_backoff);
     Eio_unix.sleep backoff;
     connect_with_retry t
@@ -318,9 +330,10 @@ let run_with_reconnect t ~on_disconnect =
       (* Check connection status periodically *)
       Eio_unix.sleep 1.0
     done;
-    Log.info (fun m -> m "Reconnection monitor stopped (connection closed)")
+    Logger.log_info ~section:"WSS" ~event:"MONITOR"
+      [ ("status", "stopped"); ("reason", "closed") ]
   with Eio.Cancel.Cancelled _ ->
-    Log.debug (fun m -> m "Reconnection monitor cancelled")
+    Logger.log_debug ~section:"WSS" ~event:"MONITOR" [ ("status", "cancelled") ]
 
 (** Start keepalive ping loop *)
 let start_keepalive t ~interval =
@@ -330,6 +343,8 @@ let start_keepalive t ~interval =
           Eio_unix.sleep interval;
           if is_connected t then send_ping t
         done;
-        Log.debug (fun m -> m "Keepalive stopped (connection closed)")
+        Logger.log_debug ~section:"WSS" ~event:"KEEPALIVE"
+          [ ("status", "stopped"); ("reason", "closed") ]
       with Eio.Cancel.Cancelled _ ->
-        Log.debug (fun m -> m "Keepalive cancelled"))
+        Logger.log_debug ~section:"WSS" ~event:"KEEPALIVE"
+          [ ("status", "cancelled") ])
