@@ -370,7 +370,7 @@ type value = { user : Polymarket_common.Primitives.Address.t; value : float }
 (** Value record *)
 
 type open_interest = {
-  market : Polymarket_common.Primitives.Hash64.t;
+  market : string;  (** Can be "GLOBAL" or a condition ID hash *)
   value : float;
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
