@@ -134,19 +134,20 @@ module Clob : sig
         | Error _ -> ...
       ]} *)
 
-  include module type of Polymarket_clob.Client
+  val default_base_url : string
+
   module Types = Polymarket_clob.Types
   module Auth = Polymarket_clob.Auth
   module Auth_types = Polymarket_clob.Auth_types
   module Crypto = Polymarket_clob.Crypto
 
-  type unauthed = Polymarket_clob.Client_typestate.unauthed
-  type l1 = Polymarket_clob.Client_typestate.l1
-  type l2 = Polymarket_clob.Client_typestate.l2
+  type unauthed = Polymarket_clob.Client.unauthed
+  type l1 = Polymarket_clob.Client.l1
+  type l2 = Polymarket_clob.Client.l2
 
-  module Unauthed = Polymarket_clob.Client_typestate.Unauthed
-  module L1 = Polymarket_clob.Client_typestate.L1
-  module L2 = Polymarket_clob.Client_typestate.L2
+  module Unauthed = Polymarket_clob.Client.Unauthed
+  module L1 = Polymarket_clob.Client.L1
+  module L2 = Polymarket_clob.Client.L2
 
   val upgrade_to_l1 : unauthed -> private_key:string -> l1
 
