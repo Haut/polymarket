@@ -1,0 +1,81 @@
+name: Windows CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+env:
+  OPAMROOT: D:\opamroot
+  OPAMSOLVERTIMEOUT: 120
+  MSYS: winsymlinks:native
+
+jobs:
+  build:
+    name: "target/host: x86_64-w64-mingw32, build: ${{ matrix.build }}"
+    runs-on: windows-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        build: [cygwin, msys2]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Download opam install script
+        run: Invoke-WebRequest -Uri "https://raw.githubusercontent.com/ocaml/opam/master/shell/install.ps1" -OutFile install.ps1
+
+      - name: Cache opam
+        uses: actions/cache@v4
+        with:
+          path: |
+            D:\opamroot
+            D:\cygwin64
+          key: windows-${{ matrix.build }}-opam-${{ hashFiles('*.opam') }}
+          restore-keys: |
+            windows-${{ matrix.build }}-opam-
+
+      - name: Initialize opam
+        shell: pwsh
+        run: |
+          if (!(Test-Path $env:OPAMROOT)) {
+            .\install.ps1 -OpamBinDir D:\opam -Cygwin -CygwinMirror https://mirrors.kernel.org/sourceware/cygwin/ -OCamlVersionMin 5.1
+            D:\opam\opam init --bare -a -y --disable-sandboxing
+          }
+
+      - name: Set up msys2
+        if: matrix.build == 'msys2'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          install: m4 make mingw-w64-x86_64-gcc mingw-w64-x86_64-pkg-config rsync unzip
+
+      - name: Create opam switch
+        shell: pwsh
+        run: |
+          $env:PATH = "D:\opam;D:\cygwin64\bin;$env:PATH"
+          opam switch create . 5.2.1 --no-install -y || opam switch .
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          $env:PATH = "D:\opam;D:\cygwin64\bin;$env:PATH"
+          opam install . --deps-only -y
+
+      - name: Build
+        shell: pwsh
+        run: |
+          $env:PATH = "D:\opam;D:\cygwin64\bin;$env:PATH"
+          opam exec -- dune build
+
+      - name: Run tests
+        shell: pwsh
+        run: |
+          $env:PATH = "D:\opam;D:\cygwin64\bin;$env:PATH"
+          opam exec -- dune runtest
