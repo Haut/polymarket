@@ -1,0 +1,20 @@
+(library
+ (name polymarket_wss)
+ (public_name polymarket.wss)
+ (libraries
+  polymarket_common
+  polymarket_clob
+  eio
+  eio_main
+  yojson
+  ppx_yojson_conv_lib
+  uri
+  ssl
+  eio-ssl
+  httpun
+  httpun-ws
+  httpun-ws-eio
+  digestif
+  logs)
+ (preprocess
+  (pps ppx_yojson_conv ppx_deriving.show ppx_deriving.eq)))

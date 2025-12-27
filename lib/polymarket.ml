@@ -80,3 +80,19 @@ module Extended_offset = Polymarket_common.Primitives.Extended_offset
 module Leaderboard_limit = Polymarket_common.Primitives.Leaderboard_limit
 module Leaderboard_offset = Polymarket_common.Primitives.Leaderboard_offset
 module Builder_limit = Polymarket_common.Primitives.Builder_limit
+
+(** {1 WebSocket API}
+
+    Real-time streaming access to market and user data via WebSocket. *)
+
+module Wss = struct
+  (** WebSocket client for real-time market and user updates.
+
+      Provides typed streaming access to:
+      - Market channel: orderbook updates, price changes, trades
+      - User channel: order and trade events for authenticated users *)
+
+  include Polymarket_wss.Client
+  module Types = Polymarket_wss.Types
+  module Connection = Polymarket_wss.Connection
+end
