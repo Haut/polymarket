@@ -71,7 +71,7 @@ let log_request ~method_ ~uri =
 
 let log_response ~method_ ~uri ~status ~body =
   let url = Uri.to_string uri in
-  let status_code = string_of_int (Cohttp.Code.code_of_status status) in
+  let status_code = match status with `Code c -> string_of_int c in
   log_info ~section:"HTTP_CLIENT" ~event:"RESPONSE"
     [ ("method", method_); ("url", url); ("status", status_code) ];
   log_debug ~section:"HTTP_CLIENT" ~event:"BODY" [ ("body", body) ]

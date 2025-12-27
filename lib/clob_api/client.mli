@@ -13,7 +13,7 @@ val create :
   ?credentials:Auth_types.credentials ->
   ?address:string ->
   sw:Eio.Switch.t ->
-  net:_ Eio.Net.t ->
+  env:Eio_unix.Stdenv.base ->
   rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
   unit ->
   t
@@ -23,7 +23,7 @@ val create :
     @param address
       Optional Ethereum address (required if credentials are provided)
     @param sw The Eio switch for resource management
-    @param net The Eio network capability
+    @param env The Eio environment
     @param rate_limiter Shared rate limiter for enforcing API limits *)
 
 val with_credentials :

@@ -10,32 +10,13 @@ module R = Polymarket_rate_limiter.Rate_limiter
 
 type t = {
   base_url : string;
-  client : Cohttp_eio.Client.t;
+  env : Eio_unix.Stdenv.base;
   sw : Eio.Switch.t;
   rate_limiter : R.t;
 }
 
-let create ~base_url ~sw ~net ~rate_limiter () =
-  let authenticator =
-    match Ca_certs.authenticator () with
-    | Ok x -> x
-    | Error (`Msg m) -> failwith ("Failed to create X509 authenticator: " ^ m)
-  in
-  let https =
-    let tls_config =
-      match Tls.Config.client ~authenticator () with
-      | Error (`Msg msg) -> failwith ("TLS configuration error: " ^ msg)
-      | Ok cfg -> cfg
-    in
-    fun uri raw ->
-      let host =
-        Uri.host uri
-        |> Option.map (fun x -> Domain_name.(host_exn (of_string_exn x)))
-      in
-      Tls_eio.client_of_flow ?host tls_config raw
-  in
-  let client = Cohttp_eio.Client.make ~https:(Some https) net in
-  { base_url; client; sw; rate_limiter }
+let create ~base_url ~sw ~env ~rate_limiter () =
+  { base_url; env; sw; rate_limiter }
 
 let base_url t = t.base_url
 
@@ -74,65 +55,86 @@ let build_uri base_url path params =
   let uri = Uri.of_string (base_url ^ path) in
   Uri.add_query_params uri params
 
+type status_code = int
+
 let apply_rate_limit t ~method_ ~uri =
   R.before_request t.rate_limiter ~method_ ~uri
+
+(** Helper to extract body string from Piaf response *)
+let body_to_string body =
+  match Piaf.Body.to_string body with
+  | Ok s -> s
+  | Error err ->
+      Printf.sprintf "{\"error\": \"Body read error: %s\"}"
+        (Piaf.Error.to_string err)
+
+(** Helper to perform request with a Piaf client *)
+let with_client t uri f =
+  match Piaf.Client.create ~sw:t.sw t.env uri with
+  | Ok client ->
+      let result = f client in
+      Piaf.Client.shutdown client;
+      result
+  | Error err ->
+      ( 500,
+        Printf.sprintf {|{"error": "Connection failed: %s"}|}
+          (Piaf.Error.to_string err) )
 
 let do_get ?(headers = []) t uri =
   apply_rate_limit t ~method_:"GET" ~uri;
   Polymarket_common.Logger.log_request ~method_:"GET" ~uri;
-  try
-    let headers = Cohttp.Header.of_list headers in
-    let resp, body = Cohttp_eio.Client.get ~sw:t.sw ~headers t.client uri in
-    let status = Cohttp.Response.status resp in
-    let body_str = Eio.Buf_read.(parse_exn take_all) body ~max_size:max_int in
-    Polymarket_common.Logger.log_response ~method_:"GET" ~uri ~status
-      ~body:body_str;
-    (status, body_str)
-  with exn ->
-    Polymarket_common.Logger.log_error ~method_:"GET" ~uri ~exn;
-    ( `Internal_server_error,
-      Printf.sprintf {|{"error": "Request failed: %s"}|}
-        (Printexc.to_string exn) )
+  let path = Uri.path_and_query uri in
+  with_client t uri (fun client ->
+      match Piaf.Client.get client ~headers path with
+      | Ok response ->
+          let status = Piaf.Status.to_code response.status in
+          let body_str = body_to_string response.body in
+          Polymarket_common.Logger.log_response ~method_:"GET" ~uri
+            ~status:(`Code status) ~body:body_str;
+          (status, body_str)
+      | Error err ->
+          let msg = Piaf.Error.to_string err in
+          Polymarket_common.Logger.log_error ~method_:"GET" ~uri
+            ~exn:(Failure msg);
+          (500, Printf.sprintf {|{"error": "Request failed: %s"}|} msg))
 
 let do_post ?(headers = []) t uri ~body:request_body =
   apply_rate_limit t ~method_:"POST" ~uri;
   Polymarket_common.Logger.log_request ~method_:"POST" ~uri;
-  try
-    let all_headers = ("Content-Type", "application/json") :: headers in
-    let headers = Cohttp.Header.of_list all_headers in
-    let body = Cohttp_eio.Body.of_string request_body in
-    let resp, resp_body =
-      Cohttp_eio.Client.post ~sw:t.sw ~headers ~body t.client uri
-    in
-    let status = Cohttp.Response.status resp in
-    let body_str =
-      Eio.Buf_read.(parse_exn take_all) resp_body ~max_size:max_int
-    in
-    Polymarket_common.Logger.log_response ~method_:"POST" ~uri ~status
-      ~body:body_str;
-    (status, body_str)
-  with exn ->
-    Polymarket_common.Logger.log_error ~method_:"POST" ~uri ~exn;
-    ( `Internal_server_error,
-      Printf.sprintf {|{"error": "Request failed: %s"}|}
-        (Printexc.to_string exn) )
+  let path = Uri.path_and_query uri in
+  let all_headers = ("Content-Type", "application/json") :: headers in
+  let body = Piaf.Body.of_string request_body in
+  with_client t uri (fun client ->
+      match Piaf.Client.post client ~headers:all_headers ~body path with
+      | Ok response ->
+          let status = Piaf.Status.to_code response.status in
+          let body_str = body_to_string response.body in
+          Polymarket_common.Logger.log_response ~method_:"POST" ~uri
+            ~status:(`Code status) ~body:body_str;
+          (status, body_str)
+      | Error err ->
+          let msg = Piaf.Error.to_string err in
+          Polymarket_common.Logger.log_error ~method_:"POST" ~uri
+            ~exn:(Failure msg);
+          (500, Printf.sprintf {|{"error": "Request failed: %s"}|} msg))
 
 let do_delete ?(headers = []) t uri =
   apply_rate_limit t ~method_:"DELETE" ~uri;
   Polymarket_common.Logger.log_request ~method_:"DELETE" ~uri;
-  try
-    let headers = Cohttp.Header.of_list headers in
-    let resp, body = Cohttp_eio.Client.delete ~sw:t.sw ~headers t.client uri in
-    let status = Cohttp.Response.status resp in
-    let body_str = Eio.Buf_read.(parse_exn take_all) body ~max_size:max_int in
-    Polymarket_common.Logger.log_response ~method_:"DELETE" ~uri ~status
-      ~body:body_str;
-    (status, body_str)
-  with exn ->
-    Polymarket_common.Logger.log_error ~method_:"DELETE" ~uri ~exn;
-    ( `Internal_server_error,
-      Printf.sprintf {|{"error": "Request failed: %s"}|}
-        (Printexc.to_string exn) )
+  let path = Uri.path_and_query uri in
+  with_client t uri (fun client ->
+      match Piaf.Client.delete client ~headers path with
+      | Ok response ->
+          let status = Piaf.Status.to_code response.status in
+          let body_str = body_to_string response.body in
+          Polymarket_common.Logger.log_response ~method_:"DELETE" ~uri
+            ~status:(`Code status) ~body:body_str;
+          (status, body_str)
+      | Error err ->
+          let msg = Piaf.Error.to_string err in
+          Polymarket_common.Logger.log_error ~method_:"DELETE" ~uri
+            ~exn:(Failure msg);
+          (500, Printf.sprintf {|{"error": "Request failed: %s"}|} msg))
 
 (** {1 JSON Parsing} *)
 
@@ -179,9 +181,7 @@ let parse_error body =
 (** {1 Response Handling} *)
 
 let handle_response status body parse_fn error_parser =
-  match Cohttp.Code.code_of_status status with
-  | 200 -> parse_fn body
-  | _ -> Error (error_parser body)
+  match status with 200 -> parse_fn body | _ -> Error (error_parser body)
 
 let request ?(headers = []) t path parse_fn error_parser params =
   let uri = build_uri t.base_url path params in

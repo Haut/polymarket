@@ -15,7 +15,7 @@
 
     {[
       (* Start with an unauthenticated client for public data *)
-      let client = Unauthed.create ~sw ~net ~rate_limiter () in
+      let client = Unauthed.create ~sw ~env ~rate_limiter () in
       let order_book = Unauthed.get_order_book client ~token_id () in
 
       (* Upgrade to L1 for wallet-based operations *)
@@ -57,14 +57,14 @@ module Unauthed : sig
   val create :
     ?base_url:string ->
     sw:Eio.Switch.t ->
-    net:_ Eio.Net.t ->
+    env:Eio_unix.Stdenv.base ->
     rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
     unit ->
     t
   (** Create a new unauthenticated CLOB client.
       @param base_url Optional base URL (defaults to {!default_base_url})
       @param sw The Eio switch for resource management
-      @param net The Eio network capability
+      @param env The Eio environment
       @param rate_limiter Shared rate limiter for enforcing API limits *)
 
   (** {2 Order Book} *)
@@ -133,7 +133,7 @@ module L1 : sig
   val create :
     ?base_url:string ->
     sw:Eio.Switch.t ->
-    net:_ Eio.Net.t ->
+    env:Eio_unix.Stdenv.base ->
     rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
     private_key:Crypto.private_key ->
     unit ->
@@ -141,7 +141,7 @@ module L1 : sig
   (** Create a new L1-authenticated CLOB client.
       @param base_url Optional base URL (defaults to {!default_base_url})
       @param sw The Eio switch for resource management
-      @param net The Eio network capability
+      @param env The Eio environment
       @param rate_limiter Shared rate limiter for enforcing API limits
       @param private_key The wallet's private key for signing *)
 
@@ -232,7 +232,7 @@ module L2 : sig
   val create :
     ?base_url:string ->
     sw:Eio.Switch.t ->
-    net:_ Eio.Net.t ->
+    env:Eio_unix.Stdenv.base ->
     rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
     private_key:Crypto.private_key ->
     credentials:Auth_types.credentials ->
@@ -241,7 +241,7 @@ module L2 : sig
   (** Create a new L2-authenticated CLOB client.
       @param base_url Optional base URL (defaults to {!default_base_url})
       @param sw The Eio switch for resource management
-      @param net The Eio network capability
+      @param env The Eio environment
       @param rate_limiter Shared rate limiter for enforcing API limits
       @param private_key The wallet's private key (for L1 operations)
       @param credentials The API credentials (api_key, secret, passphrase) *)

@@ -77,11 +77,7 @@ val log_request : method_:string -> uri:Uri.t -> unit
     [[HTTP_CLIENT] [REQUEST] method="..." url="..."] *)
 
 val log_response :
-  method_:string ->
-  uri:Uri.t ->
-  status:Cohttp.Code.status_code ->
-  body:string ->
-  unit
+  method_:string -> uri:Uri.t -> status:[< `Code of int ] -> body:string -> unit
 (** Log an HTTP response. Format:
     [[HTTP_CLIENT] [RESPONSE] method="..." url="..." status="..."] *)
 

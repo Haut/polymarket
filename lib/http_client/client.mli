@@ -11,14 +11,14 @@ type t
 val create :
   base_url:string ->
   sw:Eio.Switch.t ->
-  net:_ Eio.Net.t ->
+  env:Eio_unix.Stdenv.base ->
   rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
   unit ->
   t
 (** Create a new client instance.
     @param base_url The API base URL
     @param sw The Eio switch for resource management
-    @param net The Eio network capability
+    @param env The Eio environment
     @param rate_limiter Shared rate limiter for enforcing API limits *)
 
 val base_url : t -> string
@@ -68,11 +68,11 @@ val add_each : string -> ('a -> string) -> 'a list option -> params -> params
 val build_uri : string -> string -> params -> Uri.t
 (** Build a URI from base URL, path, and query parameters *)
 
+type status_code = int
+(** HTTP status code *)
+
 val do_get :
-  ?headers:(string * string) list ->
-  t ->
-  Uri.t ->
-  Cohttp.Code.status_code * string
+  ?headers:(string * string) list -> t -> Uri.t -> status_code * string
 (** Perform a GET request and return status code and body.
     @param headers Optional list of HTTP headers to include *)
 
@@ -81,15 +81,12 @@ val do_post :
   t ->
   Uri.t ->
   body:string ->
-  Cohttp.Code.status_code * string
+  status_code * string
 (** Perform a POST request with JSON body and return status code and body.
     @param headers Optional list of HTTP headers to include *)
 
 val do_delete :
-  ?headers:(string * string) list ->
-  t ->
-  Uri.t ->
-  Cohttp.Code.status_code * string
+  ?headers:(string * string) list -> t -> Uri.t -> status_code * string
 (** Perform a DELETE request and return status code and body.
     @param headers Optional list of HTTP headers to include *)
 
@@ -119,7 +116,7 @@ val parse_error : string -> error_response
 (** {1 Response Handling} *)
 
 val handle_response :
-  Cohttp.Code.status_code ->
+  status_code ->
   string ->
   (string -> ('a, 'e) result) ->
   (string -> 'e) ->

@@ -70,7 +70,6 @@ let find_market_with_orderbook clob_client markets_with_tokens =
 let run_demo env =
   Logger.setup ();
   Eio.Switch.run @@ fun sw ->
-  let net = Eio.Stdenv.net env in
   let clock = Eio.Stdenv.clock env in
 
   Logger.info "START"
@@ -80,11 +79,11 @@ let run_demo env =
   let rate_limiter = Rate_limiter.create_polymarket ~clock () in
 
   (* Create an unauthenticated client for public endpoints *)
-  let unauthed_client = Clob.Unauthed.create ~sw ~net ~rate_limiter () in
+  let unauthed_client = Clob.Unauthed.create ~sw ~env ~rate_limiter () in
 
   (* First, get markets from Gamma API to find token IDs with active order books *)
   Logger.header "Setup: Finding Active Markets";
-  let gamma_client = Gamma.create ~sw ~net ~rate_limiter () in
+  let gamma_client = Gamma.create ~sw ~env ~rate_limiter () in
   (* Filter for non-closed markets with volume to find ones with order books *)
   let markets =
     Gamma.get_markets gamma_client ~limit:(Nonneg_int.of_int_exn 50)
