@@ -11,14 +11,14 @@ type t
 val create :
   base_url:string ->
   sw:Eio.Switch.t ->
-  env:Eio_unix.Stdenv.base ->
+  net:_ Eio.Net.t ->
   rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
   unit ->
   t
 (** Create a new client instance.
     @param base_url The API base URL
     @param sw The Eio switch for resource management
-    @param env The Eio environment
+    @param net The Eio network interface
     @param rate_limiter Shared rate limiter for enforcing API limits *)
 
 val base_url : t -> string

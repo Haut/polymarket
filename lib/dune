@@ -7,5 +7,4 @@
   polymarket_rate_limiter
   polymarket_clob
   polymarket_data
-  polymarket_gamma
-  polymarket_wss))
+  polymarket_gamma))

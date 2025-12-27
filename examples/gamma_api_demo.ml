@@ -62,7 +62,7 @@ let run_demo env =
 
   (* Create shared rate limiter with Polymarket presets *)
   let rate_limiter = Rate_limiter.create_polymarket ~clock () in
-  let client = Gamma.create ~sw ~env ~rate_limiter () in
+  let client = Gamma.create ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter () in
 
   (* ===== Health Check ===== *)
   Logger.header "Health Check";

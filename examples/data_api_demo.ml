@@ -40,7 +40,7 @@ let run_demo env =
   let rate_limiter = Rate_limiter.create_polymarket ~clock () in
 
   (* Create the client *)
-  let client = Data.create ~sw ~env ~rate_limiter () in
+  let client = Data.create ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter () in
 
   (* Health Check *)
   Logger.header "Health Check";

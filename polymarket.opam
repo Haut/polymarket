@@ -3,7 +3,7 @@ opam-version: "2.0"
 version: "0.1.0"
 synopsis: "OCaml client library for the Polymarket prediction market API"
 description:
-  "A comprehensive OCaml client for interacting with Polymarket's CLOB (Central Limit Order Book) and Gamma APIs. Supports market data retrieval, order management, and real-time WebSocket subscriptions."
+  "A comprehensive OCaml client for interacting with Polymarket's CLOB (Central Limit Order Book) and Gamma APIs. Supports market data retrieval and order management."
 maintainer: ["Richard <rkhaut1@gmail.com>"]
 authors: ["Richard <rkhaut1@gmail.com>"]
 license: "MIT"
@@ -26,12 +26,9 @@ depends: [
   "ppx_deriving" {>= "5.2"}
   "eio_main" {>= "1.0"}
   "uri" {>= "4.0"}
-  "piaf" {>= "0.2"}
-  "ssl" {>= "0.7"}
-  "eio-ssl" {>= "0.3"}
-  "httpun" {>= "0.2"}
-  "httpun-ws" {>= "0.2"}
-  "httpun-ws-eio" {>= "0.2"}
+  "cohttp-eio" {>= "6.0"}
+  "tls-eio" {>= "1.0"}
+  "ca-certs" {>= "1.0"}
   "digestif" {>= "1.2"}
   "secp256k1-internal" {>= "0.4"}
   "base64" {>= "3.5"}
