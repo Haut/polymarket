@@ -45,20 +45,29 @@ type t = {
 }
 (** Internal connection type *)
 
-(** Generate a random nonce for WebSocket handshake *)
+(** Generate a random nonce for WebSocket handshake (raw 16 bytes) *)
 let generate_nonce () =
   let bytes = Bytes.create 16 in
   for i = 0 to 15 do
     Bytes.set bytes i (Char.chr (Random.int 256))
   done;
-  Base64.encode_string (Bytes.to_string bytes)
+  Bytes.to_string bytes
 
 (** Create SSL context for TLS connections *)
 let make_ssl_context () =
   Ssl.init ();
-  let ctx = Ssl.create_context Ssl.TLSv1_3 Ssl.Client_context in
+  (* Use TLSv1_2 as minimum, allowing negotiation up to TLSv1_3 *)
+  let ctx = Ssl.create_context Ssl.TLSv1_2 Ssl.Client_context in
+  (* Set ALPN to offer only HTTP/1.1 - required for WebSocket upgrade *)
   Ssl.set_context_alpn_protos ctx [ "http/1.1" ];
   ctx
+
+(** Set ALPN on individual socket for WebSocket compatibility *)
+let configure_ssl_socket ssl_sock host =
+  (* Set SNI hostname - required by most modern servers *)
+  Ssl.set_client_SNI_hostname ssl_sock host;
+  (* Also set ALPN on the socket level to ensure HTTP/1.1 *)
+  Ssl.set_alpn_protos ssl_sock [ "http/1.1" ]
 
 (** Create a new connection *)
 let create ~sw ~(net : Eio_unix.Net.t) ~channel () =
@@ -102,7 +111,23 @@ let connect_internal t =
   (* Upgrade to TLS using OpenSSL *)
   let ssl_ctx = make_ssl_context () in
   let ssl_context = Eio_ssl.Context.create ~ctx:ssl_ctx socket in
+  let ssl_sock = Eio_ssl.Context.ssl_socket ssl_context in
+  (* Configure SNI and ALPN for HTTP/1.1 WebSocket compatibility *)
+  configure_ssl_socket ssl_sock host;
+  Log.info (fun m -> m "Starting TLS handshake...");
   let tls_socket = Eio_ssl.connect ssl_context in
+
+  (* Log negotiated ALPN protocol *)
+  let alpn_proto =
+    match Ssl.get_negotiated_alpn_protocol ssl_sock with
+    | Some proto -> proto
+    | None -> "none"
+  in
+  Log.info (fun m -> m "TLS connected. ALPN negotiated: %s" alpn_proto);
+
+  (* Fail fast if HTTP/2 was negotiated - WebSocket requires HTTP/1.1 *)
+  if alpn_proto = "h2" then
+    failwith "Server negotiated HTTP/2 but WebSocket requires HTTP/1.1";
 
   (* Promise for connection completion *)
   let connected, set_connected = Eio.Promise.create () in
@@ -118,19 +143,19 @@ let connect_internal t =
     let frame ~opcode ~is_fin:_ ~len payload =
       match opcode with
       | `Text | `Binary ->
-          (* Accumulate payload data *)
+          (* Accumulate payload data - need to reschedule reads for multi-chunk payloads *)
           let buffer = Buffer.create len in
-          let on_read bs ~off ~len =
-            Buffer.add_string buffer (Bigstringaf.substring bs ~off ~len)
+          let rec schedule_read () =
+            Httpun_ws.Payload.schedule_read payload
+              ~on_eof:(fun () ->
+                let msg = Buffer.contents buffer in
+                if String.length msg > 0 then
+                  Eio.Stream.add t.message_stream msg)
+              ~on_read:(fun bs ~off ~len ->
+                Buffer.add_string buffer (Bigstringaf.substring bs ~off ~len);
+                schedule_read ())
           in
-          let on_eof () =
-            let msg = Buffer.contents buffer in
-            if String.length msg > 0 then begin
-              Log.debug (fun m -> m "Received: %s" msg);
-              Eio.Stream.add t.message_stream msg
-            end
-          in
-          Httpun_ws.Payload.schedule_read payload ~on_eof ~on_read
+          schedule_read ()
       | `Ping ->
           Log.debug (fun m -> m "Received PING");
           Httpun_ws.Wsd.send_pong wsd
@@ -161,19 +186,60 @@ let connect_internal t =
       | `Exn exn -> Printexc.to_string exn
       | `Invalid_response_body_length _ -> "Invalid response body length"
       | `Malformed_response msg -> "Malformed response: " ^ msg
-      | `Handshake_failure (resp, _) ->
-          Printf.sprintf "Handshake failed: %d"
+      | `Handshake_failure (resp, body) ->
+          (* Read response body for error details *)
+          let body_content = ref "" in
+          let rec read_body () =
+            Httpun.Body.Reader.schedule_read body
+              ~on_eof:(fun () -> ())
+              ~on_read:(fun bs ~off ~len ->
+                body_content :=
+                  !body_content ^ Bigstringaf.substring bs ~off ~len;
+                read_body ())
+          in
+          read_body ();
+          let headers_str =
+            Httpun.Headers.fold
+              ~f:(fun name value acc -> acc ^ name ^ ": " ^ value ^ "; ")
+              ~init:"" resp.Httpun.Response.headers
+          in
+          Printf.sprintf "Handshake failed: %d %s\nHeaders: %s\nBody: %s"
             (Httpun.Status.to_code resp.Httpun.Response.status)
+            (Httpun.Status.to_string resp.Httpun.Response.status)
+            headers_str !body_content
     in
     Log.err (fun m -> m "Connection error: %s" msg);
     t.state <- Disconnected
   in
 
-  (* Connect - eio-ssl returns the exact type httpun-ws-eio expects *)
+  (* Generate nonce for WebSocket handshake *)
   let nonce = generate_nonce () in
+
+  (* WebSocket headers - httpun-ws only adds Sec-WebSocket-Key from nonce *)
+  let headers =
+    Httpun.Headers.of_list
+      [
+        ("Host", host);
+        ("Connection", "Upgrade");
+        ("Upgrade", "websocket");
+        ("Sec-WebSocket-Version", "13");
+        ("Origin", "https://polymarket.com");
+        ("User-Agent", "polymarket-ocaml/1.0");
+      ]
+  in
+
+  (* Create WebSocket client connection - httpun-ws adds Sec-WebSocket-Key from nonce *)
+  let sha1 s = Digestif.SHA1.(digest_string s |> to_raw_string) in
+  let connection =
+    Httpun_ws.Client_connection.connect ~nonce ~headers ~sha1 ~error_handler
+      ~websocket_handler resource
+  in
+
+  (* Use Gluten to run the connection *)
   let _client =
-    Httpun_ws_eio.Client.connect ~sw:t.sw ~nonce ~host ~port ~resource
-      ~error_handler ~websocket_handler tls_socket
+    Gluten_eio.Client.create ~sw:t.sw ~read_buffer_size:0x1000
+      ~protocol:(module Httpun_ws.Client_connection)
+      connection tls_socket
   in
 
   (* Wait for connection *)

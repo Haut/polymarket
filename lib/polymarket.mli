@@ -5,6 +5,8 @@
     - {!Data}: Positions, trades, activity, and leaderboards
       (data-api.polymarket.com)
     - {!Clob}: Order books, pricing, and trading (clob.polymarket.com)
+    - {!Wss}: Real-time WebSocket streaming
+      (ws-subscriptions-clob.polymarket.com)
     - {!Rate_limiter}: Route-based rate limiting middleware
 
     {2 Example Usage}
@@ -48,7 +50,8 @@
     - [polymarket.rate_limiter]: Rate limiting middleware
     - [polymarket.gamma]: Gamma API client
     - [polymarket.data]: Data API client
-    - [polymarket.clob]: CLOB API client *)
+    - [polymarket.clob]: CLOB API client
+    - [polymarket.wss]: WebSocket streaming client *)
 
 (** {1 API Modules} *)
 
@@ -153,6 +156,35 @@ module Clob : sig
   val l2_to_l1 : l2 -> l1
   val l2_to_unauthed : l2 -> unauthed
   val l1_to_unauthed : l1 -> unauthed
+end
+
+module Wss : sig
+  (** WebSocket client for real-time market and user updates.
+
+      Provides typed streaming access to:
+      - Market channel: orderbook updates, price changes, trades
+      - User channel: order and trade events for authenticated users
+
+      {2 Example: Market Channel}
+
+      {[
+        Eio.Switch.run @@ fun sw ->
+        let net = Eio.Stdenv.net env in
+        let client = Wss.Market.connect ~sw ~net ~asset_ids () in
+        let stream = Wss.Market.stream client in
+        while true do
+          match Eio.Stream.take stream with
+          | Wss.Types.Market (Book msg) ->
+              Printf.printf "Book update: %d bids\n" (List.length msg.bids)
+          | Wss.Types.Market (Price_change msg) ->
+              Printf.printf "Price change: %s\n" msg.market
+          | _ -> ()
+        done
+      ]} *)
+
+  include module type of Polymarket_wss.Client
+  module Types = Polymarket_wss.Types
+  module Connection = Polymarket_wss.Connection
 end
 
 module Http = Polymarket_http.Client

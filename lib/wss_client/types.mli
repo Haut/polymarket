@@ -27,7 +27,12 @@ val equal_order_summary : order_summary -> order_summary -> bool
 (** {1 Market Channel Message Types} *)
 
 module Market_event : sig
-  type t = Book | Price_change | Tick_size_change | Last_trade_price
+  type t =
+    | Book
+    | Price_change
+    | Tick_size_change
+    | Last_trade_price
+    | Best_bid_ask
 
   val to_string : t -> string
   val of_string : string -> t
@@ -138,6 +143,24 @@ val show_last_trade_price_message : last_trade_price_message -> string
 
 val equal_last_trade_price_message :
   last_trade_price_message -> last_trade_price_message -> bool
+
+type best_bid_ask_message = {
+  event_type : string;
+  asset_id : string;
+  market : string;
+  best_bid : string;
+  best_ask : string;
+  timestamp : string;
+}
+(** Best bid/ask message *)
+
+val best_bid_ask_message_of_yojson : Yojson.Safe.t -> best_bid_ask_message
+val yojson_of_best_bid_ask_message : best_bid_ask_message -> Yojson.Safe.t
+val pp_best_bid_ask_message : Format.formatter -> best_bid_ask_message -> unit
+val show_best_bid_ask_message : best_bid_ask_message -> string
+
+val equal_best_bid_ask_message :
+  best_bid_ask_message -> best_bid_ask_message -> bool
 
 (** {1 User Channel Message Types} *)
 
@@ -251,6 +274,7 @@ type market_message =
   | Price_change of price_change_message
   | Tick_size_change of tick_size_change_message
   | Last_trade_price of last_trade_price_message
+  | Best_bid_ask of best_bid_ask_message
 
 val pp_market_message : Format.formatter -> market_message -> unit
 val show_market_message : market_message -> string
@@ -279,9 +303,10 @@ val parse_market_message : Yojson.Safe.t -> market_message
 val parse_user_message : Yojson.Safe.t -> user_message
 (** Parse a JSON value as a user channel message. *)
 
-val parse_message : channel:Channel.t -> string -> message
-(** Parse a raw JSON string into a typed message based on channel. Returns
-    [Unknown] if parsing fails. *)
+val parse_message : channel:Channel.t -> string -> message list
+(** Parse a raw JSON string into typed messages based on channel. Returns empty
+    list for ack messages, handles arrays of messages from initial subscription.
+*)
 
 (** {1 Subscription Requests} *)
 
