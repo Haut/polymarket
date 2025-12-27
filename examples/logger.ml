@@ -40,7 +40,6 @@ let make_reporter ppf =
 let log_channel = ref None
 
 let setup () =
-  Logs.set_level None;
   let reporter =
     match Sys.getenv_opt "POLYMARKET_LOG_FILE" with
     | Some path ->
@@ -50,7 +49,9 @@ let setup () =
     | None -> make_reporter Format.std_formatter
   in
   Logs.set_reporter reporter;
-  Logs.Src.set_level src (Some Logs.Debug)
+  Logs.Src.set_level src (Some Logs.Debug);
+  (* Also initialize the polymarket library logger to respect POLYMARKET_LOG_LEVEL *)
+  Polymarket_common.Logger.setup ()
 
 let close () =
   match !log_channel with
