@@ -27,6 +27,11 @@ depends: [
   "eio_main" {>= "1.0"}
   "uri" {>= "4.0"}
   "piaf" {>= "0.2"}
+  "ssl" {>= "0.7"}
+  "eio-ssl" {>= "0.3"}
+  "httpun" {>= "0.2"}
+  "httpun-ws" {>= "0.2"}
+  "httpun-ws-eio" {>= "0.2"}
   "digestif" {>= "1.2"}
   "secp256k1-internal" {>= "0.4"}
   "base64" {>= "3.5"}
@@ -34,6 +39,7 @@ depends: [
   "logs" {>= "0.7"}
   "fmt" {>= "0.9"}
   "ptime" {>= "1.0"}
+  "mirage-crypto-rng" {>= "1.0"}
   "alcotest" {>= "1.7" & with-test}
   "odoc" {with-doc}
 ]

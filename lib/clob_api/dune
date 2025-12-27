@@ -6,7 +6,6 @@
   polymarket_http
   yojson
   ppx_yojson_conv_lib
-  cohttp
   digestif
   secp256k1-internal
   base64
