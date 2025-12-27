@@ -37,7 +37,9 @@ let setup () =
             None
         | some_level -> some_level)
   in
-  (* Only set the source level, don't override the reporter *)
+  (* Set default log level for all sources (including wss, etc) *)
+  Logs.set_level log_level;
+  (* Also set explicitly for this source *)
   Logs.Src.set_level src log_level
 
 (** {1 Structured Logging} *)

@@ -26,10 +26,8 @@ module Market = struct
     let subscribe_msg = Types.market_subscribe_json ~asset_ids in
     Connection.set_subscription conn subscribe_msg;
 
-    (* Start connection in background *)
-    Eio.Fiber.fork ~sw (fun () ->
-        Connection.connect_with_retry conn;
-        Connection.send conn subscribe_msg);
+    (* Connect and subscribe (connect_with_retry sends subscription_msg) *)
+    Connection.connect_with_retry conn;
 
     (* Start keepalive *)
     Connection.start_keepalive conn ~interval:keepalive_interval;
@@ -40,8 +38,8 @@ module Market = struct
           let raw_stream = Connection.message_stream conn in
           while not (Connection.is_closed conn) do
             let raw = Eio.Stream.take raw_stream in
-            let msg = Types.parse_message ~channel:Types.Channel.Market raw in
-            Eio.Stream.add message_stream msg
+            let msgs = Types.parse_message ~channel:Types.Channel.Market raw in
+            List.iter (fun msg -> Eio.Stream.add message_stream msg) msgs
           done;
           Log.debug (fun m -> m "Market message parser stopped")
         with
@@ -51,7 +49,7 @@ module Market = struct
             Log.err (fun m ->
                 m "Market message parser error: %s" (Printexc.to_string exn)));
 
-    (* Start reconnection monitor *)
+    (* Start reconnection monitor in background *)
     Eio.Fiber.fork ~sw (fun () ->
         Connection.run_with_reconnect conn ~on_disconnect:(fun () ->
             Log.info (fun m -> m "Market channel disconnected, reconnecting...")));
@@ -93,10 +91,8 @@ module User = struct
     let subscribe_msg = Types.user_subscribe_json ~credentials ~markets in
     Connection.set_subscription conn subscribe_msg;
 
-    (* Start connection in background *)
-    Eio.Fiber.fork ~sw (fun () ->
-        Connection.connect_with_retry conn;
-        Connection.send conn subscribe_msg);
+    (* Connect and subscribe (connect_with_retry sends subscription_msg) *)
+    Connection.connect_with_retry conn;
 
     (* Start keepalive *)
     Connection.start_keepalive conn ~interval:keepalive_interval;
@@ -107,8 +103,8 @@ module User = struct
           let raw_stream = Connection.message_stream conn in
           while not (Connection.is_closed conn) do
             let raw = Eio.Stream.take raw_stream in
-            let msg = Types.parse_message ~channel:Types.Channel.User raw in
-            Eio.Stream.add message_stream msg
+            let msgs = Types.parse_message ~channel:Types.Channel.User raw in
+            List.iter (fun msg -> Eio.Stream.add message_stream msg) msgs
           done;
           Log.debug (fun m -> m "User message parser stopped")
         with
@@ -118,7 +114,7 @@ module User = struct
             Log.err (fun m ->
                 m "User message parser error: %s" (Printexc.to_string exn)));
 
-    (* Start reconnection monitor *)
+    (* Start reconnection monitor in background *)
     Eio.Fiber.fork ~sw (fun () ->
         Connection.run_with_reconnect conn ~on_disconnect:(fun () ->
             Log.info (fun m -> m "User channel disconnected, reconnecting...")));

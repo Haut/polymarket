@@ -14,6 +14,7 @@
   httpun
   httpun-ws
   httpun-ws-eio
+  gluten-eio
   digestif
   logs)
  (preprocess
