@@ -31,7 +31,6 @@ let run_demo env =
   (* Initialize demo logger (disables noise from other libraries) *)
   Logger.setup ();
   Eio.Switch.run @@ fun sw ->
-  let net = Eio.Stdenv.net env in
   let clock = Eio.Stdenv.clock env in
 
   Logger.info "START"
@@ -41,7 +40,7 @@ let run_demo env =
   let rate_limiter = Rate_limiter.create_polymarket ~clock () in
 
   (* Create the client *)
-  let client = Data.create ~sw ~net ~rate_limiter () in
+  let client = Data.create ~sw ~env ~rate_limiter () in
 
   (* Health Check *)
   Logger.header "Health Check";

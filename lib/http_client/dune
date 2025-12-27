@@ -6,11 +6,8 @@
   polymarket_rate_limiter
   yojson
   ppx_yojson_conv_lib
-  cohttp-eio
+  piaf
   eio_main
-  uri
-  tls
-  tls-eio
-  ca-certs)
+  uri)
  (preprocess
   (pps ppx_yojson_conv ppx_deriving.show ppx_deriving.eq)))

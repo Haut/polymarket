@@ -196,8 +196,8 @@ type l2 = {
 module Unauthed = struct
   type t = unauthed
 
-  let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter () =
-    let http = H.create ~base_url ~sw ~net ~rate_limiter () in
+  let create ?(base_url = default_base_url) ~sw ~env ~rate_limiter () =
+    let http = H.create ~base_url ~sw ~env ~rate_limiter () in
     { http }
 
   let get_order_book (t : t) = Internal.get_order_book t.http
@@ -214,9 +214,9 @@ end
 module L1 = struct
   type t = l1
 
-  let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter ~private_key
+  let create ?(base_url = default_base_url) ~sw ~env ~rate_limiter ~private_key
       () =
-    let http = H.create ~base_url ~sw ~net ~rate_limiter () in
+    let http = H.create ~base_url ~sw ~env ~rate_limiter () in
     let address = Crypto.private_key_to_address private_key in
     { http; private_key; address }
 
@@ -258,9 +258,9 @@ end
 module L2 = struct
   type t = l2
 
-  let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter ~private_key
+  let create ?(base_url = default_base_url) ~sw ~env ~rate_limiter ~private_key
       ~credentials () =
-    let http = H.create ~base_url ~sw ~net ~rate_limiter () in
+    let http = H.create ~base_url ~sw ~env ~rate_limiter () in
     let address = Crypto.private_key_to_address private_key in
     { http; private_key; address; credentials }
 
