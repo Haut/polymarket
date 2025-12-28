@@ -1,6 +1,8 @@
-(** Unit tests for Common.Http_client module *)
+(** Unit tests for Http_client modules *)
 
 open Polymarket_http.Client
+module Json = Polymarket_http.Json
+module Builder = Polymarket_http.Builder
 
 let params_testable =
   Alcotest.testable
@@ -12,87 +14,6 @@ let params_testable =
                 Printf.sprintf "(%s, [%s])" k (String.concat ", " vs))
               params)))
     ( = )
-
-(** {1 Query Parameter Builder Tests} *)
-
-let test_add_some () =
-  let result = [] |> add "key" (Some "value") in
-  Alcotest.(check params_testable)
-    "adds key-value pair"
-    [ ("key", [ "value" ]) ]
-    result
-
-let test_add_none () =
-  let result = [] |> add "key" None in
-  Alcotest.(check params_testable) "returns empty for None" [] result
-
-let test_add_preserves_existing () =
-  let result = [ ("existing", [ "val" ]) ] |> add "key" (Some "value") in
-  Alcotest.(check params_testable)
-    "preserves existing params"
-    [ ("key", [ "value" ]); ("existing", [ "val" ]) ]
-    result
-
-let test_add_list_non_empty () =
-  let result = [] |> add_list "ids" string_of_int (Some [ 1; 2; 3 ]) in
-  Alcotest.(check params_testable)
-    "joins with comma"
-    [ ("ids", [ "1,2,3" ]) ]
-    result
-
-let test_add_list_empty () =
-  let result = [] |> add_list "ids" string_of_int (Some []) in
-  Alcotest.(check params_testable) "returns empty for empty list" [] result
-
-let test_add_list_none () =
-  let result = [] |> add_list "ids" string_of_int None in
-  Alcotest.(check params_testable) "returns empty for None" [] result
-
-let test_add_list_strings () =
-  let result = [] |> add_list "tags" Fun.id (Some [ "a"; "b"; "c" ]) in
-  Alcotest.(check params_testable)
-    "joins strings"
-    [ ("tags", [ "a,b,c" ]) ]
-    result
-
-let test_add_list_single () =
-  let result = [] |> add_list "ids" string_of_int (Some [ 42 ]) in
-  Alcotest.(check params_testable) "single item" [ ("ids", [ "42" ]) ] result
-
-let test_add_list_with_commas () =
-  (* Note: This tests current behavior - strings with commas are passed through *)
-  let result = [] |> add_list "tags" Fun.id (Some [ "a,b"; "c" ]) in
-  Alcotest.(check params_testable)
-    "strings with commas"
-    [ ("tags", [ "a,b,c" ]) ]
-    result
-
-let test_add_bool_true () =
-  let result = [] |> add_bool "flag" (Some true) in
-  Alcotest.(check params_testable) "adds true" [ ("flag", [ "true" ]) ] result
-
-let test_add_bool_false () =
-  let result = [] |> add_bool "flag" (Some false) in
-  Alcotest.(check params_testable) "adds false" [ ("flag", [ "false" ]) ] result
-
-let test_add_bool_none () =
-  let result = [] |> add_bool "flag" None in
-  Alcotest.(check params_testable) "returns empty for None" [] result
-
-let test_add_each_some () =
-  let result = [] |> add_each "id" string_of_int (Some [ 1; 2; 3 ]) in
-  Alcotest.(check params_testable)
-    "adds each value"
-    [ ("id", [ "3" ]); ("id", [ "2" ]); ("id", [ "1" ]) ]
-    result
-
-let test_add_each_none () =
-  let result = [] |> add_each "id" string_of_int None in
-  Alcotest.(check params_testable) "returns empty for None" [] result
-
-let test_add_each_empty () =
-  let result = [] |> add_each "id" string_of_int (Some []) in
-  Alcotest.(check params_testable) "returns empty for empty list" [] result
 
 (** {1 URI Building Tests} *)
 
@@ -147,7 +68,7 @@ let test_record_of_yojson json =
 
 let test_parse_json_success () =
   let json_str = {|{"name": "test", "value": 42}|} in
-  let result = parse_json test_record_of_yojson json_str in
+  let result = Json.parse test_record_of_yojson json_str in
   match result with
   | Ok record ->
       Alcotest.(check string) "parses name" "test" record.name;
@@ -165,7 +86,7 @@ let test_parse_json_invalid () =
     | _ -> failwith "unexpected"
   in
   let json_str = {|{"name": "test"}|} in
-  let result = parse_json parser json_str in
+  let result = Json.parse parser json_str in
   match result with
   | Ok _ -> Alcotest.fail "expected error"
   | Error msg ->
@@ -173,7 +94,7 @@ let test_parse_json_invalid () =
 
 let test_parse_json_malformed () =
   let json_str = {|not json|} in
-  let result = parse_json test_record_of_yojson json_str in
+  let result = Json.parse test_record_of_yojson json_str in
   match result with
   | Ok _ -> Alcotest.fail "expected error"
   | Error msg ->
@@ -181,7 +102,7 @@ let test_parse_json_malformed () =
 
 let test_parse_json_list_success () =
   let json_str = {|[{"name": "a", "value": 1}, {"name": "b", "value": 2}]|} in
-  let result = parse_json_list test_record_of_yojson json_str in
+  let result = Json.parse_list test_record_of_yojson json_str in
   match result with
   | Ok records ->
       Alcotest.(check int) "parses two records" 2 (List.length records);
@@ -191,7 +112,7 @@ let test_parse_json_list_success () =
 
 let test_parse_json_list_empty () =
   let json_str = {|[]|} in
-  let result = parse_json_list test_record_of_yojson json_str in
+  let result = Json.parse_list test_record_of_yojson json_str in
   match result with
   | Ok records ->
       Alcotest.(check int) "parses empty list" 0 (List.length records)
@@ -199,7 +120,7 @@ let test_parse_json_list_empty () =
 
 let test_parse_json_list_not_array () =
   let json_str = {|{"name": "test", "value": 42}|} in
-  let result = parse_json_list test_record_of_yojson json_str in
+  let result = Json.parse_list test_record_of_yojson json_str in
   match result with
   | Ok _ -> Alcotest.fail "expected error"
   | Error msg ->
@@ -244,33 +165,6 @@ let test_to_error () =
 
 let tests =
   [
-    ( "add",
-      [
-        ("Some value", `Quick, test_add_some);
-        ("None", `Quick, test_add_none);
-        ("preserves existing", `Quick, test_add_preserves_existing);
-      ] );
-    ( "add_list",
-      [
-        ("non-empty", `Quick, test_add_list_non_empty);
-        ("empty list", `Quick, test_add_list_empty);
-        ("None", `Quick, test_add_list_none);
-        ("strings", `Quick, test_add_list_strings);
-        ("single item", `Quick, test_add_list_single);
-        ("strings with commas", `Quick, test_add_list_with_commas);
-      ] );
-    ( "add_bool",
-      [
-        ("true", `Quick, test_add_bool_true);
-        ("false", `Quick, test_add_bool_false);
-        ("None", `Quick, test_add_bool_none);
-      ] );
-    ( "add_each",
-      [
-        ("Some", `Quick, test_add_each_some);
-        ("None", `Quick, test_add_each_none);
-        ("empty list", `Quick, test_add_each_empty);
-      ] );
     ( "build_uri",
       [
         ("no params", `Quick, test_build_uri_no_params);

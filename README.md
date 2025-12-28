@@ -11,6 +11,7 @@ OCaml client library for the [Polymarket](https://polymarket.com) prediction mar
 - Built on [Eio](https://github.com/ocaml-multicore/eio) for efficient concurrent I/O
 - Pure-OCaml TLS for cross-platform compatibility (via tls-eio)
 - Built-in rate limiting with official Polymarket API limits (GCRA algorithm)
+- Type-safe HTTP request builder with phantom types
 - Comprehensive error handling with result types
 - JSON serialization via ppx_yojson_conv
 - Pretty printing and equality functions for all types
@@ -423,6 +424,97 @@ The library includes pre-configured limits for all Polymarket APIs:
 | CLOB API | 9000/10s | Trading endpoints with burst + sustained limits |
 | Global | 15000/10s | Applies across all APIs |
 
+## HTTP Request Builder
+
+The library provides a type-safe request builder with **phantom types** that enforce correct usage at compile time. The builder is used internally by all API modules and is also available for direct use when building custom requests.
+
+**Note:** The builder is accessed via `Polymarket_http.Builder`. The high-level API modules (`Polymarket.Gamma`, `Polymarket.Data`, etc.) use the builder internally, so most users won't need to use it directly.
+
+- `GET` and `DELETE` requests are ready to execute immediately
+- `POST` requests require a body via `with_body` before execution
+- Authentication can be added via `with_l1_auth` or `with_l2_auth`
+
+### Basic Usage
+
+```ocaml
+open Polymarket_http.Builder
+
+(* GET request with query parameters *)
+let positions =
+  new_get client "/positions"
+  |> query_param "user" address
+  |> query_option "limit" string_of_int (Some 10)
+  |> fetch_json_list position_of_yojson
+
+(* POST request - requires body before execution *)
+let order =
+  new_post client "/order"
+  |> with_body order_json        (* Changes not_ready -> ready *)
+  |> fetch_json order_of_yojson
+
+(* DELETE request *)
+let result =
+  new_delete client "/order"
+  |> query_param "id" order_id
+  |> fetch_unit
+```
+
+### Query Parameter Helpers
+
+| Function | Description |
+|----------|-------------|
+| `query_param key value` | Add a required string parameter |
+| `query_add key opt` | Add an optional string parameter |
+| `query_option key to_string opt` | Add optional param with converter |
+| `query_list key to_string opts` | Join list values with commas |
+| `query_bool key opt` | Add boolean as "true"/"false" |
+| `query_each key to_string opts` | Add each value as separate param |
+
+### Authentication Helpers
+
+```ocaml
+(* L1 wallet authentication for API key creation *)
+new_post client "/auth/api-key"
+|> with_l1_auth ~private_key ~address ~nonce:0
+|> with_body ""
+|> fetch_json api_key_response_of_yojson
+
+(* L2 API key authentication for trading - call after with_body for POST *)
+new_post client "/order"
+|> with_body order_json
+|> with_l2_auth ~credentials ~address
+|> fetch_json order_of_yojson
+
+(* L2 auth for GET/DELETE *)
+new_get client "/data/orders"
+|> with_l2_auth ~credentials ~address
+|> fetch_json_list order_of_yojson
+```
+
+### Response Parsers
+
+| Function | Description |
+|----------|-------------|
+| `fetch` | Raw `(status, body)` for custom handling |
+| `fetch_json parser` | Parse response as JSON object |
+| `fetch_json_list parser` | Parse response as JSON array |
+| `fetch_text` | Return body as string |
+| `fetch_unit` | Discard body, succeed on 200/201/204 |
+
+### Compile-Time Safety
+
+The phantom types prevent common errors:
+
+```ocaml
+(* This won't compile - POST needs a body *)
+let _ = new_post client "/order" |> fetch_json parser
+(* Error: This expression has type not_ready t
+          but was expected of type ready t *)
+
+(* This compiles - body provided *)
+let _ = new_post client "/order" |> with_body "{}" |> fetch_json parser
+```
+
 ## API Reference
 
 ### Module Structure
@@ -444,9 +536,16 @@ Polymarket
 │   ├── Market    (* Public market data channel *)
 │   ├── User      (* Authenticated user channel *)
 │   └── Types     (* Message types *)
-├── Http          (* HTTP client utilities *)
+├── Http          (* HTTP client - alias for Polymarket_http.Client *)
 ├── Rate_limiter  (* Rate limiting with GCRA algorithm *)
+├── Auth          (* Authentication types and header builders *)
+├── Crypto        (* Cryptographic utilities *)
 └── Primitives    (* Validated types: Address, Hash64, Limit, etc. *)
+
+Polymarket_http   (* Direct access to HTTP client components *)
+├── Client        (* HTTP client with TLS and rate limiting *)
+├── Builder       (* Type-safe request builder with phantom types *)
+└── Json          (* JSON parsing utilities *)
 ```
 
 ### Data API Endpoints
@@ -584,7 +683,7 @@ For finer-grained control, you can depend on individual sub-libraries:
 |---------|-------------|
 | `polymarket` | Main library with flattened API (recommended) |
 | `polymarket.common` | Shared primitives (`Address`, `Hash64`, etc.) and utilities |
-| `polymarket.http` | HTTP client with TLS support (via cohttp-eio) |
+| `polymarket.http` | HTTP client with TLS support, type-safe request builder |
 | `polymarket.rate_limiter` | GCRA-based rate limiter (used internally by http) |
 | `polymarket.gamma` | Gamma API client only |
 | `polymarket.data` | Data API client only |
@@ -655,10 +754,14 @@ dune fmt
 polymarket/
 ├── lib/
 │   ├── common/           # Shared utilities
-│   │   ├── logger.ml     # Structured logging
-│   │   └── primitives.ml # Validated types (Address, Hash64, Limit, etc.)
+│   │   ├── primitives.ml # Validated types (Address, Hash64, Limit, etc.)
+│   │   ├── auth.ml       # L1/L2 authentication header builders
+│   │   ├── crypto.ml     # Signing and hashing utilities
+│   │   └── logger.ml     # Structured logging
 │   ├── http_client/      # HTTP client
-│   │   └── client.ml     # TLS-enabled HTTP requests with rate limiting
+│   │   ├── client.ml     # TLS-enabled HTTP requests with rate limiting
+│   │   ├── builder.ml    # Type-safe request builder with phantom types
+│   │   └── json.ml       # JSON parsing utilities
 │   ├── rate_limiter/     # GCRA-based rate limiter
 │   │   ├── rate_limiter.ml  # Main rate limiter module
 │   │   ├── presets.ml    # Polymarket API rate limit configs
@@ -667,17 +770,16 @@ polymarket/
 │   │   ├── matcher.ml    # Route matching logic
 │   │   └── builder.ml    # Route configuration builder
 │   ├── data_api/         # Data API implementation
-│   │   ├── client.ml     # API client
+│   │   ├── endpoints.ml  # API endpoint implementations
 │   │   └── types.ml      # Response types and enums
 │   ├── gamma_api/        # Gamma API implementation
-│   │   ├── client.ml     # API client
+│   │   ├── endpoints.ml  # API endpoint implementations
 │   │   └── types.ml      # Types and module-based enums
 │   ├── clob_api/         # CLOB API implementation
 │   │   ├── client.ml     # Typestate client (compile-time auth)
-│   │   ├── types.ml      # Types and module-based enums
-│   │   ├── auth.ml       # L1/L2 authentication
-│   │   ├── auth_types.ml # Credential types
-│   │   └── crypto.ml     # Signing and hashing
+│   │   ├── endpoints.ml  # API endpoint implementations
+│   │   ├── order_builder.ml # Order construction utilities
+│   │   └── types.ml      # Types and module-based enums
 │   ├── websocket_client/ # WebSocket streaming client
 │   │   ├── client.ml     # Market and User channel clients
 │   │   ├── connection.ml # Connection management with reconnect
