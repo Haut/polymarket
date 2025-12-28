@@ -71,8 +71,20 @@ module Gamma : sig
         in
       ]} *)
 
-  include module type of Polymarket_gamma.Client
+  include module type of Polymarket_gamma.Endpoints
   include module type of Polymarket_gamma.Types
+
+  val default_base_url : string
+  (** Default base URL for the Polymarket Gamma API *)
+
+  val create :
+    ?base_url:string ->
+    sw:Eio.Switch.t ->
+    net:_ Eio.Net.t ->
+    rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
+    unit ->
+    t
+  (** Create a new Gamma API client instance. *)
 end
 
 module Data : sig
@@ -99,8 +111,20 @@ module Data : sig
         in
       ]} *)
 
-  include module type of Polymarket_data.Client
+  include module type of Polymarket_data.Endpoints
   include module type of Polymarket_data.Types
+
+  val default_base_url : string
+  (** Default base URL for the Polymarket Data API *)
+
+  val create :
+    ?base_url:string ->
+    sw:Eio.Switch.t ->
+    net:_ Eio.Net.t ->
+    rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
+    unit ->
+    t
+  (** Create a new Data API client instance. *)
 end
 
 module Clob : sig

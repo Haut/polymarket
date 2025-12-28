@@ -1,44 +1,14 @@
-(** HTTP client for the Polymarket Data API.
+(** Endpoint implementations for the Polymarket Data API.
 
     This module provides functions to interact with all public endpoints of the
     Polymarket Data API (https://data-api.polymarket.com).
 
-    {2 Example Usage}
-
-    {[
-      Eio_main.run @@ fun env ->
-      Eio.Switch.run @@ fun sw ->
-      let client =
-        Polymarket.Data_api.Client.create ~sw ~net:(Eio.Stdenv.net env) ()
-      in
-      match Polymarket.Data_api.Client.health_check client with
-      | Ok response -> print_endline (Option.value ~default:"OK" response.data)
-      | Error err ->
-          print_endline ("Error: " ^ Polymarket_http.Client.error_to_string err)
-    ]} *)
+    For client creation, use {!Polymarket.Data.create}. *)
 
 open Types
 
-(** {1 Client Configuration} *)
-
-type t
-(** The client type holding connection configuration *)
-
-val default_base_url : string
-(** Default base URL for the Polymarket Data API *)
-
-val create :
-  ?base_url:string ->
-  sw:Eio.Switch.t ->
-  net:_ Eio.Net.t ->
-  rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
-  unit ->
-  t
-(** Create a new client instance.
-    @param base_url The API base URL (default: {!default_base_url})
-    @param sw The Eio switch for resource management
-    @param net The Eio network interface
-    @param rate_limiter Shared rate limiter for enforcing API limits *)
+type t = Polymarket_http.Client.t
+(** The client type (alias for HTTP client) *)
 
 (** {1 Health Endpoint} *)
 

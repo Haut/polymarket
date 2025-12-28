@@ -1,44 +1,14 @@
-(** HTTP client for the Polymarket Gamma API.
+(** Endpoint implementations for the Polymarket Gamma API.
 
     This module provides functions to interact with all public endpoints of the
     Polymarket Gamma API (https://gamma-api.polymarket.com).
 
-    {2 Example Usage}
-
-    {[
-      Eio_main.run @@ fun env ->
-      Eio.Switch.run @@ fun sw ->
-      let client =
-        Polymarket.Gamma_api.Client.create ~sw ~net:(Eio.Stdenv.net env) ()
-      in
-      match Polymarket.Gamma_api.Client.status client with
-      | Ok status -> print_endline status
-      | Error err ->
-          print_endline ("Error: " ^ Polymarket_http.Client.error_to_string err)
-    ]} *)
+    For client creation, use {!Polymarket.Gamma.create}. *)
 
 open Types
 
-(** {1 Client Configuration} *)
-
-type t
-(** The client type holding connection configuration *)
-
-val default_base_url : string
-(** Default base URL for the Polymarket Gamma API *)
-
-val create :
-  ?base_url:string ->
-  sw:Eio.Switch.t ->
-  net:_ Eio.Net.t ->
-  rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
-  unit ->
-  t
-(** Create a new client instance.
-    @param base_url The API base URL (default: {!default_base_url})
-    @param sw The Eio switch for resource management
-    @param net The Eio network interface
-    @param rate_limiter Shared rate limiter for enforcing API limits *)
+type t = Polymarket_http.Client.t
+(** The client type (alias for HTTP client) *)
 
 (** {1 Health Endpoint} *)
 

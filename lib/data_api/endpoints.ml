@@ -1,21 +1,13 @@
-(** HTTP client for the Polymarket Data API.
+(** Endpoint implementations for the Polymarket Data API.
 
     This module provides functions to interact with all public endpoints of the
     Polymarket Data API (https://data-api.polymarket.com). *)
 
 open Types
-
-(** {1 Client Configuration} *)
-
-type t = Polymarket_http.Client.t
-
 module H = Polymarket_http.Client
 module P = Polymarket_common.Primitives
 
-let default_base_url = "https://data-api.polymarket.com"
-
-let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter () =
-  H.create ~base_url ~sw ~net ~rate_limiter ()
+type t = Polymarket_http.Client.t
 
 (** {1 Health Endpoint} *)
 
