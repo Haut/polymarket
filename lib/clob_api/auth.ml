@@ -68,7 +68,7 @@ let delete_api_key client ~credentials ~address =
   let status, body = Polymarket_http.Client.do_delete ~headers client uri in
   match status with
   | 200 | 204 -> Ok ()
-  | _ -> Error (Polymarket_http.Client.parse_error body)
+  | _ -> Error (Polymarket_http.Client.parse_error ~status body)
 
 let get_api_keys client ~credentials ~address =
   let path = "/auth/api-keys" in

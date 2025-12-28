@@ -172,22 +172,8 @@ end
 
 (** {1 Domain Enums} *)
 
-module Side = struct
-  type t = Buy | Sell [@@deriving show, eq]
-
-  let to_string = function Buy -> "BUY" | Sell -> "SELL"
-
-  let of_string = function
-    | "BUY" | "buy" -> Buy
-    | "SELL" | "sell" -> Sell
-    | s -> failwith ("Unknown side: " ^ s)
-
-  let t_of_yojson = function
-    | `String s -> of_string s
-    | _ -> failwith "Side.t_of_yojson: expected string"
-
-  let yojson_of_t side = `String (to_string side)
-end
+module Side = Polymarket_common.Primitives.Side
+(** Re-export shared Side module from Common.Primitives *)
 
 module Activity_type = struct
   type t = Trade | Split | Merge | Redeem | Reward | Conversion
@@ -222,10 +208,11 @@ end
 type health_response = { data : string } [@@deriving yojson, show, eq]
 (** Health check response *)
 
-type error_response = Polymarket_http.Client.error_response = { error : string }
-[@@deriving yojson, show, eq]
-(** Error response (alias to Polymarket_http.Client.error_response for
-    compatibility) *)
+type error = Polymarket_http.Client.error
+(** Structured error type for all API errors *)
+
+let error_to_string = Polymarket_http.Client.error_to_string
+let pp_error = Polymarket_http.Client.pp_error
 
 (** {1 Domain Models} *)
 

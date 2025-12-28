@@ -25,7 +25,7 @@ let sample_event_id = 903
 let print_result_count name result =
   match result with
   | Ok items -> Logger.ok name (Printf.sprintf "%d items" (List.length items))
-  | Error err -> Logger.error name err.Http.error
+  | Error err -> Logger.error name (Http.error_to_string err)
 
 let run_demo env =
   (* Initialize demo logger (disables noise from other libraries) *)
@@ -49,7 +49,7 @@ let run_demo env =
   | Ok resp ->
       Logger.ok "health_check" "passed";
       Logger.info "DATA" [ ("value", resp.data) ]
-  | Error err -> Logger.error "health_check" err.error);
+  | Error err -> Logger.error "health_check" (Data.error_to_string err));
 
   (* Positions *)
   Logger.header "Positions";
@@ -96,7 +96,7 @@ let run_demo env =
   | Ok t ->
       Logger.ok "get_traded"
         (Printf.sprintf "user has traded %d markets" t.traded)
-  | Error err -> Logger.error "get_traded" err.error);
+  | Error err -> Logger.error "get_traded" (Http.error_to_string err));
 
   (* Value *)
   Logger.header "Value";

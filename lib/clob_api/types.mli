@@ -361,16 +361,17 @@ val pp_price_history : Format.formatter -> price_history -> unit
 val show_price_history : price_history -> string
 val equal_price_history : price_history -> price_history -> bool
 
-(** {1 Error Response} *)
+(** {1 Error Types} *)
 
-type error_response = Polymarket_http.Client.error_response = { error : string }
-(** Error response (alias to Polymarket_http.Client.error_response) *)
+type error = Polymarket_http.Client.error
+(** Structured error type for all API errors (alias to
+    Polymarket_http.Client.error) *)
 
-val error_response_of_yojson : Yojson.Safe.t -> error_response
-val yojson_of_error_response : error_response -> Yojson.Safe.t
-val pp_error_response : Format.formatter -> error_response -> unit
-val show_error_response : error_response -> string
-val equal_error_response : error_response -> error_response -> bool
+val error_to_string : error -> string
+(** Convert error to human-readable string *)
+
+val pp_error : Format.formatter -> error -> unit
+(** Pretty printer for errors *)
 
 (** {1 Validation Functions} *)
 

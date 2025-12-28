@@ -211,22 +211,34 @@ let test_parse_json_list_not_array () =
 
 let test_parse_error_valid () =
   let body = {|{"error": "something went wrong"}|} in
-  let err = parse_error body in
-  Alcotest.(check string) "parses error" "something went wrong" err.error
+  let err = parse_error ~status:400 body in
+  match err with
+  | Http_error { message; status; _ } ->
+      Alcotest.(check string) "parses error" "something went wrong" message;
+      Alcotest.(check int) "has status" 400 status
+  | _ -> Alcotest.fail "expected Http_error"
 
 let test_parse_error_fallback () =
   let body = "plain text error" in
-  let err = parse_error body in
-  Alcotest.(check string) "uses body as error" "plain text error" err.error
+  let err = parse_error ~status:500 body in
+  match err with
+  | Http_error { message; _ } ->
+      Alcotest.(check string) "uses body as error" "plain text error" message
+  | _ -> Alcotest.fail "expected Http_error"
 
 let test_parse_error_empty () =
   let body = "" in
-  let err = parse_error body in
-  Alcotest.(check string) "empty body" "" err.error
+  let err = parse_error ~status:404 body in
+  match err with
+  | Http_error { message; _ } -> Alcotest.(check string) "empty body" "" message
+  | _ -> Alcotest.fail "expected Http_error"
 
 let test_to_error () =
   let err = to_error "test message" in
-  Alcotest.(check string) "creates error record" "test message" err.error
+  match err with
+  | Parse_error { message; _ } ->
+      Alcotest.(check string) "creates parse error" "test message" message
+  | _ -> Alcotest.fail "expected Parse_error"
 
 (** {1 Test Suite} *)
 

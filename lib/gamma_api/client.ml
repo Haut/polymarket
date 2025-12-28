@@ -136,10 +136,10 @@ let get_event t ~id ?include_chat ?include_template () =
   []
   |> H.add_bool "include_chat" include_chat
   |> H.add_bool "include_template" include_template
-  |> H.get_json t (Printf.sprintf "/events/%d" id) event_of_yojson
+  |> H.get_json t (Printf.sprintf "/events/%s" id) event_of_yojson
 
 let get_event_tags t ~id () =
-  [] |> H.get_json_list t (Printf.sprintf "/events/%d/tags" id) tag_of_yojson
+  [] |> H.get_json_list t (Printf.sprintf "/events/%s/tags" id) tag_of_yojson
 
 let get_event_by_slug t ~slug ?include_chat ?include_template () =
   []
@@ -188,10 +188,10 @@ let get_markets t ?limit ?offset ?order ?ascending ?id ?slug ?clob_token_ids
 let get_market t ~id ?include_tag () =
   []
   |> H.add_bool "include_tag" include_tag
-  |> H.get_json t (Printf.sprintf "/markets/%d" id) market_of_yojson
+  |> H.get_json t (Printf.sprintf "/markets/%s" id) market_of_yojson
 
 let get_market_tags t ~id () =
-  [] |> H.get_json_list t (Printf.sprintf "/markets/%d/tags" id) tag_of_yojson
+  [] |> H.get_json_list t (Printf.sprintf "/markets/%s/tags" id) tag_of_yojson
 
 let get_market_by_slug t ~slug ?include_tag () =
   []
@@ -218,7 +218,7 @@ let get_series_list t ?limit ?offset ?order ?ascending ?slug ?categories_ids
 let get_series t ~id ?include_chat () =
   []
   |> H.add_bool "include_chat" include_chat
-  |> H.get_json t (Printf.sprintf "/series/%d" id) series_of_yojson
+  |> H.get_json t (Printf.sprintf "/series/%s" id) series_of_yojson
 
 (** {1 Comments Endpoints} *)
 
@@ -239,7 +239,7 @@ let get_comments t ?limit ?offset ?order ?ascending ?parent_entity_type
 let get_comment t ~id ?get_positions () =
   []
   |> H.add_bool "get_positions" get_positions
-  |> H.get_json t (Printf.sprintf "/comments/%d" id) comment_of_yojson
+  |> H.get_json t (Printf.sprintf "/comments/%s" id) comment_of_yojson
 
 let get_user_comments t ~user_address ?limit ?offset ?order ?ascending () =
   []

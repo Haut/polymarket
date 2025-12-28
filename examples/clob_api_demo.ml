@@ -23,12 +23,12 @@ open Polymarket
 let print_result name ~on_ok result =
   match result with
   | Ok value -> Logger.ok name (on_ok value)
-  | Error err -> Logger.error name err.Http.error
+  | Error err -> Logger.error name (Http.error_to_string err)
 
 let print_result_count name result =
   match result with
   | Ok items -> Logger.ok name (Printf.sprintf "%d items" (List.length items))
-  | Error err -> Logger.error name err.Http.error
+  | Error err -> Logger.error name (Http.error_to_string err)
 
 (** {1 Token ID Extraction} *)
 
@@ -102,7 +102,7 @@ let run_demo env =
           (Printf.sprintf "found %d markets with token IDs" (List.length mwt));
         mwt
     | Error err ->
-        Logger.error "fetch_markets" err.Http.error;
+        Logger.error "fetch_markets" (Http.error_to_string err);
         []
   in
 
@@ -280,7 +280,7 @@ let run_demo env =
           let _unauthed_again = Clob.l2_to_unauthed l2_client in
           Logger.ok "l2_to_unauthed" "downgraded to Unauthed"
       | Error err ->
-          Logger.error "derive_api_key" err.Http.error;
+          Logger.error "derive_api_key" (Http.error_to_string err);
           Logger.skip "get_orders" "could not derive API key";
           Logger.skip "get_trades" "could not derive API key");
 

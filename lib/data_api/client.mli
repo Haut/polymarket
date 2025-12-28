@@ -13,7 +13,8 @@
       in
       match Polymarket.Data_api.Client.health_check client with
       | Ok response -> print_endline (Option.value ~default:"OK" response.data)
-      | Error err -> print_endline ("Error: " ^ err.error)
+      | Error err ->
+          print_endline ("Error: " ^ Polymarket_http.Client.error_to_string err)
     ]} *)
 
 open Types
@@ -41,7 +42,7 @@ val create :
 
 (** {1 Health Endpoint} *)
 
-val health_check : t -> (health_response, error_response) result
+val health_check : t -> (health_response, Polymarket_http.Client.error) result
 (** Check if the API is healthy.
     @return [Ok response] on success, [Error error] on failure *)
 
@@ -61,7 +62,7 @@ val get_positions :
   ?sort_direction:Sort_direction.t ->
   ?title:Polymarket_common.Primitives.Bounded_string.t ->
   unit ->
-  (position list, error_response) result
+  (position list, Polymarket_http.Client.error) result
 (** Get current positions for a user.
     @param user User address (required)
     @param market
@@ -87,7 +88,7 @@ val get_closed_positions :
   ?limit:Polymarket_common.Primitives.Closed_positions_limit.t ->
   ?offset:Polymarket_common.Primitives.Extended_offset.t ->
   unit ->
-  (closed_position list, error_response) result
+  (closed_position list, Polymarket_http.Client.error) result
 (** Get closed positions for a user.
     @param user User address (required)
     @param market Condition IDs (mutually exclusive with event_id)
@@ -112,7 +113,7 @@ val get_trades :
   ?limit:Polymarket_common.Primitives.Nonneg_int.t ->
   ?offset:Polymarket_common.Primitives.Nonneg_int.t ->
   unit ->
-  (trade list, error_response) result
+  (trade list, Polymarket_http.Client.error) result
 (** Get trades for a user or markets.
     @param user User address
     @param market Condition IDs (mutually exclusive with event_id)
@@ -140,7 +141,7 @@ val get_activity :
   ?limit:Polymarket_common.Primitives.Limit.t ->
   ?offset:Polymarket_common.Primitives.Offset.t ->
   unit ->
-  (activity list, error_response) result
+  (activity list, Polymarket_http.Client.error) result
 (** Get user activity (on-chain).
     @param user User address (required)
     @param market Condition IDs (mutually exclusive with event_id)
@@ -162,7 +163,7 @@ val get_holders :
   ?min_balance:Polymarket_common.Primitives.Min_balance.t ->
   ?limit:Polymarket_common.Primitives.Holders_limit.t ->
   unit ->
-  (meta_holder list, error_response) result
+  (meta_holder list, Polymarket_http.Client.error) result
 (** Get top holders for markets.
     @param market Condition IDs (required)
     @param min_balance Minimum balance 0-999999 (default: 1)
@@ -174,7 +175,7 @@ val get_traded :
   t ->
   user:Polymarket_common.Primitives.Address.t ->
   unit ->
-  (traded, error_response) result
+  (traded, Polymarket_http.Client.error) result
 (** Get total markets a user has traded.
     @param user User address (required) *)
 
@@ -183,7 +184,7 @@ val get_value :
   user:Polymarket_common.Primitives.Address.t ->
   ?market:Polymarket_common.Primitives.Hash64.t list ->
   unit ->
-  (value list, error_response) result
+  (value list, Polymarket_http.Client.error) result
 (** Get total value of a user's positions.
     @param user User address (required)
     @param market Condition IDs to filter by *)
@@ -194,7 +195,7 @@ val get_open_interest :
   t ->
   ?market:Polymarket_common.Primitives.Hash64.t list ->
   unit ->
-  (open_interest list, error_response) result
+  (open_interest list, Polymarket_http.Client.error) result
 (** Get open interest for markets.
     @param market Condition IDs to filter by *)
 
@@ -202,7 +203,7 @@ val get_live_volume :
   t ->
   id:Polymarket_common.Primitives.Pos_int.t ->
   unit ->
-  (live_volume list, error_response) result
+  (live_volume list, Polymarket_http.Client.error) result
 (** Get live volume for an event.
     @param id Event ID >= 1 (required) *)
 
@@ -214,7 +215,7 @@ val get_builder_leaderboard :
   ?limit:Polymarket_common.Primitives.Builder_limit.t ->
   ?offset:Polymarket_common.Primitives.Leaderboard_offset.t ->
   unit ->
-  (leaderboard_entry list, error_response) result
+  (leaderboard_entry list, Polymarket_http.Client.error) result
 (** Get aggregated builder leaderboard.
     @param time_period Time period to aggregate (default: DAY)
     @param limit Maximum results 0-50 (default: 25)
@@ -224,7 +225,7 @@ val get_builder_volume :
   t ->
   ?time_period:Time_period.t ->
   unit ->
-  (builder_volume_entry list, error_response) result
+  (builder_volume_entry list, Polymarket_http.Client.error) result
 (** Get daily builder volume time-series.
     @param time_period Time period for daily records (default: DAY) *)
 
@@ -238,7 +239,7 @@ val get_trader_leaderboard :
   ?limit:Polymarket_common.Primitives.Leaderboard_limit.t ->
   ?offset:Polymarket_common.Primitives.Leaderboard_offset.t ->
   unit ->
-  (trader_leaderboard_entry list, error_response) result
+  (trader_leaderboard_entry list, Polymarket_http.Client.error) result
 (** Get trader leaderboard rankings.
     @param category Market category (default: OVERALL)
     @param time_period Time period (default: DAY)

@@ -11,4 +11,6 @@
   mirage-crypto-rng.unix
   test_common
   test_data_api
-  test_clob_api))
+  test_gamma_api
+  test_clob_api
+  test_websocket_client))

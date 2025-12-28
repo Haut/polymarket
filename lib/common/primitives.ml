@@ -388,3 +388,27 @@ module Timestamp = struct
   let show t = to_string t
   let equal = Ptime.equal
 end
+
+(** {1 Side Enum}
+
+    Trade side (Buy/Sell) shared across Data API and CLOB API. *)
+
+module Side = struct
+  type t = Buy | Sell
+
+  let to_string = function Buy -> "BUY" | Sell -> "SELL"
+
+  let of_string = function
+    | "BUY" | "buy" -> Buy
+    | "SELL" | "sell" -> Sell
+    | s -> failwith ("Unknown side: " ^ s)
+
+  let t_of_yojson = function
+    | `String s -> of_string s
+    | _ -> failwith "Side.t_of_yojson: expected string"
+
+  let yojson_of_t t = `String (to_string t)
+  let pp fmt t = Format.fprintf fmt "%s" (to_string t)
+  let show t = to_string t
+  let equal a b = match (a, b) with Buy, Buy | Sell, Sell -> true | _ -> false
+end

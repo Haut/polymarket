@@ -500,3 +500,26 @@ module Timestamp : sig
   val show : t -> string
   val equal : t -> t -> bool
 end
+
+(** {1 Side Enum}
+
+    Trade side (Buy/Sell) shared across Data API and CLOB API. *)
+module Side : sig
+  type t = Buy | Sell  (** Buy or Sell side for trades and orders *)
+
+  val to_string : t -> string
+  (** Convert to string ("BUY" or "SELL") *)
+
+  val of_string : string -> t
+  (** Parse from string, raises on invalid input *)
+
+  val t_of_yojson : Yojson.Safe.t -> t
+  (** Parse from JSON string *)
+
+  val yojson_of_t : t -> Yojson.Safe.t
+  (** Convert to JSON string *)
+
+  val pp : Format.formatter -> t -> unit
+  val show : t -> string
+  val equal : t -> t -> bool
+end

@@ -73,13 +73,13 @@ module Unauthed : sig
     t ->
     token_id:string ->
     unit ->
-    (Types.order_book_summary, Types.error_response) result
+    (Types.order_book_summary, Polymarket_http.Client.error) result
 
   val get_order_books :
     t ->
     token_ids:string list ->
     unit ->
-    (Types.order_book_summary list, Types.error_response) result
+    (Types.order_book_summary list, Polymarket_http.Client.error) result
 
   (** {2 Pricing} *)
 
@@ -88,25 +88,25 @@ module Unauthed : sig
     token_id:string ->
     side:Types.Side.t ->
     unit ->
-    (Types.price_response, Types.error_response) result
+    (Types.price_response, Polymarket_http.Client.error) result
 
   val get_midpoint :
     t ->
     token_id:string ->
     unit ->
-    (Types.midpoint_response, Types.error_response) result
+    (Types.midpoint_response, Polymarket_http.Client.error) result
 
   val get_prices :
     t ->
     requests:(string * Types.Side.t) list ->
     unit ->
-    (Types.prices_response, Types.error_response) result
+    (Types.prices_response, Polymarket_http.Client.error) result
 
   val get_spreads :
     t ->
     token_ids:string list ->
     unit ->
-    (Types.spreads_response, Types.error_response) result
+    (Types.spreads_response, Polymarket_http.Client.error) result
 
   (** {2 Timeseries} *)
 
@@ -118,7 +118,7 @@ module Unauthed : sig
     ?interval:Types.Interval.t ->
     ?fidelity:int ->
     unit ->
-    (Types.price_history, Types.error_response) result
+    (Types.price_history, Polymarket_http.Client.error) result
 end
 
 (** {1 L1-Authenticated Client}
@@ -153,7 +153,7 @@ module L1 : sig
   val create_api_key :
     t ->
     nonce:int ->
-    (Auth_types.api_key_response, Polymarket_http.Client.error_response) result
+    (Auth_types.api_key_response, Polymarket_http.Client.error) result
   (** Create a new API key using L1 wallet authentication. Returns the API key,
       secret, and passphrase. *)
 
@@ -161,7 +161,7 @@ module L1 : sig
     t ->
     nonce:int ->
     ( l2 * Auth_types.derive_api_key_response,
-      Polymarket_http.Client.error_response )
+      Polymarket_http.Client.error )
     result
   (** Derive API key from wallet and automatically upgrade to L2 client. Returns
       both the L2 client and the raw response (for credential storage). *)
@@ -172,13 +172,13 @@ module L1 : sig
     t ->
     token_id:string ->
     unit ->
-    (Types.order_book_summary, Types.error_response) result
+    (Types.order_book_summary, Polymarket_http.Client.error) result
 
   val get_order_books :
     t ->
     token_ids:string list ->
     unit ->
-    (Types.order_book_summary list, Types.error_response) result
+    (Types.order_book_summary list, Polymarket_http.Client.error) result
 
   (** {2 Pricing} *)
 
@@ -187,25 +187,25 @@ module L1 : sig
     token_id:string ->
     side:Types.Side.t ->
     unit ->
-    (Types.price_response, Types.error_response) result
+    (Types.price_response, Polymarket_http.Client.error) result
 
   val get_midpoint :
     t ->
     token_id:string ->
     unit ->
-    (Types.midpoint_response, Types.error_response) result
+    (Types.midpoint_response, Polymarket_http.Client.error) result
 
   val get_prices :
     t ->
     requests:(string * Types.Side.t) list ->
     unit ->
-    (Types.prices_response, Types.error_response) result
+    (Types.prices_response, Polymarket_http.Client.error) result
 
   val get_spreads :
     t ->
     token_ids:string list ->
     unit ->
-    (Types.spreads_response, Types.error_response) result
+    (Types.spreads_response, Polymarket_http.Client.error) result
 
   (** {2 Timeseries} *)
 
@@ -217,7 +217,7 @@ module L1 : sig
     ?interval:Types.Interval.t ->
     ?fidelity:int ->
     unit ->
-    (Types.price_history, Types.error_response) result
+    (Types.price_history, Polymarket_http.Client.error) result
 end
 
 (** {1 L2-Authenticated Client}
@@ -257,14 +257,13 @@ module L2 : sig
   val create_api_key :
     t ->
     nonce:int ->
-    (Auth_types.api_key_response, Polymarket_http.Client.error_response) result
+    (Auth_types.api_key_response, Polymarket_http.Client.error) result
   (** Create a new API key using L1 wallet authentication. *)
 
-  val delete_api_key : t -> (unit, Polymarket_http.Client.error_response) result
+  val delete_api_key : t -> (unit, Polymarket_http.Client.error) result
   (** Delete the current API key. *)
 
-  val get_api_keys :
-    t -> (string list, Polymarket_http.Client.error_response) result
+  val get_api_keys : t -> (string list, Polymarket_http.Client.error) result
   (** Get all API keys for this address. *)
 
   (** {2 Orders} *)
@@ -275,21 +274,21 @@ module L2 : sig
     owner:string ->
     order_type:Types.Order_type.t ->
     unit ->
-    (Types.create_order_response, Types.error_response) result
+    (Types.create_order_response, Polymarket_http.Client.error) result
   (** Create a new order on the CLOB. *)
 
   val create_orders :
     t ->
     orders:(Types.signed_order * string * Types.Order_type.t) list ->
     unit ->
-    (Types.create_order_response list, Types.error_response) result
+    (Types.create_order_response list, Polymarket_http.Client.error) result
   (** Create multiple orders on the CLOB. *)
 
   val get_order :
     t ->
     order_id:string ->
     unit ->
-    (Types.open_order, Types.error_response) result
+    (Types.open_order, Polymarket_http.Client.error) result
   (** Get details of a specific order. *)
 
   val get_orders :
@@ -297,7 +296,7 @@ module L2 : sig
     ?market:string ->
     ?asset_id:string ->
     unit ->
-    (Types.open_order list, Types.error_response) result
+    (Types.open_order list, Polymarket_http.Client.error) result
   (** Get all open orders, optionally filtered by market or asset. *)
 
   (** {2 Cancel Orders} *)
@@ -306,18 +305,18 @@ module L2 : sig
     t ->
     order_id:string ->
     unit ->
-    (Types.cancel_response, Types.error_response) result
+    (Types.cancel_response, Polymarket_http.Client.error) result
   (** Cancel a specific order. *)
 
   val cancel_orders :
     t ->
     order_ids:string list ->
     unit ->
-    (Types.cancel_response, Types.error_response) result
+    (Types.cancel_response, Polymarket_http.Client.error) result
   (** Cancel multiple orders. *)
 
   val cancel_all :
-    t -> unit -> (Types.cancel_response, Types.error_response) result
+    t -> unit -> (Types.cancel_response, Polymarket_http.Client.error) result
   (** Cancel all open orders. *)
 
   val cancel_market_orders :
@@ -325,7 +324,7 @@ module L2 : sig
     ?market:string ->
     ?asset_id:string ->
     unit ->
-    (Types.cancel_response, Types.error_response) result
+    (Types.cancel_response, Polymarket_http.Client.error) result
   (** Cancel all orders for a market or asset. *)
 
   (** {2 Trades} *)
@@ -339,7 +338,7 @@ module L2 : sig
     ?before:string ->
     ?after:string ->
     unit ->
-    (Types.clob_trade list, Types.error_response) result
+    (Types.clob_trade list, Polymarket_http.Client.error) result
   (** Get trade history. *)
 
   (** {2 Order Book} *)
@@ -348,13 +347,13 @@ module L2 : sig
     t ->
     token_id:string ->
     unit ->
-    (Types.order_book_summary, Types.error_response) result
+    (Types.order_book_summary, Polymarket_http.Client.error) result
 
   val get_order_books :
     t ->
     token_ids:string list ->
     unit ->
-    (Types.order_book_summary list, Types.error_response) result
+    (Types.order_book_summary list, Polymarket_http.Client.error) result
 
   (** {2 Pricing} *)
 
@@ -363,25 +362,25 @@ module L2 : sig
     token_id:string ->
     side:Types.Side.t ->
     unit ->
-    (Types.price_response, Types.error_response) result
+    (Types.price_response, Polymarket_http.Client.error) result
 
   val get_midpoint :
     t ->
     token_id:string ->
     unit ->
-    (Types.midpoint_response, Types.error_response) result
+    (Types.midpoint_response, Polymarket_http.Client.error) result
 
   val get_prices :
     t ->
     requests:(string * Types.Side.t) list ->
     unit ->
-    (Types.prices_response, Types.error_response) result
+    (Types.prices_response, Polymarket_http.Client.error) result
 
   val get_spreads :
     t ->
     token_ids:string list ->
     unit ->
-    (Types.spreads_response, Types.error_response) result
+    (Types.spreads_response, Polymarket_http.Client.error) result
 
   (** {2 Timeseries} *)
 
@@ -393,7 +392,7 @@ module L2 : sig
     ?interval:Types.Interval.t ->
     ?fidelity:int ->
     unit ->
-    (Types.price_history, Types.error_response) result
+    (Types.price_history, Polymarket_http.Client.error) result
 end
 
 (** {1 State Transitions}

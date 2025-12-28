@@ -222,56 +222,84 @@ let parse_json_list parse_item_fn body =
 
 (** {1 Error Handling} *)
 
+type http_error = { status : int; body : string; message : string }
+type parse_error = { context : string; message : string }
+type network_error = { message : string }
+
+type error =
+  | Http_error of http_error
+  | Parse_error of parse_error
+  | Network_error of network_error
+
+let error_to_string = function
+  | Http_error { status; message; _ } ->
+      Printf.sprintf "HTTP %d: %s" status message
+  | Parse_error { context; message } ->
+      Printf.sprintf "Parse error in %s: %s" context message
+  | Network_error { message } -> Printf.sprintf "Network error: %s" message
+
+let pp_error fmt e = Format.fprintf fmt "%s" (error_to_string e)
+
 type error_response = { error : string } [@@deriving yojson]
+(** Legacy type alias for backwards compatibility *)
 
-let to_error msg = { error = msg }
+let to_error msg = Parse_error { context = "json"; message = msg }
 
-let parse_error body =
-  try error_response_of_yojson (Yojson.Safe.from_string body)
-  with _ -> { error = body }
+let parse_error ~status body =
+  let message =
+    try
+      let json = Yojson.Safe.from_string body in
+      match json with
+      | `Assoc fields -> (
+          match List.assoc_opt "error" fields with
+          | Some (`String msg) -> msg
+          | _ -> body)
+      | _ -> body
+    with _ -> body
+  in
+  Http_error { status; body; message }
 
 (** {1 Response Handling} *)
 
-let handle_response status body parse_fn error_parser =
-  match status with 200 -> parse_fn body | _ -> Error (error_parser body)
+let handle_response status body parse_fn =
+  match status with
+  | 200 -> parse_fn body
+  | _ -> Error (parse_error ~status body)
 
-let request ?(headers = []) t path parse_fn error_parser params =
+let request ?(headers = []) t path parse_fn params =
   let uri = build_uri t.base_url path params in
   let status, body = do_get ~headers t uri in
-  handle_response status body parse_fn error_parser
+  handle_response status body parse_fn
 
 (** {1 Convenient JSON Request Helpers} *)
 
 let get_json ?(headers = []) t path parser params =
   request ~headers t path
     (fun body -> parse_json parser body |> Result.map_error to_error)
-    parse_error params
+    params
 
 let get_json_list ?(headers = []) t path parser params =
   request ~headers t path
     (fun body -> parse_json_list parser body |> Result.map_error to_error)
-    parse_error params
+    params
 
 let get_text ?(headers = []) t path params =
-  request ~headers t path (fun body -> Ok body) parse_error params
+  request ~headers t path (fun body -> Ok body) params
 
 let post_json ?(headers = []) t path parser ~body params =
   let uri = build_uri t.base_url path params in
   let status, resp_body = do_post ~headers t uri ~body in
-  handle_response status resp_body
-    (fun body -> parse_json parser body |> Result.map_error to_error)
-    parse_error
+  handle_response status resp_body (fun body ->
+      parse_json parser body |> Result.map_error to_error)
 
 let post_json_list ?(headers = []) t path parser ~body params =
   let uri = build_uri t.base_url path params in
   let status, resp_body = do_post ~headers t uri ~body in
-  handle_response status resp_body
-    (fun body -> parse_json_list parser body |> Result.map_error to_error)
-    parse_error
+  handle_response status resp_body (fun body ->
+      parse_json_list parser body |> Result.map_error to_error)
 
 let delete_json ?(headers = []) t path parser params =
   let uri = build_uri t.base_url path params in
   let status, body = do_delete ~headers t uri in
-  handle_response status body
-    (fun body -> parse_json parser body |> Result.map_error to_error)
-    parse_error
+  handle_response status body (fun body ->
+      parse_json parser body |> Result.map_error to_error)

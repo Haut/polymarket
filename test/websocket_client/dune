@@ -1,0 +1,3 @@
+(library
+ (name test_websocket_client)
+ (libraries polymarket_wss alcotest))

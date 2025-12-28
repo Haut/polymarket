@@ -85,7 +85,7 @@ let get_active_tokens env sw =
         None
       end
   | Error err ->
-      Logger.error "GAMMA" err.Http.error;
+      Logger.error "GAMMA" (Http.error_to_string err);
       None
 
 (** {1 Main Demo} *)

@@ -103,45 +103,58 @@ val parse_json_list :
 
 (** {1 Error Handling} *)
 
+type http_error = { status : int; body : string; message : string }
+(** HTTP error with status code, raw body, and extracted message *)
+
+type parse_error = { context : string; message : string }
+(** Parse error with context and message *)
+
+type network_error = { message : string }
+(** Network-level error (connection failed, timeout, etc.) *)
+
+type error =
+  | Http_error of http_error
+  | Parse_error of parse_error
+  | Network_error of network_error
+      (** Structured error type for all API errors *)
+
+val error_to_string : error -> string
+(** Convert error to human-readable string *)
+
+val pp_error : Format.formatter -> error -> unit
+(** Pretty printer for errors *)
+
 type error_response = { error : string }
-(** Standard error response type used by Polymarket APIs *)
+(** Legacy type alias for backwards compatibility *)
 
-val to_error : string -> error_response
-(** Create an error response from a message *)
+val to_error : string -> error
+(** Create a parse error from a message *)
 
-val parse_error : string -> error_response
-(** Parse an error response from a JSON body, falling back to body as error
-    message *)
+val parse_error : status:int -> string -> error
+(** Parse an error response from a JSON body and status code *)
 
 (** {1 Response Handling} *)
 
 val handle_response :
-  status_code ->
-  string ->
-  (string -> ('a, 'e) result) ->
-  (string -> 'e) ->
-  ('a, 'e) result
+  status_code -> string -> (string -> ('a, error) result) -> ('a, error) result
 (** Handle HTTP response status and parse body.
     @param status The HTTP status code
     @param body The response body
     @param parse_fn Parser for successful responses
-    @param error_parser Parser for error responses
     @return Parsed result or error *)
 
 val request :
   ?headers:(string * string) list ->
   t ->
   string ->
-  (string -> ('a, 'e) result) ->
-  (string -> 'e) ->
+  (string -> ('a, error) result) ->
   params ->
-  ('a, 'e) result
+  ('a, error) result
 (** Unified request function for GET requests.
     @param headers Optional list of HTTP headers to include
     @param t The client
     @param path API endpoint path
     @param parse_fn Parser for successful responses
-    @param error_parser Parser for error responses
     @param params Query parameters
     @return Parsed result or error *)
 
@@ -155,7 +168,7 @@ val get_json :
   string ->
   (Yojson.Safe.t -> 'a) ->
   params ->
-  ('a, error_response) result
+  ('a, error) result
 (** GET request expecting a JSON object response.
     @param headers Optional list of HTTP headers to include *)
 
@@ -165,7 +178,7 @@ val get_json_list :
   string ->
   (Yojson.Safe.t -> 'a) ->
   params ->
-  ('a list, error_response) result
+  ('a list, error) result
 (** GET request expecting a JSON array response.
     @param headers Optional list of HTTP headers to include *)
 
@@ -174,7 +187,7 @@ val get_text :
   t ->
   string ->
   params ->
-  (string, error_response) result
+  (string, error) result
 (** GET request expecting a plain text response.
     @param headers Optional list of HTTP headers to include *)
 
@@ -185,7 +198,7 @@ val post_json :
   (Yojson.Safe.t -> 'a) ->
   body:string ->
   params ->
-  ('a, error_response) result
+  ('a, error) result
 (** POST request with JSON body expecting a JSON object response.
     @param headers Optional list of HTTP headers to include *)
 
@@ -196,7 +209,7 @@ val post_json_list :
   (Yojson.Safe.t -> 'a) ->
   body:string ->
   params ->
-  ('a list, error_response) result
+  ('a list, error) result
 (** POST request with JSON body expecting a JSON array response.
     @param headers Optional list of HTTP headers to include *)
 
@@ -206,6 +219,6 @@ val delete_json :
   string ->
   (Yojson.Safe.t -> 'a) ->
   params ->
-  ('a, error_response) result
+  ('a, error) result
 (** DELETE request expecting a JSON object response.
     @param headers Optional list of HTTP headers to include *)

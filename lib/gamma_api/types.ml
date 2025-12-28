@@ -20,10 +20,10 @@ module Status = struct
     | All -> "all"
 
   let of_string = function
-    | "active" | "Active" -> Active
-    | "closed" | "Closed" -> Closed
-    | "all" | "All" -> All
-    | s -> failwith ("Unknown status: " ^ s)
+    | "active" | "Active" -> Ok Active
+    | "closed" | "Closed" -> Ok Closed
+    | "all" | "All" -> Ok All
+    | s -> Error (Printf.sprintf "Unknown status: %s" s)
 end
 
 module Parent_entity_type = struct
@@ -39,10 +39,10 @@ module Parent_entity_type = struct
     | Market -> "market"
 
   let of_string = function
-    | "Event" | "event" -> Event
-    | "Series" | "series" -> Series
-    | "Market" | "market" -> Market
-    | s -> failwith ("Unknown parent_entity_type: " ^ s)
+    | "Event" | "event" -> Ok Event
+    | "Series" | "series" -> Ok Series
+    | "Market" | "market" -> Ok Market
+    | s -> Error (Printf.sprintf "Unknown parent_entity_type: %s" s)
 end
 
 module Slug_size = struct
@@ -55,10 +55,10 @@ module Slug_size = struct
   let to_string = function Sm -> "sm" | Md -> "md" | Lg -> "lg"
 
   let of_string = function
-    | "sm" | "Sm" -> Sm
-    | "md" | "Md" -> Md
-    | "lg" | "Lg" -> Lg
-    | s -> failwith ("Unknown slug_size: " ^ s)
+    | "sm" | "Sm" -> Ok Sm
+    | "md" | "Md" -> Ok Md
+    | "lg" | "Lg" -> Ok Lg
+    | s -> Error (Printf.sprintf "Unknown slug_size: %s" s)
 end
 
 (** {1 Response Types} *)
@@ -265,7 +265,7 @@ type comment = {
 type public_profile_user = {
   id : string;
   creator : bool;
-  mod_ : bool; [@key "mod"]
+  is_mod : bool; [@key "mod"]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Public profile user *)
@@ -337,7 +337,7 @@ type collection = {
   active : bool option; [@default None]
   closed : bool option; [@default None]
   archived : bool option; [@default None]
-  new_ : bool option; [@default None]
+  is_new : bool option; [@default None]
   featured : bool option; [@default None]
   restricted : bool option; [@default None]
   is_template : bool option; [@default None] [@key "isTemplate"]
@@ -406,7 +406,7 @@ type market = {
       [@default None] [@key "updatedAt"]
   closed_time : string option; [@default None] [@key "closedTime"]
   wide_format : bool option; [@default None] [@key "wideFormat"]
-  new_ : bool option; [@default None] [@key "new"]
+  is_new : bool option; [@default None] [@key "new"]
   mailchimp_tag : string option; [@default None] [@key "mailchimpTag"]
   featured : bool option; [@default None]
   archived : bool option; [@default None]
@@ -549,7 +549,7 @@ and event = {
   active : bool option; [@default None]
   closed : bool option; [@default None]
   archived : bool option; [@default None]
-  new_ : bool option; [@default None] [@key "new"]
+  is_new : bool option; [@default None] [@key "new"]
   featured : bool option; [@default None]
   restricted : bool option; [@default None]
   liquidity : float option; [@default None]
@@ -655,7 +655,7 @@ and series = {
   active : bool option; [@default None]
   closed : bool option; [@default None]
   archived : bool option; [@default None]
-  new_ : bool option; [@default None] [@key "new"]
+  is_new : bool option; [@default None] [@key "new"]
   featured : bool option; [@default None]
   restricted : bool option; [@default None]
   is_template : bool option; [@default None] [@key "isTemplate"]

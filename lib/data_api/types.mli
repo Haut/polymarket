@@ -110,10 +110,15 @@ end
 type health_response = { data : string } [@@deriving yojson, show, eq]
 (** Health check response *)
 
-type error_response = Polymarket_http.Client.error_response = { error : string }
-[@@deriving yojson, show, eq]
-(** Error response (alias to Polymarket_http.Client.error_response for
-    compatibility) *)
+type error = Polymarket_http.Client.error
+(** Structured error type for all API errors (alias to
+    Polymarket_http.Client.error) *)
+
+val error_to_string : error -> string
+(** Convert error to human-readable string *)
+
+val pp_error : Format.formatter -> error -> unit
+(** Pretty printer for errors *)
 
 (** {1 Domain Models} *)
 

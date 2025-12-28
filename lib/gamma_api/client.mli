@@ -13,7 +13,8 @@
       in
       match Polymarket.Gamma_api.Client.status client with
       | Ok status -> print_endline status
-      | Error err -> print_endline ("Error: " ^ err.error)
+      | Error err ->
+          print_endline ("Error: " ^ Polymarket_http.Client.error_to_string err)
     ]} *)
 
 open Types
@@ -41,7 +42,7 @@ val create :
 
 (** {1 Health Endpoint} *)
 
-val status : t -> (string, Polymarket_http.Client.error_response) result
+val status : t -> (string, Polymarket_http.Client.error) result
 (** Check if the API is healthy.
     @return [Ok "OK"] on success, [Error error] on failure *)
 
@@ -57,7 +58,7 @@ val get_teams :
   ?name:string list ->
   ?abbreviation:string list ->
   unit ->
-  (team list, Polymarket_http.Client.error_response) result
+  (team list, Polymarket_http.Client.error) result
 
 (** Get list of sports teams.
     @param limit Maximum number of results (non-negative)
@@ -69,15 +70,13 @@ val get_teams :
     @param abbreviation Filter by team abbreviation(s) *)
 
 val get_sports :
-  t ->
-  unit ->
-  (sports_metadata list, Polymarket_http.Client.error_response) result
+  t -> unit -> (sports_metadata list, Polymarket_http.Client.error) result
 (** Get list of sports with metadata. *)
 
 val get_sports_market_types :
   t ->
   unit ->
-  (sports_market_types_response, Polymarket_http.Client.error_response) result
+  (sports_market_types_response, Polymarket_http.Client.error) result
 (** Get list of sports market types. *)
 
 (** {1 Tags Endpoints} *)
@@ -91,7 +90,7 @@ val get_tags :
   ?include_template:bool ->
   ?is_carousel:bool ->
   unit ->
-  (tag list, Polymarket_http.Client.error_response) result
+  (tag list, Polymarket_http.Client.error) result
 (** Get list of tags.
     @param limit Maximum number of results (non-negative)
     @param offset Pagination offset (non-negative)
@@ -105,7 +104,7 @@ val get_tag :
   id:string ->
   ?include_template:bool ->
   unit ->
-  (tag, Polymarket_http.Client.error_response) result
+  (tag, Polymarket_http.Client.error) result
 (** Get a tag by ID.
     @param id Tag ID (required)
     @param include_template Include template data if true *)
@@ -115,7 +114,7 @@ val get_tag_by_slug :
   slug:string ->
   ?include_template:bool ->
   unit ->
-  (tag, Polymarket_http.Client.error_response) result
+  (tag, Polymarket_http.Client.error) result
 (** Get a tag by slug.
     @param slug Tag slug (required)
     @param include_template Include template data if true *)
@@ -126,7 +125,7 @@ val get_related_tags :
   ?omit_empty:bool ->
   ?status:Status.t ->
   unit ->
-  (related_tag list, Polymarket_http.Client.error_response) result
+  (related_tag list, Polymarket_http.Client.error) result
 (** Get related tags for a tag.
     @param id Tag ID (required)
     @param omit_empty Omit empty related tags
@@ -138,7 +137,7 @@ val get_related_tags_by_slug :
   ?omit_empty:bool ->
   ?status:Status.t ->
   unit ->
-  (related_tag list, Polymarket_http.Client.error_response) result
+  (related_tag list, Polymarket_http.Client.error) result
 (** Get related tags for a tag by slug.
     @param slug Tag slug (required)
     @param omit_empty Omit empty related tags
@@ -150,7 +149,7 @@ val get_related_tag_tags :
   ?omit_empty:bool ->
   ?status:Status.t ->
   unit ->
-  (tag list, Polymarket_http.Client.error_response) result
+  (tag list, Polymarket_http.Client.error) result
 (** Get full tag objects for tags related to a tag.
     @param id Tag ID (required)
     @param omit_empty Omit empty related tags
@@ -162,7 +161,7 @@ val get_related_tag_tags_by_slug :
   ?omit_empty:bool ->
   ?status:Status.t ->
   unit ->
-  (tag list, Polymarket_http.Client.error_response) result
+  (tag list, Polymarket_http.Client.error) result
 (** Get full tag objects for tags related to a tag by slug.
     @param slug Tag slug (required)
     @param omit_empty Omit empty related tags
@@ -199,7 +198,7 @@ val get_events :
   ?end_date_min:Polymarket_common.Primitives.Timestamp.t ->
   ?end_date_max:Polymarket_common.Primitives.Timestamp.t ->
   unit ->
-  (event list, Polymarket_http.Client.error_response) result
+  (event list, Polymarket_http.Client.error) result
 (** List events.
     @param limit Maximum number of results (non-negative)
     @param offset Pagination offset (non-negative)
@@ -230,11 +229,11 @@ val get_events :
 
 val get_event :
   t ->
-  id:int ->
+  id:string ->
   ?include_chat:bool ->
   ?include_template:bool ->
   unit ->
-  (event, Polymarket_http.Client.error_response) result
+  (event, Polymarket_http.Client.error) result
 (** Get an event by ID.
     @param id Event ID (required)
     @param include_chat Include chat data
@@ -246,17 +245,14 @@ val get_event_by_slug :
   ?include_chat:bool ->
   ?include_template:bool ->
   unit ->
-  (event, Polymarket_http.Client.error_response) result
+  (event, Polymarket_http.Client.error) result
 (** Get an event by slug.
     @param slug Event slug (required)
     @param include_chat Include chat data
     @param include_template Include template data *)
 
 val get_event_tags :
-  t ->
-  id:int ->
-  unit ->
-  (tag list, Polymarket_http.Client.error_response) result
+  t -> id:string -> unit -> (tag list, Polymarket_http.Client.error) result
 (** Get tags for an event.
     @param id Event ID (required) *)
 
@@ -292,7 +288,7 @@ val get_markets :
   ?include_tag:bool ->
   ?closed:bool ->
   unit ->
-  (market list, Polymarket_http.Client.error_response) result
+  (market list, Polymarket_http.Client.error) result
 (** Get list of markets.
     @param limit Maximum number of results (non-negative)
     @param offset Pagination offset (non-negative)
@@ -324,10 +320,10 @@ val get_markets :
 
 val get_market :
   t ->
-  id:int ->
+  id:string ->
   ?include_tag:bool ->
   unit ->
-  (market, Polymarket_http.Client.error_response) result
+  (market, Polymarket_http.Client.error) result
 (** Get a market by ID.
     @param id Market ID (required)
     @param include_tag Include tag data *)
@@ -337,16 +333,13 @@ val get_market_by_slug :
   slug:string ->
   ?include_tag:bool ->
   unit ->
-  (market, Polymarket_http.Client.error_response) result
+  (market, Polymarket_http.Client.error) result
 (** Get a market by slug.
     @param slug Market slug (required)
     @param include_tag Include tag data *)
 
 val get_market_tags :
-  t ->
-  id:int ->
-  unit ->
-  (tag list, Polymarket_http.Client.error_response) result
+  t -> id:string -> unit -> (tag list, Polymarket_http.Client.error) result
 (** Get tags for a market.
     @param id Market ID (required) *)
 
@@ -365,7 +358,7 @@ val get_series_list :
   ?include_chat:bool ->
   ?recurrence:string ->
   unit ->
-  (series list, Polymarket_http.Client.error_response) result
+  (series list, Polymarket_http.Client.error) result
 (** Get list of series.
     @param limit Maximum number of results (non-negative)
     @param offset Pagination offset (non-negative)
@@ -380,10 +373,10 @@ val get_series_list :
 
 val get_series :
   t ->
-  id:int ->
+  id:string ->
   ?include_chat:bool ->
   unit ->
-  (series, Polymarket_http.Client.error_response) result
+  (series, Polymarket_http.Client.error) result
 (** Get a series by ID.
     @param id Series ID (required)
     @param include_chat Include chat data *)
@@ -401,7 +394,7 @@ val get_comments :
   ?get_positions:bool ->
   ?holders_only:bool ->
   unit ->
-  (comment list, Polymarket_http.Client.error_response) result
+  (comment list, Polymarket_http.Client.error) result
 (** Get list of comments.
     @param limit Maximum number of results (non-negative)
     @param offset Pagination offset (non-negative)
@@ -414,10 +407,10 @@ val get_comments :
 
 val get_comment :
   t ->
-  id:int ->
+  id:string ->
   ?get_positions:bool ->
   unit ->
-  (comment, Polymarket_http.Client.error_response) result
+  (comment, Polymarket_http.Client.error) result
 (** Get a comment by ID.
     @param id Comment ID (required)
     @param get_positions Include position data *)
@@ -430,7 +423,7 @@ val get_user_comments :
   ?order:string ->
   ?ascending:bool ->
   unit ->
-  (comment list, Polymarket_http.Client.error_response) result
+  (comment list, Polymarket_http.Client.error) result
 (** Get comments by user address.
     @param user_address User address (required)
     @param limit Maximum number of results (non-negative)
@@ -444,7 +437,7 @@ val get_public_profile :
   t ->
   address:string ->
   unit ->
-  (public_profile_response, Polymarket_http.Client.error_response) result
+  (public_profile_response, Polymarket_http.Client.error) result
 (** Get public profile by address.
     @param address User address (required) *)
 
@@ -467,7 +460,7 @@ val public_search :
   ?exclude_tag_id:int list ->
   ?optimized:bool ->
   unit ->
-  (search, Polymarket_http.Client.error_response) result
+  (search, Polymarket_http.Client.error) result
 (** Search for events, tags, and profiles.
     @param q Search query (required)
     @param cache Enable caching

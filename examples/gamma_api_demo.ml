@@ -13,29 +13,29 @@ open Polymarket
 let print_result_count name result =
   match result with
   | Ok items -> Logger.ok name (Printf.sprintf "%d items" (List.length items))
-  | Error err -> Logger.error name err.Http.error
+  | Error err -> Logger.error name (Http.error_to_string err)
 
 let print_result name ~on_ok result =
   match result with
   | Ok value -> Logger.ok name (on_ok value)
-  | Error err -> Logger.error name err.Http.error
+  | Error err -> Logger.error name (Http.error_to_string err)
 
 (** {1 ID Extraction Helpers} *)
 
 let first_event_id (events : Gamma.event list) =
-  match events with [] -> None | e :: _ -> int_of_string_opt e.id
+  match events with [] -> None | e :: _ -> Some e.id
 
 let first_event_slug (events : Gamma.event list) =
   match events with [] -> None | e :: _ -> e.slug
 
 let first_market_id (markets : Gamma.market list) =
-  match markets with [] -> None | m :: _ -> int_of_string_opt m.id
+  match markets with [] -> None | m :: _ -> Some m.id
 
 let first_market_slug (markets : Gamma.market list) =
   match markets with [] -> None | m :: _ -> m.slug
 
 let first_series_id (series_list : Gamma.series list) =
-  match series_list with [] -> None | s :: _ -> int_of_string_opt s.id
+  match series_list with [] -> None | s :: _ -> Some s.id
 
 let first_tag_id (tags : Gamma.tag list) =
   match tags with [] -> None | t :: _ -> Some t.id
@@ -44,7 +44,7 @@ let first_tag_slug (tags : Gamma.tag list) =
   match tags with [] -> None | t :: _ -> t.slug
 
 let first_comment_id (comments : Gamma.comment list) =
-  match comments with [] -> None | c :: _ -> int_of_string_opt c.id
+  match comments with [] -> None | c :: _ -> Some c.id
 
 let first_user_address (comments : Gamma.comment list) =
   match comments with [] -> None | c :: _ -> c.user_address
@@ -188,11 +188,19 @@ let run_demo env =
   (* Comments require both parent_entity_type and parent_entity_id *)
   let comments =
     match event_id with
-    | Some eid ->
-        Gamma.get_comments client ~limit:(Nonneg_int.of_int_exn 10)
-          ~parent_entity_type:Gamma.Parent_entity_type.Event
-          ~parent_entity_id:eid ()
-    | None -> Error { Http.error = "No event ID for comments" }
+    | Some eid -> (
+        match int_of_string_opt eid with
+        | Some eid_int ->
+            Gamma.get_comments client ~limit:(Nonneg_int.of_int_exn 10)
+              ~parent_entity_type:Gamma.Parent_entity_type.Event
+              ~parent_entity_id:eid_int ()
+        | None ->
+            Error
+              (Http.Parse_error { context = "event_id"; message = "not an int" })
+        )
+    | None ->
+        Error
+          (Http.Parse_error { context = "comments"; message = "No event ID" })
   in
   print_result_count "get_comments" comments;
 

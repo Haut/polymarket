@@ -44,7 +44,7 @@ val create_api_key :
   private_key:Crypto.private_key ->
   address:string ->
   nonce:int ->
-  (Auth_types.api_key_response, Polymarket_http.Client.error_response) result
+  (Auth_types.api_key_response, Polymarket_http.Client.error) result
 (** Create a new API key using L1 authentication.
     @param private_key The Ethereum private key (hex, without 0x prefix)
     @param address The Ethereum address (hex, with 0x prefix)
@@ -55,9 +55,7 @@ val derive_api_key :
   private_key:Crypto.private_key ->
   address:string ->
   nonce:int ->
-  ( Auth_types.derive_api_key_response,
-    Polymarket_http.Client.error_response )
-  result
+  (Auth_types.derive_api_key_response, Polymarket_http.Client.error) result
 (** Derive API key from existing credentials using L1 authentication. Unlike
     create_api_key, this returns the same key for the same nonce.
     @param private_key The Ethereum private key (hex, without 0x prefix)
@@ -68,7 +66,7 @@ val delete_api_key :
   Polymarket_http.Client.t ->
   credentials:Auth_types.credentials ->
   address:string ->
-  (unit, Polymarket_http.Client.error_response) result
+  (unit, Polymarket_http.Client.error) result
 (** Delete an API key using L2 authentication.
     @param credentials The API credentials to delete
     @param address The Ethereum address (hex, with 0x prefix) *)
@@ -77,7 +75,7 @@ val get_api_keys :
   Polymarket_http.Client.t ->
   credentials:Auth_types.credentials ->
   address:string ->
-  (string list, Polymarket_http.Client.error_response) result
+  (string list, Polymarket_http.Client.error) result
 (** Get all API keys for the account using L2 authentication.
     @param credentials The API credentials
     @param address The Ethereum address (hex, with 0x prefix)

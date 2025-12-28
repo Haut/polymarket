@@ -50,3 +50,15 @@ val private_key_to_address : private_key -> string
 
 val current_timestamp_ms : unit -> string
 (** Get current Unix timestamp in milliseconds as string. *)
+
+(** {1 Low-level Helpers (for Order_builder)} *)
+
+val pad_hex_32 : string -> string
+(** Pad a hex string to 64 characters (32 bytes) with leading zeros. *)
+
+val encode_uint256 : int -> string
+(** Encode an integer as a 64-character hex string (32 bytes). *)
+
+val sign_hash : private_key:private_key -> string -> string
+(** Sign a 32-byte hash with a private key using secp256k1. Returns hex
+    signature with 0x prefix and recovery id. *)

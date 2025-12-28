@@ -23,22 +23,8 @@ exception Invalid_signature of string
 
 (** {1 Enum Modules} *)
 
-module Side = struct
-  type t = Buy | Sell [@@deriving show, eq]
-
-  let to_string = function Buy -> "BUY" | Sell -> "SELL"
-
-  let of_string = function
-    | "BUY" | "buy" -> Buy
-    | "SELL" | "sell" -> Sell
-    | s -> failwith ("Unknown side: " ^ s)
-
-  let t_of_yojson = function
-    | `String s -> of_string s
-    | _ -> failwith "Side.t_of_yojson: expected string"
-
-  let yojson_of_t t = `String (to_string t)
-end
+module Side = Polymarket_common.Primitives.Side
+(** Re-export shared Side module from Common.Primitives *)
 
 module Order_type = struct
   (** Gtc: Good Till Cancelled, Gtd: Good Till Date, Fok: Fill or Kill, Fak:
@@ -379,9 +365,11 @@ type price_history = { history : price_point list [@default []] }
 
 (** {1 Error Response} *)
 
-type error_response = Polymarket_http.Client.error_response = { error : string }
-[@@deriving yojson, show, eq]
-(** Error response (alias to Polymarket_http.Client.error_response) *)
+type error = Polymarket_http.Client.error
+(** Structured error type for all API errors *)
+
+let error_to_string = Polymarket_http.Client.error_to_string
+let pp_error = Polymarket_http.Client.pp_error
 
 (** {1 Validation Functions}
 

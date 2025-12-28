@@ -145,11 +145,9 @@ module Internal = struct
     let status, resp_body =
       H.do_delete ~headers http (Uri.with_query uri [ ("orderIDs", order_ids) ])
     in
-    H.handle_response status resp_body
-      (fun body ->
+    H.handle_response status resp_body (fun body ->
         H.parse_json cancel_response_of_yojson body
         |> Result.map_error H.to_error)
-      H.parse_error
 
   let cancel_all http ~credentials ~address () =
     let path = "/cancel-all" in
