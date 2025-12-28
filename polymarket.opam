@@ -55,3 +55,4 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/haut/polymarket.git"
+available: arch = "x86_64" | arch = "arm64" | arch = "aarch64"
