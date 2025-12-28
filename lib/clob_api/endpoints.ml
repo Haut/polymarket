@@ -24,11 +24,7 @@ let delete_api_key http ~credentials ~address =
   let headers =
     Auth.build_l2_headers ~credentials ~address ~method_:"DELETE" ~path ~body:""
   in
-  let uri = H.build_uri (H.base_url http) path [] in
-  let status, body = H.do_delete ~headers http uri in
-  match status with
-  | 200 | 204 -> Ok ()
-  | _ -> Error (H.parse_error ~status body)
+  H.delete_unit ~headers http path []
 
 let get_api_keys http ~credentials ~address =
   let path = "/auth/api-keys" in
@@ -49,10 +45,7 @@ let get_order_book http ~token_id () =
   |> H.get_json http "/book" order_book_summary_of_yojson
 
 let get_order_books http ~token_ids () =
-  let body =
-    `List (List.map (fun id -> `Assoc [ ("token_id", `String id) ]) token_ids)
-    |> Yojson.Safe.to_string
-  in
+  let body = H.json_list_single_field "token_id" token_ids in
   H.post_json_list http "/books" order_book_summary_of_yojson ~body []
 
 (** {1 Pricing} *)
@@ -67,24 +60,19 @@ let get_midpoint http ~token_id () =
 
 let get_prices http ~requests () =
   let body =
-    `List
-      (List.map
-         (fun (token_id, side) ->
-           `Assoc
-             [
-               ("token_id", `String token_id);
-               ("side", `String (Side.to_string side));
-             ])
-         requests)
-    |> Yojson.Safe.to_string
+    H.json_list_body
+      (fun (token_id, side) ->
+        H.json_obj
+          [
+            ("token_id", H.json_string token_id);
+            ("side", H.json_string (Side.to_string side));
+          ])
+      requests
   in
   H.post_json http "/prices" prices_response_of_yojson ~body []
 
 let get_spreads http ~token_ids () =
-  let body =
-    `List (List.map (fun id -> `Assoc [ ("token_id", `String id) ]) token_ids)
-    |> Yojson.Safe.to_string
-  in
+  let body = H.json_list_single_field "token_id" token_ids in
   H.post_json http "/spreads" spreads_response_of_yojson ~body []
 
 (** {1 Timeseries} *)
@@ -97,60 +85,53 @@ let get_price_history http ~market ?start_ts ?end_ts ?interval ?fidelity () =
   |> H.add_option "fidelity" string_of_int fidelity
   |> H.get_json http "/prices-history" price_history_of_yojson
 
-(** {1 L2 Auth Headers} *)
-
-let get_l2_auth_headers ~credentials ~address ~method_ ~path ~body =
-  Auth.build_l2_headers ~credentials ~address ~method_ ~path ~body
-
 (** {1 Orders (L2 only)} *)
 
 let create_order http ~credentials ~address ~order ~owner ~order_type () =
   let path = "/order" in
   let body =
-    `Assoc
-      [
-        ("order", yojson_of_signed_order order);
-        ("owner", `String owner);
-        ("orderType", `String (Order_type.to_string order_type));
-      ]
-    |> Yojson.Safe.to_string
+    H.json_body
+      (H.json_obj
+         [
+           ("order", yojson_of_signed_order order);
+           ("owner", H.json_string owner);
+           ("orderType", H.json_string (Order_type.to_string order_type));
+         ])
   in
   let headers =
-    get_l2_auth_headers ~credentials ~address ~method_:"POST" ~path ~body
+    Auth.build_l2_headers ~credentials ~address ~method_:"POST" ~path ~body
   in
   H.post_json ~headers http path create_order_response_of_yojson ~body []
 
 let create_orders http ~credentials ~address ~orders () =
   let path = "/orders" in
   let body =
-    `List
-      (List.map
-         (fun (order, owner, order_type) ->
-           `Assoc
-             [
-               ("order", yojson_of_signed_order order);
-               ("owner", `String owner);
-               ("orderType", `String (Order_type.to_string order_type));
-             ])
-         orders)
-    |> Yojson.Safe.to_string
+    H.json_list_body
+      (fun (order, owner, order_type) ->
+        H.json_obj
+          [
+            ("order", yojson_of_signed_order order);
+            ("owner", H.json_string owner);
+            ("orderType", H.json_string (Order_type.to_string order_type));
+          ])
+      orders
   in
   let headers =
-    get_l2_auth_headers ~credentials ~address ~method_:"POST" ~path ~body
+    Auth.build_l2_headers ~credentials ~address ~method_:"POST" ~path ~body
   in
   H.post_json_list ~headers http path create_order_response_of_yojson ~body []
 
 let get_order http ~credentials ~address ~order_id () =
   let path = "/data/order/" ^ order_id in
   let headers =
-    get_l2_auth_headers ~credentials ~address ~method_:"GET" ~path ~body:""
+    Auth.build_l2_headers ~credentials ~address ~method_:"GET" ~path ~body:""
   in
   H.get_json ~headers http path open_order_of_yojson []
 
 let get_orders http ~credentials ~address ?market ?asset_id () =
   let path = "/data/orders" in
   let headers =
-    get_l2_auth_headers ~credentials ~address ~method_:"GET" ~path ~body:""
+    Auth.build_l2_headers ~credentials ~address ~method_:"GET" ~path ~body:""
   in
   [] |> H.add "market" market |> H.add "asset_id" asset_id
   |> H.get_json_list ~headers http path open_order_of_yojson
@@ -160,7 +141,7 @@ let get_orders http ~credentials ~address ?market ?asset_id () =
 let cancel_order http ~credentials ~address ~order_id () =
   let path = "/order" in
   let headers =
-    get_l2_auth_headers ~credentials ~address ~method_:"DELETE" ~path ~body:""
+    Auth.build_l2_headers ~credentials ~address ~method_:"DELETE" ~path ~body:""
   in
   [ ("orderID", [ order_id ]) ]
   |> H.delete_json ~headers http path cancel_response_of_yojson
@@ -168,26 +149,22 @@ let cancel_order http ~credentials ~address ~order_id () =
 let cancel_orders http ~credentials ~address ~order_ids () =
   let path = "/orders" in
   let headers =
-    get_l2_auth_headers ~credentials ~address ~method_:"DELETE" ~path ~body:""
+    Auth.build_l2_headers ~credentials ~address ~method_:"DELETE" ~path ~body:""
   in
-  let uri = H.build_uri (H.base_url http) path [] in
-  let status, resp_body =
-    H.do_delete ~headers http (Uri.with_query uri [ ("orderIDs", order_ids) ])
-  in
-  H.handle_response status resp_body (fun body ->
-      H.parse_json cancel_response_of_yojson body |> Result.map_error H.to_error)
+  [ ("orderIDs", order_ids) ]
+  |> H.delete_json ~headers http path cancel_response_of_yojson
 
 let cancel_all http ~credentials ~address () =
   let path = "/cancel-all" in
   let headers =
-    get_l2_auth_headers ~credentials ~address ~method_:"DELETE" ~path ~body:""
+    Auth.build_l2_headers ~credentials ~address ~method_:"DELETE" ~path ~body:""
   in
   H.delete_json ~headers http path cancel_response_of_yojson []
 
 let cancel_market_orders http ~credentials ~address ?market ?asset_id () =
   let path = "/cancel-market-orders" in
   let headers =
-    get_l2_auth_headers ~credentials ~address ~method_:"DELETE" ~path ~body:""
+    Auth.build_l2_headers ~credentials ~address ~method_:"DELETE" ~path ~body:""
   in
   [] |> H.add "market" market |> H.add "asset_id" asset_id
   |> H.delete_json ~headers http path cancel_response_of_yojson
@@ -198,7 +175,7 @@ let get_trades http ~credentials ~address ?id ?taker ?maker ?market ?before
     ?after () =
   let path = "/data/trades" in
   let headers =
-    get_l2_auth_headers ~credentials ~address ~method_:"GET" ~path ~body:""
+    Auth.build_l2_headers ~credentials ~address ~method_:"GET" ~path ~body:""
   in
   [] |> H.add "id" id |> H.add "taker" taker |> H.add "maker" maker
   |> H.add "market" market |> H.add "before" before |> H.add "after" after

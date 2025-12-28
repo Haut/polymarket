@@ -303,3 +303,25 @@ let delete_json ?(headers = []) t path parser params =
   let status, body = do_delete ~headers t uri in
   handle_response status body (fun body ->
       parse_json parser body |> Result.map_error to_error)
+
+let delete_unit ?(headers = []) t path params =
+  let uri = build_uri t.base_url path params in
+  let status, body = do_delete ~headers t uri in
+  match status with 200 | 204 -> Ok () | _ -> Error (parse_error ~status body)
+
+let post_unit ?(headers = []) t path ~body params =
+  let uri = build_uri t.base_url path params in
+  let status, resp_body = do_post ~headers t uri ~body in
+  match status with
+  | 200 | 201 | 204 -> Ok ()
+  | _ -> Error (parse_error ~status resp_body)
+
+(** {1 JSON Body Builders} *)
+
+let json_body json = Yojson.Safe.to_string json
+let json_obj fields = `Assoc fields
+let json_string s = `String s
+let json_list_body f items = `List (List.map f items) |> json_body
+
+let json_list_single_field key items =
+  json_list_body (fun v -> json_obj [ (key, json_string v) ]) items

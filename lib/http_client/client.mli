@@ -222,3 +222,41 @@ val delete_json :
   ('a, error) result
 (** DELETE request expecting a JSON object response.
     @param headers Optional list of HTTP headers to include *)
+
+val delete_unit :
+  ?headers:(string * string) list ->
+  t ->
+  string ->
+  params ->
+  (unit, error) result
+(** DELETE request expecting no content (handles 200/204).
+    @param headers Optional list of HTTP headers to include *)
+
+val post_unit :
+  ?headers:(string * string) list ->
+  t ->
+  string ->
+  body:string ->
+  params ->
+  (unit, error) result
+(** POST request expecting no content (handles 200/201/204).
+    @param headers Optional list of HTTP headers to include *)
+
+(** {1 JSON Body Builders} *)
+
+val json_body : Yojson.Safe.t -> string
+(** Convert JSON to string body *)
+
+val json_obj : (string * Yojson.Safe.t) list -> Yojson.Safe.t
+(** Build JSON object from field list *)
+
+val json_string : string -> Yojson.Safe.t
+(** Wrap string as JSON string *)
+
+val json_list_body : ('a -> Yojson.Safe.t) -> 'a list -> string
+(** Map items to JSON and serialize as array *)
+
+val json_list_single_field : string -> string list -> string
+(** Build JSON array of single-field objects.
+    [json_list_single_field "token_id" ids] produces
+    [[{"token_id": "id1"}, {"token_id": "id2"}, ...]] *)
