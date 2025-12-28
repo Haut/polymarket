@@ -26,22 +26,6 @@ module Make_public (M : HAS_HTTP) = struct
   let get_price_history (t : M.t) = Endpoints.get_price_history (M.http t)
 end
 
-(** {1 L1 Operations Functor} *)
-
-module type HAS_L1_AUTH = sig
-  type t
-
-  val http : t -> H.t
-  val private_key : t -> Crypto.private_key
-  val address : t -> string
-end
-
-module Make_l1_ops (M : HAS_L1_AUTH) = struct
-  let create_api_key (t : M.t) ~nonce =
-    Endpoints.create_api_key (M.http t) ~private_key:(M.private_key t)
-      ~address:(M.address t) ~nonce
-end
-
 (** {1 Client Types} *)
 
 type unauthed = { http : H.t }
@@ -83,13 +67,9 @@ module L1 = struct
 
   let address (t : t) = t.address
 
-  include Make_l1_ops (struct
-    type t = l1
-
-    let http (t : t) = t.http
-    let private_key (t : t) = t.private_key
-    let address (t : t) = t.address
-  end)
+  let create_api_key (t : t) ~nonce =
+    Endpoints.create_api_key t.http ~private_key:t.private_key
+      ~address:t.address ~nonce
 
   let derive_api_key (t : t) ~nonce =
     match
@@ -131,13 +111,9 @@ module L2 = struct
   let credentials (t : t) = t.credentials
 
   (* L1 operations *)
-  include Make_l1_ops (struct
-    type t = l2
-
-    let http (t : t) = t.http
-    let private_key (t : t) = t.private_key
-    let address (t : t) = t.address
-  end)
+  let create_api_key (t : t) ~nonce =
+    Endpoints.create_api_key t.http ~private_key:t.private_key
+      ~address:t.address ~nonce
 
   let delete_api_key (t : t) =
     Endpoints.delete_api_key t.http ~credentials:t.credentials
