@@ -147,78 +147,8 @@ let do_delete ?(headers = []) t uri =
 
 (** {1 JSON Parsing} *)
 
-let parse_json parse_fn body =
-  try
-    let json = Yojson.Safe.from_string body in
-    Ok (parse_fn json)
-  with
-  | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, json) ->
-      let msg =
-        Printf.sprintf
-          "JSON parse error: %s\nProblematic value: %s\nFull response:\n%s"
-          (Printexc.to_string exn)
-          (Yojson.Safe.to_string json)
-          body
-      in
-      Polymarket_common.Logger.log_err ~section:"HTTP_CLIENT"
-        ~event:"PARSE_ERROR"
-        [ ("error", Printexc.to_string exn) ];
-      Error msg
-  | Yojson.Json_error msg ->
-      let err = "JSON error: " ^ msg ^ "\nBody:\n" ^ body in
-      Polymarket_common.Logger.log_err ~section:"HTTP_CLIENT"
-        ~event:"PARSE_ERROR"
-        [ ("error", msg) ];
-      Error err
-  | exn ->
-      let msg =
-        Printf.sprintf "Parse error: %s\nFull response:\n%s"
-          (Printexc.to_string exn) body
-      in
-      Polymarket_common.Logger.log_err ~section:"HTTP_CLIENT"
-        ~event:"PARSE_ERROR"
-        [ ("error", Printexc.to_string exn) ];
-      Error msg
-
-let parse_json_list parse_item_fn body =
-  try
-    let json = Yojson.Safe.from_string body in
-    match json with
-    | `List items -> Ok (List.map parse_item_fn items)
-    | _ ->
-        let err = "Expected JSON array\nBody:\n" ^ body in
-        Polymarket_common.Logger.log_err ~section:"HTTP_CLIENT"
-          ~event:"PARSE_ERROR"
-          [ ("error", "expected JSON array") ];
-        Error err
-  with
-  | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, json) ->
-      let msg =
-        Printf.sprintf
-          "JSON parse error: %s\nProblematic value: %s\nFull response:\n%s"
-          (Printexc.to_string exn)
-          (Yojson.Safe.to_string json)
-          body
-      in
-      Polymarket_common.Logger.log_err ~section:"HTTP_CLIENT"
-        ~event:"PARSE_ERROR"
-        [ ("error", Printexc.to_string exn) ];
-      Error msg
-  | Yojson.Json_error msg ->
-      let err = "JSON error: " ^ msg ^ "\nBody:\n" ^ body in
-      Polymarket_common.Logger.log_err ~section:"HTTP_CLIENT"
-        ~event:"PARSE_ERROR"
-        [ ("error", msg) ];
-      Error err
-  | exn ->
-      let msg =
-        Printf.sprintf "Parse error: %s\nFull response:\n%s"
-          (Printexc.to_string exn) body
-      in
-      Polymarket_common.Logger.log_err ~section:"HTTP_CLIENT"
-        ~event:"PARSE_ERROR"
-        [ ("error", Printexc.to_string exn) ];
-      Error msg
+let parse_json = Json.parse
+let parse_json_list = Json.parse_list
 
 (** {1 Error Handling} *)
 
@@ -318,10 +248,8 @@ let post_unit ?(headers = []) t path ~body params =
 
 (** {1 JSON Body Builders} *)
 
-let json_body json = Yojson.Safe.to_string json
-let json_obj fields = `Assoc fields
-let json_string s = `String s
-let json_list_body f items = `List (List.map f items) |> json_body
-
-let json_list_single_field key items =
-  json_list_body (fun v -> json_obj [ (key, json_string v) ]) items
+let json_body = Json.body
+let json_obj = Json.obj
+let json_string = Json.string
+let json_list_body = Json.list
+let json_list_single_field = Json.list_single_field
