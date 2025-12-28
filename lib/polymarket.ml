@@ -50,6 +50,16 @@ module Clob = struct
   let l1_to_unauthed = Polymarket_clob.Client.l1_to_unauthed
 end
 
+module Wss = struct
+  (** WebSocket client for real-time market and user data.
+
+      Uses pure-OCaml TLS (tls-eio) for cross-platform compatibility. *)
+
+  module Types = Polymarket_wss.Types
+  module Market = Polymarket_wss.Client.Market
+  module User = Polymarket_wss.Client.User
+end
+
 module Http = Polymarket_http.Client
 (** HTTP client utilities for making API requests. *)
 

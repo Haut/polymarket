@@ -1,101 +1,165 @@
 (** Live demo of the Polymarket WebSocket client.
 
-    This example connects to the Market WebSocket channel and watches for
-    real-time price updates on the BTC 15-minute up/down market. Run with: dune
-    exec examples/wss_demo.exe
+    This example connects to the Market channel and streams real-time orderbook
+    updates. Run with: dune exec examples/wss_demo.exe
 
-    Set POLYMARKET_LOG_LEVEL=debug for verbose output. *)
+    Note: This connects to ws-subscriptions-clob.polymarket.com and requires
+    valid asset IDs. The demo uses a popular market to ensure data is flowing.
+*)
 
 open Polymarket
 
-(** BTC 15-minute up/down market token IDs (11:30AM-11:45AM ET) *)
-let btc_15m_tokens =
-  [
-    "90537656988681332190152553956251798703285617329864967215099855163235832712503";
-    "17777926850952096189805690713073409186209077885446432345429015819936583971311";
-  ]
+(** {1 Message Handlers} *)
 
-(** Log a market message with structured format *)
-let log_message n = function
-  | Wss.Types.Market (Book msg) ->
-      Logger.info "BOOK"
-        [
-          ("n", string_of_int n);
-          ( "asset",
-            String.sub msg.asset_id 0 (min 16 (String.length msg.asset_id)) );
-          ("bids", string_of_int (List.length msg.bids));
-          ("asks", string_of_int (List.length msg.asks));
-        ]
-  | Wss.Types.Market (Price_change msg) ->
-      Logger.info "PRICE"
-        [
-          ("n", string_of_int n);
-          ("market", String.sub msg.market 0 (min 16 (String.length msg.market)));
-          ("changes", string_of_int (List.length msg.price_changes));
-        ]
-  | Wss.Types.Market (Last_trade_price msg) ->
-      Logger.info "TRADE"
-        [
-          ("n", string_of_int n);
-          ("price", msg.price);
-          ("size", msg.size);
-          ("side", msg.side);
-        ]
-  | Wss.Types.Market (Tick_size_change msg) ->
-      Logger.info "TICK"
-        [
-          ("n", string_of_int n);
-          ("old", msg.old_tick_size);
-          ("new", msg.new_tick_size);
-        ]
-  | Wss.Types.Market (Best_bid_ask msg) ->
-      Logger.info "BBA"
-        [ ("n", string_of_int n); ("bid", msg.best_bid); ("ask", msg.best_ask) ]
-  | Wss.Types.User _ -> Logger.info "USER" [ ("n", string_of_int n) ]
+let handle_market_message msg =
+  match msg with
+  | Wss.Types.Market (Book book) ->
+      Logger.ok "BOOK"
+        (Printf.sprintf "asset=%s bids=%d asks=%d" book.asset_id
+           (List.length book.bids) (List.length book.asks))
+  | Wss.Types.Market (Price_change change) ->
+      let n = List.length change.price_changes in
+      Logger.ok "PRICE" (Printf.sprintf "market=%s changes=%d" change.market n)
+  | Wss.Types.Market (Last_trade_price trade) ->
+      Logger.ok "TRADE"
+        (Printf.sprintf "asset=%s price=%s" trade.asset_id trade.price)
+  | Wss.Types.Market (Tick_size_change _) ->
+      Logger.ok "TICK_SIZE" "tick size changed"
+  | Wss.Types.Market (Best_bid_ask bba) ->
+      Logger.ok "BBA"
+        (Printf.sprintf "asset=%s bid=%s ask=%s" bba.asset_id bba.best_bid
+           bba.best_ask)
+  | Wss.Types.User (Trade trade) ->
+      Logger.ok "USER_TRADE"
+        (Printf.sprintf "id=%s price=%s size=%s" trade.id trade.price trade.size)
+  | Wss.Types.User (Order order) ->
+      Logger.ok "USER_ORDER"
+        (Printf.sprintf "id=%s side=%s price=%s" order.id order.side order.price)
   | Wss.Types.Unknown raw ->
-      Logger.info "UNKNOWN"
-        [
-          ("n", string_of_int n);
-          ("raw", String.sub raw 0 (min 50 (String.length raw)));
-        ]
+      if String.length raw > 80 then
+        Logger.skip "MSG" (String.sub raw 0 80 ^ "...")
+      else Logger.skip "MSG" raw
+
+(** {1 Demo Helpers} *)
+
+(** Parse comma-separated token IDs from clob_token_ids string *)
+let parse_token_ids s =
+  (* Format is typically "[\"token1\",\"token2\"]" - a JSON array *)
+  try
+    match Yojson.Safe.from_string s with
+    | `List items ->
+        List.filter_map (function `String id -> Some id | _ -> None) items
+    | _ -> []
+  with _ -> []
+
+(** Get some active token IDs from the Gamma API *)
+let get_active_tokens env sw =
+  Logger.info "FETCHING" [ ("source", "Gamma API") ];
+  let clock = Eio.Stdenv.clock env in
+  let rate_limiter = Rate_limiter.create_polymarket ~clock () in
+  let client = Gamma.create ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter () in
+  match
+    Gamma.get_markets client ~limit:(Nonneg_int.of_int_exn 3) ~closed:false ()
+  with
+  | Ok markets ->
+      let token_ids =
+        List.concat_map
+          (fun (m : Gamma.market) ->
+            match m.clob_token_ids with
+            | Some s -> (
+                let ids = parse_token_ids s in
+                (* Take just the first token ID (YES outcome) *)
+                match ids with
+                | id :: _ -> [ id ]
+                | [] -> [])
+            | None -> [])
+          markets
+      in
+      if List.length token_ids > 0 then begin
+        Logger.ok "TOKENS"
+          (Printf.sprintf "%d token IDs" (List.length token_ids));
+        Some token_ids
+      end
+      else begin
+        Logger.error "TOKENS" "No active markets with token IDs found";
+        None
+      end
+  | Error err ->
+      Logger.error "GAMMA" err.Http.error;
+      None
+
+(** {1 Main Demo} *)
 
 let run_demo env =
   Logger.setup ();
   Eio.Switch.run @@ fun sw ->
   let net = Eio.Stdenv.net env in
+  let clock = Eio.Stdenv.clock env in
 
-  Logger.info "START" [ ("demo", "WebSocket Market Stream") ];
-  Logger.header "BTC 15-minute Up/Down Market";
+  Logger.info "START"
+    [
+      ("demo", "WebSocket Client");
+      ("host", "ws-subscriptions-clob.polymarket.com");
+    ];
 
-  (* Connect to market channel with BTC 15m tokens *)
-  let market_client =
-    Wss.Market.connect ~sw ~net ~asset_ids:btc_15m_tokens ()
-  in
-  let stream = Wss.Market.stream market_client in
+  (* Get active token IDs to subscribe to *)
+  match get_active_tokens env sw with
+  | None ->
+      Logger.error "DEMO" "Cannot run demo without active token IDs";
+      Logger.info "TIP"
+        [
+          ( "message",
+            "Make sure you have network access to gamma-api.polymarket.com" );
+        ]
+  | Some asset_ids ->
+      Logger.header "Market Channel";
+      Logger.info "CONNECTING"
+        [
+          ("channel", "market");
+          ("assets", string_of_int (List.length asset_ids));
+        ];
 
-  Logger.header "Watching Messages (Ctrl+C to stop)";
+      (* Connect to market channel *)
+      let client = Wss.Market.connect ~sw ~net ~clock ~asset_ids () in
+      let stream = Wss.Market.stream client in
 
-  (* Watch for messages *)
-  let count = ref 0 in
-  (try
-     while true do
-       let msg = Eio.Stream.take stream in
-       incr count;
-       log_message !count msg;
-       (* Stop after 50 messages for demo purposes *)
-       if !count >= 50 then begin
-         Logger.info "LIMIT" [ ("message", "reached 50 messages, stopping") ];
-         raise Exit
-       end
-     done
-   with
-  | Exit -> ()
-  | Eio.Cancel.Cancelled _ -> Logger.info "CANCELLED" []);
+      Logger.ok "CONNECTED" "Waiting for messages...";
+      Logger.info "NOTE" [ ("message", "Press Ctrl+C to stop") ];
 
-  (* Cleanup *)
-  Wss.Market.close market_client;
-  Logger.header "Summary";
-  Logger.info "COMPLETE" [ ("messages_received", string_of_int !count) ]
+      (* Read messages for a while *)
+      let message_count = ref 0 in
+      let max_messages = 20 in
+
+      (try
+         while !message_count < max_messages do
+           (* Use Eio.Time.with_timeout for bounded wait *)
+           match
+             Eio.Time.with_timeout clock 30.0 (fun () ->
+                 Ok (Eio.Stream.take stream))
+           with
+           | Ok msg ->
+               incr message_count;
+               handle_market_message msg
+           | Error `Timeout ->
+               Logger.skip "TIMEOUT" "No message in 30s";
+               message_count := max_messages
+         done
+       with
+      | Eio.Cancel.Cancelled _ -> Logger.info "CANCELLED" []
+      | exn -> Logger.error "EXCEPTION" (Printexc.to_string exn));
+
+      (* Cleanup *)
+      Logger.header "Cleanup";
+      Wss.Market.close client;
+      Logger.ok "CLOSED" "Connection closed";
+
+      (* Summary *)
+      Logger.header "Summary";
+      Logger.info "COMPLETE"
+        [
+          ("messages_received", string_of_int !message_count);
+          ("status", "demo finished");
+        ]
 
 let () =
   Mirage_crypto_rng_unix.use_default ();

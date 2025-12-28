@@ -156,6 +156,54 @@ module Clob : sig
   val l1_to_unauthed : l1 -> unauthed
 end
 
+module Wss : sig
+  (** WebSocket client for real-time market and user data.
+
+      Uses pure-OCaml TLS (tls-eio) for cross-platform compatibility.
+
+      {2 Market Channel (Public)}
+
+      Subscribe to orderbook updates for specific asset IDs:
+
+      {[
+        Eio_main.run @@ fun env ->
+        Eio.Switch.run @@ fun sw ->
+        let net = Eio.Stdenv.net env in
+        let clock = Eio.Stdenv.clock env in
+        let asset_ids = [ "token_id_1"; "token_id_2" ] in
+        let client = Wss.Market.connect ~sw ~net ~clock ~asset_ids () in
+        let stream = Wss.Market.stream client in
+        match Eio.Stream.take stream with
+        | Wss.Types.Market (Book msg) ->
+            Printf.printf "Book update for %s\n" msg.asset_id
+        | _ -> ()
+      ]}
+
+      {2 User Channel (Authenticated)}
+
+      Subscribe to your trades and orders with API credentials:
+
+      {[
+        let credentials =
+          Clob.Auth_types.
+            { api_key = "..."; secret = "..."; passphrase = "..." }
+        in
+        let markets = [ "condition_id_1" ] in
+        let client =
+          Wss.User.connect ~sw ~net ~clock ~credentials ~markets ()
+        in
+        let stream = Wss.User.stream client in
+        match Eio.Stream.take stream with
+        | Wss.Types.User (Trade msg) ->
+            Printf.printf "Trade: %s at %s\n" msg.id msg.price
+        | _ -> ()
+      ]} *)
+
+  module Types = Polymarket_wss.Types
+  module Market = Polymarket_wss.Client.Market
+  module User = Polymarket_wss.Client.User
+end
+
 module Http = Polymarket_http.Client
 (** HTTP client utilities for making API requests. *)
 
