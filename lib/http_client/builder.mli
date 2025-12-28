@@ -75,6 +75,16 @@ val header_add : string -> string -> 'a t -> 'a t
 val header_list : (string * string) list -> 'a t -> 'a t
 (** Add multiple headers. *)
 
+(** {1 Auth} *)
+
+val with_l2_auth :
+  credentials:Polymarket_common.Auth.credentials ->
+  address:string ->
+  'a t ->
+  'a t
+(** Add L2 authentication headers. Computes headers from the request's method,
+    path, and body. Must be called after [with_body] for POST requests. *)
+
 (** {1 Body} *)
 
 val with_body : string -> not_ready t -> ready t

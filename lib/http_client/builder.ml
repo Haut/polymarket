@@ -26,6 +26,7 @@
     ]} *)
 
 module C = Client
+module Auth = Polymarket_common.Auth
 
 type ready
 (** Phantom type indicating request is ready to execute *)
@@ -104,6 +105,21 @@ let header_add (key : string) (value : string) (req : 'a t) : 'a t =
 
 let header_list (hs : (string * string) list) (req : 'a t) : 'a t =
   { req with headers = hs @ req.headers }
+
+(** {1 Auth} *)
+
+let method_to_string = function
+  | GET -> "GET"
+  | POST -> "POST"
+  | DELETE -> "DELETE"
+
+let with_l2_auth ~credentials ~address (req : 'a t) : 'a t =
+  let method_ = method_to_string req.method_ in
+  let body = Option.value ~default:"" req.body in
+  let headers =
+    Auth.build_l2_headers ~credentials ~address ~method_ ~path:req.path ~body
+  in
+  { req with headers = headers @ req.headers }
 
 (** {1 Body} *)
 
