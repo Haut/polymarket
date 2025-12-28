@@ -186,7 +186,7 @@ type l2 = {
   http : H.t;
   private_key : Crypto.private_key;
   address : string;
-  credentials : Auth_types.credentials;
+  credentials : Auth.credentials;
 }
 
 (** {1 Unauthenticated Client} *)
@@ -230,7 +230,7 @@ module L1 = struct
         ~nonce
     with
     | Ok resp ->
-        let credentials = Auth_types.credentials_of_derive_response resp in
+        let credentials = Auth.credentials_of_derive_response resp in
         let l2_client : l2 =
           {
             http = t.http;

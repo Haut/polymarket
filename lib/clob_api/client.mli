@@ -153,16 +153,14 @@ module L1 : sig
   val create_api_key :
     t ->
     nonce:int ->
-    (Auth_types.api_key_response, Polymarket_http.Client.error) result
+    (Auth.api_key_response, Polymarket_http.Client.error) result
   (** Create a new API key using L1 wallet authentication. Returns the API key,
       secret, and passphrase. *)
 
   val derive_api_key :
     t ->
     nonce:int ->
-    ( l2 * Auth_types.derive_api_key_response,
-      Polymarket_http.Client.error )
-    result
+    (l2 * Auth.derive_api_key_response, Polymarket_http.Client.error) result
   (** Derive API key from wallet and automatically upgrade to L2 client. Returns
       both the L2 client and the raw response (for credential storage). *)
 
@@ -235,7 +233,7 @@ module L2 : sig
     net:_ Eio.Net.t ->
     rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
     private_key:Crypto.private_key ->
-    credentials:Auth_types.credentials ->
+    credentials:Auth.credentials ->
     unit ->
     t
   (** Create a new L2-authenticated CLOB client.
@@ -249,7 +247,7 @@ module L2 : sig
   val address : t -> string
   (** Get the Ethereum address derived from the private key. *)
 
-  val credentials : t -> Auth_types.credentials
+  val credentials : t -> Auth.credentials
   (** Get the API credentials. *)
 
   (** {2 L1 Authentication Endpoints} *)
@@ -257,7 +255,7 @@ module L2 : sig
   val create_api_key :
     t ->
     nonce:int ->
-    (Auth_types.api_key_response, Polymarket_http.Client.error) result
+    (Auth.api_key_response, Polymarket_http.Client.error) result
   (** Create a new API key using L1 wallet authentication. *)
 
   val delete_api_key : t -> (unit, Polymarket_http.Client.error) result
@@ -403,7 +401,7 @@ val upgrade_to_l1 : unauthed -> private_key:Crypto.private_key -> l1
 (** Upgrade an unauthenticated client to L1 by providing a private key. The
     address is derived from the private key automatically. *)
 
-val upgrade_to_l2 : l1 -> credentials:Auth_types.credentials -> l2
+val upgrade_to_l2 : l1 -> credentials:Auth.credentials -> l2
 (** Upgrade an L1 client to L2 by providing API credentials. *)
 
 val l2_to_l1 : l2 -> l1

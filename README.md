@@ -219,7 +219,7 @@ match Clob.L1.derive_api_key l1_client ~nonce:0 with
 ```ocaml
 (* Upgrade functions *)
 val Clob.upgrade_to_l1 : unauthed -> private_key:string -> l1
-val Clob.upgrade_to_l2 : l1 -> credentials:Auth_types.credentials -> l2
+val Clob.upgrade_to_l2 : l1 -> credentials:Auth.credentials -> l2
 val Clob.L1.derive_api_key : l1 -> nonce:int -> (l2 * response, error) result
 
 (* Downgrade functions *)
@@ -327,7 +327,7 @@ let () =
 Subscribe to your trades and orders with API credentials:
 
 ```ocaml
-let credentials = Clob.Auth_types.{
+let credentials = Clob.Auth.{
   api_key = "...";
   secret = "...";
   passphrase = "...";

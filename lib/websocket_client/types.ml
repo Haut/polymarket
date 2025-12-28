@@ -354,7 +354,7 @@ let market_subscribe_json ~asset_ids =
     { assets_ids = asset_ids; type_ = "MARKET"; custom_feature_enabled = true }
   |> Yojson.Safe.to_string
 
-let user_subscribe_json ~(credentials : Polymarket_clob.Auth_types.credentials)
+let user_subscribe_json ~(credentials : Polymarket_common.Auth.credentials)
     ~markets =
   let auth =
     {

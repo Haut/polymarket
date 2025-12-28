@@ -32,7 +32,6 @@ module Clob = struct
 
   module Types = Polymarket_clob.Types
   module Auth = Polymarket_clob.Auth
-  module Auth_types = Polymarket_clob.Auth_types
   module Crypto = Polymarket_clob.Crypto
 
   type unauthed = Polymarket_clob.Client.unauthed
@@ -91,3 +90,13 @@ module Extended_offset = Polymarket_common.Primitives.Extended_offset
 module Leaderboard_limit = Polymarket_common.Primitives.Leaderboard_limit
 module Leaderboard_offset = Polymarket_common.Primitives.Leaderboard_offset
 module Builder_limit = Polymarket_common.Primitives.Builder_limit
+
+(** {1 Authentication and Crypto}
+
+    Shared authentication types and cryptographic utilities. *)
+
+module Auth = Polymarket_common.Auth
+(** Authentication types and header builders. *)
+
+module Crypto = Polymarket_common.Crypto
+(** Cryptographic utilities for signing and address derivation. *)
