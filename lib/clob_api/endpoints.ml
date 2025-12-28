@@ -4,137 +4,155 @@
     client modules. *)
 
 open Types
-module H = Polymarket_http.Client
+module B = Polymarket_http.Builder
+module J = Polymarket_http.Json
 module Auth = Polymarket_common.Auth
+
+type t = Polymarket_http.Client.t
+type error = Polymarket_http.Client.error
 
 (** {1 Auth Endpoints} *)
 
 let create_api_key http ~private_key ~address ~nonce =
   let headers = Auth.build_l1_headers ~private_key ~address ~nonce in
-  H.post_json ~headers http "/auth/api-key" Auth.api_key_response_of_yojson
-    ~body:"{}" []
+  B.new_post http "/auth/api-key"
+  |> B.header_list headers |> B.with_body "{}"
+  |> B.fetch_json Auth.api_key_response_of_yojson
 
 let derive_api_key http ~private_key ~address ~nonce =
   let headers = Auth.build_l1_headers ~private_key ~address ~nonce in
-  H.get_json ~headers http "/auth/derive-api-key"
-    Auth.derive_api_key_response_of_yojson []
+  B.new_get http "/auth/derive-api-key"
+  |> B.header_list headers
+  |> B.fetch_json Auth.derive_api_key_response_of_yojson
 
 let delete_api_key http ~credentials ~address =
   let path = "/auth/api-key" in
   let headers =
     Auth.build_l2_headers ~credentials ~address ~method_:"DELETE" ~path ~body:""
   in
-  H.delete_unit ~headers http path []
+  B.new_delete http path |> B.header_list headers |> B.fetch_unit
 
 let get_api_keys http ~credentials ~address =
   let path = "/auth/api-keys" in
   let headers =
     Auth.build_l2_headers ~credentials ~address ~method_:"GET" ~path ~body:""
   in
-  H.get_json_list ~headers http path
-    (fun json ->
+  B.new_get http path |> B.header_list headers
+  |> B.fetch_json_list (fun json ->
       match json with
       | `String s -> s
       | _ -> failwith "Expected string in API keys list")
-    []
 
 (** {1 Order Book} *)
 
 let get_order_book http ~token_id () =
-  [ ("token_id", [ token_id ]) ]
-  |> H.get_json http "/book" order_book_summary_of_yojson
+  B.new_get http "/book"
+  |> B.query_param "token_id" token_id
+  |> B.fetch_json order_book_summary_of_yojson
 
 let get_order_books http ~token_ids () =
-  let body = H.json_list_single_field "token_id" token_ids in
-  H.post_json_list http "/books" order_book_summary_of_yojson ~body []
+  let body = J.list_single_field "token_id" token_ids in
+  B.new_post http "/books" |> B.with_body body
+  |> B.fetch_json_list order_book_summary_of_yojson
 
 (** {1 Pricing} *)
 
 let get_price http ~token_id ~side () =
-  [ ("token_id", [ token_id ]); ("side", [ Side.to_string side ]) ]
-  |> H.get_json http "/price" price_response_of_yojson
+  B.new_get http "/price"
+  |> B.query_param "token_id" token_id
+  |> B.query_param "side" (Side.to_string side)
+  |> B.fetch_json price_response_of_yojson
 
 let get_midpoint http ~token_id () =
-  [ ("token_id", [ token_id ]) ]
-  |> H.get_json http "/midpoint" midpoint_response_of_yojson
+  B.new_get http "/midpoint"
+  |> B.query_param "token_id" token_id
+  |> B.fetch_json midpoint_response_of_yojson
 
 let get_prices http ~requests () =
   let body =
-    H.json_list_body
+    J.list
       (fun (token_id, side) ->
-        H.json_obj
+        J.obj
           [
-            ("token_id", H.json_string token_id);
-            ("side", H.json_string (Side.to_string side));
+            ("token_id", J.string token_id);
+            ("side", J.string (Side.to_string side));
           ])
       requests
   in
-  H.post_json http "/prices" prices_response_of_yojson ~body []
+  B.new_post http "/prices" |> B.with_body body
+  |> B.fetch_json prices_response_of_yojson
 
 let get_spreads http ~token_ids () =
-  let body = H.json_list_single_field "token_id" token_ids in
-  H.post_json http "/spreads" spreads_response_of_yojson ~body []
+  let body = J.list_single_field "token_id" token_ids in
+  B.new_post http "/spreads" |> B.with_body body
+  |> B.fetch_json spreads_response_of_yojson
 
 (** {1 Timeseries} *)
 
 let get_price_history http ~market ?start_ts ?end_ts ?interval ?fidelity () =
-  [ ("market", [ market ]) ]
-  |> H.add_option "startTs" string_of_int start_ts
-  |> H.add_option "endTs" string_of_int end_ts
-  |> H.add_option "interval" Interval.to_string interval
-  |> H.add_option "fidelity" string_of_int fidelity
-  |> H.get_json http "/prices-history" price_history_of_yojson
+  B.new_get http "/prices-history"
+  |> B.query_param "market" market
+  |> B.query_option "startTs" string_of_int start_ts
+  |> B.query_option "endTs" string_of_int end_ts
+  |> B.query_option "interval" Interval.to_string interval
+  |> B.query_option "fidelity" string_of_int fidelity
+  |> B.fetch_json price_history_of_yojson
 
 (** {1 Orders (L2 only)} *)
 
 let create_order http ~credentials ~address ~order ~owner ~order_type () =
   let path = "/order" in
   let body =
-    H.json_body
-      (H.json_obj
+    J.body
+      (J.obj
          [
            ("order", yojson_of_signed_order order);
-           ("owner", H.json_string owner);
-           ("orderType", H.json_string (Order_type.to_string order_type));
+           ("owner", J.string owner);
+           ("orderType", J.string (Order_type.to_string order_type));
          ])
   in
   let headers =
     Auth.build_l2_headers ~credentials ~address ~method_:"POST" ~path ~body
   in
-  H.post_json ~headers http path create_order_response_of_yojson ~body []
+  B.new_post http path |> B.header_list headers |> B.with_body body
+  |> B.fetch_json create_order_response_of_yojson
 
 let create_orders http ~credentials ~address ~orders () =
   let path = "/orders" in
   let body =
-    H.json_list_body
+    J.list
       (fun (order, owner, order_type) ->
-        H.json_obj
+        J.obj
           [
             ("order", yojson_of_signed_order order);
-            ("owner", H.json_string owner);
-            ("orderType", H.json_string (Order_type.to_string order_type));
+            ("owner", J.string owner);
+            ("orderType", J.string (Order_type.to_string order_type));
           ])
       orders
   in
   let headers =
     Auth.build_l2_headers ~credentials ~address ~method_:"POST" ~path ~body
   in
-  H.post_json_list ~headers http path create_order_response_of_yojson ~body []
+  B.new_post http path |> B.header_list headers |> B.with_body body
+  |> B.fetch_json_list create_order_response_of_yojson
 
 let get_order http ~credentials ~address ~order_id () =
   let path = "/data/order/" ^ order_id in
   let headers =
     Auth.build_l2_headers ~credentials ~address ~method_:"GET" ~path ~body:""
   in
-  H.get_json ~headers http path open_order_of_yojson []
+  B.new_get http path |> B.header_list headers
+  |> B.fetch_json open_order_of_yojson
 
 let get_orders http ~credentials ~address ?market ?asset_id () =
   let path = "/data/orders" in
   let headers =
     Auth.build_l2_headers ~credentials ~address ~method_:"GET" ~path ~body:""
   in
-  [] |> H.add "market" market |> H.add "asset_id" asset_id
-  |> H.get_json_list ~headers http path open_order_of_yojson
+  B.new_get http path |> B.header_list headers
+  |> B.query_add "market" market
+  |> B.query_add "asset_id" asset_id
+  |> B.fetch_json_list open_order_of_yojson
 
 (** {1 Cancel Orders (L2 only)} *)
 
@@ -143,31 +161,36 @@ let cancel_order http ~credentials ~address ~order_id () =
   let headers =
     Auth.build_l2_headers ~credentials ~address ~method_:"DELETE" ~path ~body:""
   in
-  [ ("orderID", [ order_id ]) ]
-  |> H.delete_json ~headers http path cancel_response_of_yojson
+  B.new_delete http path |> B.header_list headers
+  |> B.query_param "orderID" order_id
+  |> B.fetch_json cancel_response_of_yojson
 
 let cancel_orders http ~credentials ~address ~order_ids () =
   let path = "/orders" in
   let headers =
     Auth.build_l2_headers ~credentials ~address ~method_:"DELETE" ~path ~body:""
   in
-  [ ("orderIDs", order_ids) ]
-  |> H.delete_json ~headers http path cancel_response_of_yojson
+  B.new_delete http path |> B.header_list headers
+  |> B.query_each "orderIDs" Fun.id (Some order_ids)
+  |> B.fetch_json cancel_response_of_yojson
 
 let cancel_all http ~credentials ~address () =
   let path = "/cancel-all" in
   let headers =
     Auth.build_l2_headers ~credentials ~address ~method_:"DELETE" ~path ~body:""
   in
-  H.delete_json ~headers http path cancel_response_of_yojson []
+  B.new_delete http path |> B.header_list headers
+  |> B.fetch_json cancel_response_of_yojson
 
 let cancel_market_orders http ~credentials ~address ?market ?asset_id () =
   let path = "/cancel-market-orders" in
   let headers =
     Auth.build_l2_headers ~credentials ~address ~method_:"DELETE" ~path ~body:""
   in
-  [] |> H.add "market" market |> H.add "asset_id" asset_id
-  |> H.delete_json ~headers http path cancel_response_of_yojson
+  B.new_delete http path |> B.header_list headers
+  |> B.query_add "market" market
+  |> B.query_add "asset_id" asset_id
+  |> B.fetch_json cancel_response_of_yojson
 
 (** {1 Trades (L2 only)} *)
 
@@ -177,6 +200,9 @@ let get_trades http ~credentials ~address ?id ?taker ?maker ?market ?before
   let headers =
     Auth.build_l2_headers ~credentials ~address ~method_:"GET" ~path ~body:""
   in
-  [] |> H.add "id" id |> H.add "taker" taker |> H.add "maker" maker
-  |> H.add "market" market |> H.add "before" before |> H.add "after" after
-  |> H.get_json_list ~headers http path clob_trade_of_yojson
+  B.new_get http path |> B.header_list headers |> B.query_add "id" id
+  |> B.query_add "taker" taker |> B.query_add "maker" maker
+  |> B.query_add "market" market
+  |> B.query_add "before" before
+  |> B.query_add "after" after
+  |> B.fetch_json_list clob_trade_of_yojson

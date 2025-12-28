@@ -129,13 +129,13 @@ let fetch_json (parser : Yojson.Safe.t -> 'a) (req : ready t) :
     ('a, C.error) result =
   let status, body = fetch req in
   C.handle_response status body (fun b ->
-      C.parse_json parser b |> Result.map_error C.to_error)
+      Json.parse parser b |> Result.map_error C.to_error)
 
 let fetch_json_list (parser : Yojson.Safe.t -> 'a) (req : ready t) :
     ('a list, C.error) result =
   let status, body = fetch req in
   C.handle_response status body (fun b ->
-      C.parse_json_list parser b |> Result.map_error C.to_error)
+      Json.parse_list parser b |> Result.map_error C.to_error)
 
 let fetch_text (req : ready t) : (string, C.error) result =
   let status, body = fetch req in

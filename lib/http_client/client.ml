@@ -1,7 +1,7 @@
 (** Generic HTTP client for Polymarket APIs.
 
-    This module provides a reusable HTTP client with JSON parsing and query
-    parameter building utilities. Uses cohttp-eio for HTTP requests. *)
+    This module provides a reusable HTTP client. Uses cohttp-eio for HTTP
+    requests. *)
 
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 module R = Polymarket_rate_limiter.Rate_limiter
@@ -45,36 +45,9 @@ let create ~base_url ~sw ~net ~rate_limiter () =
 
 let base_url t = t.base_url
 
-(** {1 Query Parameter Builders} *)
+(** {1 HTTP Request Functions} *)
 
 type params = (string * string list) list
-
-let add key value params =
-  match value with Some v -> (key, [ v ]) :: params | None -> params
-
-let add_option key to_string value params =
-  match value with Some v -> (key, [ to_string v ]) :: params | None -> params
-
-let add_list key to_string values params =
-  match values with
-  | Some vs when vs <> [] ->
-      let joined = String.concat "," (List.map to_string vs) in
-      (key, [ joined ]) :: params
-  | _ -> params
-
-let add_bool key value params =
-  match value with
-  | Some true -> (key, [ "true" ]) :: params
-  | Some false -> (key, [ "false" ]) :: params
-  | None -> params
-
-let add_each key to_string values params =
-  match values with
-  | Some vs ->
-      List.fold_left (fun acc v -> (key, [ to_string v ]) :: acc) params vs
-  | None -> params
-
-(** {1 HTTP Request Functions} *)
 
 let build_uri base_url path params =
   let uri = Uri.of_string (base_url ^ path) in
@@ -145,11 +118,6 @@ let do_delete ?(headers = []) t uri =
     Polymarket_common.Logger.log_error ~method_:"DELETE" ~uri ~exn;
     (500, Printf.sprintf {|{"error": "Request failed: %s"}|} msg)
 
-(** {1 JSON Parsing} *)
-
-let parse_json = Json.parse
-let parse_json_list = Json.parse_list
-
 (** {1 Error Handling} *)
 
 type http_error = { status : int; body : string; message : string }
@@ -195,61 +163,3 @@ let handle_response status body parse_fn =
   match status with
   | 200 -> parse_fn body
   | _ -> Error (parse_error ~status body)
-
-let request ?(headers = []) t path parse_fn params =
-  let uri = build_uri t.base_url path params in
-  let status, body = do_get ~headers t uri in
-  handle_response status body parse_fn
-
-(** {1 Convenient JSON Request Helpers} *)
-
-let get_json ?(headers = []) t path parser params =
-  request ~headers t path
-    (fun body -> parse_json parser body |> Result.map_error to_error)
-    params
-
-let get_json_list ?(headers = []) t path parser params =
-  request ~headers t path
-    (fun body -> parse_json_list parser body |> Result.map_error to_error)
-    params
-
-let get_text ?(headers = []) t path params =
-  request ~headers t path (fun body -> Ok body) params
-
-let post_json ?(headers = []) t path parser ~body params =
-  let uri = build_uri t.base_url path params in
-  let status, resp_body = do_post ~headers t uri ~body in
-  handle_response status resp_body (fun body ->
-      parse_json parser body |> Result.map_error to_error)
-
-let post_json_list ?(headers = []) t path parser ~body params =
-  let uri = build_uri t.base_url path params in
-  let status, resp_body = do_post ~headers t uri ~body in
-  handle_response status resp_body (fun body ->
-      parse_json_list parser body |> Result.map_error to_error)
-
-let delete_json ?(headers = []) t path parser params =
-  let uri = build_uri t.base_url path params in
-  let status, body = do_delete ~headers t uri in
-  handle_response status body (fun body ->
-      parse_json parser body |> Result.map_error to_error)
-
-let delete_unit ?(headers = []) t path params =
-  let uri = build_uri t.base_url path params in
-  let status, body = do_delete ~headers t uri in
-  match status with 200 | 204 -> Ok () | _ -> Error (parse_error ~status body)
-
-let post_unit ?(headers = []) t path ~body params =
-  let uri = build_uri t.base_url path params in
-  let status, resp_body = do_post ~headers t uri ~body in
-  match status with
-  | 200 | 201 | 204 -> Ok ()
-  | _ -> Error (parse_error ~status resp_body)
-
-(** {1 JSON Body Builders} *)
-
-let json_body = Json.body
-let json_obj = Json.obj
-let json_string = Json.string
-let json_list_body = Json.list
-let json_list_single_field = Json.list_single_field
