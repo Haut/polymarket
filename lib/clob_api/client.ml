@@ -8,6 +8,24 @@ module Crypto = Polymarket_common.Crypto
 
 let default_base_url = "https://clob.polymarket.com"
 
+(** {1 Public Endpoints Functor} *)
+
+module type HAS_HTTP = sig
+  type t
+
+  val http : t -> H.t
+end
+
+module Make_public (M : HAS_HTTP) = struct
+  let get_order_book (t : M.t) = Endpoints.get_order_book (M.http t)
+  let get_order_books (t : M.t) = Endpoints.get_order_books (M.http t)
+  let get_price (t : M.t) = Endpoints.get_price (M.http t)
+  let get_midpoint (t : M.t) = Endpoints.get_midpoint (M.http t)
+  let get_prices (t : M.t) = Endpoints.get_prices (M.http t)
+  let get_spreads (t : M.t) = Endpoints.get_spreads (M.http t)
+  let get_price_history (t : M.t) = Endpoints.get_price_history (M.http t)
+end
+
 (** {1 Client Types} *)
 
 type unauthed = { http : H.t }
@@ -29,13 +47,11 @@ module Unauthed = struct
     let http = H.create ~base_url ~sw ~net ~rate_limiter () in
     { http }
 
-  let get_order_book (t : t) = Endpoints.get_order_book t.http
-  let get_order_books (t : t) = Endpoints.get_order_books t.http
-  let get_price (t : t) = Endpoints.get_price t.http
-  let get_midpoint (t : t) = Endpoints.get_midpoint t.http
-  let get_prices (t : t) = Endpoints.get_prices t.http
-  let get_spreads (t : t) = Endpoints.get_spreads t.http
-  let get_price_history (t : t) = Endpoints.get_price_history t.http
+  include Make_public (struct
+    type t = unauthed
+
+    let http (t : t) = t.http
+  end)
 end
 
 (** {1 L1-Authenticated Client} *)
@@ -73,13 +89,11 @@ module L1 = struct
         Ok (l2_client, resp)
     | Error e -> Error e
 
-  let get_order_book (t : t) = Endpoints.get_order_book t.http
-  let get_order_books (t : t) = Endpoints.get_order_books t.http
-  let get_price (t : t) = Endpoints.get_price t.http
-  let get_midpoint (t : t) = Endpoints.get_midpoint t.http
-  let get_prices (t : t) = Endpoints.get_prices t.http
-  let get_spreads (t : t) = Endpoints.get_spreads t.http
-  let get_price_history (t : t) = Endpoints.get_price_history t.http
+  include Make_public (struct
+    type t = l1
+
+    let http (t : t) = t.http
+  end)
 end
 
 (** {1 L2-Authenticated Client} *)
@@ -138,13 +152,11 @@ module L2 = struct
     Endpoints.get_trades t.http ~credentials:t.credentials ~address:t.address
 
   (* Public operations *)
-  let get_order_book (t : t) = Endpoints.get_order_book t.http
-  let get_order_books (t : t) = Endpoints.get_order_books t.http
-  let get_price (t : t) = Endpoints.get_price t.http
-  let get_midpoint (t : t) = Endpoints.get_midpoint t.http
-  let get_prices (t : t) = Endpoints.get_prices t.http
-  let get_spreads (t : t) = Endpoints.get_spreads t.http
-  let get_price_history (t : t) = Endpoints.get_price_history t.http
+  include Make_public (struct
+    type t = l2
+
+    let http (t : t) = t.http
+  end)
 end
 
 (** {1 State Transitions} *)
