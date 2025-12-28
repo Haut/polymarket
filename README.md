@@ -5,10 +5,11 @@ OCaml client library for the [Polymarket](https://polymarket.com) prediction mar
 ## Features
 
 - Full coverage of the Polymarket Data API, Gamma API, and CLOB API
+- Real-time WebSocket streaming for market data and user events
 - L1 (EIP-712 wallet signing) and L2 (HMAC-SHA256) authentication for CLOB API
 - Type-safe interface with validated primitive types and OCaml variant types
 - Built on [Eio](https://github.com/ocaml-multicore/eio) for efficient concurrent I/O
-- TLS support for secure API connections (via cohttp-eio and tls-eio)
+- Pure-OCaml TLS for cross-platform compatibility (via tls-eio)
 - Built-in rate limiting with official Polymarket API limits (GCRA algorithm)
 - Comprehensive error handling with result types
 - JSON serialization via ppx_yojson_conv
@@ -277,6 +278,100 @@ match Clob.L2.cancel_all l2_client () with
 | Error err -> Printf.printf "Error: %s\n" err.Http.error
 ```
 
+## WebSocket Streaming
+
+The library provides real-time WebSocket streaming for market data and user events using pure-OCaml TLS (tls-eio) for cross-platform compatibility.
+
+### Market Channel (Public)
+
+Subscribe to orderbook updates for specific asset IDs:
+
+```ocaml
+open Polymarket
+
+let () =
+  Mirage_crypto_rng_unix.use_default ();
+  Eio_main.run @@ fun env ->
+  Eio.Switch.run @@ fun sw ->
+  let net = Eio.Stdenv.net env in
+  let clock = Eio.Stdenv.clock env in
+
+  (* Get token IDs from Gamma API *)
+  let asset_ids = ["token_id_1"; "token_id_2"] in
+
+  (* Connect to market channel *)
+  let client = Wss.Market.connect ~sw ~net ~clock ~asset_ids () in
+  let stream = Wss.Market.stream client in
+
+  (* Process messages *)
+  let rec loop () =
+    match Eio.Stream.take stream with
+    | Wss.Types.Market (Book book) ->
+        Printf.printf "Book: %s - %d bids, %d asks\n"
+          book.asset_id (List.length book.bids) (List.length book.asks);
+        loop ()
+    | Wss.Types.Market (Price_change change) ->
+        Printf.printf "Price change: %d updates\n"
+          (List.length change.price_changes);
+        loop ()
+    | Wss.Types.Market (Last_trade_price trade) ->
+        Printf.printf "Trade: %s @ %s\n" trade.asset_id trade.price;
+        loop ()
+    | _ -> loop ()
+  in
+  loop ()
+```
+
+### User Channel (Authenticated)
+
+Subscribe to your trades and orders with API credentials:
+
+```ocaml
+let credentials = Clob.Auth_types.{
+  api_key = "...";
+  secret = "...";
+  passphrase = "...";
+} in
+let markets = ["condition_id_1"; "condition_id_2"] in
+
+let client = Wss.User.connect ~sw ~net ~clock ~credentials ~markets () in
+let stream = Wss.User.stream client in
+
+match Eio.Stream.take stream with
+| Wss.Types.User (Trade trade) ->
+    Printf.printf "Trade: %s @ %s\n" trade.id trade.price
+| Wss.Types.User (Order order) ->
+    Printf.printf "Order: %s %s @ %s\n" order.id order.side order.price
+| _ -> ()
+```
+
+### Dynamic Subscriptions
+
+Add or remove asset subscriptions on the fly:
+
+```ocaml
+(* Subscribe to additional assets *)
+Wss.Market.subscribe client ~asset_ids:["new_token_id"];
+
+(* Unsubscribe from assets *)
+Wss.Market.unsubscribe client ~asset_ids:["old_token_id"];
+
+(* Close connection *)
+Wss.Market.close client
+```
+
+### Message Types
+
+| Channel | Message Type | Description |
+|---------|--------------|-------------|
+| Market | `Book` | Full orderbook snapshot |
+| Market | `Price_change` | Incremental orderbook update |
+| Market | `Last_trade_price` | Last trade price update |
+| Market | `Best_bid_ask` | Best bid/ask update |
+| Market | `Tick_size_change` | Tick size change notification |
+| User | `Trade` | Trade execution notification |
+| User | `Order` | Order status update |
+
 ## Rate Limiting
 
 The library includes built-in rate limiting that matches the official [Polymarket API rate limits](https://docs.polymarket.com/#/api-rate-limits). A shared rate limiter enforces limits across all API clients.
@@ -345,6 +440,10 @@ Polymarket
 │   ├── Types     (* order_side, order_type, time_interval, etc. *)
 │   ├── Auth      (* L1/L2 authentication *)
 │   └── Crypto    (* Signing and hashing *)
+├── Wss           (* Real-time WebSocket streaming *)
+│   ├── Market    (* Public market data channel *)
+│   ├── User      (* Authenticated user channel *)
+│   └── Types     (* Message types *)
 ├── Http          (* HTTP client utilities *)
 ├── Rate_limiter  (* Rate limiting with GCRA algorithm *)
 └── Primitives    (* Validated types: Address, Hash64, Limit, etc. *)
@@ -490,6 +589,7 @@ For finer-grained control, you can depend on individual sub-libraries:
 | `polymarket.gamma` | Gamma API client only |
 | `polymarket.data` | Data API client only |
 | `polymarket.clob` | CLOB API client only |
+| `polymarket.wss` | WebSocket client with pure-OCaml TLS (via tls-eio) |
 
 To use a sub-library, add it to your dune file:
 
@@ -538,6 +638,9 @@ dune exec examples/clob_api_demo.exe
 
 # CLOB API demo with private key for authentication
 POLY_PRIVATE_KEY=your_private_key_hex dune exec examples/clob_api_demo.exe
+
+# WebSocket streaming demo
+dune exec examples/wss_demo.exe
 ```
 
 ### Code Formatting
@@ -575,12 +678,19 @@ polymarket/
 │   │   ├── auth.ml       # L1/L2 authentication
 │   │   ├── auth_types.ml # Credential types
 │   │   └── crypto.ml     # Signing and hashing
+│   ├── websocket_client/ # WebSocket streaming client
+│   │   ├── client.ml     # Market and User channel clients
+│   │   ├── connection.ml # Connection management with reconnect
+│   │   ├── frame.ml      # WebSocket frame encoding/decoding
+│   │   ├── handshake.ml  # HTTP upgrade handshake
+│   │   └── types.ml      # Message types
 │   ├── polymarket.ml     # Main module (flattened API)
 │   └── polymarket.mli    # Public interface
 ├── examples/
 │   ├── data_api_demo.ml  # Data API live demo
 │   ├── gamma_api_demo.ml # Gamma API live demo
 │   ├── clob_api_demo.ml  # CLOB API live demo
+│   ├── wss_demo.ml       # WebSocket streaming demo
 │   └── logger.ml         # Demo logging utilities
 ├── test/                 # Test suite
 ├── CHANGELOG.md
