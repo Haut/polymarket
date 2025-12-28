@@ -30,6 +30,12 @@
       | Error e -> failwith e.error
     ]} *)
 
+module Auth = Polymarket_common.Auth
+(** Re-exported authentication types from common. *)
+
+module Crypto = Polymarket_common.Crypto
+(** Re-exported cryptographic utilities from common. *)
+
 val default_base_url : string
 (** Default base URL for the CLOB API: https://clob.polymarket.com *)
 

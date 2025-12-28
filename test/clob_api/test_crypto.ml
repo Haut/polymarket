@@ -1,6 +1,6 @@
 (** Tests for the Crypto module. *)
 
-open Polymarket_clob
+module Crypto = Polymarket_common.Crypto
 
 (** {1 Test Helpers} *)
 

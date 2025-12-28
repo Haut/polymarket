@@ -31,8 +31,8 @@ module Clob = struct
   let default_base_url = Polymarket_clob.Client.default_base_url
 
   module Types = Polymarket_clob.Types
-  module Auth = Polymarket_clob.Auth
-  module Crypto = Polymarket_clob.Crypto
+  module Auth = Polymarket_common.Auth
+  module Crypto = Polymarket_common.Crypto
 
   type unauthed = Polymarket_clob.Client.unauthed
   type l1 = Polymarket_clob.Client.l1

@@ -4,6 +4,8 @@
 
 open Types
 module H = Polymarket_http.Client
+module Auth = Polymarket_common.Auth
+module Crypto = Polymarket_common.Crypto
 
 let default_base_url = "https://clob.polymarket.com"
 
@@ -13,6 +15,42 @@ let default_base_url = "https://clob.polymarket.com"
     authentication levels. *)
 
 module Internal = struct
+  (** {2 Auth Endpoints} *)
+
+  let create_api_key http ~private_key ~address ~nonce =
+    let headers = Auth.build_l1_headers ~private_key ~address ~nonce in
+    H.post_json ~headers http "/auth/api-key" Auth.api_key_response_of_yojson
+      ~body:"{}" []
+
+  let derive_api_key http ~private_key ~address ~nonce =
+    let headers = Auth.build_l1_headers ~private_key ~address ~nonce in
+    H.get_json ~headers http "/auth/derive-api-key"
+      Auth.derive_api_key_response_of_yojson []
+
+  let delete_api_key http ~credentials ~address =
+    let path = "/auth/api-key" in
+    let headers =
+      Auth.build_l2_headers ~credentials ~address ~method_:"DELETE" ~path
+        ~body:""
+    in
+    let uri = H.build_uri (H.base_url http) path [] in
+    let status, body = H.do_delete ~headers http uri in
+    match status with
+    | 200 | 204 -> Ok ()
+    | _ -> Error (H.parse_error ~status body)
+
+  let get_api_keys http ~credentials ~address =
+    let path = "/auth/api-keys" in
+    let headers =
+      Auth.build_l2_headers ~credentials ~address ~method_:"GET" ~path ~body:""
+    in
+    H.get_json_list ~headers http path
+      (fun json ->
+        match json with
+        | `String s -> s
+        | _ -> failwith "Expected string in API keys list")
+      []
+
   (** {2 Order Book} *)
 
   let get_order_book http ~token_id () =
@@ -221,13 +259,13 @@ module L1 = struct
   let address (t : t) = t.address
 
   let create_api_key (t : t) ~nonce =
-    Auth.create_api_key t.http ~private_key:t.private_key ~address:t.address
+    Internal.create_api_key t.http ~private_key:t.private_key ~address:t.address
       ~nonce
 
   let derive_api_key (t : t) ~nonce =
     match
-      Auth.derive_api_key t.http ~private_key:t.private_key ~address:t.address
-        ~nonce
+      Internal.derive_api_key t.http ~private_key:t.private_key
+        ~address:t.address ~nonce
     with
     | Ok resp ->
         let credentials = Auth.credentials_of_derive_response resp in
@@ -267,14 +305,14 @@ module L2 = struct
 
   (* L1 operations *)
   let create_api_key (t : t) ~nonce =
-    Auth.create_api_key t.http ~private_key:t.private_key ~address:t.address
+    Internal.create_api_key t.http ~private_key:t.private_key ~address:t.address
       ~nonce
 
   let delete_api_key (t : t) =
-    Auth.delete_api_key t.http ~credentials:t.credentials ~address:t.address
+    Internal.delete_api_key t.http ~credentials:t.credentials ~address:t.address
 
   let get_api_keys (t : t) =
-    Auth.get_api_keys t.http ~credentials:t.credentials ~address:t.address
+    Internal.get_api_keys t.http ~credentials:t.credentials ~address:t.address
 
   (* L2 order operations *)
   let create_order (t : t) =

@@ -134,8 +134,8 @@ module Clob : sig
   val default_base_url : string
 
   module Types = Polymarket_clob.Types
-  module Auth = Polymarket_clob.Auth
-  module Crypto = Polymarket_clob.Crypto
+  module Auth = Polymarket_common.Auth
+  module Crypto = Polymarket_common.Crypto
 
   type unauthed = Polymarket_clob.Client.unauthed
   type l1 = Polymarket_clob.Client.l1
@@ -146,7 +146,7 @@ module Clob : sig
   module L2 = Polymarket_clob.Client.L2
 
   val upgrade_to_l1 : unauthed -> private_key:string -> l1
-  val upgrade_to_l2 : l1 -> credentials:Polymarket_clob.Auth.credentials -> l2
+  val upgrade_to_l2 : l1 -> credentials:Polymarket_common.Auth.credentials -> l2
   val l2_to_l1 : l2 -> l1
   val l2_to_unauthed : l2 -> unauthed
   val l1_to_unauthed : l1 -> unauthed

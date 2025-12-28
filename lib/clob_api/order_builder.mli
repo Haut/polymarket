@@ -50,7 +50,7 @@ val calculate_amounts :
 (** {1 Order Building} *)
 
 val create_limit_order :
-  private_key:Crypto.private_key ->
+  private_key:Polymarket_common.Crypto.private_key ->
   token_id:string ->
   side:Types.Side.t ->
   price:float ->

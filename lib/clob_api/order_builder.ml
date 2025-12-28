@@ -4,6 +4,7 @@
     proper EIP-712 signatures, amount calculations, and nonce generation. *)
 
 module Side = Types.Side
+module Crypto = Polymarket_common.Crypto
 
 (** {1 Constants} *)
 
