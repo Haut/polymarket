@@ -14,15 +14,14 @@ type error = Polymarket_http.Client.error
 (** {1 Auth Endpoints} *)
 
 let create_api_key http ~private_key ~address ~nonce =
-  let headers = Auth.build_l1_headers ~private_key ~address ~nonce in
   B.new_post http "/auth/api-key"
-  |> B.header_list headers |> B.with_body "{}"
+  |> B.with_body "{}"
+  |> B.with_l1_auth ~private_key ~address ~nonce
   |> B.fetch_json Auth.api_key_response_of_yojson
 
 let derive_api_key http ~private_key ~address ~nonce =
-  let headers = Auth.build_l1_headers ~private_key ~address ~nonce in
   B.new_get http "/auth/derive-api-key"
-  |> B.header_list headers
+  |> B.with_l1_auth ~private_key ~address ~nonce
   |> B.fetch_json Auth.derive_api_key_response_of_yojson
 
 let delete_api_key http ~credentials ~address =

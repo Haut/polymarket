@@ -108,6 +108,10 @@ let header_list (hs : (string * string) list) (req : 'a t) : 'a t =
 
 (** {1 Auth} *)
 
+let with_l1_auth ~private_key ~address ~nonce (req : 'a t) : 'a t =
+  let headers = Auth.build_l1_headers ~private_key ~address ~nonce in
+  { req with headers = headers @ req.headers }
+
 let method_to_string = function
   | GET -> "GET"
   | POST -> "POST"

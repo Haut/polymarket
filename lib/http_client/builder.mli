@@ -77,6 +77,14 @@ val header_list : (string * string) list -> 'a t -> 'a t
 
 (** {1 Auth} *)
 
+val with_l1_auth :
+  private_key:Polymarket_common.Crypto.private_key ->
+  address:string ->
+  nonce:int ->
+  'a t ->
+  'a t
+(** Add L1 authentication headers for wallet-based endpoints. *)
+
 val with_l2_auth :
   credentials:Polymarket_common.Auth.credentials ->
   address:string ->
