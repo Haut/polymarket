@@ -12,8 +12,13 @@ module Gamma = struct
 
       Combines client functions and types. *)
 
-  include Polymarket_gamma.Client
+  include Polymarket_gamma.Endpoints
   include Polymarket_gamma.Types
+
+  let default_base_url = "https://gamma-api.polymarket.com"
+
+  let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter () =
+    Polymarket_http.Client.create ~base_url ~sw ~net ~rate_limiter ()
 end
 
 module Data = struct
@@ -21,8 +26,13 @@ module Data = struct
 
       Combines client functions and response types. *)
 
-  include Polymarket_data.Client
+  include Polymarket_data.Endpoints
   include Polymarket_data.Types
+
+  let default_base_url = "https://data-api.polymarket.com"
+
+  let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter () =
+    Polymarket_http.Client.create ~base_url ~sw ~net ~rate_limiter ()
 end
 
 module Clob = struct
