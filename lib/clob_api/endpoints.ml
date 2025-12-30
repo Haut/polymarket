@@ -45,8 +45,8 @@ let get_order_book http ~token_id () =
   |> B.fetch_json order_book_summary_of_yojson
 
 let get_order_books http ~token_ids () =
-  let body = J.list_single_field "token_id" token_ids in
-  B.new_post http "/books" |> B.with_body body
+  B.new_post http "/books"
+  |> B.with_body (J.list_single_field "token_id" token_ids)
   |> B.fetch_json_list order_book_summary_of_yojson
 
 (** {1 Pricing} *)
@@ -63,17 +63,16 @@ let get_midpoint http ~token_id () =
   |> B.fetch_json midpoint_response_of_yojson
 
 let get_prices http ~requests () =
-  let body =
-    J.list
-      (fun (token_id, side) ->
-        J.obj
-          [
-            ("token_id", J.string token_id);
-            ("side", J.string (Side.to_string side));
-          ])
-      requests
-  in
-  B.new_post http "/prices" |> B.with_body body
+  B.new_post http "/prices"
+  |> B.with_body
+       (J.list
+          (fun (token_id, side) ->
+            J.obj
+              [
+                ("token_id", J.string token_id);
+                ("side", J.string (Side.to_string side));
+              ])
+          requests)
   |> B.fetch_json prices_response_of_yojson
 
 let get_spreads http ~token_ids () =
@@ -95,32 +94,30 @@ let get_price_history http ~market ?start_ts ?end_ts ?interval ?fidelity () =
 (** {1 Orders (L2 only)} *)
 
 let create_order http ~credentials ~address ~order ~owner ~order_type () =
-  let body =
-    J.body
-      (J.obj
-         [
-           ("order", yojson_of_signed_order order);
-           ("owner", J.string owner);
-           ("orderType", J.string (Order_type.to_string order_type));
-         ])
-  in
-  B.new_post http "/order" |> B.with_body body
+  B.new_post http "/order"
+  |> B.with_body
+       (J.body
+          (J.obj
+             [
+               ("order", yojson_of_signed_order order);
+               ("owner", J.string owner);
+               ("orderType", J.string (Order_type.to_string order_type));
+             ]))
   |> B.with_l2_auth ~credentials ~address
   |> B.fetch_json create_order_response_of_yojson
 
 let create_orders http ~credentials ~address ~orders () =
-  let body =
-    J.list
-      (fun (order, owner, order_type) ->
-        J.obj
-          [
-            ("order", yojson_of_signed_order order);
-            ("owner", J.string owner);
-            ("orderType", J.string (Order_type.to_string order_type));
-          ])
-      orders
-  in
-  B.new_post http "/orders" |> B.with_body body
+  B.new_post http "/orders"
+  |> B.with_body
+       (J.list
+          (fun (order, owner, order_type) ->
+            J.obj
+              [
+                ("order", yojson_of_signed_order order);
+                ("owner", J.string owner);
+                ("orderType", J.string (Order_type.to_string order_type));
+              ])
+          orders)
   |> B.with_l2_auth ~credentials ~address
   |> B.fetch_json_list create_order_response_of_yojson
 

@@ -28,6 +28,7 @@
   (yojson (>= 2.0))
   (ppx_yojson_conv (>= 0.16))
   (ppx_deriving (>= 5.2))
+  (ppxlib (>= 0.32))
   (eio_main (>= 1.0))
   (uri (>= 4.0))
   (cohttp-eio (>= 6.0))
