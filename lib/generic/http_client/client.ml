@@ -67,22 +67,23 @@ let body_to_string body =
 
 let do_get ?(headers = []) t uri =
   apply_rate_limit t ~method_:"GET" ~uri;
-  Log.log_request ~method_:"GET" ~uri;
+  Polymarket_common.Logger.log_request ~method_:"GET" ~uri;
   let headers = make_headers headers in
   try
     let resp, body = Cohttp_eio.Client.get ~sw:t.sw ~headers t.client uri in
     let status = Http.Response.status resp |> Http.Status.to_int in
     let body_str = body_to_string body in
-    Log.log_response ~method_:"GET" ~uri ~status:(`Code status) ~body:body_str;
+    Polymarket_common.Logger.log_response ~method_:"GET" ~uri
+      ~status:(`Code status) ~body:body_str;
     (status, body_str)
   with exn ->
     let msg = Printexc.to_string exn in
-    Log.log_error ~method_:"GET" ~uri ~exn;
+    Polymarket_common.Logger.log_error ~method_:"GET" ~uri ~exn;
     (500, Printf.sprintf {|{"error": "Request failed: %s"}|} msg)
 
 let do_post ?(headers = []) t uri ~body:request_body =
   apply_rate_limit t ~method_:"POST" ~uri;
-  Log.log_request ~method_:"POST" ~uri;
+  Polymarket_common.Logger.log_request ~method_:"POST" ~uri;
   let headers =
     make_headers (("Content-Type", "application/json") :: headers)
   in
@@ -93,27 +94,28 @@ let do_post ?(headers = []) t uri ~body:request_body =
     in
     let status = Http.Response.status resp |> Http.Status.to_int in
     let body_str = body_to_string resp_body in
-    Log.log_response ~method_:"POST" ~uri ~status:(`Code status) ~body:body_str;
+    Polymarket_common.Logger.log_response ~method_:"POST" ~uri
+      ~status:(`Code status) ~body:body_str;
     (status, body_str)
   with exn ->
     let msg = Printexc.to_string exn in
-    Log.log_error ~method_:"POST" ~uri ~exn;
+    Polymarket_common.Logger.log_error ~method_:"POST" ~uri ~exn;
     (500, Printf.sprintf {|{"error": "Request failed: %s"}|} msg)
 
 let do_delete ?(headers = []) t uri =
   apply_rate_limit t ~method_:"DELETE" ~uri;
-  Log.log_request ~method_:"DELETE" ~uri;
+  Polymarket_common.Logger.log_request ~method_:"DELETE" ~uri;
   let headers = make_headers headers in
   try
     let resp, body = Cohttp_eio.Client.delete ~sw:t.sw ~headers t.client uri in
     let status = Http.Response.status resp |> Http.Status.to_int in
     let body_str = body_to_string body in
-    Log.log_response ~method_:"DELETE" ~uri ~status:(`Code status)
-      ~body:body_str;
+    Polymarket_common.Logger.log_response ~method_:"DELETE" ~uri
+      ~status:(`Code status) ~body:body_str;
     (status, body_str)
   with exn ->
     let msg = Printexc.to_string exn in
-    Log.log_error ~method_:"DELETE" ~uri ~exn;
+    Polymarket_common.Logger.log_error ~method_:"DELETE" ~uri ~exn;
     (500, Printf.sprintf {|{"error": "Request failed: %s"}|} msg)
 
 (** {1 Error Handling} *)

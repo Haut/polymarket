@@ -60,14 +60,8 @@ let setup () =
   in
   Logs.set_reporter reporter;
   Logs.Src.set_level src (Some Logs.Debug);
-  (* Set log level for all sources based on POLYMARKET_LOG_LEVEL *)
-  let log_level =
-    match Sys.getenv_opt "POLYMARKET_LOG_LEVEL" with
-    | Some "debug" -> Some Logs.Debug
-    | Some "info" -> Some Logs.Info
-    | _ -> None
-  in
-  Logs.set_level log_level
+  (* Also initialize the polymarket library logger to respect POLYMARKET_LOG_LEVEL *)
+  Polymarket_common.Logger.setup ()
 
 let close () =
   match !log_channel with

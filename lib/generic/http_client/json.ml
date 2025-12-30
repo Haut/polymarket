@@ -16,19 +16,23 @@ let parse (parse_fn : Yojson.Safe.t -> 'a) (body : string) : ('a, string) result
           (Yojson.Safe.to_string json)
           body
       in
-      Log.log_err ~section:"HTTP_CLIENT" ~event:"PARSE_ERROR"
+      Polymarket_common.Logger.log_err ~section:"HTTP_CLIENT"
+        ~event:"PARSE_ERROR"
         [ ("error", Printexc.to_string exn) ];
       Error msg
   | Yojson.Json_error msg ->
       let err = "JSON error: " ^ msg ^ "\nBody:\n" ^ body in
-      Log.log_err ~section:"HTTP_CLIENT" ~event:"PARSE_ERROR" [ ("error", msg) ];
+      Polymarket_common.Logger.log_err ~section:"HTTP_CLIENT"
+        ~event:"PARSE_ERROR"
+        [ ("error", msg) ];
       Error err
   | exn ->
       let msg =
         Printf.sprintf "Parse error: %s\nFull response:\n%s"
           (Printexc.to_string exn) body
       in
-      Log.log_err ~section:"HTTP_CLIENT" ~event:"PARSE_ERROR"
+      Polymarket_common.Logger.log_err ~section:"HTTP_CLIENT"
+        ~event:"PARSE_ERROR"
         [ ("error", Printexc.to_string exn) ];
       Error msg
 
@@ -40,7 +44,8 @@ let parse_list (parse_item_fn : Yojson.Safe.t -> 'a) (body : string) :
     | `List items -> Ok (List.map parse_item_fn items)
     | _ ->
         let err = "Expected JSON array\nBody:\n" ^ body in
-        Log.log_err ~section:"HTTP_CLIENT" ~event:"PARSE_ERROR"
+        Polymarket_common.Logger.log_err ~section:"HTTP_CLIENT"
+          ~event:"PARSE_ERROR"
           [ ("error", "expected JSON array") ];
         Error err
   with
@@ -52,19 +57,23 @@ let parse_list (parse_item_fn : Yojson.Safe.t -> 'a) (body : string) :
           (Yojson.Safe.to_string json)
           body
       in
-      Log.log_err ~section:"HTTP_CLIENT" ~event:"PARSE_ERROR"
+      Polymarket_common.Logger.log_err ~section:"HTTP_CLIENT"
+        ~event:"PARSE_ERROR"
         [ ("error", Printexc.to_string exn) ];
       Error msg
   | Yojson.Json_error msg ->
       let err = "JSON error: " ^ msg ^ "\nBody:\n" ^ body in
-      Log.log_err ~section:"HTTP_CLIENT" ~event:"PARSE_ERROR" [ ("error", msg) ];
+      Polymarket_common.Logger.log_err ~section:"HTTP_CLIENT"
+        ~event:"PARSE_ERROR"
+        [ ("error", msg) ];
       Error err
   | exn ->
       let msg =
         Printf.sprintf "Parse error: %s\nFull response:\n%s"
           (Printexc.to_string exn) body
       in
-      Log.log_err ~section:"HTTP_CLIENT" ~event:"PARSE_ERROR"
+      Polymarket_common.Logger.log_err ~section:"HTTP_CLIENT"
+        ~event:"PARSE_ERROR"
         [ ("error", Printexc.to_string exn) ];
       Error msg
 
