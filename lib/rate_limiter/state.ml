@@ -16,22 +16,20 @@ let create ~clock ?(max_idle_time = 300.0) () =
   let now () = Eio.Time.now clock in
   { now; table; mutex; max_idle_time }
 
-let get_or_create_entry t ~route_key ~limits =
-  let now_time = t.now () in
-  match Hashtbl.find_opt t.table route_key with
-  | Some entry ->
-      entry.last_used <- now_time;
-      entry
-  | None ->
-      let gcras = List.map Gcra.create limits in
-      let entry = { gcras; last_used = now_time } in
-      Hashtbl.add t.table route_key entry;
-      entry
-
 let check_limits t ~route_key ~limits =
   Eio.Mutex.use_rw ~protect:true t.mutex (fun () ->
       let now_time = t.now () in
-      let entry = get_or_create_entry t ~route_key ~limits in
+      let entry =
+        match Hashtbl.find_opt t.table route_key with
+        | Some entry ->
+            entry.last_used <- now_time;
+            entry
+        | None ->
+            let gcras = List.map Gcra.create limits in
+            let entry = { gcras; last_used = now_time } in
+            Hashtbl.add t.table route_key entry;
+            entry
+      in
       (* Check all limits, collect maximum retry_after if any fail *)
       let rec check_all gcras max_retry =
         match gcras with
