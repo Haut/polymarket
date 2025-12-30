@@ -26,124 +26,65 @@ exception Invalid_signature of string
 module Side = Polymarket_common.Primitives.Side
 (** Re-export shared Side module from Common.Primitives *)
 
+(** Gtc: Good Till Cancelled, Gtd: Good Till Date, Fok: Fill or Kill, Fak: Fill
+    and Kill *)
 module Order_type = struct
-  (** Gtc: Good Till Cancelled, Gtd: Good Till Date, Fok: Fill or Kill, Fak:
-      Fill and Kill *)
-  type t = Gtc | Gtd | Fok | Fak [@@deriving show, eq]
-
-  let to_string = function
-    | Gtc -> "GTC"
-    | Gtd -> "GTD"
-    | Fok -> "FOK"
-    | Fak -> "FAK"
-
-  let of_string = function
-    | "GTC" | "gtc" -> Gtc
-    | "GTD" | "gtd" -> Gtd
-    | "FOK" | "fok" -> Fok
-    | "FAK" | "fak" -> Fak
-    | s -> failwith ("Unknown order_type: " ^ s)
-
-  let t_of_yojson = function
-    | `String s -> of_string s
-    | _ -> failwith "Order_type.t_of_yojson: expected string"
-
-  let yojson_of_t t = `String (to_string t)
+  type t = Gtc | Gtd | Fok | Fak [@@deriving enum]
 end
 
 module Interval = struct
-  type t = Min_1 | Min_5 | Min_15 | Hour_1 | Hour_6 | Day_1 | Week_1 | Max
-  [@@deriving show, eq]
-
-  let to_string = function
-    | Min_1 -> "1m"
-    | Min_5 -> "5m"
-    | Min_15 -> "15m"
-    | Hour_1 -> "1h"
-    | Hour_6 -> "6h"
-    | Day_1 -> "1d"
-    | Week_1 -> "1w"
-    | Max -> "max"
-
-  let of_string = function
-    | "1m" -> Min_1
-    | "5m" -> Min_5
-    | "15m" -> Min_15
-    | "1h" -> Hour_1
-    | "6h" -> Hour_6
-    | "1d" -> Day_1
-    | "1w" -> Week_1
-    | "max" -> Max
-    | s -> failwith ("Unknown interval: " ^ s)
+  type t =
+    | Min_1 [@value "1m"]
+    | Min_5 [@value "5m"]
+    | Min_15 [@value "15m"]
+    | Hour_1 [@value "1h"]
+    | Hour_6 [@value "6h"]
+    | Day_1 [@value "1d"]
+    | Week_1 [@value "1w"]
+    | Max [@value "max"]
+  [@@deriving enum]
 end
 
 module Status = struct
   type t = Live | Matched | Delayed | Unmatched | Cancelled | Expired
-  [@@deriving show, eq]
-
-  let to_string = function
-    | Live -> "LIVE"
-    | Matched -> "MATCHED"
-    | Delayed -> "DELAYED"
-    | Unmatched -> "UNMATCHED"
-    | Cancelled -> "CANCELLED"
-    | Expired -> "EXPIRED"
-
-  let of_string = function
-    | "live" | "LIVE" -> Live
-    | "matched" | "MATCHED" -> Matched
-    | "delayed" | "DELAYED" -> Delayed
-    | "unmatched" | "UNMATCHED" -> Unmatched
-    | "cancelled" | "CANCELLED" -> Cancelled
-    | "expired" | "EXPIRED" -> Expired
-    | s -> failwith ("Unknown status: " ^ s)
-
-  let t_of_yojson = function
-    | `String s -> of_string s
-    | _ -> failwith "Status.t_of_yojson: expected string"
-
-  let yojson_of_t t = `String (to_string t)
+  [@@deriving enum]
 end
 
+(** Eoa: EIP712 from externally owned account (0), Poly_proxy: EIP712 from
+    Polymarket proxy wallet signer (1), Poly_gnosis_safe: EIP712 from Polymarket
+    Gnosis Safe signer (2) *)
 module Signature_type = struct
-  (** Eoa: EIP712 from externally owned account (0), Poly_proxy: EIP712 from
-      Polymarket proxy wallet signer (1), Poly_gnosis_safe: EIP712 from
-      Polymarket Gnosis Safe signer (2) *)
-  type t = Eoa | Poly_proxy | Poly_gnosis_safe [@@deriving show, eq]
+  type t = Eoa | Poly_proxy | Poly_gnosis_safe
 
   let to_int = function Eoa -> 0 | Poly_proxy -> 1 | Poly_gnosis_safe -> 2
 
-  let of_int = function
-    | 0 -> Eoa
-    | 1 -> Poly_proxy
-    | 2 -> Poly_gnosis_safe
-    | n -> failwith (Printf.sprintf "Unknown signature_type: %d" n)
+  let of_int_opt = function
+    | 0 -> Some Eoa
+    | 1 -> Some Poly_proxy
+    | 2 -> Some Poly_gnosis_safe
+    | _ -> None
+
+  let of_int n =
+    match of_int_opt n with
+    | Some v -> v
+    | None -> failwith (Printf.sprintf "Unknown Signature_type: %d" n)
 
   let t_of_yojson = function
     | `Int n -> of_int n
-    | `String "0" -> Eoa
-    | `String "1" -> Poly_proxy
-    | `String "2" -> Poly_gnosis_safe
-    | _ -> failwith "Signature_type.t_of_yojson: expected int or string"
+    | `String s -> (
+        match int_of_string_opt s with
+        | Some n -> of_int n
+        | None -> failwith ("Expected int for Signature_type, got: " ^ s))
+    | _ -> failwith "Expected int for Signature_type"
 
   let yojson_of_t t = `Int (to_int t)
+  let pp fmt t = Format.fprintf fmt "%d" (to_int t)
+  let show t = string_of_int (to_int t)
+  let equal a b = Int.equal (to_int a) (to_int b)
 end
 
 module Trade_type = struct
-  type t = Taker | Maker [@@deriving show, eq]
-
-  let to_string = function Taker -> "TAKER" | Maker -> "MAKER"
-
-  let of_string = function
-    | "TAKER" | "taker" -> Taker
-    | "MAKER" | "maker" -> Maker
-    | s -> failwith ("Unknown trade_type: " ^ s)
-
-  let t_of_yojson = function
-    | `String s -> of_string s
-    | _ -> failwith "Trade_type.t_of_yojson: expected string"
-
-  let yojson_of_t t = `String (to_string t)
+  type t = Taker | Maker [@@deriving enum]
 end
 
 (** {1 Order Book Types} *)

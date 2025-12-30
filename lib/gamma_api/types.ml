@@ -7,58 +7,31 @@ open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 
 (** {1 Enum Modules} *)
 
+(** Status filter for events and markets *)
 module Status = struct
-  (** Status filter for events and markets *)
   type t =
-    | Active  (** Only active/open items *)
-    | Closed  (** Only closed/resolved items *)
-    | All  (** All items regardless of status *)
-
-  let to_string = function
-    | Active -> "active"
-    | Closed -> "closed"
-    | All -> "all"
-
-  let of_string = function
-    | "active" | "Active" -> Ok Active
-    | "closed" | "Closed" -> Ok Closed
-    | "all" | "All" -> Ok All
-    | s -> Error (Printf.sprintf "Unknown status: %s" s)
+    | Active [@value "active"]  (** Only active/open items *)
+    | Closed [@value "closed"]  (** Only closed/resolved items *)
+    | All [@value "all"]  (** All items regardless of status *)
+  [@@deriving enum]
 end
 
+(** Parent entity type for comments *)
 module Parent_entity_type = struct
-  (** Parent entity type for comments *)
   type t =
-    | Event  (** Event entity *)
-    | Series  (** Series entity *)
-    | Market  (** Market entity *)
-
-  let to_string = function
-    | Event -> "Event"
-    | Series -> "Series"
-    | Market -> "market"
-
-  let of_string = function
-    | "Event" | "event" -> Ok Event
-    | "Series" | "series" -> Ok Series
-    | "Market" | "market" -> Ok Market
-    | s -> Error (Printf.sprintf "Unknown parent_entity_type: %s" s)
+    | Event [@value "Event"]  (** Event entity *)
+    | Series [@value "Series"]  (** Series entity *)
+    | Market [@value "market"]  (** Market entity *)
+  [@@deriving enum]
 end
 
+(** Slug size for URL slugs *)
 module Slug_size = struct
-  (** Slug size for URL slugs *)
   type t =
-    | Sm  (** Small slug *)
-    | Md  (** Medium slug *)
-    | Lg  (** Large slug *)
-
-  let to_string = function Sm -> "sm" | Md -> "md" | Lg -> "lg"
-
-  let of_string = function
-    | "sm" | "Sm" -> Ok Sm
-    | "md" | "Md" -> Ok Md
-    | "lg" | "Lg" -> Ok Lg
-    | s -> Error (Printf.sprintf "Unknown slug_size: %s" s)
+    | Sm [@value "sm"]  (** Small slug *)
+    | Md [@value "md"]  (** Medium slug *)
+    | Lg [@value "lg"]  (** Large slug *)
+  [@@deriving enum]
 end
 
 (** {1 Response Types} *)

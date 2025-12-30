@@ -7,14 +7,7 @@ open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 (** {1 Channel Types} *)
 
 module Channel = struct
-  type t = Market | User [@@deriving show, eq]
-
-  let to_string = function Market -> "market" | User -> "user"
-
-  let of_string = function
-    | "market" | "MARKET" -> Market
-    | "user" | "USER" -> User
-    | s -> failwith ("Unknown channel: " ^ s)
+  type t = Market [@value "market"] | User [@value "user"] [@@deriving enum]
 end
 
 (** {1 Common Types} *)
@@ -26,33 +19,12 @@ type order_summary = { price : string; size : string }
 
 module Market_event = struct
   type t =
-    | Book
-    | Price_change
-    | Tick_size_change
-    | Last_trade_price
-    | Best_bid_ask
-  [@@deriving show, eq]
-
-  let to_string = function
-    | Book -> "book"
-    | Price_change -> "price_change"
-    | Tick_size_change -> "tick_size_change"
-    | Last_trade_price -> "last_trade_price"
-    | Best_bid_ask -> "best_bid_ask"
-
-  let of_string = function
-    | "book" -> Book
-    | "price_change" -> Price_change
-    | "tick_size_change" -> Tick_size_change
-    | "last_trade_price" -> Last_trade_price
-    | "best_bid_ask" -> Best_bid_ask
-    | s -> failwith ("Unknown market event type: " ^ s)
-
-  let t_of_yojson = function
-    | `String s -> of_string s
-    | _ -> failwith "Market_event.t_of_yojson: expected string"
-
-  let yojson_of_t t = `String (to_string t)
+    | Book [@value "book"]
+    | Price_change [@value "price_change"]
+    | Tick_size_change [@value "tick_size_change"]
+    | Last_trade_price [@value "last_trade_price"]
+    | Best_bid_ask [@value "best_bid_ask"]
+  [@@deriving enum]
 end
 
 type book_message = {
@@ -127,67 +99,15 @@ type best_bid_ask_message = {
 (** {1 User Channel Message Types} *)
 
 module User_event = struct
-  type t = Trade | Order [@@deriving show, eq]
-
-  let to_string = function Trade -> "trade" | Order -> "order"
-
-  let of_string = function
-    | "trade" -> Trade
-    | "order" -> Order
-    | s -> failwith ("Unknown user event type: " ^ s)
-
-  let t_of_yojson = function
-    | `String s -> of_string s
-    | _ -> failwith "User_event.t_of_yojson: expected string"
-
-  let yojson_of_t t = `String (to_string t)
+  type t = Trade [@value "trade"] | Order [@value "order"] [@@deriving enum]
 end
 
 module Trade_status = struct
-  type t = Matched | Mined | Confirmed | Retrying | Failed
-  [@@deriving show, eq]
-
-  let to_string = function
-    | Matched -> "MATCHED"
-    | Mined -> "MINED"
-    | Confirmed -> "CONFIRMED"
-    | Retrying -> "RETRYING"
-    | Failed -> "FAILED"
-
-  let of_string = function
-    | "MATCHED" -> Matched
-    | "MINED" -> Mined
-    | "CONFIRMED" -> Confirmed
-    | "RETRYING" -> Retrying
-    | "FAILED" -> Failed
-    | s -> failwith ("Unknown trade status: " ^ s)
-
-  let t_of_yojson = function
-    | `String s -> of_string s
-    | _ -> failwith "Trade_status.t_of_yojson: expected string"
-
-  let yojson_of_t t = `String (to_string t)
+  type t = Matched | Mined | Confirmed | Retrying | Failed [@@deriving enum]
 end
 
 module Order_event_type = struct
-  type t = Placement | Update | Cancellation [@@deriving show, eq]
-
-  let to_string = function
-    | Placement -> "PLACEMENT"
-    | Update -> "UPDATE"
-    | Cancellation -> "CANCELLATION"
-
-  let of_string = function
-    | "PLACEMENT" -> Placement
-    | "UPDATE" -> Update
-    | "CANCELLATION" -> Cancellation
-    | s -> failwith ("Unknown order event type: " ^ s)
-
-  let t_of_yojson = function
-    | `String s -> of_string s
-    | _ -> failwith "Order_event_type.t_of_yojson: expected string"
-
-  let yojson_of_t t = `String (to_string t)
+  type t = Placement | Update | Cancellation [@@deriving enum]
 end
 
 type maker_order = {
@@ -243,24 +163,69 @@ type order_message = {
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Order message from user channel *)
 
-(** {1 Unified Message Type} *)
+(** {1 Unified Message Type (Polymorphic Variants)} *)
 
 type market_message =
-  | Book of book_message
-  | Price_change of price_change_message
-  | Tick_size_change of tick_size_change_message
-  | Last_trade_price of last_trade_price_message
-  | Best_bid_ask of best_bid_ask_message
-[@@deriving show, eq]
+  [ `Book of book_message
+  | `Price_change of price_change_message
+  | `Tick_size_change of tick_size_change_message
+  | `Last_trade_price of last_trade_price_message
+  | `Best_bid_ask of best_bid_ask_message ]
+(** Market channel messages using polymorphic variants for extensibility. *)
 
-type user_message = Trade of trade_message | Order of order_message
-[@@deriving show, eq]
+let show_market_message : market_message -> string = function
+  | `Book m -> "Book " ^ show_book_message m
+  | `Price_change m -> "Price_change " ^ show_price_change_message m
+  | `Tick_size_change m -> "Tick_size_change " ^ show_tick_size_change_message m
+  | `Last_trade_price m -> "Last_trade_price " ^ show_last_trade_price_message m
+  | `Best_bid_ask m -> "Best_bid_ask " ^ show_best_bid_ask_message m
+
+let pp_market_message fmt m = Format.fprintf fmt "%s" (show_market_message m)
+
+let equal_market_message (a : market_message) (b : market_message) =
+  match (a, b) with
+  | `Book a, `Book b -> equal_book_message a b
+  | `Price_change a, `Price_change b -> equal_price_change_message a b
+  | `Tick_size_change a, `Tick_size_change b ->
+      equal_tick_size_change_message a b
+  | `Last_trade_price a, `Last_trade_price b ->
+      equal_last_trade_price_message a b
+  | `Best_bid_ask a, `Best_bid_ask b -> equal_best_bid_ask_message a b
+  | _ -> false
+
+type user_message = [ `Trade of trade_message | `Order of order_message ]
+(** User channel messages using polymorphic variants for extensibility. *)
+
+let show_user_message : user_message -> string = function
+  | `Trade m -> "Trade " ^ show_trade_message m
+  | `Order m -> "Order " ^ show_order_message m
+
+let pp_user_message fmt m = Format.fprintf fmt "%s" (show_user_message m)
+
+let equal_user_message (a : user_message) (b : user_message) =
+  match (a, b) with
+  | `Trade a, `Trade b -> equal_trade_message a b
+  | `Order a, `Order b -> equal_order_message a b
+  | _ -> false
 
 type message =
-  | Market of market_message
-  | User of user_message
-  | Unknown of string
-[@@deriving show, eq]
+  [ `Market of market_message | `User of user_message | `Unknown of string ]
+(** Top-level message type using polymorphic variants. Allows pattern matching
+    on all message types at once. *)
+
+let show_message : message -> string = function
+  | `Market m -> "Market (" ^ show_market_message m ^ ")"
+  | `User m -> "User (" ^ show_user_message m ^ ")"
+  | `Unknown s -> "Unknown " ^ s
+
+let pp_message fmt m = Format.fprintf fmt "%s" (show_message m)
+
+let equal_message (a : message) (b : message) =
+  match (a, b) with
+  | `Market a, `Market b -> equal_market_message a b
+  | `User a, `User b -> equal_user_message a b
+  | `Unknown a, `Unknown b -> String.equal a b
+  | _ -> false
 
 (** {1 Message Parsing} *)
 
@@ -268,15 +233,15 @@ let parse_market_message (json : Yojson.Safe.t) : market_message =
   match json with
   | `Assoc fields -> (
       match List.assoc_opt "event_type" fields with
-      | Some (`String "book") -> Book (book_message_of_yojson json)
+      | Some (`String "book") -> `Book (book_message_of_yojson json)
       | Some (`String "price_change") ->
-          Price_change (price_change_message_of_yojson json)
+          `Price_change (price_change_message_of_yojson json)
       | Some (`String "tick_size_change") ->
-          Tick_size_change (tick_size_change_message_of_yojson json)
+          `Tick_size_change (tick_size_change_message_of_yojson json)
       | Some (`String "last_trade_price") ->
-          Last_trade_price (last_trade_price_message_of_yojson json)
+          `Last_trade_price (last_trade_price_message_of_yojson json)
       | Some (`String "best_bid_ask") ->
-          Best_bid_ask (best_bid_ask_message_of_yojson json)
+          `Best_bid_ask (best_bid_ask_message_of_yojson json)
       | Some (`String s) -> failwith ("Unknown market event_type: " ^ s)
       | _ -> failwith "Missing or invalid event_type in market message")
   | _ -> failwith "Market message must be a JSON object"
@@ -285,8 +250,8 @@ let parse_user_message (json : Yojson.Safe.t) : user_message =
   match json with
   | `Assoc fields -> (
       match List.assoc_opt "event_type" fields with
-      | Some (`String "trade") -> Trade (trade_message_of_yojson json)
-      | Some (`String "order") -> Order (order_message_of_yojson json)
+      | Some (`String "trade") -> `Trade (trade_message_of_yojson json)
+      | Some (`String "order") -> `Order (order_message_of_yojson json)
       | Some (`String s) -> failwith ("Unknown user event_type: " ^ s)
       | _ -> failwith "Missing or invalid event_type in user message")
   | _ -> failwith "User message must be a JSON object"
@@ -303,21 +268,18 @@ let parse_message ~channel (raw : string) : message list =
             try
               Some
                 (match channel with
-                | Channel.Market -> Market (parse_market_message item)
-                | Channel.User -> User (parse_user_message item))
+                | Channel.Market -> `Market (parse_market_message item)
+                | Channel.User -> `User (parse_user_message item))
             with _ -> None)
           items
     | _ ->
         (* Single message object *)
         [
           (match channel with
-          | Channel.Market -> Market (parse_market_message json)
-          | Channel.User -> User (parse_user_message json));
+          | Channel.Market -> `Market (parse_market_message json)
+          | Channel.User -> `User (parse_user_message json));
         ]
-  with e ->
-    [
-      Unknown (Printf.sprintf "Parse error: %s - %s" (Printexc.to_string e) raw);
-    ]
+  with _ -> [ `Unknown (Printf.sprintf "Parse error: %s" raw) ]
 
 (** {1 Subscription Request Types} *)
 

@@ -11,31 +11,30 @@ open Polymarket
 
 (** {1 Message Handlers} *)
 
-let handle_market_message msg =
+let handle_market_message (msg : Wss.Types.message) =
   match msg with
-  | Wss.Types.Market (Book book) ->
+  | `Market (`Book book) ->
       Logger.ok "BOOK"
         (Printf.sprintf "asset=%s bids=%d asks=%d" book.asset_id
            (List.length book.bids) (List.length book.asks))
-  | Wss.Types.Market (Price_change change) ->
+  | `Market (`Price_change change) ->
       let n = List.length change.price_changes in
       Logger.ok "PRICE" (Printf.sprintf "market=%s changes=%d" change.market n)
-  | Wss.Types.Market (Last_trade_price trade) ->
+  | `Market (`Last_trade_price trade) ->
       Logger.ok "TRADE"
         (Printf.sprintf "asset=%s price=%s" trade.asset_id trade.price)
-  | Wss.Types.Market (Tick_size_change _) ->
-      Logger.ok "TICK_SIZE" "tick size changed"
-  | Wss.Types.Market (Best_bid_ask bba) ->
+  | `Market (`Tick_size_change _) -> Logger.ok "TICK_SIZE" "tick size changed"
+  | `Market (`Best_bid_ask bba) ->
       Logger.ok "BBA"
         (Printf.sprintf "asset=%s bid=%s ask=%s" bba.asset_id bba.best_bid
            bba.best_ask)
-  | Wss.Types.User (Trade trade) ->
+  | `User (`Trade trade) ->
       Logger.ok "USER_TRADE"
         (Printf.sprintf "id=%s price=%s size=%s" trade.id trade.price trade.size)
-  | Wss.Types.User (Order order) ->
+  | `User (`Order order) ->
       Logger.ok "USER_ORDER"
         (Printf.sprintf "id=%s side=%s price=%s" order.id order.side order.price)
-  | Wss.Types.Unknown raw ->
+  | `Unknown raw ->
       if String.length raw > 80 then
         Logger.skip "MSG" (String.sub raw 0 80 ^ "...")
       else Logger.skip "MSG" raw

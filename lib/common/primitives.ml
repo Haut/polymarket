@@ -122,228 +122,113 @@ end
 
 (** {1 Non-negative Integers} *)
 
-module Nonneg_int = struct
-  type t = int
-
-  let of_int n = if n >= 0 then Some n else None
-  let of_int_exn n = if n >= 0 then n else invalid_arg "must be non-negative"
-  let to_int n = n
-  let to_string n = string_of_int n
-  let zero = 0
-  let one = 1
-end
+module Nonneg_int = Bounded.Nonneg_int
 
 (** {1 Positive Integers} *)
 
-module Pos_int = struct
-  type t = int
-
-  let of_int n = if n >= 1 then Some n else None
-  let of_int_exn n = if n >= 1 then n else invalid_arg "must be positive (>= 1)"
-  let to_int n = n
-  let to_string n = string_of_int n
-  let one = 1
-end
+module Pos_int = Bounded.Pos_int
 
 (** {1 Non-negative Floats} *)
 
-module Nonneg_float = struct
-  type t = float
-
-  let of_float n = if n >= 0.0 then Some n else None
-
-  let of_float_exn n =
-    if n >= 0.0 then n else invalid_arg "must be non-negative"
-
-  let to_float n = n
-  let to_string n = string_of_float n
-  let zero = 0.0
-end
+module Nonneg_float = Bounded.Nonneg_float
 
 (** {1 Limit} *)
 
 module Limit = struct
-  type t = int
-
-  let min_value = 0
-  let max_value = 500
-  let of_int n = if n >= min_value && n <= max_value then Some n else None
-
-  let of_int_exn n =
-    if n >= min_value && n <= max_value then n
-    else
-      invalid_arg
-        (Printf.sprintf "limit must be between %d and %d" min_value max_value)
-
-  let to_int n = n
-  let to_string n = string_of_int n
-  let default = 100
+  include Bounded.Make_int (struct
+    let min_value = 0
+    let max_value = 500
+    let default = 100
+    let name = "limit"
+  end)
 end
 
 (** {1 Offset} *)
 
 module Offset = struct
-  type t = int
-
-  let min_value = 0
-  let max_value = 10000
-  let of_int n = if n >= min_value && n <= max_value then Some n else None
-
-  let of_int_exn n =
-    if n >= min_value && n <= max_value then n
-    else
-      invalid_arg
-        (Printf.sprintf "offset must be between %d and %d" min_value max_value)
-
-  let to_int n = n
-  let to_string n = string_of_int n
-  let default = 0
+  include Bounded.Make_int (struct
+    let min_value = 0
+    let max_value = 10000
+    let default = 0
+    let name = "offset"
+  end)
 end
 
 (** {1 Holders Limit} *)
 
 module Holders_limit = struct
-  type t = int
-
-  let min_value = 0
-  let max_value = 20
-  let of_int n = if n >= min_value && n <= max_value then Some n else None
-
-  let of_int_exn n =
-    if n >= min_value && n <= max_value then n
-    else
-      invalid_arg
-        (Printf.sprintf "holders limit must be between %d and %d" min_value
-           max_value)
-
-  let to_int n = n
-  let to_string n = string_of_int n
-  let default = 20
+  include Bounded.Make_int (struct
+    let min_value = 0
+    let max_value = 20
+    let default = 20
+    let name = "holders limit"
+  end)
 end
 
 (** {1 Min Balance} *)
 
 module Min_balance = struct
-  type t = int
-
-  let min_value = 0
-  let max_value = 999999
-  let of_int n = if n >= min_value && n <= max_value then Some n else None
-
-  let of_int_exn n =
-    if n >= min_value && n <= max_value then n
-    else
-      invalid_arg
-        (Printf.sprintf "min_balance must be between %d and %d" min_value
-           max_value)
-
-  let to_int n = n
-  let to_string n = string_of_int n
-  let default = 1
+  include Bounded.Make_int (struct
+    let min_value = 0
+    let max_value = 999999
+    let default = 1
+    let name = "min_balance"
+  end)
 end
 
 (** {1 Closed Positions Limit} *)
 
 module Closed_positions_limit = struct
-  type t = int
-
-  let min_value = 0
-  let max_value = 50
-  let of_int n = if n >= min_value && n <= max_value then Some n else None
-
-  let of_int_exn n =
-    if n >= min_value && n <= max_value then n
-    else
-      invalid_arg
-        (Printf.sprintf "closed positions limit must be between %d and %d"
-           min_value max_value)
-
-  let to_int n = n
-  let to_string n = string_of_int n
-  let default = 10
+  include Bounded.Make_int (struct
+    let min_value = 0
+    let max_value = 50
+    let default = 10
+    let name = "closed positions limit"
+  end)
 end
 
 (** {1 Extended Offset} *)
 
 module Extended_offset = struct
-  type t = int
-
-  let min_value = 0
-  let max_value = 100000
-  let of_int n = if n >= min_value && n <= max_value then Some n else None
-
-  let of_int_exn n =
-    if n >= min_value && n <= max_value then n
-    else
-      invalid_arg
-        (Printf.sprintf "offset must be between %d and %d" min_value max_value)
-
-  let to_int n = n
-  let to_string n = string_of_int n
-  let default = 0
+  include Bounded.Make_int (struct
+    let min_value = 0
+    let max_value = 100000
+    let default = 0
+    let name = "offset"
+  end)
 end
 
 (** {1 Leaderboard Limit} *)
 
 module Leaderboard_limit = struct
-  type t = int
-
-  let min_value = 1
-  let max_value = 50
-  let of_int n = if n >= min_value && n <= max_value then Some n else None
-
-  let of_int_exn n =
-    if n >= min_value && n <= max_value then n
-    else
-      invalid_arg
-        (Printf.sprintf "leaderboard limit must be between %d and %d" min_value
-           max_value)
-
-  let to_int n = n
-  let to_string n = string_of_int n
-  let default = 25
+  include Bounded.Make_int (struct
+    let min_value = 1
+    let max_value = 50
+    let default = 25
+    let name = "leaderboard limit"
+  end)
 end
 
 (** {1 Leaderboard Offset} *)
 
 module Leaderboard_offset = struct
-  type t = int
-
-  let min_value = 0
-  let max_value = 1000
-  let of_int n = if n >= min_value && n <= max_value then Some n else None
-
-  let of_int_exn n =
-    if n >= min_value && n <= max_value then n
-    else
-      invalid_arg
-        (Printf.sprintf "leaderboard offset must be between %d and %d" min_value
-           max_value)
-
-  let to_int n = n
-  let to_string n = string_of_int n
-  let default = 0
+  include Bounded.Make_int (struct
+    let min_value = 0
+    let max_value = 1000
+    let default = 0
+    let name = "leaderboard offset"
+  end)
 end
 
 (** {1 Builder Limit} *)
 
 module Builder_limit = struct
-  type t = int
-
-  let min_value = 0
-  let max_value = 50
-  let of_int n = if n >= min_value && n <= max_value then Some n else None
-
-  let of_int_exn n =
-    if n >= min_value && n <= max_value then n
-    else
-      invalid_arg
-        (Printf.sprintf "builder limit must be between %d and %d" min_value
-           max_value)
-
-  let to_int n = n
-  let to_string n = string_of_int n
-  let default = 25
+  include Bounded.Make_int (struct
+    let min_value = 0
+    let max_value = 50
+    let default = 25
+    let name = "builder limit"
+  end)
 end
 
 (** {1 Bounded String} *)
@@ -394,21 +279,5 @@ end
     Trade side (Buy/Sell) shared across Data API and CLOB API. *)
 
 module Side = struct
-  type t = Buy | Sell
-
-  let to_string = function Buy -> "BUY" | Sell -> "SELL"
-
-  let of_string = function
-    | "BUY" | "buy" -> Buy
-    | "SELL" | "sell" -> Sell
-    | s -> failwith ("Unknown side: " ^ s)
-
-  let t_of_yojson = function
-    | `String s -> of_string s
-    | _ -> failwith "Side.t_of_yojson: expected string"
-
-  let yojson_of_t t = `String (to_string t)
-  let pp fmt t = Format.fprintf fmt "%s" (to_string t)
-  let show t = to_string t
-  let equal a b = match (a, b) with Buy, Buy | Sell, Sell -> true | _ -> false
+  type t = Buy | Sell [@@deriving enum]
 end

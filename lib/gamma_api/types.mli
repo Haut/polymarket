@@ -14,7 +14,13 @@ module Status : sig
     | All  (** All items regardless of status *)
 
   val to_string : t -> string
-  val of_string : string -> (t, string) result
+  val of_string : string -> t
+  val of_string_opt : string -> t option
+  val t_of_yojson : Yojson.Safe.t -> t
+  val yojson_of_t : t -> Yojson.Safe.t
+  val pp : Format.formatter -> t -> unit
+  val show : t -> string
+  val equal : t -> t -> bool
 end
 
 module Parent_entity_type : sig
@@ -26,7 +32,13 @@ module Parent_entity_type : sig
     | Market  (** Market entity *)
 
   val to_string : t -> string
-  val of_string : string -> (t, string) result
+  val of_string : string -> t
+  val of_string_opt : string -> t option
+  val t_of_yojson : Yojson.Safe.t -> t
+  val yojson_of_t : t -> Yojson.Safe.t
+  val pp : Format.formatter -> t -> unit
+  val show : t -> string
+  val equal : t -> t -> bool
 end
 
 module Slug_size : sig
@@ -38,7 +50,13 @@ module Slug_size : sig
     | Lg  (** Large slug *)
 
   val to_string : t -> string
-  val of_string : string -> (t, string) result
+  val of_string : string -> t
+  val of_string_opt : string -> t option
+  val t_of_yojson : Yojson.Safe.t -> t
+  val yojson_of_t : t -> Yojson.Safe.t
+  val pp : Format.formatter -> t -> unit
+  val show : t -> string
+  val equal : t -> t -> bool
 end
 
 (** {1 Response Types} *)

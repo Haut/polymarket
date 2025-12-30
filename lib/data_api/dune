@@ -3,4 +3,4 @@
  (public_name polymarket.data)
  (libraries polymarket_common polymarket_http yojson ppx_yojson_conv_lib)
  (preprocess
-  (pps ppx_yojson_conv ppx_deriving.show ppx_deriving.eq)))
+  (pps ppx_yojson_conv ppx_deriving.show ppx_deriving.eq ppx_polymarket_enum)))
