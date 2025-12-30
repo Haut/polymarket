@@ -8,4 +8,4 @@
   polymarket_clob
   polymarket_data
   polymarket_gamma
-  polymarket_wss))
+  polymarket_wss_api))

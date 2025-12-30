@@ -64,9 +64,9 @@ module Wss = struct
 
       Uses pure-OCaml TLS (tls-eio) for cross-platform compatibility. *)
 
-  module Types = Polymarket_wss.Types
-  module Market = Polymarket_wss.Client.Market
-  module User = Polymarket_wss.Client.User
+  module Types = Polymarket_wss_api.Types
+  module Market = Polymarket_wss_api.Client.Market
+  module User = Polymarket_wss_api.Client.User
 end
 
 module Http = Polymarket_http.Client

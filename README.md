@@ -688,7 +688,7 @@ For finer-grained control, you can depend on individual sub-libraries:
 | `polymarket.gamma` | Gamma API client only |
 | `polymarket.data` | Data API client only |
 | `polymarket.clob` | CLOB API client only |
-| `polymarket.wss` | WebSocket client with pure-OCaml TLS (via tls-eio) |
+| `polymarket.wss_api` | WebSocket client with pure-OCaml TLS (via tls-eio) |
 
 To use a sub-library, add it to your dune file:
 
