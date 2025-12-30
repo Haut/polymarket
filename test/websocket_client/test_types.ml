@@ -1,6 +1,6 @@
 (** Unit tests for WebSocket message types *)
 
-open Polymarket_wss.Types
+open Polymarket_wss_api.Types
 
 (** {1 Channel Tests} *)
 
