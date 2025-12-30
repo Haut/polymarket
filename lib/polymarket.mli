@@ -223,6 +223,168 @@ module Wss : sig
   module User = Polymarket_wss_api.Client.User
 end
 
+module Rtds : sig
+  (** Real-Time Data Socket (RTDS) client for streaming data.
+
+      Provides real-time updates for:
+      - Crypto prices (Binance and Chainlink sources)
+      - Comments and reactions
+
+      Uses pure-OCaml TLS (tls-eio) for cross-platform compatibility.
+
+      {2 Crypto Prices (Binance)}
+
+      Subscribe to real-time crypto prices from Binance:
+
+      {[
+        Eio_main.run @@ fun env ->
+        Eio.Switch.run @@ fun sw ->
+        let net = Eio.Stdenv.net env in
+        let clock = Eio.Stdenv.clock env in
+        let client =
+          Rtds.Crypto_prices.connect_binance ~sw ~net ~clock
+            ~symbols:[ "btcusdt"; "ethusdt" ]
+            ()
+        in
+        let stream = Rtds.Crypto_prices.stream client in
+        match Eio.Stream.take stream with
+        | `Binance msg -> Printf.printf "BTC: %.2f\n" msg.payload.value
+        | _ -> ()
+      ]}
+
+      {2 Crypto Prices (Chainlink)}
+
+      Subscribe to oracle prices from Chainlink:
+
+      {[
+        let client =
+          Rtds.Crypto_prices.connect_chainlink ~sw ~net ~clock ~symbol:"eth/usd"
+            ()
+        in
+        let stream = Rtds.Crypto_prices.stream client in
+        match Eio.Stream.take stream with
+        | `Chainlink msg -> Printf.printf "ETH: %.2f\n" msg.payload.value
+        | _ -> ()
+      ]}
+
+      {2 Comments}
+
+      Subscribe to real-time comment updates:
+
+      {[
+        let client = Rtds.Comments.connect ~sw ~net ~clock () in
+        let stream = Rtds.Comments.stream client in
+        match Eio.Stream.take stream with
+        | `Comment_created msg ->
+            Printf.printf "New comment: %s\n" msg.payload.body
+        | _ -> ()
+      ]}
+
+      {2 Unified Client}
+
+      Subscribe to multiple topics with a single connection:
+
+      {[
+        let client = Rtds.connect ~sw ~net ~clock () in
+        let subscriptions =
+          [
+            Rtds.Types.crypto_prices_subscription
+              ~filters:(Rtds.Types.binance_symbol_filter [ "btcusdt" ])
+              ();
+            Rtds.Types.comments_subscription ();
+          ]
+        in
+        Rtds.subscribe client ~subscriptions;
+        let stream = Rtds.stream client in
+        match Eio.Stream.take stream with
+        | `Crypto (`Binance msg) ->
+            Printf.printf "Price: %.2f\n" msg.payload.value
+        | `Comment (`Comment_created msg) ->
+            Printf.printf "Comment: %s\n" msg.payload.body
+        | _ -> ()
+      ]} *)
+
+  module Types = Polymarket_rtds_api.Types
+
+  (** {1 Unified Client} *)
+
+  type t
+  (** Unified RTDS client for multiple subscription types *)
+
+  val connect :
+    sw:Eio.Switch.t ->
+    net:_ Eio.Net.t ->
+    clock:float Eio.Time.clock_ty Eio.Resource.t ->
+    unit ->
+    t
+  (** Connect to the RTDS WebSocket *)
+
+  val stream : t -> Types.message Eio.Stream.t
+  (** Get the message stream *)
+
+  val subscribe : t -> subscriptions:Types.subscription list -> unit
+  (** Subscribe to topics *)
+
+  val unsubscribe : t -> subscriptions:Types.subscription list -> unit
+  (** Unsubscribe from topics *)
+
+  val close : t -> unit
+  (** Close the connection *)
+
+  (** {1 Specialized Clients} *)
+
+  module Crypto_prices : sig
+    (** Specialized client for crypto price streams *)
+
+    type t
+
+    val connect_binance :
+      sw:Eio.Switch.t ->
+      net:_ Eio.Net.t ->
+      clock:float Eio.Time.clock_ty Eio.Resource.t ->
+      ?symbols:string list ->
+      unit ->
+      t
+    (** Connect to Binance crypto prices *)
+
+    val connect_chainlink :
+      sw:Eio.Switch.t ->
+      net:_ Eio.Net.t ->
+      clock:float Eio.Time.clock_ty Eio.Resource.t ->
+      ?symbol:string ->
+      unit ->
+      t
+    (** Connect to Chainlink oracle prices *)
+
+    val stream : t -> Types.crypto_message Eio.Stream.t
+    (** Get the crypto price message stream *)
+
+    val close : t -> unit
+    (** Close the connection *)
+  end
+
+  module Comments : sig
+    (** Specialized client for comment streams *)
+
+    type t
+
+    val connect :
+      sw:Eio.Switch.t ->
+      net:_ Eio.Net.t ->
+      clock:float Eio.Time.clock_ty Eio.Resource.t ->
+      ?gamma_auth:Types.gamma_auth ->
+      unit ->
+      t
+    (** Connect to comments stream *)
+
+    val stream : t -> Types.comment Eio.Stream.t
+    (** Get the comment message stream *)
+
+    val close : t -> unit
+    (** Close the connection *)
+  end
+end
+
 module Http = Polymarket_http.Client
 (** HTTP client utilities for making API requests. *)
 

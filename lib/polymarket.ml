@@ -69,6 +69,19 @@ module Wss = struct
   module User = Polymarket_wss_api.Client.User
 end
 
+module Rtds = struct
+  (** Real-Time Data Socket (RTDS) client for streaming data.
+
+      Provides real-time updates for:
+      - Crypto prices (Binance and Chainlink sources)
+      - Comments and reactions
+
+      Uses pure-OCaml TLS (tls-eio) for cross-platform compatibility. *)
+
+  module Types = Polymarket_rtds_api.Types
+  include Polymarket_rtds_api.Client
+end
+
 module Http = Polymarket_http.Client
 (** HTTP client utilities for making API requests. *)
 
