@@ -2,8 +2,6 @@
 
     Performs HTTP/1.1 Upgrade handshake directly over a TLS flow. *)
 
-module Logger = Polymarket_common.Logger
-
 let section = "WSS_HANDSHAKE"
 
 (** WebSocket GUID for Sec-WebSocket-Accept calculation *)

@@ -2,8 +2,6 @@
 
     Uses tls-eio for pure-OCaml TLS, avoiding OpenSSL dependencies. *)
 
-module Logger = Polymarket_common.Logger
-
 let section = "WSS"
 
 (** Connection state *)

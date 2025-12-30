@@ -1,6 +1,6 @@
 (** Unit tests for WebSocket frame encoding/decoding *)
 
-open Polymarket_wss.Frame
+open Websocket.Frame
 
 (** {1 Opcode Tests} *)
 
