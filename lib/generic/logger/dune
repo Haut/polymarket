@@ -1,0 +1,4 @@
+(library
+ (name logger)
+ (public_name polymarket.logger)
+ (libraries logs))
