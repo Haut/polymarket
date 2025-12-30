@@ -6,6 +6,8 @@
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 module R = Polymarket_rate_limiter.Rate_limiter
 
+let section = "HTTP"
+
 (** {1 Client Configuration} *)
 
 type t = {
@@ -65,55 +67,70 @@ let make_headers headers = Http.Header.of_list headers
 let body_to_string body =
   Eio.Buf_read.(parse_exn take_all) body ~max_size:max_int
 
+let log_request ~method_ uri =
+  Logger.log_info ~section ~event:"REQUEST"
+    [ ("method", method_); ("uri", Uri.to_string uri) ]
+
+let log_response ~method_ uri status =
+  Logger.log_info ~section ~event:"RESPONSE"
+    [
+      ("method", method_);
+      ("uri", Uri.to_string uri);
+      ("status", string_of_int status);
+    ]
+
+let log_error ~method_ uri error =
+  Logger.log_err ~section ~event:"ERROR"
+    [ ("method", method_); ("uri", Uri.to_string uri); ("error", error) ]
+
 let do_get ?(headers = []) t uri =
   apply_rate_limit t ~method_:"GET" ~uri;
-  Log.log_request ~method_:"GET" ~uri;
   let headers = make_headers headers in
+  log_request ~method_:"GET" uri;
   try
     let resp, body = Cohttp_eio.Client.get ~sw:t.sw ~headers t.client uri in
     let status = Http.Response.status resp |> Http.Status.to_int in
     let body_str = body_to_string body in
-    Log.log_response ~method_:"GET" ~uri ~status:(`Code status) ~body:body_str;
+    log_response ~method_:"GET" uri status;
     (status, body_str)
   with exn ->
     let msg = Printexc.to_string exn in
-    Log.log_error ~method_:"GET" ~uri ~exn;
+    log_error ~method_:"GET" uri msg;
     (500, Printf.sprintf {|{"error": "Request failed: %s"}|} msg)
 
 let do_post ?(headers = []) t uri ~body:request_body =
   apply_rate_limit t ~method_:"POST" ~uri;
-  Log.log_request ~method_:"POST" ~uri;
   let headers =
     make_headers (("Content-Type", "application/json") :: headers)
   in
   let body = Cohttp_eio.Body.of_string request_body in
+  log_request ~method_:"POST" uri;
   try
     let resp, resp_body =
       Cohttp_eio.Client.post ~sw:t.sw ~headers ~body t.client uri
     in
     let status = Http.Response.status resp |> Http.Status.to_int in
     let body_str = body_to_string resp_body in
-    Log.log_response ~method_:"POST" ~uri ~status:(`Code status) ~body:body_str;
+    log_response ~method_:"POST" uri status;
     (status, body_str)
   with exn ->
     let msg = Printexc.to_string exn in
-    Log.log_error ~method_:"POST" ~uri ~exn;
+    log_error ~method_:"POST" uri msg;
     (500, Printf.sprintf {|{"error": "Request failed: %s"}|} msg)
 
 let do_delete ?(headers = []) t uri =
   apply_rate_limit t ~method_:"DELETE" ~uri;
-  Log.log_request ~method_:"DELETE" ~uri;
   let headers = make_headers headers in
+  log_request ~method_:"DELETE" uri;
   try
     let resp, body = Cohttp_eio.Client.delete ~sw:t.sw ~headers t.client uri in
     let status = Http.Response.status resp |> Http.Status.to_int in
     let body_str = body_to_string body in
-    Log.log_response ~method_:"DELETE" ~uri ~status:(`Code status)
-      ~body:body_str;
+    log_response ~method_:"DELETE" uri status;
     (status, body_str)
   with exn ->
     let msg = Printexc.to_string exn in
-    Log.log_error ~method_:"DELETE" ~uri ~exn;
+    log_error ~method_:"DELETE" uri msg;
     (500, Printf.sprintf {|{"error": "Request failed: %s"}|} msg)
 
 (** {1 Error Handling} *)

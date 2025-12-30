@@ -78,7 +78,7 @@ type result = Success | Failed of string
 
 (** Perform WebSocket handshake over a TLS flow *)
 let perform ~flow ~host ~port ~resource =
-  Log.log_info ~section ~event:"START"
+  Logger.log_info ~section ~event:"START"
     [ ("host", host); ("port", string_of_int port); ("resource", resource) ];
 
   (* Generate key for Sec-WebSocket-Key *)
@@ -100,20 +100,20 @@ let perform ~flow ~host ~port ~resource =
       resource host port key
   in
 
-  Log.log_debug ~section ~event:"REQUEST" [ ("key", key) ];
+  Logger.log_debug ~section ~event:"REQUEST" [ ("key", key) ];
 
   (* Send request *)
   Eio.Flow.copy_string request flow;
 
   (* Read status line *)
   let status_line = read_line flow in
-  Log.log_debug ~section ~event:"STATUS" [ ("line", status_line) ];
+  Logger.log_debug ~section ~event:"STATUS" [ ("line", status_line) ];
 
   let _version, status_code = parse_status_line status_line in
 
   if status_code <> 101 then begin
     let msg = Printf.sprintf "Expected 101, got %d" status_code in
-    Log.log_err ~section ~event:"FAILED" [ ("error", msg) ];
+    Logger.log_err ~section ~event:"FAILED" [ ("error", msg) ];
     Failed msg
   end
   else begin
@@ -132,11 +132,11 @@ let perform ~flow ~host ~port ~resource =
         Printf.sprintf "Invalid Sec-WebSocket-Accept: expected %s, got %s"
           expected accept
       in
-      Log.log_err ~section ~event:"FAILED" [ ("error", msg) ];
+      Logger.log_err ~section ~event:"FAILED" [ ("error", msg) ];
       Failed msg
     end
     else begin
-      Log.log_info ~section ~event:"SUCCESS" [];
+      Logger.log_info ~section ~event:"SUCCESS" [];
       Success
     end
   end

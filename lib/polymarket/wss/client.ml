@@ -3,7 +3,6 @@
     Provides typed streaming access to Market and User channels. *)
 
 module Connection = Websocket.Connection
-module Logger = Websocket.Log
 
 let section = "WSS"
 

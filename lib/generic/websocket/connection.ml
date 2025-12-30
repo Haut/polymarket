@@ -76,7 +76,7 @@ let connect_tls t =
   let port = t.config.port in
   let (Net net) = t.net in
 
-  Log.log_info ~section ~event:"TCP_CONNECT"
+  Logger.log_info ~section ~event:"TCP_CONNECT"
     [ ("host", host); ("port", string_of_int port) ];
 
   (* Resolve address *)
@@ -92,9 +92,9 @@ let connect_tls t =
   (* Upgrade to TLS *)
   let tls_config = make_tls_config () in
   let host_name = Domain_name.of_string_exn host |> Domain_name.host_exn in
-  Log.log_debug ~section ~event:"TLS_HANDSHAKE" [];
+  Logger.log_debug ~section ~event:"TLS_HANDSHAKE" [];
   let tls_flow = Tls_eio.client_of_flow tls_config ~host:host_name socket in
-  Log.log_info ~section ~event:"TLS_CONNECTED" [];
+  Logger.log_info ~section ~event:"TLS_CONNECTED" [];
 
   tls_flow
 
@@ -112,10 +112,10 @@ let connect_internal t =
       t.flow <- Some flow;
       t.state <- Connected;
       t.current_backoff <- t.config.initial_backoff;
-      Log.log_info ~section ~event:"CONNECTED" [];
+      Logger.log_info ~section ~event:"CONNECTED" [];
       true
   | Handshake.Failed msg ->
-      Log.log_err ~section ~event:"HANDSHAKE_FAILED" [ ("error", msg) ];
+      Logger.log_err ~section ~event:"HANDSHAKE_FAILED" [ ("error", msg) ];
       t.state <- Disconnected;
       false
 
@@ -125,15 +125,16 @@ let send_frame t frame =
   | Some flow ->
       let data = Frame.encode ~mask:true frame in
       Eio.Flow.copy_string data flow;
-      Log.log_debug ~section ~event:"FRAME_SENT"
+      Logger.log_debug ~section ~event:"FRAME_SENT"
         [ ("opcode", string_of_int (Frame.Opcode.to_int frame.opcode)) ]
   | None ->
-      Log.log_warn ~section ~event:"SEND_FAILED" [ ("reason", "not connected") ]
+      Logger.log_warn ~section ~event:"SEND_FAILED"
+        [ ("reason", "not connected") ]
 
 (** Send a text message *)
 let send t msg =
   send_frame t (Frame.text msg);
-  Log.log_debug ~section ~event:"MSG_SENT" [ ("msg", msg) ]
+  Logger.log_debug ~section ~event:"MSG_SENT" [ ("msg", msg) ]
 
 (** Send a ping *)
 let send_ping t = send_frame t (Frame.ping ())
@@ -152,19 +153,19 @@ let receive_loop t =
           | Frame.Opcode.Ping ->
               (* Respond with pong *)
               send_frame t (Frame.pong ~payload:frame.payload ());
-              Log.log_debug ~section ~event:"PING_RECV" []
-          | Frame.Opcode.Pong -> Log.log_debug ~section ~event:"PONG_RECV" []
+              Logger.log_debug ~section ~event:"PING_RECV" []
+          | Frame.Opcode.Pong -> Logger.log_debug ~section ~event:"PONG_RECV" []
           | Frame.Opcode.Close ->
-              Log.log_info ~section ~event:"CLOSE_RECV" [];
+              Logger.log_info ~section ~event:"CLOSE_RECV" [];
               t.state <- Closed
           | _ -> ()
         done
       with
       | End_of_file ->
-          Log.log_info ~section ~event:"EOF" [];
+          Logger.log_info ~section ~event:"EOF" [];
           t.state <- Disconnected
       | exn ->
-          Log.log_err ~section ~event:"RECV_ERROR"
+          Logger.log_err ~section ~event:"RECV_ERROR"
             [ ("error", Printexc.to_string exn) ];
           t.state <- Disconnected)
 
@@ -175,11 +176,12 @@ let ping_loop t =
       Eio.Time.sleep t.clock t.config.ping_interval;
       if t.state = Connected then begin
         send_ping t;
-        Log.log_debug ~section ~event:"PING_SENT" []
+        Logger.log_debug ~section ~event:"PING_SENT" []
       end
     done
   with
-  | Eio.Cancel.Cancelled _ -> Log.log_debug ~section ~event:"PING_CANCELLED" []
+  | Eio.Cancel.Cancelled _ ->
+      Logger.log_debug ~section ~event:"PING_CANCELLED" []
   | _ -> ()
 
 (** Connect with exponential backoff retry *)
@@ -190,11 +192,11 @@ let rec connect_with_retry t =
     match t.subscription_msg with
     | Some msg ->
         send t msg;
-        Log.log_info ~section ~event:"RESUBSCRIBED" []
+        Logger.log_info ~section ~event:"RESUBSCRIBED" []
     | None -> ()
   end
   else begin
-    Log.log_warn ~section ~event:"RETRY"
+    Logger.log_warn ~section ~event:"RETRY"
       [ ("backoff", Printf.sprintf "%.1fs" t.current_backoff) ];
     Eio.Time.sleep t.clock t.current_backoff;
     t.current_backoff <- min (t.current_backoff *. 2.0) t.config.max_backoff;
@@ -226,7 +228,7 @@ let close t =
         t.flow <- None
     | None -> ());
     t.state <- Closed;
-    Log.log_info ~section ~event:"CLOSED" []
+    Logger.log_info ~section ~event:"CLOSED" []
   end
 
 (** Start the connection with receive loop *)
@@ -241,7 +243,7 @@ let start t =
             Eio.Time.sleep t.clock 0.1
         done
       with Eio.Cancel.Cancelled _ ->
-        Log.log_debug ~section ~event:"RECV_CANCELLED" [])
+        Logger.log_debug ~section ~event:"RECV_CANCELLED" [])
 
 (** Start ping loop *)
 let start_ping t = Eio.Fiber.fork ~sw:t.sw (fun () -> ping_loop t)
