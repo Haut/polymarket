@@ -17,3 +17,8 @@
  (name wss_demo)
  (modules wss_demo logger)
  (libraries polymarket unix eio_main mirage-crypto-rng.unix logs yojson))
+
+(executable
+ (name rtds_demo)
+ (modules rtds_demo logger)
+ (libraries polymarket unix eio_main mirage-crypto-rng.unix logs))
