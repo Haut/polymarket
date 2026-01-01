@@ -7,8 +7,8 @@
 
 (** {1 Address Module}
 
-    Ethereum address type (0x-prefixed, 40 hex chars, total 42 chars).
-    Pattern: ^0x[a-fA-F0-9]{40}$ *)
+    Ethereum address type (0x-prefixed, 40 hex chars, total 42 chars). Pattern:
+    [^0x[a-fA-F0-9]\{40\}$] *)
 module Address : sig
   type t
 
@@ -49,7 +49,7 @@ end
 (** {1 Hash64 Module}
 
     64-character hex hash type (0x-prefixed, 64 hex chars, total 66 chars).
-    Pattern: ^0x[a-fA-F0-9]{64}$ *)
+    Pattern: [^0x[a-fA-F0-9]\{64\}$] *)
 module Hash64 : sig
   type t
 
