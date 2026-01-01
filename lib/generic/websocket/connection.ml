@@ -2,7 +2,9 @@
 
     Uses tls-eio for pure-OCaml TLS, avoiding OpenSSL dependencies. *)
 
-let section = "WSS"
+let src = Logs.Src.create "polymarket.wss" ~doc:"WebSocket connection"
+
+module Log = (val Logs.src_log src : Logs.LOG)
 
 (** Connection state *)
 type state = Disconnected | Connecting | Connected | Closing | Closed
@@ -78,8 +80,7 @@ let connect_tls t =
   let port = t.config.port in
   let (Net net) = t.net in
 
-  Logger.log_info ~section ~event:"TCP_CONNECT"
-    [ ("host", host); ("port", string_of_int port) ];
+  Log.debug (fun m -> m "Connecting to %s:%d" host port);
 
   (* Resolve address *)
   let addr =
@@ -94,9 +95,9 @@ let connect_tls t =
   (* Upgrade to TLS *)
   let tls_config = make_tls_config () in
   let host_name = Domain_name.of_string_exn host |> Domain_name.host_exn in
-  Logger.log_debug ~section ~event:"TLS_HANDSHAKE" [];
+  Log.debug (fun m -> m "TLS handshake");
   let tls_flow = Tls_eio.client_of_flow tls_config ~host:host_name socket in
-  Logger.log_info ~section ~event:"TLS_CONNECTED" [];
+  Log.debug (fun m -> m "TLS connected");
 
   tls_flow
 
@@ -114,10 +115,10 @@ let connect_internal t =
       t.flow <- Some flow;
       t.state <- Connected;
       t.current_backoff <- t.config.initial_backoff;
-      Logger.log_info ~section ~event:"CONNECTED" [];
+      Log.debug (fun m -> m "Connected");
       true
   | Handshake.Failed msg ->
-      Logger.log_err ~section ~event:"HANDSHAKE_FAILED" [ ("error", msg) ];
+      Log.err (fun m -> m "Handshake failed: %s" msg);
       t.state <- Disconnected;
       false
 
@@ -127,16 +128,14 @@ let send_frame t frame =
   | Some flow ->
       let data = Frame.encode ~mask:true frame in
       Eio.Flow.copy_string data flow;
-      Logger.log_debug ~section ~event:"FRAME_SENT"
-        [ ("opcode", string_of_int (Frame.Opcode.to_int frame.opcode)) ]
-  | None ->
-      Logger.log_warn ~section ~event:"SEND_FAILED"
-        [ ("reason", "not connected") ]
+      Log.debug (fun m ->
+          m "Frame sent (opcode %d)" (Frame.Opcode.to_int frame.opcode))
+  | None -> Log.warn (fun m -> m "Send failed: not connected")
 
 (** Send a text message *)
 let send t msg =
   send_frame t (Frame.text msg);
-  Logger.log_debug ~section ~event:"MSG_SENT" [ ("msg", msg) ]
+  Log.debug (fun m -> m "Message sent")
 
 (** Send a ping *)
 let send_ping t = send_frame t (Frame.ping ())
@@ -155,20 +154,19 @@ let receive_loop t =
           | Frame.Opcode.Ping ->
               (* Respond with pong *)
               send_frame t (Frame.pong ~payload:frame.payload ());
-              Logger.log_debug ~section ~event:"PING_RECV" []
-          | Frame.Opcode.Pong -> Logger.log_debug ~section ~event:"PONG_RECV" []
+              Log.debug (fun m -> m "Ping received")
+          | Frame.Opcode.Pong -> Log.debug (fun m -> m "Pong received")
           | Frame.Opcode.Close ->
-              Logger.log_info ~section ~event:"CLOSE_RECV" [];
+              Log.debug (fun m -> m "Close received");
               t.state <- Closed
           | _ -> ()
         done
       with
       | End_of_file ->
-          Logger.log_info ~section ~event:"EOF" [];
+          Log.debug (fun m -> m "EOF");
           t.state <- Disconnected
       | exn ->
-          Logger.log_err ~section ~event:"RECV_ERROR"
-            [ ("error", Printexc.to_string exn) ];
+          Log.err (fun m -> m "Receive error: %s" (Printexc.to_string exn));
           t.state <- Disconnected)
 
 (** Ping loop - sends periodic pings *)
@@ -178,12 +176,11 @@ let ping_loop t =
       Eio.Time.sleep t.clock t.config.ping_interval;
       if t.state = Connected then begin
         send_ping t;
-        Logger.log_debug ~section ~event:"PING_SENT" []
+        Log.debug (fun m -> m "Ping sent")
       end
     done
   with
-  | Eio.Cancel.Cancelled _ ->
-      Logger.log_debug ~section ~event:"PING_CANCELLED" []
+  | Eio.Cancel.Cancelled _ -> Log.debug (fun m -> m "Ping cancelled")
   | _ -> ()
 
 (** Connect with exponential backoff retry *)
@@ -194,12 +191,11 @@ let rec connect_with_retry t =
     match t.subscription_msg with
     | Some msg ->
         send t msg;
-        Logger.log_info ~section ~event:"RESUBSCRIBED" []
+        Log.debug (fun m -> m "Resubscribed")
     | None -> ()
   end
   else begin
-    Logger.log_warn ~section ~event:"RETRY"
-      [ ("backoff", Printf.sprintf "%.1fs" t.current_backoff) ];
+    Log.warn (fun m -> m "Retrying in %.1fs" t.current_backoff);
     Eio.Time.sleep t.clock t.current_backoff;
     t.current_backoff <- min (t.current_backoff *. 2.0) t.config.max_backoff;
     connect_with_retry t
@@ -230,7 +226,7 @@ let close t =
         t.flow <- None
     | None -> ());
     t.state <- Closed;
-    Logger.log_info ~section ~event:"CLOSED" []
+    Log.debug (fun m -> m "Closed")
   end
 
 (** Start the connection with receive loop *)
@@ -245,7 +241,7 @@ let start t =
             Eio.Time.sleep t.clock 0.1
         done
       with Eio.Cancel.Cancelled _ ->
-        Logger.log_debug ~section ~event:"RECV_CANCELLED" [])
+        Log.debug (fun m -> m "Receive cancelled"))
 
 (** Start ping loop *)
 let start_ping t = Eio.Fiber.fork ~sw:t.sw (fun () -> ping_loop t)
@@ -255,12 +251,11 @@ let start_ping t = Eio.Fiber.fork ~sw:t.sw (fun () -> ping_loop t)
     stream. Handles cancellation and errors with consistent logging.
 
     @param sw Switch for fiber lifecycle
-    @param log_section Logging section (e.g., "WSS", "RTDS")
     @param channel_name Name for log messages (e.g., "market", "user")
     @param conn WebSocket connection to read from
     @param parse Function to parse raw messages into typed messages
     @param output_stream Output stream for parsed messages *)
-let start_parsing_fiber (type a) ~sw ~log_section ~channel_name ~conn
+let start_parsing_fiber (type a) ~sw ~channel_name ~conn
     ~(parse : string -> a list) ~(output_stream : a Eio.Stream.t) =
   Eio.Fiber.fork ~sw (fun () ->
       try
@@ -270,12 +265,10 @@ let start_parsing_fiber (type a) ~sw ~log_section ~channel_name ~conn
           let msgs = parse raw in
           List.iter (fun msg -> Eio.Stream.add output_stream msg) msgs
         done;
-        Logger.log_debug ~section:log_section ~event:"PARSER_STOPPED"
-          [ ("channel", channel_name) ]
+        Log.debug (fun m -> m "Parser stopped (%s)" channel_name)
       with
       | Eio.Cancel.Cancelled _ ->
-          Logger.log_debug ~section:log_section ~event:"PARSER_CANCELLED"
-            [ ("channel", channel_name) ]
+          Log.debug (fun m -> m "Parser cancelled (%s)" channel_name)
       | exn ->
-          Logger.log_err ~section:log_section ~event:"PARSER_ERROR"
-            [ ("channel", channel_name); ("error", Printexc.to_string exn) ])
+          Log.err (fun m ->
+              m "Parser error (%s): %s" channel_name (Printexc.to_string exn)))

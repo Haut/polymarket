@@ -2,7 +2,9 @@
 
     Performs HTTP/1.1 Upgrade handshake directly over a TLS flow. *)
 
-let section = "WSS_HANDSHAKE"
+let src = Logs.Src.create "polymarket.wss.handshake" ~doc:"WebSocket handshake"
+
+module Log = (val Logs.src_log src : Logs.LOG)
 
 (** WebSocket GUID for Sec-WebSocket-Accept calculation *)
 let websocket_guid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
@@ -78,8 +80,7 @@ type result = Success | Failed of string
 
 (** Perform WebSocket handshake over a TLS flow *)
 let perform ~flow ~host ~port ~resource =
-  Logger.log_info ~section ~event:"START"
-    [ ("host", host); ("port", string_of_int port); ("resource", resource) ];
+  Log.debug (fun m -> m "Starting handshake to %s:%d%s" host port resource);
 
   (* Generate key for Sec-WebSocket-Key *)
   let key = generate_key () in
@@ -100,20 +101,20 @@ let perform ~flow ~host ~port ~resource =
       resource host port key
   in
 
-  Logger.log_debug ~section ~event:"REQUEST" [ ("key", key) ];
+  Log.debug (fun m -> m "Sending request with key %s" key);
 
   (* Send request *)
   Eio.Flow.copy_string request flow;
 
   (* Read status line *)
   let status_line = read_line flow in
-  Logger.log_debug ~section ~event:"STATUS" [ ("line", status_line) ];
+  Log.debug (fun m -> m "Status: %s" status_line);
 
   let _version, status_code = parse_status_line status_line in
 
   if status_code <> 101 then begin
     let msg = Printf.sprintf "Expected 101, got %d" status_code in
-    Logger.log_err ~section ~event:"FAILED" [ ("error", msg) ];
+    Log.err (fun m -> m "Handshake failed: %s" msg);
     Failed msg
   end
   else begin
@@ -132,11 +133,11 @@ let perform ~flow ~host ~port ~resource =
         Printf.sprintf "Invalid Sec-WebSocket-Accept: expected %s, got %s"
           expected accept
       in
-      Logger.log_err ~section ~event:"FAILED" [ ("error", msg) ];
+      Log.err (fun m -> m "Handshake failed: %s" msg);
       Failed msg
     end
     else begin
-      Logger.log_info ~section ~event:"SUCCESS" [];
+      Log.debug (fun m -> m "Handshake successful");
       Success
     end
   end

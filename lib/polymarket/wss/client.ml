@@ -4,7 +4,9 @@
 
 module Connection = Websocket.Connection
 
-let section = "WSS"
+let src = Logs.Src.create "polymarket.wss" ~doc:"Polymarket WebSocket client"
+
+module Log = (val Logs.src_log src : Logs.LOG)
 
 (** Polymarket WebSocket host *)
 let default_host = "ws-subscriptions-clob.polymarket.com"
@@ -25,7 +27,7 @@ let make_client ~sw ~net ~clock ~resource ~subscribe_msg ~channel ~channel_name
   Connection.set_subscription conn subscribe_msg;
   Connection.start conn;
   Connection.start_ping conn;
-  Connection.start_parsing_fiber ~sw ~log_section:section ~channel_name ~conn
+  Connection.start_parsing_fiber ~sw ~channel_name ~conn
     ~parse:(Types.parse_message ~channel)
     ~output_stream:message_stream;
   (conn, message_stream)
@@ -40,6 +42,8 @@ module Market = struct
   }
 
   let connect ~sw ~net ~clock ~asset_ids () =
+    Log.debug (fun m ->
+        m "Market: connecting with %d assets" (List.length asset_ids));
     let subscribe_msg = Types.market_subscribe_json ~asset_ids in
     let conn, message_stream =
       make_client ~sw ~net ~clock ~resource:"/ws/market" ~subscribe_msg
@@ -50,6 +54,9 @@ module Market = struct
   let stream t = t.message_stream
 
   let subscribe t ~asset_ids =
+    Log.debug (fun m ->
+        m "Market: subscribing to %d assets (total: %d)" (List.length asset_ids)
+          (List.length t.asset_ids + List.length asset_ids));
     t.asset_ids <- t.asset_ids @ asset_ids;
     let msg = Types.subscribe_assets_json ~asset_ids in
     Connection.send t.conn msg;
@@ -58,8 +65,13 @@ module Market = struct
     Connection.set_subscription t.conn full_msg
 
   let unsubscribe t ~asset_ids =
-    t.asset_ids <-
-      List.filter (fun id -> not (List.mem id asset_ids)) t.asset_ids;
+    let new_ids =
+      List.filter (fun id -> not (List.mem id asset_ids)) t.asset_ids
+    in
+    Log.debug (fun m ->
+        m "Market: unsubscribing from %d assets (remaining: %d)"
+          (List.length asset_ids) (List.length new_ids));
+    t.asset_ids <- new_ids;
     let msg = Types.unsubscribe_assets_json ~asset_ids in
     Connection.send t.conn msg;
     (* Update stored subscription for reconnect *)
@@ -75,6 +87,8 @@ module User = struct
   type t = { conn : Connection.t; message_stream : Types.message Eio.Stream.t }
 
   let connect ~sw ~net ~clock ~credentials ~markets () =
+    Log.debug (fun m ->
+        m "User: connecting with %d markets" (List.length markets));
     let subscribe_msg = Types.user_subscribe_json ~credentials ~markets in
     let conn, message_stream =
       make_client ~sw ~net ~clock ~resource:"/ws/user" ~subscribe_msg

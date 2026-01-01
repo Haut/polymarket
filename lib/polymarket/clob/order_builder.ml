@@ -7,6 +7,10 @@ module Crypto = Polymarket_common.Crypto
 module Constants = Polymarket_common.Constants
 module Order_signing = Polymarket_common.Order_signing
 
+let src = Logs.Src.create "polymarket.clob.order" ~doc:"CLOB order builder"
+
+module Log = (val Logs.src_log src : Logs.LOG)
+
 let default_fee_rate_bps = "0"
 
 (** {1 Amount Calculations} *)
@@ -31,6 +35,10 @@ let create_limit_order ~private_key ~token_id ~(side : Types.Side.t) ~price
   let address = Crypto.private_key_to_address private_key in
   let salt = Order_signing.generate_salt () in
   let maker_amount, taker_amount = calculate_amounts ~side ~price ~size in
+  Log.debug (fun m ->
+      m "Building order: side=%s price=%.4f size=%.2f -> maker=%s taker=%s"
+        (Types.Side.to_string side)
+        price size maker_amount taker_amount);
   let expiration =
     match expiration with
     | Some e -> e
@@ -40,11 +48,18 @@ let create_limit_order ~private_key ~token_id ~(side : Types.Side.t) ~price
   in
   let nonce = match nonce with Some n -> string_of_int n | None -> "0" in
   let side_int = match side with Types.Side.Buy -> 0 | Types.Side.Sell -> 1 in
+  Log.debug (fun m ->
+      m "Signing order: token=%s...%s expiration=%s nonce=%s"
+        (String.sub token_id 0 (min 8 (String.length token_id)))
+        (let len = String.length token_id in
+         if len > 8 then String.sub token_id (len - 4) 4 else "")
+        expiration nonce);
   let signature =
     Order_signing.sign_order ~private_key ~salt ~maker:address ~signer:address
       ~taker:Constants.zero_address ~token_id ~maker_amount ~taker_amount
       ~expiration ~nonce ~fee_rate_bps ~side:side_int ~signature_type:0
   in
+  Log.debug (fun m -> m "Order signed: sig=%s..." (String.sub signature 0 16));
   Types.
     {
       salt = Some salt;

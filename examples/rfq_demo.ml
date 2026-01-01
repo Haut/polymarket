@@ -31,8 +31,7 @@ let run_demo env =
   Eio.Switch.run @@ fun sw ->
   let clock = Eio.Stdenv.clock env in
 
-  Logger.info "START"
-    [ ("demo", "RFQ API"); ("base_url", Rfq.default_base_url) ];
+  Logger.info (Printf.sprintf "Starting RFQ API demo (%s)" Rfq.default_base_url);
 
   (* Check for credentials *)
   let private_key =
@@ -41,11 +40,8 @@ let run_demo env =
       | Some pk -> pk
       (* Well-known Foundry/Hardhat test account #0 - DO NOT use with real funds *)
       | None ->
-          Logger.info "WARN"
-            [
-              ( "msg",
-                "Using test private key - set POLY_PRIVATE_KEY for real use" );
-            ];
+          Logger.warn "CREDENTIAL"
+            "Using test private key - set POLY_PRIVATE_KEY for real use";
           "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
     in
     Crypto.private_key_of_string pk_str
@@ -60,12 +56,9 @@ let run_demo env =
     | Some api_key, Some secret, Some passphrase ->
         { api_key; secret; passphrase }
     | _ ->
-        Logger.info "WARN"
-          [
-            ( "msg",
-              "Using placeholder credentials - set POLY_API_KEY, \
-               POLY_API_SECRET, POLY_API_PASSPHRASE for real use" );
-          ];
+        Logger.warn "CREDENTIAL"
+          "Using placeholder credentials - set POLY_API_KEY, POLY_API_SECRET, \
+           POLY_API_PASSPHRASE for real use";
         (* Placeholder credentials - API calls will fail auth but structure is correct *)
         {
           api_key = "placeholder-key";
@@ -86,11 +79,10 @@ let run_demo env =
       ~credentials ()
   in
 
-  Logger.info "CLIENT"
-    [ ("address", Rfq.address rfq_client); ("auth_level", "L2") ];
+  Logger.info
+    (Printf.sprintf "Client address: %s (L2 auth)" (Rfq.address rfq_client));
 
   (* ===== Request Endpoints ===== *)
-  Logger.header "RFQ Requests";
 
   (* Get active requests - shows requests from all traders *)
   let requests =
@@ -106,14 +98,10 @@ let run_demo env =
   (match requests with
   | Ok r when List.length r.data > 0 ->
       let req = List.hd r.data in
-      Logger.info "SAMPLE_REQUEST"
-        [
-          ("request_id", req.request_id);
-          ("market", req.market);
-          ("side", Rfq.Types.Side.to_string req.side);
-          ("price", Printf.sprintf "%.4f" req.price);
-          ("size_in", Printf.sprintf "%.2f" req.size_in);
-        ]
+      Logger.info
+        (Printf.sprintf "Sample request: %s %s@%.4f size=%.2f" req.request_id
+           (Rfq.Types.Side.to_string req.side)
+           req.price req.size_in)
   | _ -> ());
 
   (* Get inactive (completed/canceled) requests *)
@@ -126,7 +114,6 @@ let run_demo env =
       Printf.sprintf "%d requests" (List.length r.data));
 
   (* ===== Quote Endpoints ===== *)
-  Logger.header "RFQ Quotes";
 
   (* Get active quotes *)
   let quotes =
@@ -140,13 +127,9 @@ let run_demo env =
   (match quotes with
   | Ok q when List.length q.data > 0 ->
       let quote = List.hd q.data in
-      Logger.info "SAMPLE_QUOTE"
-        [
-          ("quote_id", quote.quote_id);
-          ("request_id", quote.request_id);
-          ("price", Printf.sprintf "%.4f" quote.price);
-          ("size_in", Printf.sprintf "%.2f" quote.size_in);
-        ]
+      Logger.info
+        (Printf.sprintf "Sample quote: %s for request %s @%.4f size=%.2f"
+           quote.quote_id quote.request_id quote.price quote.size_in)
   | _ -> ());
 
   (* Get inactive quotes *)
@@ -158,7 +141,6 @@ let run_demo env =
       Printf.sprintf "%d quotes" (List.length q.data));
 
   (* ===== Filtering Examples ===== *)
-  Logger.header "Filtered Queries";
 
   (* Filter by price range *)
   let price_filtered =
@@ -179,7 +161,6 @@ let run_demo env =
       Printf.sprintf "%d requests" (List.length r.data));
 
   (* ===== Write Operations (Skipped) ===== *)
-  Logger.header "Write Operations";
   Logger.skip "create_request" "requires funded account with token balance";
   Logger.skip "cancel_request" "requires active request ID";
   Logger.skip "create_quote" "requires active request to quote on";
@@ -188,8 +169,7 @@ let run_demo env =
   Logger.skip "approve_order" "requires maker approval for matched quote";
 
   (* ===== Summary ===== *)
-  Logger.header "Summary";
-  Logger.info "COMPLETE" [ ("status", "demo finished") ]
+  Logger.info "Demo complete"
 
 let () =
   Mirage_crypto_rng_unix.use_default ();

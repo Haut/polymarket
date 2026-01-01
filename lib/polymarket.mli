@@ -409,6 +409,7 @@ module Rtds : sig
   module Crypto_prices : sig
     (** Specialized client for crypto price streams *)
 
+    type source = Binance | Chainlink  (** Price data source *)
     type t
 
     val connect_binance :
@@ -432,6 +433,12 @@ module Rtds : sig
     val stream : t -> Types.crypto_message Eio.Stream.t
     (** Get the crypto price message stream *)
 
+    val symbols : t -> string list option
+    (** Get the subscribed symbols *)
+
+    val source : t -> source
+    (** Get the price data source *)
+
     val close : t -> unit
     (** Close the connection *)
   end
@@ -452,6 +459,9 @@ module Rtds : sig
 
     val stream : t -> Types.comment Eio.Stream.t
     (** Get the comment message stream *)
+
+    val gamma_auth : t -> Types.gamma_auth option
+    (** Get the gamma authentication used for the connection *)
 
     val close : t -> unit
     (** Close the connection *)

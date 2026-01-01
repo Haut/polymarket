@@ -2,7 +2,7 @@
  (name polymarket_rtds)
  (public_name polymarket.rtds)
  (libraries
-  logger
+  logs
   websocket
   polymarket_common
   eio

@@ -2,7 +2,7 @@
  (name polymarket_http)
  (public_name polymarket.http)
  (libraries
-  logger
+  logs
   polymarket_common
   polymarket_rate_limiter
   yojson

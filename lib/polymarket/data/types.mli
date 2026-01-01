@@ -150,6 +150,7 @@ type position = {
   opposite_asset : string;
   end_date : string;
   negative_risk : bool;
+  event_id : string;
 }
 [@@deriving yojson, show, eq]
 (** Position in a market *)

@@ -397,6 +397,9 @@ type market = {
   wide_format : bool option; [@default None] [@key "wideFormat"]
   is_new : bool option; [@default None] [@key "new"]
   mailchimp_tag : string option; [@default None] [@key "mailchimpTag"]
+  category_mailchimp_tag : string option;
+      [@default None] [@key "categoryMailchimpTag"]
+  sent_discord : bool option; [@default None] [@key "sentDiscord"]
   featured : bool option; [@default None]
   archived : bool option; [@default None]
   resolved_by : string option; [@default None] [@key "resolvedBy"]

@@ -6,7 +6,9 @@
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 module R = Polymarket_rate_limiter.Rate_limiter
 
-let section = "HTTP"
+let src = Logs.Src.create "polymarket.http" ~doc:"HTTP client"
+
+module Log = (val Logs.src_log src : Logs.LOG)
 
 (** {1 Client Configuration} *)
 
@@ -68,20 +70,13 @@ let body_to_string body =
   Eio.Buf_read.(parse_exn take_all) body ~max_size:max_int
 
 let log_request ~method_ uri =
-  Logger.log_info ~section ~event:"REQUEST"
-    [ ("method", method_); ("uri", Uri.to_string uri) ]
+  Log.debug (fun m -> m "%s %s" method_ (Uri.to_string uri))
 
 let log_response ~method_ uri status =
-  Logger.log_info ~section ~event:"RESPONSE"
-    [
-      ("method", method_);
-      ("uri", Uri.to_string uri);
-      ("status", string_of_int status);
-    ]
+  Log.debug (fun m -> m "%s %s -> %d" method_ (Uri.to_string uri) status)
 
 let log_error ~method_ uri error =
-  Logger.log_err ~section ~event:"ERROR"
-    [ ("method", method_); ("uri", Uri.to_string uri); ("error", error) ]
+  Log.err (fun m -> m "%s %s failed: %s" method_ (Uri.to_string uri) error)
 
 let do_get ?(headers = []) t uri =
   apply_rate_limit t ~method_:"GET" ~uri;
@@ -180,15 +175,24 @@ let to_error msg = Parse_error { context = "json"; message = msg }
 
 let parse_error ~status body =
   let message =
-    try
-      let json = Yojson.Safe.from_string body in
-      match json with
-      | `Assoc fields -> (
-          match List.assoc_opt "error" fields with
-          | Some (`String msg) -> msg
-          | _ -> body)
-      | _ -> body
-    with _ -> body
+    (* Check for HTML error pages (from proxies like Cloudflare) *)
+    if String.length body > 0 && body.[0] = '<' then
+      match status with
+      | 502 -> "Bad Gateway"
+      | 503 -> "Service Unavailable"
+      | 504 -> "Gateway Timeout"
+      | 429 -> "Too Many Requests"
+      | _ -> Printf.sprintf "HTTP error (status %d)" status
+    else
+      try
+        let json = Yojson.Safe.from_string body in
+        match json with
+        | `Assoc fields -> (
+            match List.assoc_opt "error" fields with
+            | Some (`String msg) -> msg
+            | _ -> body)
+        | _ -> body
+      with _ -> body
   in
   Http_error { status; body; message }
 
@@ -211,13 +215,12 @@ let check_extra_fields ~expected_fields ~context json =
       in
       if extra_fields <> [] then
         let format_field (name, value) =
-          Printf.sprintf "%s=%s" name (Yojson.Safe.to_string value)
+          Printf.sprintf "%s: %s" name (Yojson.Safe.to_string value)
         in
-        Logger.log_warn ~section:"JSON" ~event:"EXTRA_FIELDS"
-          [
-            ("context", context);
-            ("fields", String.concat "; " (List.map format_field extra_fields));
-          ]
+        let formatted =
+          List.map format_field extra_fields |> String.concat ", "
+        in
+        Log.warn (fun m -> m "Extra fields in %s: %s" context formatted)
   | _ -> ()
 
 let parse_with_field_check ~expected_fields ~context body of_yojson =

@@ -1,7 +1,7 @@
-(** Example logger with timestamps.
+(** Example logger with timestamps and colors.
 
     Provides structured logging with ISO 8601 timestamps for demo programs. Uses
-    the Logs library with a custom timestamped reporter.
+    the Logs library with a custom timestamped reporter and ANSI colors.
 
     Set POLYMARKET_LOG_FILE to write logs to a file instead of stdout. *)
 
@@ -19,12 +19,19 @@ let timestamp () =
     (tm.Unix.tm_mon + 1) tm.Unix.tm_mday tm.Unix.tm_hour tm.Unix.tm_min
     tm.Unix.tm_sec millis
 
-let pp_header ppf (level, _header) =
-  let ts = timestamp () in
-  match level with
-  | Logs.Error -> Format.fprintf ppf "%s [ERROR]" ts
-  | Logs.Warning -> Format.fprintf ppf "%s [WARN]" ts
-  | _ -> Format.fprintf ppf "%s" ts
+let level_style = function
+  | Logs.App -> `Magenta
+  | Logs.Error -> `Red
+  | Logs.Warning -> `Yellow
+  | Logs.Info -> `Green
+  | Logs.Debug -> `Cyan
+
+let level_to_string = function
+  | Logs.App -> "APP"
+  | Logs.Error -> "ERROR"
+  | Logs.Warning -> "WARN"
+  | Logs.Info -> "INFO"
+  | Logs.Debug -> "DEBUG"
 
 let is_polymarket_source src =
   let name = Logs.Src.name src in
@@ -38,8 +45,16 @@ let make_reporter ppf =
         over ();
         k ()
       in
+      let src_name = Logs.Src.name src in
+      let style = level_style level in
       msgf @@ fun ?header:_ ?tags:_ fmt ->
-      Format.kfprintf k ppf ("%a @[" ^^ fmt ^^ "@]@.") pp_header (level, None)
+      Format.kfprintf k ppf
+        ("%s %a %a @[" ^^ fmt ^^ "@]@.")
+        (timestamp ())
+        Fmt.(styled style string)
+        (level_to_string level)
+        Fmt.(styled `Bold string)
+        src_name
     else begin
       over ();
       k ()
@@ -50,24 +65,28 @@ let make_reporter ppf =
 let log_channel = ref None
 
 let setup () =
+  (* Enable ANSI colors if stdout is a TTY *)
+  Fmt_tty.setup_std_outputs ();
   let reporter =
     match Sys.getenv_opt "POLYMARKET_LOG_FILE" with
     | Some path ->
         let oc = open_out path in
         log_channel := Some oc;
+        (* No colors for file output *)
+        Fmt.set_style_renderer (Format.formatter_of_out_channel oc) `None;
         make_reporter (Format.formatter_of_out_channel oc)
     | None -> make_reporter Format.std_formatter
   in
   Logs.set_reporter reporter;
-  Logs.Src.set_level src (Some Logs.Debug);
-  (* Set log level for all sources based on POLYMARKET_LOG_LEVEL *)
+  (* Set global log level for all sources based on POLYMARKET_LOG_LEVEL.
+     Default to Info if not specified. *)
   let log_level =
     match Sys.getenv_opt "POLYMARKET_LOG_LEVEL" with
     | Some "debug" -> Some Logs.Debug
     | Some "info" -> Some Logs.Info
     | Some "warn" -> Some Logs.Warning
     | Some "error" -> Some Logs.Error
-    | _ -> None
+    | _ -> Some Logs.Info
   in
   Logs.set_level log_level
 
@@ -78,26 +97,11 @@ let close () =
       log_channel := None
   | None -> ()
 
-(** {1 Formatting} *)
+(** {1 Logging Helpers} *)
 
-let quote s = Printf.sprintf "\"%s\"" s
-let format_kv (key, value) = Printf.sprintf "%s=%s" key (quote value)
-let format_kvs kvs = String.concat " " (List.map format_kv kvs)
-
-(** {1 Demo Logging Helpers} *)
-
-let info event kvs =
-  let kv_str = format_kvs kvs in
-  if kv_str = "" then Log.info (fun m -> m "[DEMO] [%s]" event)
-  else Log.info (fun m -> m "[DEMO] [%s] %s" event kv_str)
-
-let ok name msg =
-  Log.info (fun m -> m "[DEMO] [OK] name=\"%s\" result=\"%s\"" name msg)
-
-let error name msg =
-  Log.err (fun m -> m "[DEMO] [ERROR] name=\"%s\" error=\"%s\"" name msg)
-
-let skip name msg =
-  Log.info (fun m -> m "[DEMO] [SKIP] name=\"%s\" reason=\"%s\"" name msg)
-
-let header title = Log.info (fun m -> m "[DEMO] [SECTION] title=\"%s\"" title)
+let info msg = Log.info (fun m -> m "%s" msg)
+let debug msg = Log.debug (fun m -> m "%s" msg)
+let ok name result = Log.info (fun m -> m "%s: %s" name result)
+let warn name msg = Log.warn (fun m -> m "%s: %s" name msg)
+let error name msg = Log.err (fun m -> m "%s: %s" name msg)
+let skip name reason = Log.info (fun m -> m "[SKIP] %s: %s" name reason)

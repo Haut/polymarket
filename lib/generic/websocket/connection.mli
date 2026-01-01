@@ -79,7 +79,6 @@ val start_ping : t -> unit
 
 val start_parsing_fiber :
   sw:Eio.Switch.t ->
-  log_section:string ->
   channel_name:string ->
   conn:t ->
   parse:(string -> 'a list) ->
@@ -91,7 +90,6 @@ val start_parsing_fiber :
 
     Handles cancellation and errors with consistent logging.
 
-    @param log_section Logging section (e.g., "WSS", "RTDS")
     @param channel_name Name for log messages (e.g., "market", "user")
     @param parse Function to parse raw messages into typed messages
     @param output_stream Output stream for parsed messages *)

@@ -1,29 +1,37 @@
 (executable
  (name data_api_demo)
  (modules data_api_demo logger)
- (libraries polymarket unix eio_main mirage-crypto-rng.unix logs))
+ (libraries polymarket unix eio_main mirage-crypto-rng.unix logs fmt fmt.tty))
 
 (executable
  (name gamma_api_demo)
  (modules gamma_api_demo logger)
- (libraries polymarket unix eio_main mirage-crypto-rng.unix logs))
+ (libraries polymarket unix eio_main mirage-crypto-rng.unix logs fmt fmt.tty))
 
 (executable
  (name clob_api_demo)
  (modules clob_api_demo logger)
- (libraries polymarket unix eio_main mirage-crypto-rng.unix logs))
+ (libraries polymarket unix eio_main mirage-crypto-rng.unix logs fmt fmt.tty))
 
 (executable
  (name wss_demo)
  (modules wss_demo logger)
- (libraries polymarket unix eio_main mirage-crypto-rng.unix logs yojson))
+ (libraries
+  polymarket
+  unix
+  eio_main
+  mirage-crypto-rng.unix
+  logs
+  yojson
+  fmt
+  fmt.tty))
 
 (executable
  (name rtds_demo)
  (modules rtds_demo logger)
- (libraries polymarket unix eio_main mirage-crypto-rng.unix logs))
+ (libraries polymarket unix eio_main mirage-crypto-rng.unix logs fmt fmt.tty))
 
 (executable
  (name rfq_demo)
  (modules rfq_demo logger)
- (libraries polymarket unix eio_main mirage-crypto-rng.unix logs))
+ (libraries polymarket unix eio_main mirage-crypto-rng.unix logs fmt fmt.tty))

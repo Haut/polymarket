@@ -380,6 +380,8 @@ type market = {
   wide_format : bool option;
   is_new : bool option;
   mailchimp_tag : string option;
+  category_mailchimp_tag : string option;
+  sent_discord : bool option;
   featured : bool option;
   archived : bool option;
   resolved_by : string option;

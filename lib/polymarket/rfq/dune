@@ -2,6 +2,7 @@
  (name polymarket_rfq)
  (public_name polymarket.rfq)
  (libraries
+  logs
   polymarket_common
   polymarket_http
   polymarket_clob

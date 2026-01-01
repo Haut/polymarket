@@ -112,6 +112,7 @@ type position = {
   opposite_asset : string; [@key "oppositeAsset"]
   end_date : string; [@key "endDate"]
   negative_risk : bool; [@key "negativeRisk"]
+  event_id : string; [@key "eventId"]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Position in a market *)

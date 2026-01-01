@@ -1,5 +1,9 @@
 (** Route-based rate limiting for HTTP clients. *)
 
+let src = Logs.Src.create "polymarket.rate_limiter" ~doc:"Rate limiter"
+
+module Log = (val Logs.src_log src : Logs.LOG)
+
 (* Re-export core types *)
 type behavior = Types.behavior = Delay | Error
 
@@ -45,6 +49,8 @@ let rec wait_for_slot t ~route_key ~limits =
   match State.check_limits t.state ~route_key ~limits with
   | Ok () -> ()
   | Error retry ->
+      Log.debug (fun m ->
+          m "Rate limited (delay): %s, waiting %.2fs" route_key retry);
       t.sleep retry;
       wait_for_slot t ~route_key ~limits
 
@@ -66,6 +72,9 @@ let check t ~method_ ~uri =
           match (result, route.behavior, max_error) with
           | Ok (), _, max_err -> max_err
           | Error retry, Error, None ->
+              Log.debug (fun m ->
+                  m "Rate limited (error): %s, retry after %.2fs" route_key
+                    retry);
               Some (Rate_limited { retry_after = retry; route_key })
           | Error retry, Error, Some (Rate_limited prev) ->
               Some

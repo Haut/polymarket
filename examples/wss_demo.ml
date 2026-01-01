@@ -1,11 +1,16 @@
 (** Live demo of the Polymarket WebSocket client.
 
-    This example connects to the Market channel and streams real-time orderbook
-    updates. Run with: dune exec examples/wss_demo.exe
+    This example demonstrates the WebSocket client for both Market and User
+    channels, including dynamic subscribe/unsubscribe. Run with: dune exec
+    examples/wss_demo.exe
 
     Note: This connects to ws-subscriptions-clob.polymarket.com and requires
     valid asset IDs. The demo uses a popular market to ensure data is flowing.
-*)
+
+    To test the User channel, set this environment variable:
+    - POLY_PRIVATE_KEY: Your Ethereum private key (hex, without 0x prefix)
+
+    Or the demo will use a well-known test key (do not use with real funds). *)
 
 open Polymarket
 
@@ -53,7 +58,7 @@ let parse_token_ids s =
 
 (** Get some active token IDs from the Gamma API *)
 let get_active_tokens env sw =
-  Logger.info "FETCHING" [ ("source", "Gamma API") ];
+  Logger.info "Fetching active markets from Gamma API";
   let clock = Eio.Stdenv.clock env in
   let routes =
     Polymarket_common.Rate_limit_presets.all ~behavior:Rate_limiter.Delay
@@ -96,43 +101,32 @@ let run_demo env =
   let net = Eio.Stdenv.net env in
   let clock = Eio.Stdenv.clock env in
 
-  Logger.info "START"
-    [
-      ("demo", "WebSocket Client");
-      ("host", "ws-subscriptions-clob.polymarket.com");
-    ];
+  Logger.info "Starting WebSocket demo (ws-subscriptions-clob.polymarket.com)";
 
   (* Get active token IDs to subscribe to *)
   match get_active_tokens env sw with
   | None ->
       Logger.error "DEMO" "Cannot run demo without active token IDs";
-      Logger.info "TIP"
-        [
-          ( "message",
-            "Make sure you have network access to gamma-api.polymarket.com" );
-        ]
+      Logger.info
+        "Tip: Make sure you have network access to gamma-api.polymarket.com"
   | Some asset_ids ->
-      Logger.header "Market Channel";
-      Logger.info "CONNECTING"
-        [
-          ("channel", "market");
-          ("assets", string_of_int (List.length asset_ids));
-        ];
+      Logger.info
+        (Printf.sprintf "Connecting to market channel (%d assets)"
+           (List.length asset_ids));
 
       (* Connect to market channel *)
       let client = Wss.Market.connect ~sw ~net ~clock ~asset_ids () in
       let stream = Wss.Market.stream client in
 
       Logger.ok "CONNECTED" "Waiting for messages...";
-      Logger.info "NOTE" [ ("message", "Press Ctrl+C to stop") ];
+      Logger.info "Press Ctrl+C to stop";
 
-      (* Read messages for a while *)
+      (* Read some initial messages *)
       let message_count = ref 0 in
-      let max_messages = 20 in
+      let max_messages = 10 in
 
       (try
          while !message_count < max_messages do
-           (* Use Eio.Time.with_timeout for bounded wait *)
            match
              Eio.Time.with_timeout clock 30.0 (fun () ->
                  Ok (Eio.Stream.take stream))
@@ -145,21 +139,132 @@ let run_demo env =
                message_count := max_messages
          done
        with
-      | Eio.Cancel.Cancelled _ -> Logger.info "CANCELLED" []
+      | Eio.Cancel.Cancelled _ -> Logger.info "Cancelled"
       | exn -> Logger.error "EXCEPTION" (Printexc.to_string exn));
 
-      (* Cleanup *)
-      Logger.header "Cleanup";
+      (* ===== Dynamic Subscribe/Unsubscribe ===== *)
+
+      (* Unsubscribe from first asset *)
+      let first_asset = List.hd asset_ids in
+      Wss.Market.unsubscribe client ~asset_ids:[ first_asset ];
+      Logger.ok "unsubscribe"
+        (Printf.sprintf "unsubscribed from %s..." (String.sub first_asset 0 20));
+
+      (* Subscribe to same asset again *)
+      Wss.Market.subscribe client ~asset_ids:[ first_asset ];
+      Logger.ok "subscribe"
+        (Printf.sprintf "re-subscribed to %s..." (String.sub first_asset 0 20));
+
+      (* Read a few more messages to confirm subscription works *)
+      let extra_count = ref 0 in
+      (try
+         while !extra_count < 5 do
+           match
+             Eio.Time.with_timeout clock 10.0 (fun () ->
+                 Ok (Eio.Stream.take stream))
+           with
+           | Ok msg ->
+               incr extra_count;
+               incr message_count;
+               handle_market_message msg
+           | Error `Timeout -> extra_count := 5
+         done
+       with _ -> ());
+
+      (* Close market client *)
       Wss.Market.close client;
-      Logger.ok "CLOSED" "Connection closed";
+      Logger.ok "CLOSED" "Market channel closed";
+
+      (* ===== User Channel ===== *)
+
+      (* Get credentials for User channel *)
+      let private_key =
+        let pk_str =
+          match Sys.getenv_opt "POLY_PRIVATE_KEY" with
+          | Some pk -> pk
+          | None ->
+              "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+        in
+        Crypto.private_key_of_string pk_str
+      in
+
+      (* Create rate limiter for CLOB API *)
+      let routes =
+        Polymarket_common.Rate_limit_presets.all ~behavior:Rate_limiter.Delay
+      in
+      let rate_limiter = Rate_limiter.create ~routes ~clock () in
+
+      (* Derive API credentials via CLOB API *)
+      let unauthed_client = Clob.Unauthed.create ~sw ~net ~rate_limiter () in
+      let l1_client = Clob.upgrade_to_l1 unauthed_client ~private_key in
+      let nonce = int_of_float (Unix.gettimeofday () *. 1000.0) mod 1000000 in
+
+      (match Clob.L1.derive_api_key l1_client ~nonce with
+      | Ok (_l2_client, resp) ->
+          Logger.ok "derive_api_key"
+            (Printf.sprintf "api_key=%s..." (String.sub resp.api_key 0 8));
+
+          let credentials : Auth.credentials =
+            {
+              api_key = resp.api_key;
+              secret = resp.secret;
+              passphrase = resp.passphrase;
+            }
+          in
+
+          (* Get condition IDs for markets (User channel uses markets, not assets) *)
+          let gamma_client = Gamma.create ~sw ~net ~rate_limiter () in
+          let market_ids =
+            match Gamma.get_markets gamma_client ~limit:2 ~closed:false () with
+            | Ok markets ->
+                List.filter_map
+                  (fun (m : Gamma.market) -> m.condition_id)
+                  markets
+            | Error _ -> []
+          in
+
+          if List.length market_ids > 0 then begin
+            Logger.info
+              (Printf.sprintf "Connecting to user channel (%d markets)"
+                 (List.length market_ids));
+
+            let user_client =
+              Wss.User.connect ~sw ~net ~clock ~credentials ~markets:market_ids
+                ()
+            in
+            let user_stream = Wss.User.stream user_client in
+
+            Logger.ok "CONNECTED" "User channel connected";
+
+            (* Listen briefly for user events (likely none for test account) *)
+            let user_msg_count = ref 0 in
+            (try
+               while !user_msg_count < 3 do
+                 match
+                   Eio.Time.with_timeout clock 5.0 (fun () ->
+                       Ok (Eio.Stream.take user_stream))
+                 with
+                 | Ok msg ->
+                     incr user_msg_count;
+                     handle_market_message msg
+                 | Error `Timeout ->
+                     Logger.ok "USER_TIMEOUT"
+                       "no user events (expected for test account)";
+                     user_msg_count := 3
+               done
+             with _ -> ());
+
+            Wss.User.close user_client;
+            Logger.ok "CLOSED" "User channel closed"
+          end
+          else Logger.skip "User.connect" "no market IDs available"
+      | Error err ->
+          Logger.error "derive_api_key" (Http.error_to_string err);
+          Logger.skip "User.connect" "could not derive API key");
 
       (* Summary *)
-      Logger.header "Summary";
-      Logger.info "COMPLETE"
-        [
-          ("messages_received", string_of_int !message_count);
-          ("status", "demo finished");
-        ]
+      Logger.info
+        (Printf.sprintf "Demo complete: %d messages received" !message_count)
 
 let () =
   Mirage_crypto_rng_unix.use_default ();

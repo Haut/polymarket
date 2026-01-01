@@ -2,7 +2,7 @@
  (name polymarket_wss)
  (public_name polymarket.wss)
  (libraries
-  logger
+  logs
   websocket
   polymarket_common
   polymarket_clob

@@ -37,28 +37,44 @@ let first_market_slug (markets : Gamma.market list) =
 let first_series_id (series_list : Gamma.series list) =
   match series_list with [] -> None | s :: _ -> Some s.id
 
-let first_tag_id (tags : Gamma.tag list) =
-  match tags with [] -> None | t :: _ -> Some t.id
+(** Find a tag with related tags (try first few tags) *)
+let find_tag_with_related client (tags : Gamma.tag list) =
+  let rec try_tags = function
+    | [] -> None
+    | (t : Gamma.tag) :: rest -> (
+        match Gamma.get_related_tags client ~id:t.id () with
+        | Ok (_ :: _ as related) -> Some (t, related)
+        | _ -> try_tags rest)
+  in
+  try_tags (List.filteri (fun i _ -> i < 10) tags)
 
-let first_tag_slug (tags : Gamma.tag list) =
-  match tags with [] -> None | t :: _ -> t.slug
-
-let first_comment_id (comments : Gamma.comment list) =
-  match comments with [] -> None | c :: _ -> Some c.id
-
-let first_user_address (comments : Gamma.comment list) =
-  match comments with [] -> None | c :: _ -> c.user_address
+(** Find an event with comments (try first few events) *)
+let find_event_with_comments client (events : Gamma.event list) =
+  let rec try_events = function
+    | [] -> None
+    | (e : Gamma.event) :: rest -> (
+        match int_of_string_opt e.id with
+        | None -> try_events rest
+        | Some eid -> (
+            match
+              Gamma.get_comments client ~limit:10
+                ~parent_entity_type:Gamma.Parent_entity_type.Event
+                ~parent_entity_id:eid ()
+            with
+            | Ok (_ :: _ as comments) -> Some (e, comments)
+            | _ -> try_events rest))
+  in
+  try_events (List.filteri (fun i _ -> i < 10) events)
 
 (** {1 Main Demo} *)
 
 let run_demo env =
-  (* Initialize demo logger (disables noise from other libraries) *)
   Logger.setup ();
   Eio.Switch.run @@ fun sw ->
   let clock = Eio.Stdenv.clock env in
 
-  Logger.info "START"
-    [ ("demo", "Gamma API"); ("base_url", Gamma.default_base_url) ];
+  Logger.info
+    (Printf.sprintf "Starting Gamma API demo (%s)" Gamma.default_base_url);
 
   (* Create shared rate limiter with Polymarket presets *)
   let routes =
@@ -68,46 +84,64 @@ let run_demo env =
   let client = Gamma.create ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter () in
 
   (* ===== Health Check ===== *)
-  Logger.header "Health Check";
   let status = Gamma.status client in
   print_result "status" status ~on_ok:(fun s -> s);
 
-  (* ===== Teams ===== *)
-  Logger.header "Teams";
-  let teams = Gamma.get_teams client () in
-  print_result_count "get_teams" teams;
-
   (* ===== Tags ===== *)
-  Logger.header "Tags";
-  let tags = Gamma.get_tags client ~limit:10 () in
+  let tags = Gamma.get_tags client ~limit:20 () in
   print_result_count "get_tags" tags;
 
-  let tag_id, tag_slug =
-    match tags with
-    | Ok t -> (first_tag_id t, first_tag_slug t)
-    | Error _ -> (None, None)
+  (* Find a tag with related tags for better demo output *)
+  let tag_with_related =
+    match tags with Ok t -> find_tag_with_related client t | Error _ -> None
   in
-  (match tag_id with
-  | Some id ->
-      let tag = Gamma.get_tag client ~id () in
-      print_result "get_tag" tag ~on_ok:(fun (t : Gamma.tag) ->
-          Option.value ~default:"(no label)" t.label);
 
-      let related = Gamma.get_related_tags client ~id () in
-      print_result_count "get_related_tags" related
+  (match tag_with_related with
+  | Some (tag, related) ->
+      let label = Option.value ~default:"(no label)" tag.label in
+      Logger.ok "get_tag" label;
+      Logger.ok "get_related_tags"
+        (Printf.sprintf "%d items" (List.length related));
+
+      (match tag.slug with
+      | Some slug ->
+          let tag_by_slug = Gamma.get_tag_by_slug client ~slug () in
+          print_result "get_tag_by_slug" tag_by_slug
+            ~on_ok:(fun (t : Gamma.tag) ->
+              Option.value ~default:"(no label)" t.label);
+
+          let related_by_slug =
+            Gamma.get_related_tags_by_slug client ~slug ()
+          in
+          print_result_count "get_related_tags_by_slug" related_by_slug;
+
+          let related_tag_objs =
+            Gamma.get_related_tag_tags_by_slug client ~slug ()
+          in
+          print_result_count "get_related_tag_tags_by_slug" related_tag_objs
+      | None ->
+          Logger.skip "get_tag_by_slug" "no tag slug available";
+          Logger.skip "get_related_tags_by_slug" "no tag slug available";
+          Logger.skip "get_related_tag_tags_by_slug" "no tag slug available");
+
+      let related_tag_objs = Gamma.get_related_tag_tags client ~id:tag.id () in
+      print_result_count "get_related_tag_tags" related_tag_objs
   | None ->
-      Logger.skip "get_tag" "no tag ID available";
-      Logger.skip "get_related_tags" "no tag ID available");
-
-  (match tag_slug with
-  | Some slug ->
-      let tag = Gamma.get_tag_by_slug client ~slug () in
-      print_result "get_tag_by_slug" tag ~on_ok:(fun (t : Gamma.tag) ->
-          Option.value ~default:"(no label)" t.label)
-  | None -> Logger.skip "get_tag_by_slug" "no tag slug available");
+      (* Fall back to first tag if none have related tags *)
+      (match tags with
+      | Ok (t :: _) ->
+          let tag = Gamma.get_tag client ~id:t.id () in
+          print_result "get_tag" tag ~on_ok:(fun (t : Gamma.tag) ->
+              Option.value ~default:"(no label)" t.label);
+          Logger.ok "get_related_tags" "0 items (no tags with relations found)"
+      | _ -> Logger.skip "get_tag" "no tags available");
+      Logger.skip "get_tag_by_slug" "no tag with related tags found";
+      Logger.skip "get_related_tags_by_slug" "no tag with related tags found";
+      Logger.skip "get_related_tag_tags_by_slug"
+        "no tag with related tags found";
+      Logger.skip "get_related_tag_tags" "no tag with related tags found");
 
   (* ===== Events ===== *)
-  Logger.header "Events";
   let events = Gamma.get_events client ~limit:10 ~active:true () in
   print_result_count "get_events" events;
 
@@ -137,7 +171,6 @@ let run_demo env =
   | None -> Logger.skip "get_event_by_slug" "no event slug available");
 
   (* ===== Markets ===== *)
-  Logger.header "Markets";
   let markets = Gamma.get_markets client ~limit:10 () in
   print_result_count "get_markets" markets;
 
@@ -167,7 +200,6 @@ let run_demo env =
   | None -> Logger.skip "get_market_by_slug" "no market slug available");
 
   (* ===== Series ===== *)
-  Logger.header "Series";
   let series_list = Gamma.get_series_list client ~limit:10 () in
   print_result_count "get_series_list" series_list;
 
@@ -183,50 +215,38 @@ let run_demo env =
   | None -> Logger.skip "get_series" "no series ID available");
 
   (* ===== Comments ===== *)
-  Logger.header "Comments";
-  (* Comments require both parent_entity_type and parent_entity_id *)
-  let comments =
-    match event_id with
-    | Some eid -> (
-        match int_of_string_opt eid with
-        | Some eid_int ->
-            Gamma.get_comments client ~limit:10
-              ~parent_entity_type:Gamma.Parent_entity_type.Event
-              ~parent_entity_id:eid_int ()
-        | None ->
-            Error
-              (Http.Parse_error { context = "event_id"; message = "not an int" })
-        )
-    | None ->
-        Error
-          (Http.Parse_error { context = "comments"; message = "No event ID" })
-  in
-  print_result_count "get_comments" comments;
-
-  let comment_id, user_address =
-    match comments with
-    | Ok c -> (first_comment_id c, first_user_address c)
-    | Error _ -> (None, None)
+  (* Find an event with comments for better demo output *)
+  let event_with_comments =
+    match events with
+    | Ok ev -> find_event_with_comments client ev
+    | Error _ -> None
   in
 
-  (match comment_id with
-  | Some id ->
-      let comment = Gamma.get_comment client ~id () in
-      print_result "get_comment" comment ~on_ok:(fun (c : Gamma.comment) ->
-          let body = Option.value ~default:"(no body)" c.body in
-          if String.length body > 50 then String.sub body 0 50 ^ "..." else body)
-  | None -> Logger.skip "get_comment" "no comment ID available");
+  (match event_with_comments with
+  | Some (_event, comments) -> (
+      Logger.ok "get_comments"
+        (Printf.sprintf "%d items" (List.length comments));
 
-  (match user_address with
-  | Some addr ->
-      let user_comments =
-        Gamma.get_user_comments client ~user_address:addr ~limit:5 ()
+      let comment = List.hd comments in
+      let body = Option.value ~default:"(no body)" comment.body in
+      let truncated =
+        if String.length body > 50 then String.sub body 0 50 ^ "..." else body
       in
-      print_result_count "get_user_comments" user_comments
-  | None -> Logger.skip "get_user_comments" "no user address available");
+      Logger.ok "get_comment" truncated;
+
+      match comment.user_address with
+      | Some addr ->
+          let user_comments =
+            Gamma.get_user_comments client ~user_address:addr ~limit:5 ()
+          in
+          print_result_count "get_user_comments" user_comments
+      | None -> Logger.skip "get_user_comments" "no user address on comment")
+  | None ->
+      Logger.ok "get_comments" "0 items (no events with comments found)";
+      Logger.skip "get_comment" "no comments available";
+      Logger.skip "get_user_comments" "no comments available");
 
   (* ===== Profiles ===== *)
-  Logger.header "Profiles";
   (* Use a known test address for profile testing *)
   let test_address = "0xa41249c581990c31fb2a0dfc4417ede58e0de774" in
   let public_profile =
@@ -237,7 +257,6 @@ let run_demo env =
       Option.value ~default:"(no name)" p.name);
 
   (* ===== Sports ===== *)
-  Logger.header "Sports";
   let sports = Gamma.get_sports client () in
   print_result_count "get_sports" sports;
 
@@ -246,8 +265,11 @@ let run_demo env =
     ~on_ok:(fun (r : Gamma.sports_market_types_response) ->
       Printf.sprintf "%d market types" (List.length r.market_types));
 
+  (* ===== Teams ===== *)
+  let teams = Gamma.get_teams client () in
+  print_result_count "get_teams" teams;
+
   (* ===== Search ===== *)
-  Logger.header "Search";
   let search = Gamma.public_search client ~q:"election" ~limit_per_type:5 () in
   print_result "public_search" search ~on_ok:(fun (s : Gamma.search) ->
       let event_count =
@@ -257,12 +279,8 @@ let run_demo env =
       Printf.sprintf "%d events, %d tags" event_count tag_count);
 
   (* ===== Summary ===== *)
-  Logger.header "Summary";
-  Logger.info "COMPLETE" [ ("status", "all endpoints exercised") ];
-  Logger.info "NOTE"
-    [
-      ("message", "Endpoints that returned SKIP had no valid IDs to test with");
-    ]
+  Logger.info "All endpoints exercised";
+  Logger.info "Endpoints that returned SKIP had no valid IDs to test with"
 
 let () =
   Mirage_crypto_rng_unix.use_default ();

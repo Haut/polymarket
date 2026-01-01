@@ -2,6 +2,7 @@
  (name polymarket_clob)
  (public_name polymarket.clob)
  (libraries
+  logs
   polymarket_common
   polymarket_http
   yojson

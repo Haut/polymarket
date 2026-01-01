@@ -3,161 +3,159 @@
     This example calls all Data API endpoints and prints the results. Run with:
     dune exec examples/data_api_demo.exe
 
-    Note: Some endpoints require valid user addresses or market IDs to return
-    data. The demo uses sample values that may or may not have data. *)
+    Uses Gamma API to discover real user addresses and market IDs for better
+    results. *)
 
 open Polymarket
 
-(* Sample data for testing - these are real Polymarket values *)
+(** {1 Helper Functions} *)
 
-(* A known active trader address *)
-let sample_user = Address.make_exn "0x1a9a6f917a87a4f02c33f8530c6a8998f1bc8d59"
-
-(* A sample condition ID (market) - 2024 US Presidential Election Winner *)
-let sample_market =
-  Hash64.make_exn
-    "0xdd22472e552920b8438f08c8830e189a5a159cc4e8d5f2fb0f0e8e9a7e3e2a5e"
-
-(* A sample event ID *)
-let sample_event_id = 903
-
-(* Helper functions *)
 let print_result_count name result =
   match result with
   | Ok items -> Logger.ok name (Printf.sprintf "%d items" (List.length items))
   | Error err -> Logger.error name (Http.error_to_string err)
 
+let print_result name ~on_ok result =
+  match result with
+  | Ok value -> Logger.ok name (on_ok value)
+  | Error err -> Logger.error name (Http.error_to_string err)
+
+(** {1 Main Demo} *)
+
 let run_demo env =
-  (* Initialize demo logger (disables noise from other libraries) *)
   Logger.setup ();
   Eio.Switch.run @@ fun sw ->
   let clock = Eio.Stdenv.clock env in
+  let net = Eio.Stdenv.net env in
 
-  Logger.info "START"
-    [ ("demo", "Data API"); ("base_url", Data.default_base_url) ];
+  Logger.info
+    (Printf.sprintf "Starting Data API demo (%s)" Data.default_base_url);
 
-  (* Create shared rate limiter with Polymarket presets *)
+  (* Create shared rate limiter *)
   let routes =
     Polymarket_common.Rate_limit_presets.all ~behavior:Rate_limiter.Delay
   in
   let rate_limiter = Rate_limiter.create ~routes ~clock () in
 
-  (* Create the client *)
-  let client = Data.create ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter () in
+  (* Create clients *)
+  let data_client = Data.create ~sw ~net ~rate_limiter () in
+  let gamma_client = Gamma.create ~sw ~net ~rate_limiter () in
 
-  (* Health Check *)
-  Logger.header "Health Check";
-  let health = Data.health_check client in
-  (match health with
-  | Ok resp ->
-      Logger.ok "health_check" "passed";
-      Logger.info "DATA" [ ("value", resp.data) ]
-  | Error err -> Logger.error "health_check" (Data.error_to_string err));
+  (* ===== Health Check ===== *)
+  let health = Data.health_check data_client in
+  print_result "health_check" health ~on_ok:(fun (r : Data.health_response) ->
+      r.data);
 
-  (* Positions *)
-  Logger.header "Positions";
-  let positions = Data.get_positions client ~user:sample_user ~limit:5 () in
-  print_result_count "get_positions" positions;
-  (match positions with
-  | Ok items when List.length items > 0 ->
-      let pos = List.hd items in
-      Logger.info "FIRST" [ ("position", pos.title) ]
-  | _ -> ());
+  (* ===== Global Trades ===== *)
+  let trades = Data.get_trades data_client ~limit:10 () in
+  print_result_count "get_trades" trades;
 
-  (* Trades *)
-  Logger.header "Trades";
-  let trades = Data.get_trades client ~limit:5 () in
-  print_result_count "get_trades (all)" trades;
+  (* Extract a market (condition_id) from trades for later use *)
+  let trade_market =
+    match trades with
+    | Ok ((t : Data.trade) :: _) -> Some t.condition_id
+    | _ -> None
+  in
 
-  let user_trades = Data.get_trades client ~user:sample_user ~limit:5 () in
-  print_result_count "get_trades (by user)" user_trades;
+  (* ===== Open Interest ===== *)
+  let oi = Data.get_open_interest data_client () in
+  print_result_count "get_open_interest" oi;
 
-  (* Activity *)
-  Logger.header "Activity";
-  let activity = Data.get_activity client ~user:sample_user ~limit:5 () in
-  print_result_count "get_activity" activity;
+  (match trade_market with
+  | Some market ->
+      let oi_market =
+        Data.get_open_interest data_client ~market:[ market ] ()
+      in
+      print_result "get_open_interest (market)" oi_market ~on_ok:(fun items ->
+          Printf.sprintf "%d items" (List.length items))
+  | None -> Logger.skip "get_open_interest (market)" "no market from trades");
 
-  (* Holders *)
-  Logger.header "Holders";
-  let holders = Data.get_holders client ~market:[ sample_market ] ~limit:5 () in
-  print_result_count "get_holders" holders;
+  (* ===== Live Volume ===== *)
+  (* Get an event ID from Gamma for live volume *)
+  let events = Gamma.get_events gamma_client ~limit:1 ~active:true () in
+  (match events with
+  | Ok ((e : Gamma.event) :: _) -> (
+      match int_of_string_opt e.id with
+      | Some event_id ->
+          let volume = Data.get_live_volume data_client ~id:event_id () in
+          print_result_count "get_live_volume" volume
+      | None -> Logger.skip "get_live_volume" "event ID not an int")
+  | _ -> Logger.skip "get_live_volume" "no events from Gamma");
 
-  (* Traded *)
-  Logger.header "Traded";
-  let traded = Data.get_traded client ~user:sample_user () in
-  (match traded with
-  | Ok t ->
-      Logger.ok "get_traded"
-        (Printf.sprintf "user has traded %d markets" t.traded)
-  | Error err -> Logger.error "get_traded" (Http.error_to_string err));
-
-  (* Value *)
-  Logger.header "Value";
-  let value = Data.get_value client ~user:sample_user () in
-  print_result_count "get_value" value;
-
-  (* Open Interest *)
-  Logger.header "Open Interest";
-  let oi = Data.get_open_interest client () in
-  print_result_count "get_open_interest (all)" oi;
-
-  let oi_market = Data.get_open_interest client ~market:[ sample_market ] () in
-  print_result_count "get_open_interest (by market)" oi_market;
-
-  (* Live Volume *)
-  Logger.header "Live Volume";
-  let volume = Data.get_live_volume client ~id:sample_event_id () in
-  print_result_count "get_live_volume" volume;
-
-  (* Closed Positions *)
-  Logger.header "Closed Positions";
-  let closed = Data.get_closed_positions client ~user:sample_user ~limit:5 () in
-  print_result_count "get_closed_positions" closed;
-
-  (* Builder Leaderboard *)
-  Logger.header "Builder Leaderboard";
+  (* ===== Leaderboards ===== *)
   let builders =
-    Data.get_builder_leaderboard client ~time_period:Data.Time_period.Week
+    Data.get_builder_leaderboard data_client ~time_period:Data.Time_period.Week
       ~limit:5 ()
   in
-  print_result_count "get_builder_leaderboard" builders;
-  (match builders with
-  | Ok items when List.length items > 0 ->
-      let b = List.hd items in
-      Logger.info "TOP" [ ("builder", b.builder) ]
-  | _ -> ());
+  print_result "get_builder_leaderboard" builders ~on_ok:(fun items ->
+      Printf.sprintf "%d items" (List.length items));
 
-  (* Builder Volume *)
-  Logger.header "Builder Volume";
   let builder_vol =
-    Data.get_builder_volume client ~time_period:Data.Time_period.Week ()
+    Data.get_builder_volume data_client ~time_period:Data.Time_period.Week ()
   in
-  print_result_count "get_builder_volume" builder_vol;
+  print_result "get_builder_volume" builder_vol ~on_ok:(fun items ->
+      Printf.sprintf "%d items" (List.length items));
 
-  (* Trader Leaderboard *)
-  Logger.header "Trader Leaderboard";
   let traders =
-    Data.get_trader_leaderboard client
+    Data.get_trader_leaderboard data_client
       ~category:Data.Leaderboard_category.Overall
       ~time_period:Data.Time_period.Week ~order_by:Data.Leaderboard_order_by.Pnl
       ~limit:5 ()
   in
-  print_result_count "get_trader_leaderboard" traders;
-  (match traders with
-  | Ok items when List.length items > 0 ->
-      let t = List.hd items in
-      Logger.info "TOP" [ ("trader", t.user_name); ("rank", t.rank) ]
-  | _ -> ());
+  print_result "get_trader_leaderboard" traders ~on_ok:(fun items ->
+      Printf.sprintf "%d items" (List.length items));
 
-  (* Summary *)
-  Logger.header "Summary";
-  Logger.info "COMPLETE" [ ("status", "all endpoints called") ];
-  Logger.info "NOTE"
-    [
-      ( "message",
-        "Empty results may indicate no matching data for sample parameters" );
-    ]
+  (* Get a real user address from trader leaderboard *)
+  let active_user =
+    match traders with
+    | Ok ((t : Data.trader_leaderboard_entry) :: _) ->
+        Logger.info (Printf.sprintf "Using trader: %s" t.user_name);
+        Some t.proxy_wallet
+    | _ -> None
+  in
+
+  (* ===== User Data ===== *)
+  (match active_user with
+  | Some user ->
+      let positions = Data.get_positions data_client ~user ~limit:5 () in
+      print_result_count "get_positions" positions;
+
+      let user_trades = Data.get_trades data_client ~user ~limit:5 () in
+      print_result_count "get_trades (user)" user_trades;
+
+      let activity = Data.get_activity data_client ~user ~limit:5 () in
+      print_result_count "get_activity" activity;
+
+      let traded = Data.get_traded data_client ~user () in
+      print_result "get_traded" traded ~on_ok:(fun (t : Data.traded) ->
+          Printf.sprintf "%d markets" t.traded);
+
+      let value = Data.get_value data_client ~user () in
+      print_result_count "get_value" value;
+
+      let closed = Data.get_closed_positions data_client ~user ~limit:5 () in
+      print_result_count "get_closed_positions" closed
+  | None ->
+      Logger.skip "get_positions" "no active user found";
+      Logger.skip "get_trades (user)" "no active user found";
+      Logger.skip "get_activity" "no active user found";
+      Logger.skip "get_traded" "no active user found";
+      Logger.skip "get_value" "no active user found";
+      Logger.skip "get_closed_positions" "no active user found");
+
+  (* ===== Market Data ===== *)
+  (match trade_market with
+  | Some market ->
+      let holders =
+        Data.get_holders data_client ~market:[ market ] ~limit:5 ()
+      in
+      print_result_count "get_holders" holders
+  | None -> Logger.skip "get_holders" "no market from trades");
+
+  (* ===== Summary ===== *)
+  Logger.info "All endpoints exercised"
 
 let () =
   Mirage_crypto_rng_unix.use_default ();
-  Eio_main.run run_demo
+  Eio_main.run run_demo;
+  Logger.close ()

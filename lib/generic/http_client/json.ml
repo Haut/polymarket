@@ -1,6 +1,8 @@
 (** JSON parsing and body building utilities. *)
 
-let section = "JSON"
+let src = Logs.Src.create "polymarket.json" ~doc:"JSON parsing"
+
+module Log = (val Logs.src_log src : Logs.LOG)
 
 (** {1 JSON Parsing} *)
 
@@ -18,20 +20,18 @@ let parse (parse_fn : Yojson.Safe.t -> 'a) (body : string) : ('a, string) result
           (Yojson.Safe.to_string json)
           body
       in
-      Logger.log_err ~section ~event:"PARSE_ERROR"
-        [ ("error", Printexc.to_string exn) ];
+      Log.err (fun m -> m "Parse error: %s" (Printexc.to_string exn));
       Error msg
   | Yojson.Json_error msg ->
       let err = "JSON error: " ^ msg ^ "\nBody:\n" ^ body in
-      Logger.log_err ~section ~event:"JSON_ERROR" [ ("error", msg) ];
+      Log.err (fun m -> m "JSON error: %s" msg);
       Error err
   | exn ->
       let msg =
         Printf.sprintf "Parse error: %s\nFull response:\n%s"
           (Printexc.to_string exn) body
       in
-      Logger.log_err ~section ~event:"ERROR"
-        [ ("error", Printexc.to_string exn) ];
+      Log.err (fun m -> m "Error: %s" (Printexc.to_string exn));
       Error msg
 
 let parse_list (parse_item_fn : Yojson.Safe.t -> 'a) (body : string) :
@@ -42,8 +42,7 @@ let parse_list (parse_item_fn : Yojson.Safe.t -> 'a) (body : string) :
     | `List items -> Ok (List.map parse_item_fn items)
     | _ ->
         let err = "Expected JSON array\nBody:\n" ^ body in
-        Logger.log_err ~section ~event:"NOT_ARRAY"
-          [ ("error", "Expected JSON array") ];
+        Log.err (fun m -> m "Expected JSON array");
         Error err
   with
   | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, json) ->
@@ -54,20 +53,18 @@ let parse_list (parse_item_fn : Yojson.Safe.t -> 'a) (body : string) :
           (Yojson.Safe.to_string json)
           body
       in
-      Logger.log_err ~section ~event:"PARSE_ERROR"
-        [ ("error", Printexc.to_string exn) ];
+      Log.err (fun m -> m "Parse error: %s" (Printexc.to_string exn));
       Error msg
   | Yojson.Json_error msg ->
       let err = "JSON error: " ^ msg ^ "\nBody:\n" ^ body in
-      Logger.log_err ~section ~event:"JSON_ERROR" [ ("error", msg) ];
+      Log.err (fun m -> m "JSON error: %s" msg);
       Error err
   | exn ->
       let msg =
         Printf.sprintf "Parse error: %s\nFull response:\n%s"
           (Printexc.to_string exn) body
       in
-      Logger.log_err ~section ~event:"ERROR"
-        [ ("error", Printexc.to_string exn) ];
+      Log.err (fun m -> m "Error: %s" (Printexc.to_string exn));
       Error msg
 
 (** {1 JSON Body Builders} *)
