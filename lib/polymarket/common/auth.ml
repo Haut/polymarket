@@ -17,21 +17,11 @@ type api_key_response = {
   passphrase : string;
 }
 [@@deriving yojson, show, eq]
-
-type derive_api_key_response = {
-  api_key : string; [@key "apiKey"]
-  secret : string;
-  passphrase : string;
-}
-[@@deriving yojson, show, eq]
+(** Response from API key endpoints (create or derive). *)
 
 (** {1 Conversion} *)
 
 let credentials_of_api_key_response (resp : api_key_response) : credentials =
-  { api_key = resp.api_key; secret = resp.secret; passphrase = resp.passphrase }
-
-let credentials_of_derive_response (resp : derive_api_key_response) :
-    credentials =
   { api_key = resp.api_key; secret = resp.secret; passphrase = resp.passphrase }
 
 (** {1 Header Names} *)

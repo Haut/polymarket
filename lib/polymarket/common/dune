@@ -14,6 +14,9 @@
   secp256k1-internal
   base64
   hex
+  eio
+  logger
+  websocket
   polymarket.rate_limiter)
  (preprocess
   (pps ppx_yojson_conv ppx_deriving.show ppx_deriving.eq ppx_polymarket_enum)))

@@ -5,17 +5,6 @@
 
 type private_key = string
 
-(** {1 Constants} *)
-
-(** EIP-712 domain for CLOB authentication *)
-let clob_domain_name = "ClobAuthDomain"
-
-let clob_domain_version = "1"
-let polygon_chain_id = 137
-
-(** The attestation message signed for authentication *)
-let auth_message_text = "This message attests that I control the given wallet"
-
 (** {1 Hashing} *)
 
 let keccak256 data =
@@ -75,12 +64,12 @@ let clob_auth_type_hash =
 let compute_domain_separator () =
   (* Encode: typeHash + keccak256(name) + keccak256(version) + chainId *)
   let name_hash =
-    Digestif.KECCAK_256.(to_hex (digest_string clob_domain_name))
+    Digestif.KECCAK_256.(to_hex (digest_string Constants.clob_domain_name))
   in
   let version_hash =
-    Digestif.KECCAK_256.(to_hex (digest_string clob_domain_version))
+    Digestif.KECCAK_256.(to_hex (digest_string Constants.clob_domain_version))
   in
-  let chain_id_hex = encode_uint256 polygon_chain_id in
+  let chain_id_hex = encode_uint256 Constants.polygon_chain_id in
   let data = domain_type_hash ^ name_hash ^ version_hash ^ chain_id_hex in
   let bytes = Hex.to_string (`Hex data) in
   Digestif.KECCAK_256.(to_hex (digest_string bytes))
@@ -98,7 +87,7 @@ let compute_clob_auth_hash ~address ~timestamp ~nonce =
   (* Hash the string fields *)
   let timestamp_hash = Digestif.KECCAK_256.(to_hex (digest_string timestamp)) in
   let message_hash =
-    Digestif.KECCAK_256.(to_hex (digest_string auth_message_text))
+    Digestif.KECCAK_256.(to_hex (digest_string Constants.auth_message_text))
   in
   let nonce_hex = encode_uint256 nonce in
   (* Encode: typeHash + address + keccak256(timestamp) + nonce + keccak256(message) *)

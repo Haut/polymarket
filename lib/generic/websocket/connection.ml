@@ -56,15 +56,17 @@ let make_tls_config () =
   | Error (`Msg msg) -> failwith ("TLS config error: " ^ msg)
 
 (** Create a new connection *)
-let create ~sw ~net ~clock ~host ~resource () =
+let create ~sw ~net ~clock ~host ~resource ?(ping_interval = 30.0)
+    ?(buffer_size = 1000) () =
+  let config = default_config ~host ~resource in
   {
-    config = default_config ~host ~resource;
+    config = { config with ping_interval };
     sw;
     net = Net net;
     clock;
     state = Disconnected;
     flow = None;
-    message_stream = Eio.Stream.create 1000;
+    message_stream = Eio.Stream.create buffer_size;
     subscription_msg = None;
     closed = false;
     current_backoff = 1.0;
@@ -247,3 +249,33 @@ let start t =
 
 (** Start ping loop *)
 let start_ping t = Eio.Fiber.fork ~sw:t.sw (fun () -> ping_loop t)
+
+(** Start a message parsing fiber that reads from a connection's raw stream,
+    parses messages using the provided function, and adds them to the output
+    stream. Handles cancellation and errors with consistent logging.
+
+    @param sw Switch for fiber lifecycle
+    @param log_section Logging section (e.g., "WSS", "RTDS")
+    @param channel_name Name for log messages (e.g., "market", "user")
+    @param conn WebSocket connection to read from
+    @param parse Function to parse raw messages into typed messages
+    @param output_stream Output stream for parsed messages *)
+let start_parsing_fiber (type a) ~sw ~log_section ~channel_name ~conn
+    ~(parse : string -> a list) ~(output_stream : a Eio.Stream.t) =
+  Eio.Fiber.fork ~sw (fun () ->
+      try
+        let raw_stream = conn.message_stream in
+        while not conn.closed do
+          let raw = Eio.Stream.take raw_stream in
+          let msgs = parse raw in
+          List.iter (fun msg -> Eio.Stream.add output_stream msg) msgs
+        done;
+        Logger.log_debug ~section:log_section ~event:"PARSER_STOPPED"
+          [ ("channel", channel_name) ]
+      with
+      | Eio.Cancel.Cancelled _ ->
+          Logger.log_debug ~section:log_section ~event:"PARSER_CANCELLED"
+            [ ("channel", channel_name) ]
+      | exn ->
+          Logger.log_err ~section:log_section ~event:"PARSER_ERROR"
+            [ ("channel", channel_name); ("error", Printexc.to_string exn) ])

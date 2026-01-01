@@ -39,14 +39,11 @@ module Address : sig
   val to_yojson : t -> Yojson.Safe.t
   (** JSON serialization. *)
 
-  val yojson_of : t -> Yojson.Safe.t
-  (** Alias for to_yojson (ppx_yojson_conv compatibility). *)
-
   val yojson_of_t : t -> Yojson.Safe.t
-  (** Alias for to_yojson (ppx_yojson_conv compatibility). *)
+  (** JSON serialization (ppx_yojson_conv compatibility). *)
 
   val t_of_yojson : Yojson.Safe.t -> t
-  (** Alias for of_yojson_exn (ppx_yojson_conv compatibility). *)
+  (** JSON deserialization (ppx_yojson_conv compatibility). *)
 end
 
 (** {1 Hash64 Module}
@@ -83,14 +80,11 @@ module Hash64 : sig
   val to_yojson : t -> Yojson.Safe.t
   (** JSON serialization. *)
 
-  val yojson_of : t -> Yojson.Safe.t
-  (** Alias for to_yojson (ppx_yojson_conv compatibility). *)
-
   val yojson_of_t : t -> Yojson.Safe.t
-  (** Alias for to_yojson (ppx_yojson_conv compatibility). *)
+  (** JSON serialization (ppx_yojson_conv compatibility). *)
 
   val t_of_yojson : Yojson.Safe.t -> t
-  (** Alias for of_yojson_exn (ppx_yojson_conv compatibility). *)
+  (** JSON deserialization (ppx_yojson_conv compatibility). *)
 end
 
 (** {1 Hash Module}
@@ -127,14 +121,11 @@ module Hash : sig
   val to_yojson : t -> Yojson.Safe.t
   (** JSON serialization. *)
 
-  val yojson_of : t -> Yojson.Safe.t
-  (** Alias for to_yojson (ppx_yojson_conv compatibility). *)
-
   val yojson_of_t : t -> Yojson.Safe.t
-  (** Alias for to_yojson (ppx_yojson_conv compatibility). *)
+  (** JSON serialization (ppx_yojson_conv compatibility). *)
 
   val t_of_yojson : Yojson.Safe.t -> t
-  (** Alias for of_yojson_exn (ppx_yojson_conv compatibility). *)
+  (** JSON deserialization (ppx_yojson_conv compatibility). *)
 end
 
 (** {1 Non-negative Integers}

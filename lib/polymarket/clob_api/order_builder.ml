@@ -7,32 +7,23 @@ module Crypto = Polymarket_common.Crypto
 
 (** {1 Constants} *)
 
-(** USDC and CTF token decimals (both use 6 decimals on Polygon) *)
-let scale = 1_000_000.0
-
-(** Zero address for open orders (no specific taker) *)
-let zero_address = "0x0000000000000000000000000000000000000000"
+module Constants = Polymarket_common.Constants
 
 (** Default fee rate in basis points *)
 let default_fee_rate_bps = "0"
 
 (** {1 Salt Generation} *)
 
-(** Generate a random salt as a large integer string *)
+(** Generate a random salt as a decimal string. Uses 63 bits of randomness,
+    which provides sufficient uniqueness for order deduplication (2^63 possible
+    values). *)
 let generate_salt () =
-  (* Generate 32 random bytes and convert to decimal string *)
-  let bytes = Bytes.create 32 in
-  for i = 0 to 31 do
-    Bytes.set bytes i (Char.chr (Random.int 256))
+  let n = ref Int64.zero in
+  for _ = 1 to 8 do
+    n := Int64.(logor (shift_left !n 8) (of_int (Random.int 256)))
   done;
-  (* Convert first 8 bytes to int64 for simplicity *)
-  let n =
-    Bytes.fold_left
-      (fun acc byte ->
-        Int64.(shift_left acc 8 |> add (Int64.of_int (Char.code byte))))
-      Int64.zero bytes
-  in
-  Int64.to_string (Int64.abs n)
+  (* Mask to positive int64 range *)
+  Int64.(to_string (logand !n max_int))
 
 (** {1 Amount Calculations} *)
 
@@ -46,8 +37,8 @@ let generate_salt () =
     - makerAmount = size (CTF tokens)
     - takerAmount = price * size (USDC) *)
 let calculate_amounts ~side ~price ~size =
-  let size_scaled = size *. scale in
-  let usdc_amount = price *. size *. scale in
+  let size_scaled = size *. Constants.token_scale in
+  let usdc_amount = price *. size *. Constants.token_scale in
   match side with
   | Types.Side.Buy ->
       let maker_amount = Printf.sprintf "%.0f" usdc_amount in
@@ -71,34 +62,25 @@ let order_type_hash =
   let hash = Digestif.KECCAK_256.digest_string type_string in
   Digestif.KECCAK_256.to_hex hash
 
-(** CTF Exchange domain for Polygon *)
-let ctf_exchange_domain_name = "Polymarket CTF Exchange"
-
-let ctf_exchange_domain_version = "1"
-let polygon_chain_id = 137
-
-(** CTF Exchange contract address on Polygon *)
-let ctf_exchange_address = "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E"
-
-(** Compute domain separator for CTF Exchange *)
-let compute_ctf_domain_separator () =
+(** EIP-712 domain separator for CTF Exchange (precomputed from constants) *)
+let ctf_domain_separator =
   let domain_type_hash =
     let type_string =
       "EIP712Domain(string name,string version,uint256 chainId,address \
        verifyingContract)"
     in
-    let hash = Digestif.KECCAK_256.digest_string type_string in
-    Digestif.KECCAK_256.to_hex hash
+    Digestif.KECCAK_256.(to_hex (digest_string type_string))
   in
   let name_hash =
-    Digestif.KECCAK_256.(to_hex (digest_string ctf_exchange_domain_name))
+    Digestif.KECCAK_256.(
+      to_hex (digest_string Constants.ctf_exchange_domain_name))
   in
   let version_hash =
-    Digestif.KECCAK_256.(to_hex (digest_string ctf_exchange_domain_version))
+    Digestif.KECCAK_256.(
+      to_hex (digest_string Constants.ctf_exchange_domain_version))
   in
-  let chain_id_hex = Crypto.encode_uint256 polygon_chain_id in
-  (* Remove 0x prefix from contract address and pad to 32 bytes *)
-  let contract_hex = String.sub ctf_exchange_address 2 40 in
+  let chain_id_hex = Crypto.encode_uint256 Constants.polygon_chain_id in
+  let contract_hex = String.sub Constants.ctf_exchange_address 2 40 in
   let contract_padded = Crypto.pad_hex_32 contract_hex in
   let data =
     domain_type_hash ^ name_hash ^ version_hash ^ chain_id_hex ^ contract_padded
@@ -145,9 +127,8 @@ let sign_order ~private_key ~salt ~maker ~signer ~taker ~token_id ~maker_amount
   let struct_bytes = Hex.to_string (`Hex struct_data) in
   let struct_hash = Digestif.KECCAK_256.(to_hex (digest_string struct_bytes)) in
   (* Compute final EIP-712 hash *)
-  let domain_separator = compute_ctf_domain_separator () in
   let prefix = "\x19\x01" in
-  let domain_bytes = Hex.to_string (`Hex domain_separator) in
+  let domain_bytes = Hex.to_string (`Hex ctf_domain_separator) in
   let struct_bytes = Hex.to_string (`Hex struct_hash) in
   let final_data = prefix ^ domain_bytes ^ struct_bytes in
   let final_hash = Digestif.KECCAK_256.(to_hex (digest_string final_data)) in
@@ -181,15 +162,16 @@ let create_limit_order ~private_key ~token_id ~(side : Types.Side.t) ~price
     | Some e -> e
     | None ->
         let now = Unix.gettimeofday () in
-        Printf.sprintf "%.0f" (now +. 31536000.0)
+        Printf.sprintf "%.0f" (now +. Constants.one_year_seconds)
   in
   (* Default nonce *)
   let nonce = match nonce with Some n -> string_of_int n | None -> "0" in
   (* Sign the order *)
   let signature =
     sign_order ~private_key ~salt ~maker:address ~signer:address
-      ~taker:zero_address ~token_id ~maker_amount ~taker_amount ~expiration
-      ~nonce ~fee_rate_bps ~side ~signature_type:Types.Signature_type.Eoa
+      ~taker:Constants.zero_address ~token_id ~maker_amount ~taker_amount
+      ~expiration ~nonce ~fee_rate_bps ~side
+      ~signature_type:Types.Signature_type.Eoa
   in
   (* Build signed order *)
   Types.
@@ -197,7 +179,7 @@ let create_limit_order ~private_key ~token_id ~(side : Types.Side.t) ~price
       salt = Some salt;
       maker = Some address;
       signer = Some address;
-      taker = Some zero_address;
+      taker = Some Constants.zero_address;
       token_id = Some token_id;
       maker_amount = Some maker_amount;
       taker_amount = Some taker_amount;

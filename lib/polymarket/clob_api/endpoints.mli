@@ -22,7 +22,7 @@ val derive_api_key :
   private_key:Polymarket_common.Crypto.private_key ->
   address:string ->
   nonce:int ->
-  (Auth.derive_api_key_response, error) result
+  (Auth.api_key_response, error) result
 
 val delete_api_key :
   t -> credentials:Auth.credentials -> address:string -> (unit, error) result

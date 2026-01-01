@@ -9,6 +9,27 @@ let section = "WSS"
 (** Polymarket WebSocket host *)
 let default_host = "ws-subscriptions-clob.polymarket.com"
 
+module Constants = Polymarket_common.Constants
+
+(** {1 Internal Helpers} *)
+
+(** Create a WebSocket client with the common initialization pattern. Uses the
+    Connection's built-in ping loop (30s interval). *)
+let make_client ~sw ~net ~clock ~resource ~subscribe_msg ~channel ~channel_name
+    =
+  let conn =
+    Connection.create ~sw ~net ~clock ~host:default_host ~resource
+      ~buffer_size:Constants.message_buffer_size ()
+  in
+  let message_stream = Eio.Stream.create Constants.message_buffer_size in
+  Connection.set_subscription conn subscribe_msg;
+  Connection.start conn;
+  Connection.start_ping conn;
+  Connection.start_parsing_fiber ~sw ~log_section:section ~channel_name ~conn
+    ~parse:(Types.parse_message ~channel)
+    ~output_stream:message_stream;
+  (conn, message_stream)
+
 (** {1 Market Channel Client} *)
 
 module Market = struct
@@ -19,38 +40,11 @@ module Market = struct
   }
 
   let connect ~sw ~net ~clock ~asset_ids () =
-    let conn =
-      Connection.create ~sw ~net ~clock ~host:default_host
-        ~resource:"/ws/market" ()
-    in
-    let message_stream = Eio.Stream.create 1000 in
-
-    (* Set subscription message for reconnection *)
     let subscribe_msg = Types.market_subscribe_json ~asset_ids in
-    Connection.set_subscription conn subscribe_msg;
-
-    (* Start the connection *)
-    Connection.start conn;
-
-    (* Start message parsing fiber *)
-    Eio.Fiber.fork ~sw (fun () ->
-        try
-          let raw_stream = Connection.message_stream conn in
-          while not (Connection.is_closed conn) do
-            let raw = Eio.Stream.take raw_stream in
-            let msgs = Types.parse_message ~channel:Types.Channel.Market raw in
-            List.iter (fun msg -> Eio.Stream.add message_stream msg) msgs
-          done;
-          Logger.log_debug ~section ~event:"PARSER_STOPPED"
-            [ ("channel", "market") ]
-        with
-        | Eio.Cancel.Cancelled _ ->
-            Logger.log_debug ~section ~event:"PARSER_CANCELLED"
-              [ ("channel", "market") ]
-        | exn ->
-            Logger.log_err ~section ~event:"PARSER_ERROR"
-              [ ("channel", "market"); ("error", Printexc.to_string exn) ]);
-
+    let conn, message_stream =
+      make_client ~sw ~net ~clock ~resource:"/ws/market" ~subscribe_msg
+        ~channel:Types.Channel.Market ~channel_name:"market"
+    in
     { conn; message_stream; asset_ids }
 
   let stream t = t.message_stream
@@ -81,38 +75,11 @@ module User = struct
   type t = { conn : Connection.t; message_stream : Types.message Eio.Stream.t }
 
   let connect ~sw ~net ~clock ~credentials ~markets () =
-    let conn =
-      Connection.create ~sw ~net ~clock ~host:default_host ~resource:"/ws/user"
-        ()
-    in
-    let message_stream = Eio.Stream.create 1000 in
-
-    (* Set subscription message with auth for reconnection *)
     let subscribe_msg = Types.user_subscribe_json ~credentials ~markets in
-    Connection.set_subscription conn subscribe_msg;
-
-    (* Start the connection *)
-    Connection.start conn;
-
-    (* Start message parsing fiber *)
-    Eio.Fiber.fork ~sw (fun () ->
-        try
-          let raw_stream = Connection.message_stream conn in
-          while not (Connection.is_closed conn) do
-            let raw = Eio.Stream.take raw_stream in
-            let msgs = Types.parse_message ~channel:Types.Channel.User raw in
-            List.iter (fun msg -> Eio.Stream.add message_stream msg) msgs
-          done;
-          Logger.log_debug ~section ~event:"PARSER_STOPPED"
-            [ ("channel", "user") ]
-        with
-        | Eio.Cancel.Cancelled _ ->
-            Logger.log_debug ~section ~event:"PARSER_CANCELLED"
-              [ ("channel", "user") ]
-        | exn ->
-            Logger.log_err ~section ~event:"PARSER_ERROR"
-              [ ("channel", "user"); ("error", Printexc.to_string exn) ]);
-
+    let conn, message_stream =
+      make_client ~sw ~net ~clock ~resource:"/ws/user" ~subscribe_msg
+        ~channel:Types.Channel.User ~channel_name:"user"
+    in
     { conn; message_stream }
 
   let stream t = t.message_stream

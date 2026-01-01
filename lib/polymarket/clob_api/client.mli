@@ -166,7 +166,7 @@ module L1 : sig
   val derive_api_key :
     t ->
     nonce:int ->
-    (l2 * Auth.derive_api_key_response, Polymarket_http.Client.error) result
+    (l2 * Auth.api_key_response, Polymarket_http.Client.error) result
   (** Derive API key from wallet and automatically upgrade to L2 client. Returns
       both the L2 client and the raw response (for credential storage). *)
 

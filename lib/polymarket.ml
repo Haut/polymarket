@@ -7,33 +7,11 @@
     [Polymarket_gamma.Responses.event], use [Polymarket.Gamma.get_events] and
     [Polymarket.Gamma.event]. *)
 
-module Gamma = struct
-  (** Gamma API client for markets, events, series, and search.
+module Gamma = Polymarket_gamma.Client
+(** Gamma API client for markets, events, series, and search. *)
 
-      Combines client functions and types. *)
-
-  include Polymarket_gamma.Endpoints
-  include Polymarket_gamma.Types
-
-  let default_base_url = "https://gamma-api.polymarket.com"
-
-  let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter () =
-    Polymarket_http.Client.create ~base_url ~sw ~net ~rate_limiter ()
-end
-
-module Data = struct
-  (** Data API client for positions, trades, activity, and leaderboards.
-
-      Combines client functions and response types. *)
-
-  include Polymarket_data.Endpoints
-  include Polymarket_data.Types
-
-  let default_base_url = "https://data-api.polymarket.com"
-
-  let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter () =
-    Polymarket_http.Client.create ~base_url ~sw ~net ~rate_limiter ()
-end
+module Data = Polymarket_data.Client
+(** Data API client for positions, trades, activity, and leaderboards. *)
 
 module Clob = struct
   (** CLOB API client for order books, pricing, and trading. *)

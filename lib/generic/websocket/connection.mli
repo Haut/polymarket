@@ -33,9 +33,14 @@ val create :
   clock:float Eio.Time.clock_ty Eio.Resource.t ->
   host:string ->
   resource:string ->
+  ?ping_interval:float ->
+  ?buffer_size:int ->
   unit ->
   t
-(** Create a new WebSocket connection. Does not connect immediately. *)
+(** Create a new WebSocket connection. Does not connect immediately.
+
+    @param ping_interval Ping interval in seconds (default: 30.0)
+    @param buffer_size Message buffer size (default: 1000) *)
 
 val start : t -> unit
 (** Start the connection with automatic reconnection. *)
@@ -69,3 +74,24 @@ val is_closed : t -> bool
 
 val start_ping : t -> unit
 (** Start the periodic ping loop in a background fiber. *)
+
+(** {1 Message Parsing} *)
+
+val start_parsing_fiber :
+  sw:Eio.Switch.t ->
+  log_section:string ->
+  channel_name:string ->
+  conn:t ->
+  parse:(string -> 'a list) ->
+  output_stream:'a Eio.Stream.t ->
+  unit
+(** Start a message parsing fiber that reads from a connection's raw stream,
+    parses messages using the provided function, and adds them to the output
+    stream.
+
+    Handles cancellation and errors with consistent logging.
+
+    @param log_section Logging section (e.g., "WSS", "RTDS")
+    @param channel_name Name for log messages (e.g., "market", "user")
+    @param parse Function to parse raw messages into typed messages
+    @param output_stream Output stream for parsed messages *)

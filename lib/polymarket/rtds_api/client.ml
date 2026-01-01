@@ -9,8 +9,30 @@ let section = "RTDS"
 (** RTDS WebSocket host *)
 let default_host = "ws-live-data.polymarket.com"
 
-(** Recommended ping interval (5 seconds per documentation) *)
-let ping_interval = 5.0
+module Constants = Polymarket_common.Constants
+
+(** {1 Internal Helpers} *)
+
+(** Create a WebSocket client with filtering for specialized message types. Used
+    by Crypto_prices and Comments clients that need type-specific streams. *)
+let make_filtered_client (type a) ~sw ~net ~clock ~subscription
+    ~(filter : Types.message -> a option) ~channel_name :
+    Connection.t * a Eio.Stream.t =
+  let conn =
+    Connection.create ~sw ~net ~clock ~host:default_host ~resource:"/ws"
+      ~ping_interval:Constants.rtds_ping_interval
+      ~buffer_size:Constants.message_buffer_size ()
+  in
+  let message_stream = Eio.Stream.create Constants.message_buffer_size in
+  let subscribe_msg = Types.subscribe_json ~subscriptions:[ subscription ] in
+  Connection.set_subscription conn subscribe_msg;
+  Connection.start conn;
+  Connection.start_ping conn;
+  (* Parsing with filter *)
+  let parse raw = Types.parse_message raw |> List.filter_map filter in
+  Connection.start_parsing_fiber ~sw ~log_section:section ~channel_name ~conn
+    ~parse ~output_stream:message_stream;
+  (conn, message_stream)
 
 (** {1 Unified RTDS Client} *)
 
@@ -22,40 +44,16 @@ type t = {
 
 let connect ~sw ~net ~clock () =
   let conn =
-    Connection.create ~sw ~net ~clock ~host:default_host ~resource:"/ws" ()
+    Connection.create ~sw ~net ~clock ~host:default_host ~resource:"/ws"
+      ~ping_interval:Constants.rtds_ping_interval
+      ~buffer_size:Constants.message_buffer_size ()
   in
-  let message_stream = Eio.Stream.create 1000 in
-
-  (* Start the connection *)
+  let message_stream = Eio.Stream.create Constants.message_buffer_size in
   Connection.start conn;
-
-  (* Start ping loop for connection maintenance *)
-  Eio.Fiber.fork ~sw (fun () ->
-      try
-        while not (Connection.is_closed conn) do
-          Eio.Time.sleep clock ping_interval;
-          if Connection.is_connected conn then Connection.send_ping conn
-        done
-      with Eio.Cancel.Cancelled _ ->
-        Logger.log_debug ~section ~event:"PING_CANCELLED" []);
-
-  (* Start message parsing fiber *)
-  Eio.Fiber.fork ~sw (fun () ->
-      try
-        let raw_stream = Connection.message_stream conn in
-        while not (Connection.is_closed conn) do
-          let raw = Eio.Stream.take raw_stream in
-          let msgs = Types.parse_message raw in
-          List.iter (fun msg -> Eio.Stream.add message_stream msg) msgs
-        done;
-        Logger.log_debug ~section ~event:"PARSER_STOPPED" []
-      with
-      | Eio.Cancel.Cancelled _ ->
-          Logger.log_debug ~section ~event:"PARSER_CANCELLED" []
-      | exn ->
-          Logger.log_err ~section ~event:"PARSER_ERROR"
-            [ ("error", Printexc.to_string exn) ]);
-
+  Connection.start_ping conn;
+  Connection.start_parsing_fiber ~sw ~log_section:section
+    ~channel_name:"unified" ~conn ~parse:Types.parse_message
+    ~output_stream:message_stream;
   { conn; message_stream; subscriptions = [] }
 
 let stream t = t.message_stream
@@ -96,98 +94,28 @@ module Crypto_prices = struct
     source : source;
   }
 
-  let connect_binance ~sw ~net ~clock ?symbols () =
-    let conn =
-      Connection.create ~sw ~net ~clock ~host:default_host ~resource:"/ws" ()
-    in
-    let message_stream = Eio.Stream.create 1000 in
+  let crypto_filter = function `Crypto m -> Some m | _ -> None
 
+  let connect_binance ~sw ~net ~clock ?symbols () =
     let subscription =
       let filters = Option.map Types.binance_symbol_filter symbols in
       Types.crypto_prices_subscription ?filters ()
     in
-    let subscribe_msg = Types.subscribe_json ~subscriptions:[ subscription ] in
-    Connection.set_subscription conn subscribe_msg;
-
-    (* Start the connection *)
-    Connection.start conn;
-
-    (* Start ping loop *)
-    Eio.Fiber.fork ~sw (fun () ->
-        try
-          while not (Connection.is_closed conn) do
-            Eio.Time.sleep clock ping_interval;
-            if Connection.is_connected conn then Connection.send_ping conn
-          done
-        with Eio.Cancel.Cancelled _ -> ());
-
-    (* Start message parsing fiber *)
-    Eio.Fiber.fork ~sw (fun () ->
-        try
-          let raw_stream = Connection.message_stream conn in
-          while not (Connection.is_closed conn) do
-            let raw = Eio.Stream.take raw_stream in
-            let msgs = Types.parse_message raw in
-            List.iter
-              (fun msg ->
-                match msg with
-                | `Crypto m -> Eio.Stream.add message_stream m
-                | _ -> ())
-              msgs
-          done
-        with
-        | Eio.Cancel.Cancelled _ -> ()
-        | exn ->
-            Logger.log_err ~section ~event:"CRYPTO_PARSER_ERROR"
-              [ ("error", Printexc.to_string exn) ]);
-
+    let conn, message_stream =
+      make_filtered_client ~sw ~net ~clock ~subscription ~filter:crypto_filter
+        ~channel_name:"crypto_binance"
+    in
     { conn; message_stream; symbols; source = Binance }
 
   let connect_chainlink ~sw ~net ~clock ?symbol () =
-    let conn =
-      Connection.create ~sw ~net ~clock ~host:default_host ~resource:"/ws" ()
-    in
-    let message_stream = Eio.Stream.create 1000 in
-
     let subscription =
       let filters = Option.map Types.chainlink_symbol_filter symbol in
       Types.crypto_prices_chainlink_subscription ?filters ()
     in
-    let subscribe_msg = Types.subscribe_json ~subscriptions:[ subscription ] in
-    Connection.set_subscription conn subscribe_msg;
-
-    (* Start the connection *)
-    Connection.start conn;
-
-    (* Start ping loop *)
-    Eio.Fiber.fork ~sw (fun () ->
-        try
-          while not (Connection.is_closed conn) do
-            Eio.Time.sleep clock ping_interval;
-            if Connection.is_connected conn then Connection.send_ping conn
-          done
-        with Eio.Cancel.Cancelled _ -> ());
-
-    (* Start message parsing fiber *)
-    Eio.Fiber.fork ~sw (fun () ->
-        try
-          let raw_stream = Connection.message_stream conn in
-          while not (Connection.is_closed conn) do
-            let raw = Eio.Stream.take raw_stream in
-            let msgs = Types.parse_message raw in
-            List.iter
-              (fun msg ->
-                match msg with
-                | `Crypto m -> Eio.Stream.add message_stream m
-                | _ -> ())
-              msgs
-          done
-        with
-        | Eio.Cancel.Cancelled _ -> ()
-        | exn ->
-            Logger.log_err ~section ~event:"CRYPTO_PARSER_ERROR"
-              [ ("error", Printexc.to_string exn) ]);
-
+    let conn, message_stream =
+      make_filtered_client ~sw ~net ~clock ~subscription ~filter:crypto_filter
+        ~channel_name:"crypto_chainlink"
+    in
     {
       conn;
       message_stream;
@@ -210,48 +138,14 @@ module Comments = struct
     gamma_auth : Types.gamma_auth option;
   }
 
+  let comment_filter = function `Comment m -> Some m | _ -> None
+
   let connect ~sw ~net ~clock ?gamma_auth () =
-    let conn =
-      Connection.create ~sw ~net ~clock ~host:default_host ~resource:"/ws" ()
-    in
-    let message_stream = Eio.Stream.create 1000 in
-
     let subscription = Types.comments_subscription ?gamma_auth () in
-    let subscribe_msg = Types.subscribe_json ~subscriptions:[ subscription ] in
-    Connection.set_subscription conn subscribe_msg;
-
-    (* Start the connection *)
-    Connection.start conn;
-
-    (* Start ping loop *)
-    Eio.Fiber.fork ~sw (fun () ->
-        try
-          while not (Connection.is_closed conn) do
-            Eio.Time.sleep clock ping_interval;
-            if Connection.is_connected conn then Connection.send_ping conn
-          done
-        with Eio.Cancel.Cancelled _ -> ());
-
-    (* Start message parsing fiber *)
-    Eio.Fiber.fork ~sw (fun () ->
-        try
-          let raw_stream = Connection.message_stream conn in
-          while not (Connection.is_closed conn) do
-            let raw = Eio.Stream.take raw_stream in
-            let msgs = Types.parse_message raw in
-            List.iter
-              (fun msg ->
-                match msg with
-                | `Comment m -> Eio.Stream.add message_stream m
-                | _ -> ())
-              msgs
-          done
-        with
-        | Eio.Cancel.Cancelled _ -> ()
-        | exn ->
-            Logger.log_err ~section ~event:"COMMENTS_PARSER_ERROR"
-              [ ("error", Printexc.to_string exn) ]);
-
+    let conn, message_stream =
+      make_filtered_client ~sw ~net ~clock ~subscription ~filter:comment_filter
+        ~channel_name:"comments"
+    in
     { conn; message_stream; gamma_auth }
 
   let stream t = t.message_stream

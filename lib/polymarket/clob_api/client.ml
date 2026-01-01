@@ -8,7 +8,9 @@ module Crypto = Polymarket_common.Crypto
 
 let default_base_url = "https://clob.polymarket.com"
 
-(** {1 Public Endpoints Functor} *)
+(** {1 Public Endpoints Functor}
+
+    Shared implementation for public endpoints across all auth levels. *)
 
 module type HAS_HTTP = sig
   type t
@@ -17,50 +19,13 @@ module type HAS_HTTP = sig
 end
 
 module Make_public (M : HAS_HTTP) = struct
-  let get_order_book (t : M.t) = Endpoints.get_order_book (M.http t)
-  let get_order_books (t : M.t) = Endpoints.get_order_books (M.http t)
-  let get_price (t : M.t) = Endpoints.get_price (M.http t)
-  let get_midpoint (t : M.t) = Endpoints.get_midpoint (M.http t)
-  let get_prices (t : M.t) = Endpoints.get_prices (M.http t)
-  let get_spreads (t : M.t) = Endpoints.get_spreads (M.http t)
-  let get_price_history (t : M.t) = Endpoints.get_price_history (M.http t)
-end
-
-(** {1 L1 Operations Functor} *)
-
-module type HAS_L1_AUTH = sig
-  type t
-  type l2_client
-
-  val http : t -> H.t
-  val private_key : t -> Crypto.private_key
-  val address : t -> string
-
-  val make_l2 :
-    H.t -> Crypto.private_key -> string -> Auth.credentials -> l2_client
-end
-
-module Make_l1_ops (M : HAS_L1_AUTH) = struct
-  include Make_public (M)
-
-  let address (t : M.t) = M.address t
-
-  let create_api_key (t : M.t) ~nonce =
-    Endpoints.create_api_key (M.http t) ~private_key:(M.private_key t)
-      ~address:(M.address t) ~nonce
-
-  let derive_api_key (t : M.t) ~nonce =
-    match
-      Endpoints.derive_api_key (M.http t) ~private_key:(M.private_key t)
-        ~address:(M.address t) ~nonce
-    with
-    | Ok resp ->
-        let credentials = Auth.credentials_of_derive_response resp in
-        let l2_client =
-          M.make_l2 (M.http t) (M.private_key t) (M.address t) credentials
-        in
-        Ok (l2_client, resp)
-    | Error e -> Error e
+  let get_order_book t = Endpoints.get_order_book (M.http t)
+  let get_order_books t = Endpoints.get_order_books (M.http t)
+  let get_price t = Endpoints.get_price (M.http t)
+  let get_midpoint t = Endpoints.get_midpoint (M.http t)
+  let get_prices t = Endpoints.get_prices (M.http t)
+  let get_spreads t = Endpoints.get_spreads (M.http t)
+  let get_price_history t = Endpoints.get_price_history (M.http t)
 end
 
 (** {1 Client Types} *)
@@ -75,81 +40,20 @@ type l2 = {
   credentials : Auth.credentials;
 }
 
-let make_l2 http private_key address credentials =
-  { http; private_key; address; credentials }
-
-(** {1 L2 Operations Functor} *)
-
-module type HAS_L2_AUTH = sig
-  include HAS_L1_AUTH
-
-  val credentials : t -> Auth.credentials
-end
-
-module Make_l2_ops (M : HAS_L2_AUTH) = struct
-  include Make_l1_ops (M)
-
-  let credentials (t : M.t) = M.credentials t
-
-  let delete_api_key (t : M.t) =
-    Endpoints.delete_api_key (M.http t) ~credentials:(M.credentials t)
-      ~address:(M.address t)
-
-  let get_api_keys (t : M.t) =
-    Endpoints.get_api_keys (M.http t) ~credentials:(M.credentials t)
-      ~address:(M.address t)
-
-  let create_order (t : M.t) =
-    Endpoints.create_order (M.http t) ~credentials:(M.credentials t)
-      ~address:(M.address t)
-
-  let create_orders (t : M.t) =
-    Endpoints.create_orders (M.http t) ~credentials:(M.credentials t)
-      ~address:(M.address t)
-
-  let get_order (t : M.t) =
-    Endpoints.get_order (M.http t) ~credentials:(M.credentials t)
-      ~address:(M.address t)
-
-  let get_orders (t : M.t) =
-    Endpoints.get_orders (M.http t) ~credentials:(M.credentials t)
-      ~address:(M.address t)
-
-  let cancel_order (t : M.t) =
-    Endpoints.cancel_order (M.http t) ~credentials:(M.credentials t)
-      ~address:(M.address t)
-
-  let cancel_orders (t : M.t) =
-    Endpoints.cancel_orders (M.http t) ~credentials:(M.credentials t)
-      ~address:(M.address t)
-
-  let cancel_all (t : M.t) =
-    Endpoints.cancel_all (M.http t) ~credentials:(M.credentials t)
-      ~address:(M.address t)
-
-  let cancel_market_orders (t : M.t) =
-    Endpoints.cancel_market_orders (M.http t) ~credentials:(M.credentials t)
-      ~address:(M.address t)
-
-  let get_trades (t : M.t) =
-    Endpoints.get_trades (M.http t) ~credentials:(M.credentials t)
-      ~address:(M.address t)
-end
-
 (** {1 Unauthenticated Client} *)
 
 module Unauthed = struct
   type t = unauthed
-
-  let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter () =
-    let http = H.create ~base_url ~sw ~net ~rate_limiter () in
-    { http }
 
   include Make_public (struct
     type t = unauthed
 
     let http (t : t) = t.http
   end)
+
+  let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter () =
+    let http = H.create ~base_url ~sw ~net ~rate_limiter () in
+    ({ http } : t)
 end
 
 (** {1 L1-Authenticated Client} *)
@@ -161,17 +65,38 @@ module L1 = struct
       () =
     let http = H.create ~base_url ~sw ~net ~rate_limiter () in
     let address = Crypto.private_key_to_address private_key in
-    { http; private_key; address }
+    ({ http; private_key; address } : t)
 
-  include Make_l1_ops (struct
+  let address (t : t) = t.address
+
+  include Make_public (struct
     type t = l1
-    type l2_client = l2
 
     let http (t : t) = t.http
-    let private_key (t : t) = t.private_key
-    let address (t : t) = t.address
-    let make_l2 = make_l2
   end)
+
+  (* L1 auth endpoints *)
+  let create_api_key (t : t) ~nonce =
+    Endpoints.create_api_key t.http ~private_key:t.private_key
+      ~address:t.address ~nonce
+
+  let derive_api_key (t : t) ~nonce =
+    match
+      Endpoints.derive_api_key t.http ~private_key:t.private_key
+        ~address:t.address ~nonce
+    with
+    | Ok resp ->
+        let credentials = Auth.credentials_of_api_key_response resp in
+        let l2_client : l2 =
+          {
+            http = t.http;
+            private_key = t.private_key;
+            address = t.address;
+            credentials;
+          }
+        in
+        Ok (l2_client, resp)
+    | Error e -> Error e
 end
 
 (** {1 L2-Authenticated Client} *)
@@ -183,18 +108,57 @@ module L2 = struct
       ~credentials () =
     let http = H.create ~base_url ~sw ~net ~rate_limiter () in
     let address = Crypto.private_key_to_address private_key in
-    { http; private_key; address; credentials }
+    ({ http; private_key; address; credentials } : t)
 
-  include Make_l2_ops (struct
+  let address (t : t) = t.address
+  let credentials (t : t) = t.credentials
+
+  include Make_public (struct
     type t = l2
-    type l2_client = l2
 
     let http (t : t) = t.http
-    let private_key (t : t) = t.private_key
-    let address (t : t) = t.address
-    let make_l2 = make_l2
-    let credentials (t : t) = t.credentials
   end)
+
+  (* L1 auth endpoints *)
+  let create_api_key (t : t) ~nonce =
+    Endpoints.create_api_key t.http ~private_key:t.private_key
+      ~address:t.address ~nonce
+
+  (* L2 auth endpoints *)
+  let delete_api_key (t : t) =
+    Endpoints.delete_api_key t.http ~credentials:t.credentials
+      ~address:t.address
+
+  let get_api_keys (t : t) =
+    Endpoints.get_api_keys t.http ~credentials:t.credentials ~address:t.address
+
+  let create_order (t : t) =
+    Endpoints.create_order t.http ~credentials:t.credentials ~address:t.address
+
+  let create_orders (t : t) =
+    Endpoints.create_orders t.http ~credentials:t.credentials ~address:t.address
+
+  let get_order (t : t) =
+    Endpoints.get_order t.http ~credentials:t.credentials ~address:t.address
+
+  let get_orders (t : t) =
+    Endpoints.get_orders t.http ~credentials:t.credentials ~address:t.address
+
+  let cancel_order (t : t) =
+    Endpoints.cancel_order t.http ~credentials:t.credentials ~address:t.address
+
+  let cancel_orders (t : t) =
+    Endpoints.cancel_orders t.http ~credentials:t.credentials ~address:t.address
+
+  let cancel_all (t : t) =
+    Endpoints.cancel_all t.http ~credentials:t.credentials ~address:t.address
+
+  let cancel_market_orders (t : t) =
+    Endpoints.cancel_market_orders t.http ~credentials:t.credentials
+      ~address:t.address
+
+  let get_trades (t : t) =
+    Endpoints.get_trades t.http ~credentials:t.credentials ~address:t.address
 end
 
 (** {1 State Transitions} *)
