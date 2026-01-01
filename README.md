@@ -4,7 +4,7 @@ OCaml client library for the [Polymarket](https://polymarket.com) prediction mar
 
 ## Features
 
-- Full coverage of the Polymarket Data API, Gamma API, and CLOB API
+- Full coverage of the Polymarket Data API, Gamma API, CLOB API, and RFQ API
 - Real-time WebSocket streaming for market data and user events
 - RTDS (Real-Time Data Socket) for crypto prices and comments
 - L1 (EIP-712 wallet signing) and L2 (HMAC-SHA256) authentication for CLOB API
@@ -282,6 +282,61 @@ match Clob.L2.cancel_all l2_client () with
 | Ok resp -> Printf.printf "Cancelled: %d orders\n" (List.length resp.canceled)
 | Error err -> Printf.printf "Error: %s\n" err.Http.error
 ```
+
+## RFQ API Examples
+
+The RFQ (Request for Quote) API enables large block trades by allowing traders to request quotes and execute trades off the order book.
+
+### Creating an RFQ Client
+
+All RFQ endpoints require L2 authentication:
+
+```ocaml
+open Polymarket
+
+let routes = Polymarket_common.Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
+let rate_limiter = Rate_limiter.create ~routes ~clock () in
+let private_key = Crypto.private_key_of_string "your_private_key_hex" in
+let credentials = Auth.{ api_key = "..."; secret = "..."; passphrase = "..." } in
+let client = Rfq.create ~sw ~net ~rate_limiter ~private_key ~credentials () in
+```
+
+### Get Active Requests
+
+```ocaml
+match Rfq.get_requests client ~state:Rfq.Types.State_filter.Active () with
+| Ok resp ->
+  List.iter (fun req ->
+    Printf.printf "Request %s: %s %s @ %s\n"
+      req.id req.side req.asset_id req.price
+  ) resp.requests
+| Error err ->
+  Printf.printf "Error: %s\n" (Rfq.Types.error_to_string err)
+```
+
+### Get Quotes
+
+```ocaml
+match Rfq.get_quotes client ~state:Rfq.Types.State_filter.Active () with
+| Ok resp ->
+  List.iter (fun quote ->
+    Printf.printf "Quote %s: %s\n" quote.id quote.price
+  ) resp.quotes
+| Error err ->
+  Printf.printf "Error: %s\n" (Rfq.Types.error_to_string err)
+```
+
+### RFQ API Endpoints
+
+| Endpoint | Function | Description |
+|----------|----------|-------------|
+| `POST /rfq/request` | `create_request` | Create a new RFQ request |
+| `DELETE /rfq/request` | `cancel_request` | Cancel an RFQ request |
+| `GET /rfq/request` | `get_requests` | Get RFQ requests |
+| `POST /rfq/quote` | `create_quote` | Create a quote for an RFQ |
+| `DELETE /rfq/quote` | `cancel_quote` | Cancel a quote |
+| `GET /rfq/quote` | `get_quotes` | Get quotes |
+| `POST /rfq/accept` | `accept_quote` | Accept a quote |
 
 ## WebSocket Streaming
 
@@ -653,6 +708,8 @@ Polymarket
 │   ├── Types     (* order_side, order_type, time_interval, etc. *)
 │   ├── Auth      (* L1/L2 authentication *)
 │   └── Crypto    (* Signing and hashing *)
+├── Rfq           (* Request for Quote API for block trades *)
+│   └── Types     (* RFQ types and enums *)
 ├── Wss           (* Real-time WebSocket streaming *)
 │   ├── Market    (* Public market data channel *)
 │   ├── User      (* Authenticated user channel *)
@@ -810,11 +867,13 @@ For finer-grained control, you can depend on individual sub-libraries:
 | `polymarket.common` | Shared primitives (`Address`, `Hash64`, etc.) and utilities |
 | `polymarket.http` | HTTP client with TLS support, type-safe request builder |
 | `polymarket.rate_limiter` | GCRA-based rate limiter (used internally by http) |
+| `polymarket.websocket` | Low-level WebSocket protocol implementation |
 | `polymarket.gamma` | Gamma API client only |
 | `polymarket.data` | Data API client only |
 | `polymarket.clob` | CLOB API client only |
-| `polymarket.wss_api` | WebSocket client for market/user streams |
-| `polymarket.rtds_api` | RTDS client for crypto prices and comments |
+| `polymarket.rfq` | RFQ API client for block trades |
+| `polymarket.wss` | WebSocket client for market/user streams |
+| `polymarket.rtds` | RTDS client for crypto prices and comments |
 
 To use a sub-library, add it to your dune file:
 
@@ -864,6 +923,13 @@ dune exec examples/clob_api_demo.exe
 # CLOB API demo with private key for authentication
 POLY_PRIVATE_KEY=your_private_key_hex dune exec examples/clob_api_demo.exe
 
+# RFQ API demo (requires credentials)
+POLY_PRIVATE_KEY=your_private_key_hex \
+POLY_API_KEY=your_api_key \
+POLY_API_SECRET=your_api_secret \
+POLY_API_PASSPHRASE=your_passphrase \
+dune exec examples/rfq_demo.exe
+
 # WebSocket streaming demo
 dune exec examples/wss_demo.exe
 
@@ -882,52 +948,64 @@ dune fmt
 ```
 polymarket/
 ├── lib/
-│   ├── common/           # Shared utilities
-│   │   ├── primitives.ml # Validated types (Address, Hash64, Limit, etc.)
-│   │   ├── auth.ml       # L1/L2 authentication header builders
-│   │   ├── crypto.ml     # Signing and hashing utilities
-│   │   └── logger.ml     # Structured logging
-│   ├── http_client/      # HTTP client
-│   │   ├── client.ml     # TLS-enabled HTTP requests with rate limiting
-│   │   ├── builder.ml    # Type-safe request builder with phantom types
-│   │   └── json.ml       # JSON parsing utilities
-│   ├── rate_limiter/     # GCRA-based rate limiter
-│   │   ├── rate_limiter.ml  # Main rate limiter module
-│   │   ├── presets.ml    # Polymarket API rate limit configs
-│   │   ├── gcra.ml       # Generic Cell Rate Algorithm
-│   │   ├── state.ml      # Thread-safe state management
-│   │   ├── matcher.ml    # Route matching logic
-│   │   └── builder.ml    # Route configuration builder
-│   ├── data_api/         # Data API implementation
-│   │   ├── endpoints.ml  # API endpoint implementations
-│   │   └── types.ml      # Response types and enums
-│   ├── gamma_api/        # Gamma API implementation
-│   │   ├── endpoints.ml  # API endpoint implementations
-│   │   └── types.ml      # Types and module-based enums
-│   ├── clob_api/         # CLOB API implementation
-│   │   ├── client.ml     # Typestate client (compile-time auth)
-│   │   ├── endpoints.ml  # API endpoint implementations
-│   │   ├── order_builder.ml # Order construction utilities
-│   │   └── types.ml      # Types and module-based enums
-│   ├── websocket_client/ # WebSocket streaming client (wss_api)
-│   │   ├── client.ml     # Market and User channel clients
-│   │   ├── connection.ml # Connection management with reconnect
-│   │   ├── frame.ml      # WebSocket frame encoding/decoding
-│   │   ├── handshake.ml  # HTTP upgrade handshake
-│   │   └── types.ml      # Message types
-│   ├── rtds_api/         # Real-Time Data Socket client
-│   │   ├── client.ml     # Crypto_prices and Comments clients
-│   │   └── types.ml      # RTDS message types
-│   ├── polymarket.ml     # Main module (flattened API)
-│   └── polymarket.mli    # Public interface
+│   ├── generic/              # Reusable infrastructure
+│   │   ├── http_client/      # HTTP client
+│   │   │   ├── client.ml     # TLS-enabled HTTP requests with rate limiting
+│   │   │   ├── builder.ml    # Type-safe request builder with phantom types
+│   │   │   └── json.ml       # JSON parsing utilities
+│   │   ├── rate_limiter/     # GCRA-based rate limiter
+│   │   │   ├── rate_limiter.ml  # Main rate limiter module
+│   │   │   ├── gcra.ml       # Generic Cell Rate Algorithm
+│   │   │   ├── state.ml      # Thread-safe state management
+│   │   │   ├── matcher.ml    # Route matching logic
+│   │   │   ├── builder.ml    # Route configuration builder
+│   │   │   └── types.ml      # Rate limiter types
+│   │   └── websocket/        # WebSocket protocol implementation
+│   │       ├── connection.ml # Connection management with reconnect
+│   │       ├── frame.ml      # WebSocket frame encoding/decoding
+│   │       └── handshake.ml  # HTTP upgrade handshake
+│   ├── polymarket/           # Polymarket-specific APIs
+│   │   ├── common/           # Shared utilities
+│   │   │   ├── primitives.ml # Validated types (Address, Hash64, Limit, etc.)
+│   │   │   ├── auth.ml       # L1/L2 authentication header builders
+│   │   │   ├── crypto.ml     # Signing and hashing utilities
+│   │   │   ├── order_signing.ml # Order signing utilities
+│   │   │   ├── constants.ml  # API constants
+│   │   │   ├── error.ml      # Error types
+│   │   │   └── rate_limit_presets.ml # Polymarket API rate limit configs
+│   │   ├── data/             # Data API implementation
+│   │   │   ├── client.ml     # API endpoint implementations
+│   │   │   └── types.ml      # Response types and enums
+│   │   ├── gamma/            # Gamma API implementation
+│   │   │   ├── client.ml     # API endpoint implementations
+│   │   │   └── types.ml      # Types and module-based enums
+│   │   ├── clob/             # CLOB API implementation
+│   │   │   ├── client.ml     # Typestate client (compile-time auth)
+│   │   │   ├── order_builder.ml # Order construction utilities
+│   │   │   └── types.ml      # Types and module-based enums
+│   │   ├── rfq/              # RFQ API implementation
+│   │   │   ├── client.ml     # Request for Quote client
+│   │   │   ├── order_builder.ml # RFQ order utilities
+│   │   │   └── types.ml      # RFQ types
+│   │   ├── wss/              # WebSocket streaming client
+│   │   │   ├── client.ml     # Market and User channel clients
+│   │   │   └── types.ml      # Message types
+│   │   └── rtds/             # Real-Time Data Socket client
+│   │       ├── client.ml     # Crypto_prices and Comments clients
+│   │       └── types.ml      # RTDS message types
+│   ├── polymarket.ml         # Main module (flattened API)
+│   └── polymarket.mli        # Public interface
 ├── examples/
-│   ├── data_api_demo.ml  # Data API live demo
-│   ├── gamma_api_demo.ml # Gamma API live demo
-│   ├── clob_api_demo.ml  # CLOB API live demo
-│   ├── wss_demo.ml       # WebSocket streaming demo
-│   ├── rtds_demo.ml      # RTDS streaming demo
-│   └── logger.ml         # Demo logging utilities
-├── test/                 # Test suite
+│   ├── data_api_demo.ml      # Data API live demo
+│   ├── gamma_api_demo.ml     # Gamma API live demo
+│   ├── clob_api_demo.ml      # CLOB API live demo
+│   ├── rfq_demo.ml           # RFQ API live demo
+│   ├── wss_demo.ml           # WebSocket streaming demo
+│   ├── rtds_demo.ml          # RTDS streaming demo
+│   └── logger.ml             # Demo logging utilities
+├── ppx/                      # Custom PPX preprocessors
+├── scripts/                  # Build and utility scripts
+├── test/                     # Test suite
 ├── CHANGELOG.md
 ├── CODE_OF_CONDUCT.md
 ├── CONTRIBUTING.md
