@@ -60,42 +60,34 @@ let new_delete (client : C.t) (path : string) : ready t =
 
 (** {1 Query Parameter Builders} *)
 
-let query_param (key : string) (value : string) (req : 'a t) : 'a t =
+let add_param (key : string) (value : string) (req : 'a t) : 'a t =
   { req with params = (key, [ value ]) :: req.params }
 
-let query_add (key : string) (value : string option) (req : 'a t) : 'a t =
-  match value with
-  | Some v -> { req with params = (key, [ v ]) :: req.params }
-  | None -> req
+let query_param (key : string) (value : string) (req : 'a t) : 'a t =
+  add_param key value req
 
 let query_option (key : string) (to_string : 'b -> string) (value : 'b option)
     (req : 'a t) : 'a t =
-  match value with
-  | Some v -> { req with params = (key, [ to_string v ]) :: req.params }
-  | None -> req
+  match value with Some v -> add_param key (to_string v) req | None -> req
+
+let query_add (key : string) (value : string option) (req : 'a t) : 'a t =
+  query_option key Fun.id value req
+
+let query_bool (key : string) (value : bool option) (req : 'a t) : 'a t =
+  query_option key string_of_bool value req
 
 let query_list (key : string) (to_string : 'b -> string)
     (values : 'b list option) (req : 'a t) : 'a t =
   match values with
-  | Some vs when vs <> [] ->
-      let joined = String.concat "," (List.map to_string vs) in
-      { req with params = (key, [ joined ]) :: req.params }
+  | Some (_ :: _ as vs) ->
+      add_param key (String.concat "," (List.map to_string vs)) req
   | _ -> req
-
-let query_bool (key : string) (value : bool option) (req : 'a t) : 'a t =
-  match value with
-  | Some true -> { req with params = (key, [ "true" ]) :: req.params }
-  | Some false -> { req with params = (key, [ "false" ]) :: req.params }
-  | None -> req
 
 let query_each (key : string) (to_string : 'b -> string)
     (values : 'b list option) (req : 'a t) : 'a t =
   match values with
   | Some vs ->
-      List.fold_left
-        (fun acc v ->
-          { acc with params = (key, [ to_string v ]) :: acc.params })
-        req vs
+      List.fold_left (fun acc v -> add_param key (to_string v) acc) req vs
   | None -> req
 
 (** {1 Header Builders} *)

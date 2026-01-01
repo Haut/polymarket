@@ -3,7 +3,6 @@
     This module provides ergonomic functions for building signed orders with
     proper EIP-712 signatures, amount calculations, and nonce generation. *)
 
-module Side = Types.Side
 module Crypto = Polymarket_common.Crypto
 
 (** {1 Constants} *)
@@ -28,29 +27,10 @@ let generate_salt () =
   done;
   (* Convert first 8 bytes to int64 for simplicity *)
   let n =
-    Int64.add
-      (Int64.shift_left (Int64.of_int (Char.code (Bytes.get bytes 0))) 56)
-      (Int64.add
-         (Int64.shift_left (Int64.of_int (Char.code (Bytes.get bytes 1))) 48)
-         (Int64.add
-            (Int64.shift_left (Int64.of_int (Char.code (Bytes.get bytes 2))) 40)
-            (Int64.add
-               (Int64.shift_left
-                  (Int64.of_int (Char.code (Bytes.get bytes 3)))
-                  32)
-               (Int64.add
-                  (Int64.shift_left
-                     (Int64.of_int (Char.code (Bytes.get bytes 4)))
-                     24)
-                  (Int64.add
-                     (Int64.shift_left
-                        (Int64.of_int (Char.code (Bytes.get bytes 5)))
-                        16)
-                     (Int64.add
-                        (Int64.shift_left
-                           (Int64.of_int (Char.code (Bytes.get bytes 6)))
-                           8)
-                        (Int64.of_int (Char.code (Bytes.get bytes 7)))))))))
+    Bytes.fold_left
+      (fun acc byte ->
+        Int64.(shift_left acc 8 |> add (Int64.of_int (Char.code byte))))
+      Int64.zero bytes
   in
   Int64.to_string (Int64.abs n)
 
@@ -69,11 +49,11 @@ let calculate_amounts ~side ~price ~size =
   let size_scaled = size *. scale in
   let usdc_amount = price *. size *. scale in
   match side with
-  | Side.Buy ->
+  | Types.Side.Buy ->
       let maker_amount = Printf.sprintf "%.0f" usdc_amount in
       let taker_amount = Printf.sprintf "%.0f" size_scaled in
       (maker_amount, taker_amount)
-  | Side.Sell ->
+  | Types.Side.Sell ->
       let maker_amount = Printf.sprintf "%.0f" size_scaled in
       let taker_amount = Printf.sprintf "%.0f" usdc_amount in
       (maker_amount, taker_amount)
@@ -142,7 +122,7 @@ let sign_order ~private_key ~salt ~maker ~signer ~taker ~token_id ~maker_amount
     Crypto.pad_hex_32 hex
   in
   let encode_uint256_str s = Crypto.encode_uint256 (int_of_string s) in
-  let side_int = match side with Side.Buy -> 0 | Side.Sell -> 1 in
+  let side_int = match side with Types.Side.Buy -> 0 | Types.Side.Sell -> 1 in
   let sig_type_int =
     match signature_type with
     | Types.Signature_type.Eoa -> 0
@@ -187,8 +167,8 @@ let sign_order ~private_key ~salt ~maker ~signer ~taker ~token_id ~maker_amount
     @param nonce Optional nonce for the order (default: 0)
     @param fee_rate_bps Optional fee rate in basis points (default: 0)
     @return A signed order ready for submission *)
-let create_limit_order ~private_key ~token_id ~(side : Side.t) ~price ~size
-    ?expiration ?nonce ?(fee_rate_bps = default_fee_rate_bps) () =
+let create_limit_order ~private_key ~token_id ~(side : Types.Side.t) ~price
+    ~size ?expiration ?nonce ?(fee_rate_bps = default_fee_rate_bps) () =
   (* Derive address from private key *)
   let address = Crypto.private_key_to_address private_key in
   (* Generate salt *)

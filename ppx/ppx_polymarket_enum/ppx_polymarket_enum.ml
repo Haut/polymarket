@@ -22,7 +22,6 @@
     - t_of_yojson : Yojson.Safe.t -> t
     - yojson_of_t : t -> Yojson.Safe.t
     - pp : Format.formatter -> t -> unit
-    - show : t -> string
     - equal : t -> t -> bool *)
 
 open Ppxlib
@@ -166,7 +165,6 @@ let generate_impl ~ctxt (_rec_flag, type_declarations) =
 
             let yojson_of_t t = `String (to_string t)
             let pp fmt t = Format.fprintf fmt "%s" (to_string t)
-            let show = to_string
             let equal a b = String.equal (to_string a) (to_string b)]
       | _ ->
           Location.raise_errorf ~loc:td.ptype_loc

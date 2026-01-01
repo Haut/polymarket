@@ -7,10 +7,11 @@
 (** {1 Query Parameter Enums} *)
 
 module Sort_direction : sig
-  type t = Asc | Desc [@@deriving yojson, show, eq]
+  type t = Asc | Desc [@@deriving yojson, eq]
 
   val to_string : t -> string
   val of_string : string -> t
+  val pp : Format.formatter -> t -> unit
 end
 
 module Position_sort_by : sig
@@ -24,39 +25,44 @@ module Position_sort_by : sig
     | Resolving
     | Price
     | Avgprice
-  [@@deriving yojson, show, eq]
+  [@@deriving yojson, eq]
 
   val to_string : t -> string
   val of_string : string -> t
+  val pp : Format.formatter -> t -> unit
 end
 
 module Filter_type : sig
-  type t = Cash | Tokens [@@deriving yojson, show, eq]
+  type t = Cash | Tokens [@@deriving yojson, eq]
 
   val to_string : t -> string
   val of_string : string -> t
+  val pp : Format.formatter -> t -> unit
 end
 
 module Activity_sort_by : sig
-  type t = Timestamp | Tokens | Cash [@@deriving yojson, show, eq]
+  type t = Timestamp | Tokens | Cash [@@deriving yojson, eq]
 
   val to_string : t -> string
   val of_string : string -> t
+  val pp : Format.formatter -> t -> unit
 end
 
 module Closed_position_sort_by : sig
   type t = Realizedpnl | Title | Price | Avgprice | Timestamp
-  [@@deriving yojson, show, eq]
+  [@@deriving yojson, eq]
 
   val to_string : t -> string
   val of_string : string -> t
+  val pp : Format.formatter -> t -> unit
 end
 
 module Time_period : sig
-  type t = Day | Week | Month | All [@@deriving yojson, show, eq]
+  type t = Day | Week | Month | All [@@deriving yojson, eq]
 
   val to_string : t -> string
   val of_string : string -> t
+  val pp : Format.formatter -> t -> unit
 end
 
 module Leaderboard_category : sig
@@ -71,38 +77,34 @@ module Leaderboard_category : sig
     | Economics
     | Tech
     | Finance
-  [@@deriving yojson, show, eq]
+  [@@deriving yojson, eq]
 
   val to_string : t -> string
   val of_string : string -> t
+  val pp : Format.formatter -> t -> unit
 end
 
 module Leaderboard_order_by : sig
-  type t = Pnl | Vol [@@deriving yojson, show, eq]
+  type t = Pnl | Vol [@@deriving yojson, eq]
 
   val to_string : t -> string
   val of_string : string -> t
+  val pp : Format.formatter -> t -> unit
 end
 
 (** {1 Domain Enums} *)
 
-module Side : sig
-  type t = Buy | Sell [@@deriving show, eq]
-
-  val to_string : t -> string
-  val of_string : string -> t
-  val t_of_yojson : Yojson.Safe.t -> t
-  val yojson_of_t : t -> Yojson.Safe.t
-end
+module Side = Polymarket_common.Primitives.Side
 
 module Activity_type : sig
   type t = Trade | Split | Merge | Redeem | Reward | Conversion
-  [@@deriving show, eq]
+  [@@deriving eq]
 
   val to_string : t -> string
   val of_string : string -> t
   val t_of_yojson : Yojson.Safe.t -> t
   val yojson_of_t : t -> Yojson.Safe.t
+  val pp : Format.formatter -> t -> unit
 end
 
 (** {1 Response Types} *)

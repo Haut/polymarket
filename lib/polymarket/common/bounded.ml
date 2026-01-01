@@ -53,6 +53,22 @@ module Make_int (Bounds : INT_BOUNDS) : BOUNDED_INT = struct
   let to_string n = string_of_int n
 end
 
+(** {1 Lower-bounded Integer (internal)} *)
+
+module type LOWER_INT_BOUND = sig
+  val min_value : int
+  val error_msg : string
+end
+
+module Make_lower_bounded_int (B : LOWER_INT_BOUND) = struct
+  type t = int
+
+  let of_int n = if n >= B.min_value then Some n else None
+  let of_int_exn n = if n >= B.min_value then n else invalid_arg B.error_msg
+  let to_int n = n
+  let to_string = string_of_int
+end
+
 (** {1 Non-negative Integer} *)
 
 (** Interface for non-negative integers (no upper bound). *)
@@ -69,12 +85,11 @@ end
 
 (** Non-negative integer implementation. *)
 module Nonneg_int : NONNEG_INT = struct
-  type t = int
+  include Make_lower_bounded_int (struct
+    let min_value = 0
+    let error_msg = "must be non-negative"
+  end)
 
-  let of_int n = if n >= 0 then Some n else None
-  let of_int_exn n = if n >= 0 then n else invalid_arg "must be non-negative"
-  let to_int n = n
-  let to_string n = string_of_int n
   let zero = 0
   let one = 1
 end
@@ -94,12 +109,11 @@ end
 
 (** Positive integer implementation. *)
 module Pos_int : POS_INT = struct
-  type t = int
+  include Make_lower_bounded_int (struct
+    let min_value = 1
+    let error_msg = "must be positive (>= 1)"
+  end)
 
-  let of_int n = if n >= 1 then Some n else None
-  let of_int_exn n = if n >= 1 then n else invalid_arg "must be positive (>= 1)"
-  let to_int n = n
-  let to_string n = string_of_int n
   let one = 1
 end
 
@@ -148,6 +162,22 @@ module Make_float (Bounds : FLOAT_BOUNDS) : BOUNDED_FLOAT = struct
   let to_string n = string_of_float n
 end
 
+(** {1 Lower-bounded Float (internal)} *)
+
+module type LOWER_FLOAT_BOUND = sig
+  val min_value : float
+  val error_msg : string
+end
+
+module Make_lower_bounded_float (B : LOWER_FLOAT_BOUND) = struct
+  type t = float
+
+  let of_float n = if n >= B.min_value then Some n else None
+  let of_float_exn n = if n >= B.min_value then n else invalid_arg B.error_msg
+  let to_float n = n
+  let to_string = string_of_float
+end
+
 (** {1 Non-negative Float} *)
 
 (** Interface for non-negative floats (no upper bound). *)
@@ -163,14 +193,10 @@ end
 
 (** Non-negative float implementation. *)
 module Nonneg_float : NONNEG_FLOAT = struct
-  type t = float
+  include Make_lower_bounded_float (struct
+    let min_value = 0.0
+    let error_msg = "must be non-negative"
+  end)
 
-  let of_float n = if n >= 0.0 then Some n else None
-
-  let of_float_exn n =
-    if n >= 0.0 then n else invalid_arg "must be non-negative"
-
-  let to_float n = n
-  let to_string n = string_of_float n
   let zero = 0.0
 end

@@ -19,7 +19,6 @@ module Status : sig
   val t_of_yojson : Yojson.Safe.t -> t
   val yojson_of_t : t -> Yojson.Safe.t
   val pp : Format.formatter -> t -> unit
-  val show : t -> string
   val equal : t -> t -> bool
 end
 
@@ -37,7 +36,6 @@ module Parent_entity_type : sig
   val t_of_yojson : Yojson.Safe.t -> t
   val yojson_of_t : t -> Yojson.Safe.t
   val pp : Format.formatter -> t -> unit
-  val show : t -> string
   val equal : t -> t -> bool
 end
 
@@ -55,7 +53,6 @@ module Slug_size : sig
   val t_of_yojson : Yojson.Safe.t -> t
   val yojson_of_t : t -> Yojson.Safe.t
   val pp : Format.formatter -> t -> unit
-  val show : t -> string
   val equal : t -> t -> bool
 end
 

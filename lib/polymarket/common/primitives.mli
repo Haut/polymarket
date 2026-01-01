@@ -27,9 +27,6 @@ module Address : sig
   val pp : Format.formatter -> t -> unit
   (** Pretty printer for Format. *)
 
-  val show : t -> string
-  (** Show as string (alias for to_string). *)
-
   val equal : t -> t -> bool
   (** Equality comparison. *)
 
@@ -74,9 +71,6 @@ module Hash64 : sig
   val pp : Format.formatter -> t -> unit
   (** Pretty printer for Format. *)
 
-  val show : t -> string
-  (** Show as string (alias for to_string). *)
-
   val equal : t -> t -> bool
   (** Equality comparison. *)
 
@@ -120,9 +114,6 @@ module Hash : sig
 
   val pp : Format.formatter -> t -> unit
   (** Pretty printer for Format. *)
-
-  val show : t -> string
-  (** Show as string (alias for to_string). *)
 
   val equal : t -> t -> bool
   (** Equality comparison. *)
@@ -497,7 +488,6 @@ module Timestamp : sig
   (** Convert to JSON string *)
 
   val pp : Format.formatter -> t -> unit
-  val show : t -> string
   val equal : t -> t -> bool
 end
 
@@ -520,6 +510,5 @@ module Side : sig
   (** Convert to JSON string *)
 
   val pp : Format.formatter -> t -> unit
-  val show : t -> string
   val equal : t -> t -> bool
 end

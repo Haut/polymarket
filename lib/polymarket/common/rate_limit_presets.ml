@@ -1,11 +1,9 @@
 (** Pre-configured rate limit presets for Polymarket APIs.
 
     Based on official documentation:
-    https://docs.polymarket.com/#/api-rate-limits
+    https://docs.polymarket.com/#/api-rate-limits *)
 
-    This module is internal and not exposed to library users. *)
-
-module B = Builder
+module B = Polymarket_rate_limiter.Builder
 
 (* {1 General Rate Limits} *)
 
@@ -55,46 +53,22 @@ let gamma_api ~behavior =
 
 let clob_api_host = "clob.polymarket.com"
 
-(* CLOB Trading endpoints with burst + sustained limits *)
+(* CLOB Trading endpoints with burst (10s) + sustained (10min) limits *)
 let clob_trading ~behavior =
+  let ep ~meth ~p ~burst ~sustained =
+    B.(
+      route () |> host clob_api_host |> method_ meth |> path p
+      |> limit ~requests:burst ~window_seconds:10.0
+      |> limit ~requests:sustained ~window_seconds:600.0
+      |> on_limit behavior |> build)
+  in
   [
-    (* POST /order: 3500/10s burst, 36000/10min sustained *)
-    B.(
-      route () |> host clob_api_host |> method_ "POST" |> path "/order"
-      |> limit ~requests:3500 ~window_seconds:10.0
-      |> limit ~requests:36000 ~window_seconds:600.0
-      |> on_limit behavior |> build);
-    (* DELETE /order: 3000/10s burst, 30000/10min sustained *)
-    B.(
-      route () |> host clob_api_host |> method_ "DELETE" |> path "/order"
-      |> limit ~requests:3000 ~window_seconds:10.0
-      |> limit ~requests:30000 ~window_seconds:600.0
-      |> on_limit behavior |> build);
-    (* POST /orders: 1000/10s burst, 15000/10min sustained *)
-    B.(
-      route () |> host clob_api_host |> method_ "POST" |> path "/orders"
-      |> limit ~requests:1000 ~window_seconds:10.0
-      |> limit ~requests:15000 ~window_seconds:600.0
-      |> on_limit behavior |> build);
-    (* DELETE /orders: 1000/10s burst, 15000/10min sustained *)
-    B.(
-      route () |> host clob_api_host |> method_ "DELETE" |> path "/orders"
-      |> limit ~requests:1000 ~window_seconds:10.0
-      |> limit ~requests:15000 ~window_seconds:600.0
-      |> on_limit behavior |> build);
-    (* DELETE /cancel-all: 250/10s burst, 6000/10min sustained *)
-    B.(
-      route () |> host clob_api_host |> method_ "DELETE" |> path "/cancel-all"
-      |> limit ~requests:250 ~window_seconds:10.0
-      |> limit ~requests:6000 ~window_seconds:600.0
-      |> on_limit behavior |> build);
-    (* DELETE /cancel-market-orders: 1000/10s burst, 1500/10min sustained *)
-    B.(
-      route () |> host clob_api_host |> method_ "DELETE"
-      |> path "/cancel-market-orders"
-      |> limit ~requests:1000 ~window_seconds:10.0
-      |> limit ~requests:1500 ~window_seconds:600.0
-      |> on_limit behavior |> build);
+    ep ~meth:"POST" ~p:"/order" ~burst:3500 ~sustained:36000;
+    ep ~meth:"DELETE" ~p:"/order" ~burst:3000 ~sustained:30000;
+    ep ~meth:"POST" ~p:"/orders" ~burst:1000 ~sustained:15000;
+    ep ~meth:"DELETE" ~p:"/orders" ~burst:1000 ~sustained:15000;
+    ep ~meth:"DELETE" ~p:"/cancel-all" ~burst:250 ~sustained:6000;
+    ep ~meth:"DELETE" ~p:"/cancel-market-orders" ~burst:1000 ~sustained:1500;
   ]
 
 (* CLOB Market Data endpoints *)

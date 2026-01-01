@@ -56,7 +56,7 @@ let test_market_event_json_roundtrip () =
       let json = Market_event.yojson_of_t evt in
       let result = Market_event.t_of_yojson json in
       Alcotest.(check bool)
-        (Printf.sprintf "Market_event JSON %s" (Market_event.show evt))
+        (Printf.sprintf "Market_event JSON %s" (Market_event.to_string evt))
         true
         (Market_event.equal evt result))
     events
@@ -112,7 +112,7 @@ let test_trade_status_json_roundtrip () =
       let json = Trade_status.yojson_of_t st in
       let result = Trade_status.t_of_yojson json in
       Alcotest.(check bool)
-        (Printf.sprintf "Trade_status JSON %s" (Trade_status.show st))
+        (Printf.sprintf "Trade_status JSON %s" (Trade_status.to_string st))
         true
         (Trade_status.equal st result))
     statuses

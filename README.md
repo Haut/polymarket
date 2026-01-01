@@ -49,7 +49,8 @@ let () =
   let clock = Eio.Stdenv.clock env in
 
   (* Create a shared rate limiter with Polymarket presets *)
-  let rate_limiter = Rate_limiter.create_polymarket ~clock () in
+  let routes = Polymarket_common.Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
+  let rate_limiter = Rate_limiter.create ~routes ~clock () in
 
   (* Create a client *)
   let client = Gamma.create ~sw ~net ~rate_limiter () in
@@ -139,7 +140,8 @@ The Gamma API provides access to markets, events, series, and search functionali
 ### Get Active Markets
 
 ```ocaml
-let rate_limiter = Rate_limiter.create_polymarket ~clock () in
+let routes = Polymarket_common.Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
+let rate_limiter = Rate_limiter.create ~routes ~clock () in
 let client = Gamma.create ~sw ~net ~rate_limiter () in
 match Gamma.get_markets client ~active:true ~limit:(Nonneg_int.of_int_exn 10) () with
 | Ok markets ->
@@ -232,7 +234,8 @@ val Clob.l1_to_unauthed : l1 -> unauthed
 ### Get Order Book
 
 ```ocaml
-let rate_limiter = Rate_limiter.create_polymarket ~clock () in
+let routes = Polymarket_common.Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
+let rate_limiter = Rate_limiter.create ~routes ~clock () in
 let client = Clob.Unauthed.create ~sw ~net ~rate_limiter () in
 let token_id = "12345..." in (* Token ID from Gamma API *)
 match Clob.Unauthed.get_order_book client ~token_id () with
@@ -390,7 +393,8 @@ let net = Eio.Stdenv.net env in
 let clock = Eio.Stdenv.clock env in
 
 (* Create a shared rate limiter with Polymarket presets *)
-let rate_limiter = Rate_limiter.create_polymarket ~clock () in
+let routes = Polymarket_common.Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
+let rate_limiter = Rate_limiter.create ~routes ~clock () in
 
 (* Share the same rate limiter across all clients *)
 let gamma_client = Gamma.create ~sw ~net ~rate_limiter () in
@@ -407,10 +411,12 @@ When a rate limit is exceeded, the client can either delay (sleep) until the req
 open Polymarket
 
 (* Default: Delay behavior (sleeps until request can proceed) *)
-let rate_limiter = Rate_limiter.create_polymarket ~clock () in
+let routes = Polymarket_common.Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
+let rate_limiter = Rate_limiter.create ~routes ~clock () in
 
 (* Or explicitly specify Error behavior *)
-let rate_limiter = Rate_limiter.create_polymarket ~clock ~behavior:Rate_limiter.Error () in
+let routes = Polymarket_common.Rate_limit_presets.all ~behavior:Rate_limiter.Error in
+let rate_limiter = Rate_limiter.create ~routes ~clock () in
 ```
 
 ### Configured Limits

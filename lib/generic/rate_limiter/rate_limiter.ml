@@ -37,10 +37,6 @@ let create ~routes ~clock ?max_idle_time () =
   let routes_mutex = Eio.Mutex.create () in
   { routes; routes_mutex; state; sleep }
 
-let create_polymarket ~clock ?(behavior = Delay) ?max_idle_time () =
-  let routes = Presets.all ~behavior in
-  create ~routes ~clock ?max_idle_time ()
-
 let update_routes t routes =
   Eio.Mutex.use_rw ~protect:true t.routes_mutex (fun () -> t.routes <- routes)
 

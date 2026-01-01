@@ -55,7 +55,10 @@ let parse_token_ids s =
 let get_active_tokens env sw =
   Logger.info "FETCHING" [ ("source", "Gamma API") ];
   let clock = Eio.Stdenv.clock env in
-  let rate_limiter = Rate_limiter.create_polymarket ~clock () in
+  let routes =
+    Polymarket_common.Rate_limit_presets.all ~behavior:Rate_limiter.Delay
+  in
+  let rate_limiter = Rate_limiter.create ~routes ~clock () in
   let client = Gamma.create ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter () in
   match
     Gamma.get_markets client ~limit:(Nonneg_int.of_int_exn 3) ~closed:false ()

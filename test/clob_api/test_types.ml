@@ -86,7 +86,7 @@ let test_side_json_roundtrip () =
       let json = Side.yojson_of_t side in
       let result = Side.t_of_yojson json in
       Alcotest.(check bool)
-        (Printf.sprintf "Side JSON roundtrip %s" (Side.show side))
+        (Printf.sprintf "Side JSON roundtrip %s" (Side.to_string side))
         true (Side.equal side result))
     sides
 
@@ -121,7 +121,7 @@ let test_order_type_json_roundtrip () =
       let json = Order_type.yojson_of_t ot in
       let result = Order_type.t_of_yojson json in
       Alcotest.(check bool)
-        (Printf.sprintf "Order_type JSON roundtrip %s" (Order_type.show ot))
+        (Printf.sprintf "Order_type JSON roundtrip %s" (Order_type.to_string ot))
         true
         (Order_type.equal ot result))
     types
@@ -168,8 +168,8 @@ let test_signature_type_json_roundtrip () =
       let json = Signature_type.yojson_of_t st in
       let result = Signature_type.t_of_yojson json in
       Alcotest.(check bool)
-        (Printf.sprintf "Signature_type JSON roundtrip %s"
-           (Signature_type.show st))
+        (Printf.sprintf "Signature_type JSON roundtrip %d"
+           (Signature_type.to_int st))
         true
         (Signature_type.equal st result))
     types
@@ -224,7 +224,7 @@ let test_status_json_roundtrip () =
       let json = Status.yojson_of_t st in
       let result = Status.t_of_yojson json in
       Alcotest.(check bool)
-        (Printf.sprintf "Status JSON roundtrip %s" (Status.show st))
+        (Printf.sprintf "Status JSON roundtrip %s" (Status.to_string st))
         true (Status.equal st result))
     statuses
 
@@ -257,7 +257,7 @@ let test_trade_type_json_roundtrip () =
       let json = Trade_type.yojson_of_t tt in
       let result = Trade_type.t_of_yojson json in
       Alcotest.(check bool)
-        (Printf.sprintf "Trade_type JSON roundtrip %s" (Trade_type.show tt))
+        (Printf.sprintf "Trade_type JSON roundtrip %s" (Trade_type.to_string tt))
         true
         (Trade_type.equal tt result))
     types

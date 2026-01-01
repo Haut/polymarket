@@ -93,6 +93,7 @@ module Rate_limiter = Polymarket_rate_limiter.Rate_limiter
     Validated types for addresses, hashes, and numeric constraints. These are
     re-exported at top level for convenience. *)
 
+module Side = Polymarket_common.Primitives.Side
 module Address = Polymarket_common.Primitives.Address
 module Hash64 = Polymarket_common.Primitives.Hash64
 module Hash = Polymarket_common.Primitives.Hash

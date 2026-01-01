@@ -37,7 +37,6 @@ module Address = struct
   let unsafe_of_string s = s
   let to_string t = t
   let pp fmt t = Format.fprintf fmt "%s" t
-  let show = to_string
   let equal = String.equal
 
   let of_yojson json =
@@ -67,7 +66,6 @@ module Hash64 = struct
   let unsafe_of_string s = s
   let to_string t = t
   let pp fmt t = Format.fprintf fmt "%s" t
-  let show = to_string
   let equal = String.equal
 
   let of_yojson json =
@@ -103,7 +101,6 @@ module Hash = struct
   let unsafe_of_string s = s
   let to_string t = t
   let pp fmt t = Format.fprintf fmt "%s" t
-  let show = to_string
   let equal = String.equal
 
   let of_yojson json =
@@ -270,7 +267,6 @@ module Timestamp = struct
 
   let yojson_of_t t = `String (to_string t)
   let pp fmt t = Format.fprintf fmt "%s" (to_string t)
-  let show t = to_string t
   let equal = Ptime.equal
 end
 

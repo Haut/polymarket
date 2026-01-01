@@ -171,61 +171,18 @@ type market_message =
   | `Tick_size_change of tick_size_change_message
   | `Last_trade_price of last_trade_price_message
   | `Best_bid_ask of best_bid_ask_message ]
+[@@deriving show, eq]
 (** Market channel messages using polymorphic variants for extensibility. *)
 
-let show_market_message : market_message -> string = function
-  | `Book m -> "Book " ^ show_book_message m
-  | `Price_change m -> "Price_change " ^ show_price_change_message m
-  | `Tick_size_change m -> "Tick_size_change " ^ show_tick_size_change_message m
-  | `Last_trade_price m -> "Last_trade_price " ^ show_last_trade_price_message m
-  | `Best_bid_ask m -> "Best_bid_ask " ^ show_best_bid_ask_message m
-
-let pp_market_message fmt m = Format.fprintf fmt "%s" (show_market_message m)
-
-let equal_market_message (a : market_message) (b : market_message) =
-  match (a, b) with
-  | `Book a, `Book b -> equal_book_message a b
-  | `Price_change a, `Price_change b -> equal_price_change_message a b
-  | `Tick_size_change a, `Tick_size_change b ->
-      equal_tick_size_change_message a b
-  | `Last_trade_price a, `Last_trade_price b ->
-      equal_last_trade_price_message a b
-  | `Best_bid_ask a, `Best_bid_ask b -> equal_best_bid_ask_message a b
-  | _ -> false
-
 type user_message = [ `Trade of trade_message | `Order of order_message ]
+[@@deriving show, eq]
 (** User channel messages using polymorphic variants for extensibility. *)
-
-let show_user_message : user_message -> string = function
-  | `Trade m -> "Trade " ^ show_trade_message m
-  | `Order m -> "Order " ^ show_order_message m
-
-let pp_user_message fmt m = Format.fprintf fmt "%s" (show_user_message m)
-
-let equal_user_message (a : user_message) (b : user_message) =
-  match (a, b) with
-  | `Trade a, `Trade b -> equal_trade_message a b
-  | `Order a, `Order b -> equal_order_message a b
-  | _ -> false
 
 type message =
   [ `Market of market_message | `User of user_message | `Unknown of string ]
+[@@deriving show, eq]
 (** Top-level message type using polymorphic variants. Allows pattern matching
     on all message types at once. *)
-
-let show_message : message -> string = function
-  | `Market m -> "Market (" ^ show_market_message m ^ ")"
-  | `User m -> "User (" ^ show_user_message m ^ ")"
-  | `Unknown s -> "Unknown " ^ s
-
-let pp_message fmt m = Format.fprintf fmt "%s" (show_message m)
-
-let equal_message (a : message) (b : message) =
-  match (a, b) with
-  | `Market a, `Market b -> equal_market_message a b
-  | `User a, `User b -> equal_user_message a b
-  | `Unknown a, `Unknown b -> String.equal a b
-  | _ -> false
 
 (** {1 Message Parsing} *)
 

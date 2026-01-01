@@ -37,17 +37,7 @@ exception Invalid_signature of string
 
 (** {1 Enum Modules} *)
 
-module Side : sig
-  type t = Buy | Sell
-
-  val to_string : t -> string
-  val of_string : string -> t
-  val t_of_yojson : Yojson.Safe.t -> t
-  val yojson_of_t : t -> Yojson.Safe.t
-  val pp : Format.formatter -> t -> unit
-  val show : t -> string
-  val equal : t -> t -> bool
-end
+module Side = Polymarket_common.Primitives.Side
 
 module Order_type : sig
   type t =
@@ -63,7 +53,6 @@ module Order_type : sig
   val t_of_yojson : Yojson.Safe.t -> t
   val yojson_of_t : t -> Yojson.Safe.t
   val pp : Format.formatter -> t -> unit
-  val show : t -> string
   val equal : t -> t -> bool
 end
 
@@ -73,7 +62,6 @@ module Interval : sig
   val to_string : t -> string
   val of_string : string -> t
   val pp : Format.formatter -> t -> unit
-  val show : t -> string
   val equal : t -> t -> bool
 end
 
@@ -85,7 +73,6 @@ module Status : sig
   val t_of_yojson : Yojson.Safe.t -> t
   val yojson_of_t : t -> Yojson.Safe.t
   val pp : Format.formatter -> t -> unit
-  val show : t -> string
   val equal : t -> t -> bool
 end
 
@@ -103,7 +90,6 @@ module Signature_type : sig
   val t_of_yojson : Yojson.Safe.t -> t
   val yojson_of_t : t -> Yojson.Safe.t
   val pp : Format.formatter -> t -> unit
-  val show : t -> string
   val equal : t -> t -> bool
 end
 
@@ -115,7 +101,6 @@ module Trade_type : sig
   val t_of_yojson : Yojson.Safe.t -> t
   val yojson_of_t : t -> Yojson.Safe.t
   val pp : Format.formatter -> t -> unit
-  val show : t -> string
   val equal : t -> t -> bool
 end
 

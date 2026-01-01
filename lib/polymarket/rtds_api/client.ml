@@ -87,11 +87,13 @@ let close t = Connection.close t.conn
 module Crypto_prices = struct
   (** Specialized client for crypto price streams *)
 
+  type source = Binance | Chainlink
+
   type t = {
     conn : Connection.t;
     message_stream : Types.crypto_message Eio.Stream.t;
-    mutable symbols : string list option;
-    source : [ `Binance | `Chainlink ];
+    symbols : string list option;
+    source : source;
   }
 
   let connect_binance ~sw ~net ~clock ?symbols () =
@@ -139,7 +141,7 @@ module Crypto_prices = struct
             Logger.log_err ~section ~event:"CRYPTO_PARSER_ERROR"
               [ ("error", Printexc.to_string exn) ]);
 
-    { conn; message_stream; symbols; source = `Binance }
+    { conn; message_stream; symbols; source = Binance }
 
   let connect_chainlink ~sw ~net ~clock ?symbol () =
     let conn =
@@ -190,10 +192,12 @@ module Crypto_prices = struct
       conn;
       message_stream;
       symbols = Option.map (fun s -> [ s ]) symbol;
-      source = `Chainlink;
+      source = Chainlink;
     }
 
   let stream t = t.message_stream
+  let symbols t = t.symbols
+  let source t = t.source
   let close t = Connection.close t.conn
 end
 
@@ -251,5 +255,6 @@ module Comments = struct
     { conn; message_stream; gamma_auth }
 
   let stream t = t.message_stream
+  let gamma_auth t = t.gamma_auth
   let close t = Connection.close t.conn
 end

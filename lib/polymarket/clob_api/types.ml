@@ -79,7 +79,6 @@ module Signature_type = struct
 
   let yojson_of_t t = `Int (to_int t)
   let pp fmt t = Format.fprintf fmt "%d" (to_int t)
-  let show t = string_of_int (to_int t)
   let equal a b = Int.equal (to_int a) (to_int b)
 end
 

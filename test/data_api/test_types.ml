@@ -12,7 +12,7 @@ let test_side_roundtrip () =
     (fun side ->
       let json = yojson_of_t side in
       let parsed = t_of_yojson json in
-      Alcotest.(check bool) (show side) true (equal side parsed))
+      Alcotest.(check bool) (to_string side) true (equal side parsed))
     sides
 
 let test_side_string_conversion () =
@@ -29,7 +29,7 @@ let test_activity_type_roundtrip () =
     (fun t ->
       let json = yojson_of_t t in
       let parsed = t_of_yojson json in
-      Alcotest.(check bool) (show t) true (equal t parsed))
+      Alcotest.(check bool) (to_string t) true (equal t parsed))
     types
 
 (** {1 Test Suite} *)

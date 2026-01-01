@@ -7,8 +7,9 @@
 
     {[
       (* Create a shared rate limiter with Polymarket API limits *)
+      let routes = Polymarket_common.Rate_limit_presets.all ~behavior:Delay in
       let rate_limiter =
-        Rate_limiter.create_polymarket ~clock:(Eio.Stdenv.clock env) ()
+        Rate_limiter.create ~routes ~clock:(Eio.Stdenv.clock env) ()
       in
 
       (* Pass to all API clients *)
@@ -70,23 +71,6 @@ val create :
 (** Create a rate limiter with custom routes.
     @param routes Rate limit configurations (all matching routes apply)
     @param clock Eio clock for timing and delays
-    @param max_idle_time
-      For cleanup: remove states unused for this long (default: 300.0) *)
-
-val create_polymarket :
-  clock:_ Eio.Time.clock ->
-  ?behavior:behavior ->
-  ?max_idle_time:float ->
-  unit ->
-  t
-(** Create a rate limiter with Polymarket API presets.
-
-    This is the recommended way to create a rate limiter for use with Polymarket
-    API clients. The rate limiter should be shared across all clients to
-    properly enforce global rate limits.
-
-    @param clock Eio clock for timing and delays
-    @param behavior What to do when rate limit is exceeded (default: Delay)
     @param max_idle_time
       For cleanup: remove states unused for this long (default: 300.0) *)
 
