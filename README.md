@@ -32,7 +32,7 @@ Or add to your `dune-project`:
 
 ```lisp
 (depends
- (polymarket (>= 0.1.0)))
+ (polymarket (>= 0.2.0)))
 ```
 
 ## Quick Start
