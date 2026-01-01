@@ -31,4 +31,15 @@ else
     exit 1
 fi
 
+# Build documentation (check for odoc warnings/errors)
+echo "▶ Building docs..."
+DOC_OUTPUT=$(dune build @doc 2>&1)
+if echo "$DOC_OUTPUT" | grep -qE "Warning:|Error:"; then
+    echo "  ✗ Documentation has warnings or errors"
+    echo "$DOC_OUTPUT" | grep -E "Warning:|Error:" | head -10
+    exit 1
+else
+    echo "  ✓ Docs OK"
+fi
+
 echo "✓ All pre-commit checks passed!"
