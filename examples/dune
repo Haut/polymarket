@@ -22,3 +22,8 @@
  (name rtds_demo)
  (modules rtds_demo logger)
  (libraries polymarket unix eio_main mirage-crypto-rng.unix logs))
+
+(executable
+ (name rfq_demo)
+ (modules rfq_demo logger)
+ (libraries polymarket unix eio_main mirage-crypto-rng.unix logs))

@@ -1,6 +1,6 @@
 (library
- (name polymarket_wss_api)
- (public_name polymarket.wss_api)
+ (name polymarket_wss)
+ (public_name polymarket.wss)
  (libraries
   logger
   websocket

@@ -1,6 +1,6 @@
 (library
- (name polymarket_rtds_api)
- (public_name polymarket.rtds_api)
+ (name polymarket_rtds)
+ (public_name polymarket.rtds)
  (libraries
   logger
   websocket

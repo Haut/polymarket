@@ -130,8 +130,6 @@ module Clob : sig
   val default_base_url : string
 
   module Types = Polymarket_clob.Types
-  module Auth = Polymarket_common.Auth
-  module Crypto = Polymarket_common.Crypto
 
   type unauthed = Polymarket_clob.Client.unauthed
   type l1 = Polymarket_clob.Client.l1
@@ -154,8 +152,6 @@ module Rfq : sig
       All RFQ endpoints require L2 authentication. *)
 
   module Types = Polymarket_rfq.Types
-  module Auth = Polymarket_common.Auth
-  module Crypto = Polymarket_common.Crypto
 
   val default_base_url : string
   (** Default base URL for the RFQ API: https://clob.polymarket.com *)
@@ -168,8 +164,8 @@ module Rfq : sig
     sw:Eio.Switch.t ->
     net:_ Eio.Net.t ->
     rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
-    private_key:Crypto.private_key ->
-    credentials:Auth.credentials ->
+    private_key:Polymarket_common.Crypto.private_key ->
+    credentials:Polymarket_common.Auth.credentials ->
     unit ->
     t
   (** Create a new RFQ client. *)
@@ -177,7 +173,7 @@ module Rfq : sig
   val address : t -> string
   (** Get the Ethereum address derived from the private key. *)
 
-  val credentials : t -> Auth.credentials
+  val credentials : t -> Polymarket_common.Auth.credentials
   (** Get the API credentials. *)
 
   (** {2 Request Endpoints} *)
@@ -293,9 +289,9 @@ module Wss : sig
         | _ -> ()
       ]} *)
 
-  module Types = Polymarket_wss_api.Types
-  module Market = Polymarket_wss_api.Client.Market
-  module User = Polymarket_wss_api.Client.User
+  module Types = Polymarket_wss.Types
+  module Market = Polymarket_wss.Client.Market
+  module User = Polymarket_wss.Client.User
 end
 
 module Rtds : sig
@@ -379,7 +375,7 @@ module Rtds : sig
         | _ -> ()
       ]} *)
 
-  module Types = Polymarket_rtds_api.Types
+  module Types = Polymarket_rtds.Types
 
   (** {1 Unified Client} *)
 

@@ -8,6 +8,6 @@
   polymarket_clob
   polymarket_data
   polymarket_gamma
-  polymarket_wss_api
-  polymarket_rtds_api
+  polymarket_wss
+  polymarket_rtds
   polymarket_rfq))

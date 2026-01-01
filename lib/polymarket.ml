@@ -19,8 +19,6 @@ module Clob = struct
   let default_base_url = Polymarket_clob.Client.default_base_url
 
   module Types = Polymarket_clob.Types
-  module Auth = Polymarket_common.Auth
-  module Crypto = Polymarket_common.Crypto
 
   type unauthed = Polymarket_clob.Client.unauthed
   type l1 = Polymarket_clob.Client.l1
@@ -51,9 +49,9 @@ module Wss = struct
 
       Uses pure-OCaml TLS (tls-eio) for cross-platform compatibility. *)
 
-  module Types = Polymarket_wss_api.Types
-  module Market = Polymarket_wss_api.Client.Market
-  module User = Polymarket_wss_api.Client.User
+  module Types = Polymarket_wss.Types
+  module Market = Polymarket_wss.Client.Market
+  module User = Polymarket_wss.Client.User
 end
 
 module Rtds = struct
@@ -65,8 +63,8 @@ module Rtds = struct
 
       Uses pure-OCaml TLS (tls-eio) for cross-platform compatibility. *)
 
-  module Types = Polymarket_rtds_api.Types
-  include Polymarket_rtds_api.Client
+  module Types = Polymarket_rtds.Types
+  include Polymarket_rtds.Client
 end
 
 module Http = Polymarket_http.Client

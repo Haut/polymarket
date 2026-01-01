@@ -174,7 +174,7 @@ let error_to_string = function
 let pp_error fmt e = Format.fprintf fmt "%s" (error_to_string e)
 
 type error_response = { error : string } [@@deriving yojson]
-(** Legacy type alias for backwards compatibility *)
+(** Type for parsing JSON error responses from APIs. *)
 
 let to_error msg = Parse_error { context = "json"; message = msg }
 
