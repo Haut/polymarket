@@ -89,6 +89,8 @@ type team = {
   alias : string option;
   created_at : Polymarket_common.Primitives.Timestamp.t option;
   updated_at : Polymarket_common.Primitives.Timestamp.t option;
+  provider_id : int option;
+  color : string option;
 }
 [@@deriving yojson, show, eq]
 (** Sports team *)
@@ -105,6 +107,7 @@ type tag = {
   updated_at : Polymarket_common.Primitives.Timestamp.t option;
   force_hide : bool option;
   is_carousel : bool option;
+  requires_translation : bool option;
 }
 [@@deriving yojson, show, eq]
 (** Tag for categorization *)
@@ -322,6 +325,18 @@ type collection = {
 [@@deriving yojson, show, eq]
 (** Collection of events/markets *)
 
+type clob_reward = {
+  id : string option;
+  condition_id : string option;
+  asset_address : string option;
+  rewards_amount : float option;
+  rewards_daily_rate : float option;
+  start_date : string option;
+  end_date : string option;
+}
+[@@deriving yojson, show, eq]
+(** CLOB rewards configuration for a market *)
+
 (** {1 Mutually Recursive Types: Market, Event, Series} *)
 
 type market = {
@@ -464,6 +479,17 @@ type market = {
     Polymarket_common.Primitives.Timestamp.t option;
   rfq_enabled : bool option;
   event_start_time : Polymarket_common.Primitives.Timestamp.t option;
+  cyom : bool option;
+  pager_duty_notification_enabled : bool option;
+  approved : bool option;
+  holding_rewards_enabled : bool option;
+  fees_enabled : bool option;
+  requires_translation : bool option;
+  submitted_by : string option;
+  neg_risk : bool option;
+  neg_risk_market_id : string option;
+  neg_risk_request_id : string option;
+  clob_rewards : clob_reward list;
 }
 [@@deriving yojson, show, eq]
 (** Market *)
@@ -560,6 +586,8 @@ and event = {
   scheduled_deployment_timestamp :
     Polymarket_common.Primitives.Timestamp.t option;
   game_status : string option;
+  neg_risk_augmented : bool option;
+  requires_translation : bool option;
 }
 [@@deriving yojson, show, eq]
 (** Event *)
@@ -603,6 +631,7 @@ and series = {
   categories : category list;
   tags : tag list;
   comment_count : int option;
+  requires_translation : bool option;
   chats : chat list;
 }
 [@@deriving yojson, show, eq]
@@ -626,12 +655,14 @@ type search = {
 (** {1 Sports Types} *)
 
 type sports_metadata = {
+  id : int option;
   sport : string;
   image : string option;
   resolution : string option;
   ordering : string;
   tags : string;
   series : string;
+  created_at : string option;
 }
 [@@deriving yojson, show, eq]
 (** Sports metadata *)

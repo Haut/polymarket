@@ -204,13 +204,20 @@ let handle_response status body parse_fn =
 let check_extra_fields ~expected_fields ~context json =
   match json with
   | `Assoc fields ->
-      let actual = List.map fst fields in
-      let extra =
-        List.filter (fun f -> not (List.mem f expected_fields)) actual
+      let extra_fields =
+        List.filter
+          (fun (name, _) -> not (List.mem name expected_fields))
+          fields
       in
-      if extra <> [] then
+      if extra_fields <> [] then
+        let format_field (name, value) =
+          Printf.sprintf "%s=%s" name (Yojson.Safe.to_string value)
+        in
         Logger.log_warn ~section:"JSON" ~event:"EXTRA_FIELDS"
-          [ ("context", context); ("fields", String.concat ", " extra) ]
+          [
+            ("context", context);
+            ("fields", String.concat "; " (List.map format_field extra_fields));
+          ]
   | _ -> ()
 
 let parse_with_field_check ~expected_fields ~context body of_yojson =

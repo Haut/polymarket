@@ -77,6 +77,8 @@ type team = {
       [@default None] [@key "createdAt"]
   updated_at : Polymarket_common.Primitives.Timestamp.t option;
       [@default None] [@key "updatedAt"]
+  provider_id : int option; [@default None] [@key "providerId"]
+  color : string option; [@default None]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Sports team *)
@@ -95,6 +97,8 @@ type tag = {
       [@default None] [@key "updatedAt"]
   force_hide : bool option; [@default None] [@key "forceHide"]
   is_carousel : bool option; [@default None] [@key "isCarousel"]
+  requires_translation : bool option;
+      [@default None] [@key "requiresTranslation"]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Tag for categorization *)
@@ -331,6 +335,18 @@ type collection = {
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Collection of events/markets *)
 
+type clob_reward = {
+  id : string option; [@default None]
+  condition_id : string option; [@default None] [@key "conditionId"]
+  asset_address : string option; [@default None] [@key "assetAddress"]
+  rewards_amount : float option; [@default None] [@key "rewardsAmount"]
+  rewards_daily_rate : float option; [@default None] [@key "rewardsDailyRate"]
+  start_date : string option; [@default None] [@key "startDate"]
+  end_date : string option; [@default None] [@key "endDate"]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** CLOB rewards configuration for a market *)
+
 (** {1 Mutually Recursive Types: Market, Event, Series}
 
     These types reference each other and must be defined together. *)
@@ -500,6 +516,20 @@ type market = {
   rfq_enabled : bool option; [@default None] [@key "rfqEnabled"]
   event_start_time : Polymarket_common.Primitives.Timestamp.t option;
       [@default None] [@key "eventStartTime"]
+  cyom : bool option; [@default None]
+  pager_duty_notification_enabled : bool option;
+      [@default None] [@key "pagerDutyNotificationEnabled"]
+  approved : bool option; [@default None]
+  holding_rewards_enabled : bool option;
+      [@default None] [@key "holdingRewardsEnabled"]
+  fees_enabled : bool option; [@default None] [@key "feesEnabled"]
+  requires_translation : bool option;
+      [@default None] [@key "requiresTranslation"]
+  submitted_by : string option; [@default None] [@key "submitted_by"]
+  neg_risk : bool option; [@default None] [@key "negRisk"]
+  neg_risk_market_id : string option; [@default None] [@key "negRiskMarketID"]
+  neg_risk_request_id : string option; [@default None] [@key "negRiskRequestID"]
+  clob_rewards : clob_reward list; [@default []] [@key "clobRewards"]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 
@@ -610,6 +640,9 @@ and event = {
     Polymarket_common.Primitives.Timestamp.t option;
       [@default None] [@key "scheduledDeploymentTimestamp"]
   game_status : string option; [@default None] [@key "gameStatus"]
+  neg_risk_augmented : bool option; [@default None] [@key "negRiskAugmented"]
+  requires_translation : bool option;
+      [@default None] [@key "requiresTranslation"]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 
@@ -655,6 +688,8 @@ and series = {
   categories : category list; [@default []]
   tags : tag list; [@default []]
   comment_count : int option; [@default None] [@key "commentCount"]
+  requires_translation : bool option;
+      [@default None] [@key "requiresTranslation"]
   chats : chat list; [@default []]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
@@ -680,12 +715,15 @@ type search = {
 (** {1 Sports Types} *)
 
 type sports_metadata = {
+  id : int option; [@yojson.option]
   sport : string;
   image : string option; [@default None]
   resolution : string option; [@default None]
   ordering : string;
   tags : string;
   series : string;
+  created_at : string option; [@yojson.option] [@key "createdAt"]
+      (* @TODO check real type*)
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Sports metadata *)
