@@ -65,6 +65,8 @@ let setup () =
     match Sys.getenv_opt "POLYMARKET_LOG_LEVEL" with
     | Some "debug" -> Some Logs.Debug
     | Some "info" -> Some Logs.Info
+    | Some "warn" -> Some Logs.Warning
+    | Some "error" -> Some Logs.Error
     | _ -> None
   in
   Logs.set_level log_level
