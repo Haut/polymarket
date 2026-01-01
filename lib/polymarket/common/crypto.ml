@@ -5,6 +5,9 @@
 
 type private_key = string
 
+let private_key_of_string s = s
+let private_key_to_string s = s
+
 (** {1 Hashing} *)
 
 let keccak256 data =
@@ -161,3 +164,9 @@ let private_key_to_address private_key =
 let current_timestamp_ms () =
   let t = Unix.gettimeofday () in
   Printf.sprintf "%.0f" (t *. 1000.0)
+
+module Private = struct
+  let pad_hex_32 = pad_hex_32
+  let encode_uint256 = encode_uint256
+  let sign_hash = sign_hash
+end

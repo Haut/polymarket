@@ -5,8 +5,14 @@
 
 (** {1 Types} *)
 
-type private_key = string
-(** 32-byte private key as hex string (64 chars, no 0x prefix). *)
+type private_key
+(** Abstract type for a 32-byte private key (64 hex chars, no 0x prefix). *)
+
+val private_key_of_string : string -> private_key
+(** Create a private key from a hex string (64 chars, no 0x prefix). *)
+
+val private_key_to_string : private_key -> string
+(** Convert a private key to its hex string representation. *)
 
 (** {1 Hashing} *)
 
@@ -51,14 +57,12 @@ val private_key_to_address : private_key -> string
 val current_timestamp_ms : unit -> string
 (** Get current Unix timestamp in milliseconds as string. *)
 
-(** {1 Low-level Helpers} *)
+(** {1 Internal} *)
 
-val pad_hex_32 : string -> string
-(** Pad a hex string to 64 characters (32 bytes) with leading zeros. *)
+module Private : sig
+  (** {b For internal use only. Do not depend on this module.} *)
 
-val encode_uint256 : int -> string
-(** Encode an integer as a 64-character hex string (32 bytes). *)
-
-val sign_hash : private_key:private_key -> string -> string
-(** Sign a 32-byte hash with a private key using secp256k1. Returns hex
-    signature with 0x prefix and recovery id. *)
+  val pad_hex_32 : string -> string
+  val encode_uint256 : int -> string
+  val sign_hash : private_key:string -> string -> string
+end

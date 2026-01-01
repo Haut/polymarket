@@ -42,9 +42,9 @@ let ctf_domain_separator =
     Digestif.KECCAK_256.(
       to_hex (digest_string Constants.ctf_exchange_domain_version))
   in
-  let chain_id_hex = Crypto.encode_uint256 Constants.polygon_chain_id in
+  let chain_id_hex = Crypto.Private.encode_uint256 Constants.polygon_chain_id in
   let contract_hex = String.sub Constants.ctf_exchange_address 2 40 in
-  let contract_padded = Crypto.pad_hex_32 contract_hex in
+  let contract_padded = Crypto.Private.pad_hex_32 contract_hex in
   let data =
     domain_type_hash ^ name_hash ^ version_hash ^ chain_id_hex ^ contract_padded
   in
@@ -61,9 +61,9 @@ let sign_order ~private_key ~salt ~maker ~signer ~taker ~token_id ~maker_amount
         String.sub addr 2 (String.length addr - 2)
       else addr
     in
-    Crypto.pad_hex_32 hex
+    Crypto.Private.pad_hex_32 hex
   in
-  let encode_uint256_str s = Crypto.encode_uint256 (int_of_string s) in
+  let encode_uint256_str s = Crypto.Private.encode_uint256 (int_of_string s) in
   let struct_data =
     order_type_hash ^ encode_uint256_str salt ^ encode_address maker
     ^ encode_address signer ^ encode_address taker
@@ -73,8 +73,8 @@ let sign_order ~private_key ~salt ~maker ~signer ~taker ~token_id ~maker_amount
     ^ encode_uint256_str expiration
     ^ encode_uint256_str nonce
     ^ encode_uint256_str fee_rate_bps
-    ^ Crypto.encode_uint256 side
-    ^ Crypto.encode_uint256 signature_type
+    ^ Crypto.Private.encode_uint256 side
+    ^ Crypto.Private.encode_uint256 signature_type
   in
   let struct_bytes = Hex.to_string (`Hex struct_data) in
   let struct_hash = Digestif.KECCAK_256.(to_hex (digest_string struct_bytes)) in
@@ -83,4 +83,5 @@ let sign_order ~private_key ~salt ~maker ~signer ~taker ~token_id ~maker_amount
   let struct_bytes = Hex.to_string (`Hex struct_hash) in
   let final_data = prefix ^ domain_bytes ^ struct_bytes in
   let final_hash = Digestif.KECCAK_256.(to_hex (digest_string final_data)) in
-  Crypto.sign_hash ~private_key final_hash
+  let private_key_str = Crypto.private_key_to_string private_key in
+  Crypto.Private.sign_hash ~private_key:private_key_str final_hash

@@ -139,7 +139,9 @@ module Clob : sig
   module L1 = Polymarket_clob.Client.L1
   module L2 = Polymarket_clob.Client.L2
 
-  val upgrade_to_l1 : unauthed -> private_key:string -> l1
+  val upgrade_to_l1 :
+    unauthed -> private_key:Polymarket_common.Crypto.private_key -> l1
+
   val upgrade_to_l2 : l1 -> credentials:Polymarket_common.Auth.credentials -> l2
   val l2_to_l1 : l2 -> l1
   val l2_to_unauthed : l2 -> unauthed

@@ -236,11 +236,14 @@ let run_demo env =
       Logger.header "L1 Authentication (Wallet)";
       (* Use test private key or env var *)
       let private_key =
-        match Sys.getenv_opt "POLY_PRIVATE_KEY" with
-        | Some pk -> pk
-        (* Well-known Foundry/Hardhat test account #0 - DO NOT use with real funds *)
-        | None ->
-            "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+        let pk_str =
+          match Sys.getenv_opt "POLY_PRIVATE_KEY" with
+          | Some pk -> pk
+          (* Well-known Foundry/Hardhat test account #0 - DO NOT use with real funds *)
+          | None ->
+              "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+        in
+        Crypto.private_key_of_string pk_str
       in
 
       (* Upgrade to L1 client with private key *)

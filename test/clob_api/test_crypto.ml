@@ -70,7 +70,8 @@ let test_private_key_to_address () =
   (* Private key: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 *)
   (* Expected address: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 *)
   let private_key =
-    "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+    Crypto.private_key_of_string
+      "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
   in
   let address = Crypto.private_key_to_address private_key in
   (* Address should be lowercase with 0x prefix *)
@@ -84,7 +85,8 @@ let test_private_key_to_address () =
 
 let test_sign_clob_auth_message () =
   let private_key =
-    "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+    Crypto.private_key_of_string
+      "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
   in
   let address = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" in
   let timestamp = "1234567890000" in

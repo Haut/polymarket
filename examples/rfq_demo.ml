@@ -36,15 +36,19 @@ let run_demo env =
 
   (* Check for credentials *)
   let private_key =
-    match Sys.getenv_opt "POLY_PRIVATE_KEY" with
-    | Some pk -> pk
-    (* Well-known Foundry/Hardhat test account #0 - DO NOT use with real funds *)
-    | None ->
-        Logger.info "WARN"
-          [
-            ("msg", "Using test private key - set POLY_PRIVATE_KEY for real use");
-          ];
-        "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+    let pk_str =
+      match Sys.getenv_opt "POLY_PRIVATE_KEY" with
+      | Some pk -> pk
+      (* Well-known Foundry/Hardhat test account #0 - DO NOT use with real funds *)
+      | None ->
+          Logger.info "WARN"
+            [
+              ( "msg",
+                "Using test private key - set POLY_PRIVATE_KEY for real use" );
+            ];
+          "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+    in
+    Crypto.private_key_of_string pk_str
   in
 
   let credentials : Auth.credentials =
