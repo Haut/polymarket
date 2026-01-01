@@ -6,6 +6,7 @@ OCaml client library for the [Polymarket](https://polymarket.com) prediction mar
 
 - Full coverage of the Polymarket Data API, Gamma API, and CLOB API
 - Real-time WebSocket streaming for market data and user events
+- RTDS (Real-Time Data Socket) for crypto prices and comments
 - L1 (EIP-712 wallet signing) and L2 (HMAC-SHA256) authentication for CLOB API
 - Type-safe interface with validated primitive types and OCaml variant types
 - Built on [Eio](https://github.com/ocaml-multicore/eio) for efficient concurrent I/O
@@ -376,6 +377,120 @@ Wss.Market.close client
 | User | `Trade` | Trade execution notification |
 | User | `Order` | Order status update |
 
+## RTDS (Real-Time Data Socket)
+
+The RTDS client provides streaming access to crypto prices and comments via the `ws-live-data.polymarket.com` WebSocket.
+
+### Crypto Prices (Binance)
+
+Stream real-time crypto prices from Binance:
+
+```ocaml
+open Polymarket
+
+let () =
+  Mirage_crypto_rng_unix.use_default ();
+  Eio_main.run @@ fun env ->
+  Eio.Switch.run @@ fun sw ->
+  let net = Eio.Stdenv.net env in
+  let clock = Eio.Stdenv.clock env in
+
+  (* Connect to Binance crypto prices *)
+  let client =
+    Rtds.Crypto_prices.connect_binance ~sw ~net ~clock
+      ~symbols:[ "btcusdt"; "ethusdt"; "solusdt" ]
+      ()
+  in
+  let stream = Rtds.Crypto_prices.stream client in
+
+  (* Process price updates *)
+  let rec loop () =
+    match Eio.Stream.take stream with
+    | `Binance msg ->
+        Printf.printf "%s: %.2f\n" msg.payload.symbol msg.payload.value;
+        loop ()
+    | _ -> loop ()
+  in
+  loop ()
+```
+
+### Crypto Prices (Chainlink)
+
+Stream oracle prices from Chainlink:
+
+```ocaml
+let client =
+  Rtds.Crypto_prices.connect_chainlink ~sw ~net ~clock ~symbol:"eth/usd" ()
+in
+let stream = Rtds.Crypto_prices.stream client in
+
+match Eio.Stream.take stream with
+| `Chainlink msg -> Printf.printf "ETH: %.2f\n" msg.payload.value
+| _ -> ()
+```
+
+### Comments Stream
+
+Subscribe to real-time comment and reaction updates:
+
+```ocaml
+let client = Rtds.Comments.connect ~sw ~net ~clock () in
+let stream = Rtds.Comments.stream client in
+
+match Eio.Stream.take stream with
+| `Comment_created msg ->
+    Printf.printf "New comment by %s: %s\n"
+      msg.payload.profile.name msg.payload.body
+| `Comment_removed msg ->
+    Printf.printf "Comment removed: %s\n" msg.payload.id
+| `Reaction_created msg ->
+    Printf.printf "Reaction added to: %s\n" msg.payload.id
+| `Reaction_removed msg ->
+    Printf.printf "Reaction removed from: %s\n" msg.payload.id
+```
+
+### Unified RTDS Client
+
+Subscribe to multiple topics with a single connection:
+
+```ocaml
+let client = Rtds.connect ~sw ~net ~clock () in
+
+(* Subscribe to crypto prices and comments *)
+let subscriptions =
+  [
+    Rtds.Types.crypto_prices_subscription
+      ~filters:(Rtds.Types.binance_symbol_filter [ "btcusdt" ])
+      ();
+    Rtds.Types.comments_subscription ();
+  ]
+in
+Rtds.subscribe client ~subscriptions;
+
+let stream = Rtds.stream client in
+
+(* Handle all message types *)
+match Eio.Stream.take stream with
+| `Crypto (`Binance msg) ->
+    Printf.printf "BTC: %.2f\n" msg.payload.value
+| `Crypto (`Chainlink msg) ->
+    Printf.printf "Chainlink: %.2f\n" msg.payload.value
+| `Comment (`Comment_created msg) ->
+    Printf.printf "Comment: %s\n" msg.payload.body
+| _ -> ()
+```
+
+### RTDS Message Types
+
+| Topic | Message Type | Description |
+|-------|--------------|-------------|
+| `crypto_prices` | `Binance` | Real-time Binance price updates |
+| `crypto_prices_chainlink` | `Chainlink` | Chainlink oracle price updates |
+| `comments` | `Comment_created` | New comment posted |
+| `comments` | `Comment_removed` | Comment deleted |
+| `comments` | `Reaction_created` | Reaction added to comment |
+| `comments` | `Reaction_removed` | Reaction removed from comment |
+
 ## Rate Limiting
 
 The library includes built-in rate limiting that matches the official [Polymarket API rate limits](https://docs.polymarket.com/#/api-rate-limits). A shared rate limiter enforces limits across all API clients.
@@ -542,6 +657,10 @@ Polymarket
 │   ├── Market    (* Public market data channel *)
 │   ├── User      (* Authenticated user channel *)
 │   └── Types     (* Message types *)
+├── Rtds          (* Real-Time Data Socket streaming *)
+│   ├── Crypto_prices  (* Binance/Chainlink price streams *)
+│   ├── Comments  (* Comment and reaction streams *)
+│   └── Types     (* RTDS message types *)
 ├── Http          (* HTTP client - alias for Polymarket_http.Client *)
 ├── Rate_limiter  (* Rate limiting with GCRA algorithm *)
 ├── Auth          (* Authentication types and header builders *)
@@ -694,7 +813,8 @@ For finer-grained control, you can depend on individual sub-libraries:
 | `polymarket.gamma` | Gamma API client only |
 | `polymarket.data` | Data API client only |
 | `polymarket.clob` | CLOB API client only |
-| `polymarket.wss_api` | WebSocket client with pure-OCaml TLS (via tls-eio) |
+| `polymarket.wss_api` | WebSocket client for market/user streams |
+| `polymarket.rtds_api` | RTDS client for crypto prices and comments |
 
 To use a sub-library, add it to your dune file:
 
@@ -746,6 +866,9 @@ POLY_PRIVATE_KEY=your_private_key_hex dune exec examples/clob_api_demo.exe
 
 # WebSocket streaming demo
 dune exec examples/wss_demo.exe
+
+# RTDS streaming demo (crypto prices, comments)
+dune exec examples/rtds_demo.exe
 ```
 
 ### Code Formatting
@@ -786,12 +909,15 @@ polymarket/
 │   │   ├── endpoints.ml  # API endpoint implementations
 │   │   ├── order_builder.ml # Order construction utilities
 │   │   └── types.ml      # Types and module-based enums
-│   ├── websocket_client/ # WebSocket streaming client
+│   ├── websocket_client/ # WebSocket streaming client (wss_api)
 │   │   ├── client.ml     # Market and User channel clients
 │   │   ├── connection.ml # Connection management with reconnect
 │   │   ├── frame.ml      # WebSocket frame encoding/decoding
 │   │   ├── handshake.ml  # HTTP upgrade handshake
 │   │   └── types.ml      # Message types
+│   ├── rtds_api/         # Real-Time Data Socket client
+│   │   ├── client.ml     # Crypto_prices and Comments clients
+│   │   └── types.ml      # RTDS message types
 │   ├── polymarket.ml     # Main module (flattened API)
 │   └── polymarket.mli    # Public interface
 ├── examples/
@@ -799,6 +925,7 @@ polymarket/
 │   ├── gamma_api_demo.ml # Gamma API live demo
 │   ├── clob_api_demo.ml  # CLOB API live demo
 │   ├── wss_demo.ml       # WebSocket streaming demo
+│   ├── rtds_demo.ml      # RTDS streaming demo
 │   └── logger.ml         # Demo logging utilities
 ├── test/                 # Test suite
 ├── CHANGELOG.md
