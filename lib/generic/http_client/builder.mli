@@ -46,6 +46,10 @@ val new_post : Client.t -> string -> not_ready t
 val new_delete : Client.t -> string -> ready t
 (** Create a DELETE request. Ready to execute immediately. *)
 
+val new_delete_with_body : Client.t -> string -> not_ready t
+(** Create a DELETE request with body. Requires [with_body] before execution.
+    Used for APIs that require a JSON body in DELETE requests. *)
+
 (** {1 Query Parameter Builders} *)
 
 val query_param : string -> string -> 'a t -> 'a t

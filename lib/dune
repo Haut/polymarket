@@ -9,4 +9,5 @@
   polymarket_data
   polymarket_gamma
   polymarket_wss_api
-  polymarket_rtds_api))
+  polymarket_rtds_api
+  polymarket_rfq))

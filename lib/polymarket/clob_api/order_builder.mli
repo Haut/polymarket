@@ -1,7 +1,7 @@
 (** High-level order building helpers for the CLOB API.
 
-    This module provides ergonomic functions for building signed orders with
-    proper EIP-712 signatures, amount calculations, and nonce generation.
+    This module provides ergonomic functions for building signed orders. For
+    low-level signing, see {!Polymarket_common.Order_signing}.
 
     Example:
     {[
@@ -22,30 +22,19 @@
       (* Submit with Clob.L2.create_order *)
     ]} *)
 
-(** {1 Salt Generation} *)
-
-val generate_salt : unit -> string
-(** Generate a random salt for order uniqueness. Returns a large decimal integer
-    string. *)
-
 (** {1 Amount Calculations} *)
 
 val calculate_amounts :
   side:Types.Side.t -> price:float -> size:float -> string * string
 (** Calculate maker and taker amounts for an order.
 
-    For BUY orders: maker provides USDC, receives CTF tokens
-    - makerAmount = price * size (scaled to 6 decimals)
-    - takerAmount = size (scaled to 6 decimals)
-
-    For SELL orders: maker provides CTF tokens, receives USDC
-    - makerAmount = size (scaled to 6 decimals)
-    - takerAmount = price * size (scaled to 6 decimals)
+    For BUY orders: maker provides USDC, receives CTF tokens For SELL orders:
+    maker provides CTF tokens, receives USDC
 
     @param side Buy or Sell
     @param price Price per share (typically 0.0 to 1.0)
     @param size Number of shares
-    @return (maker_amount, taker_amount) as strings *)
+    @return (maker_amount, taker_amount) as decimal strings *)
 
 (** {1 Order Building} *)
 
@@ -79,7 +68,5 @@ val create_order_request :
 (** Create an order request for API submission.
 
     @param order The signed order from create_limit_order
-    @param order_type
-      Order type: Gtc (Good Till Cancelled), Gtd (Good Till Date), Fok (Fill or
-      Kill), Fak (Fill and Kill)
+    @param order_type Order type: Gtc, Gtd, Fok, or Fak
     @return An order request ready for Clob.L2.create_order *)

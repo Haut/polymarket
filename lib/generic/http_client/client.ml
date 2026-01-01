@@ -133,6 +133,26 @@ let do_delete ?(headers = []) t uri =
     log_error ~method_:"DELETE" uri msg;
     (500, Printf.sprintf {|{"error": "Request failed: %s"}|} msg)
 
+let do_delete_with_body ?(headers = []) t uri ~body:request_body =
+  apply_rate_limit t ~method_:"DELETE" ~uri;
+  let headers =
+    make_headers (("Content-Type", "application/json") :: headers)
+  in
+  let body = Cohttp_eio.Body.of_string request_body in
+  log_request ~method_:"DELETE" uri;
+  try
+    let resp, resp_body =
+      Cohttp_eio.Client.delete ~sw:t.sw ~headers ~body t.client uri
+    in
+    let status = Http.Response.status resp |> Http.Status.to_int in
+    let body_str = body_to_string resp_body in
+    log_response ~method_:"DELETE" uri status;
+    (status, body_str)
+  with exn ->
+    let msg = Printexc.to_string exn in
+    log_error ~method_:"DELETE" uri msg;
+    (500, Printf.sprintf {|{"error": "Request failed: %s"}|} msg)
+
 (** {1 Error Handling} *)
 
 type http_error = { status : int; body : string; message : string }

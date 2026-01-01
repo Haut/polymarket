@@ -3,30 +3,13 @@
     See {!Client_typestate} for documentation. *)
 
 module H = Polymarket_http.Client
+module B = Polymarket_http.Builder
+module J = Polymarket_http.Json
 module Auth = Polymarket_common.Auth
 module Crypto = Polymarket_common.Crypto
+open Types
 
 let default_base_url = "https://clob.polymarket.com"
-
-(** {1 Public Endpoints Functor}
-
-    Shared implementation for public endpoints across all auth levels. *)
-
-module type HAS_HTTP = sig
-  type t
-
-  val http : t -> H.t
-end
-
-module Make_public (M : HAS_HTTP) = struct
-  let get_order_book t = Endpoints.get_order_book (M.http t)
-  let get_order_books t = Endpoints.get_order_books (M.http t)
-  let get_price t = Endpoints.get_price (M.http t)
-  let get_midpoint t = Endpoints.get_midpoint (M.http t)
-  let get_prices t = Endpoints.get_prices (M.http t)
-  let get_spreads t = Endpoints.get_spreads (M.http t)
-  let get_price_history t = Endpoints.get_price_history (M.http t)
-end
 
 (** {1 Client Types} *)
 
@@ -39,6 +22,67 @@ type l2 = {
   address : string;
   credentials : Auth.credentials;
 }
+
+(** {1 Public Endpoints Functor}
+
+    Shared implementation for public endpoints across all auth levels. *)
+
+module type HAS_HTTP = sig
+  type t
+
+  val http : t -> H.t
+end
+
+module Make_public (M : HAS_HTTP) = struct
+  let get_order_book t ~token_id () =
+    B.new_get (M.http t) "/book"
+    |> B.query_param "token_id" token_id
+    |> B.fetch_json order_book_summary_of_yojson
+
+  let get_order_books t ~token_ids () =
+    B.new_post (M.http t) "/books"
+    |> B.with_body (J.list_single_field "token_id" token_ids)
+    |> B.fetch_json_list order_book_summary_of_yojson
+
+  let get_price t ~token_id ~side () =
+    B.new_get (M.http t) "/price"
+    |> B.query_param "token_id" token_id
+    |> B.query_param "side" (Side.to_string side)
+    |> B.fetch_json price_response_of_yojson
+
+  let get_midpoint t ~token_id () =
+    B.new_get (M.http t) "/midpoint"
+    |> B.query_param "token_id" token_id
+    |> B.fetch_json midpoint_response_of_yojson
+
+  let get_prices t ~requests () =
+    B.new_post (M.http t) "/prices"
+    |> B.with_body
+         (J.list
+            (fun (token_id, side) ->
+              J.obj
+                [
+                  ("token_id", J.string token_id);
+                  ("side", J.string (Side.to_string side));
+                ])
+            requests)
+    |> B.fetch_json prices_response_of_yojson
+
+  let get_spreads t ~token_ids () =
+    let body = J.list_single_field "token_id" token_ids in
+    B.new_post (M.http t) "/spreads"
+    |> B.with_body body
+    |> B.fetch_json spreads_response_of_yojson
+
+  let get_price_history t ~market ?start_ts ?end_ts ?interval ?fidelity () =
+    B.new_get (M.http t) "/prices-history"
+    |> B.query_param "market" market
+    |> B.query_option "startTs" string_of_int start_ts
+    |> B.query_option "endTs" string_of_int end_ts
+    |> B.query_option "interval" Interval.to_string interval
+    |> B.query_option "fidelity" string_of_int fidelity
+    |> B.fetch_json price_history_of_yojson
+end
 
 (** {1 Unauthenticated Client} *)
 
@@ -75,15 +119,17 @@ module L1 = struct
     let http (t : t) = t.http
   end)
 
-  (* L1 auth endpoints *)
   let create_api_key (t : t) ~nonce =
-    Endpoints.create_api_key t.http ~private_key:t.private_key
-      ~address:t.address ~nonce
+    B.new_post t.http "/auth/api-key"
+    |> B.with_body "{}"
+    |> B.with_l1_auth ~private_key:t.private_key ~address:t.address ~nonce
+    |> B.fetch_json Auth.api_key_response_of_yojson
 
   let derive_api_key (t : t) ~nonce =
     match
-      Endpoints.derive_api_key t.http ~private_key:t.private_key
-        ~address:t.address ~nonce
+      B.new_get t.http "/auth/derive-api-key"
+      |> B.with_l1_auth ~private_key:t.private_key ~address:t.address ~nonce
+      |> B.fetch_json Auth.api_key_response_of_yojson
     with
     | Ok resp ->
         let credentials = Auth.credentials_of_api_key_response resp in
@@ -119,46 +165,98 @@ module L2 = struct
     let http (t : t) = t.http
   end)
 
-  (* L1 auth endpoints *)
   let create_api_key (t : t) ~nonce =
-    Endpoints.create_api_key t.http ~private_key:t.private_key
-      ~address:t.address ~nonce
+    B.new_post t.http "/auth/api-key"
+    |> B.with_body "{}"
+    |> B.with_l1_auth ~private_key:t.private_key ~address:t.address ~nonce
+    |> B.fetch_json Auth.api_key_response_of_yojson
 
-  (* L2 auth endpoints *)
   let delete_api_key (t : t) =
-    Endpoints.delete_api_key t.http ~credentials:t.credentials
-      ~address:t.address
+    B.new_delete t.http "/auth/api-key"
+    |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
+    |> B.fetch_unit
 
   let get_api_keys (t : t) =
-    Endpoints.get_api_keys t.http ~credentials:t.credentials ~address:t.address
+    B.new_get t.http "/auth/api-keys"
+    |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
+    |> B.fetch_json_list (fun json ->
+        match json with
+        | `String s -> s
+        | _ -> failwith "Expected string in API keys list")
 
-  let create_order (t : t) =
-    Endpoints.create_order t.http ~credentials:t.credentials ~address:t.address
+  let create_order (t : t) ~order ~owner ~order_type () =
+    B.new_post t.http "/order"
+    |> B.with_body
+         (J.body
+            (J.obj
+               [
+                 ("order", yojson_of_signed_order order);
+                 ("owner", J.string owner);
+                 ("orderType", J.string (Order_type.to_string order_type));
+               ]))
+    |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
+    |> B.fetch_json create_order_response_of_yojson
 
-  let create_orders (t : t) =
-    Endpoints.create_orders t.http ~credentials:t.credentials ~address:t.address
+  let create_orders (t : t) ~orders () =
+    B.new_post t.http "/orders"
+    |> B.with_body
+         (J.list
+            (fun (order, owner, order_type) ->
+              J.obj
+                [
+                  ("order", yojson_of_signed_order order);
+                  ("owner", J.string owner);
+                  ("orderType", J.string (Order_type.to_string order_type));
+                ])
+            orders)
+    |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
+    |> B.fetch_json_list create_order_response_of_yojson
 
-  let get_order (t : t) =
-    Endpoints.get_order t.http ~credentials:t.credentials ~address:t.address
+  let get_order (t : t) ~order_id () =
+    B.new_get t.http ("/data/order/" ^ order_id)
+    |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
+    |> B.fetch_json open_order_of_yojson
 
-  let get_orders (t : t) =
-    Endpoints.get_orders t.http ~credentials:t.credentials ~address:t.address
+  let get_orders (t : t) ?market ?asset_id () =
+    B.new_get t.http "/data/orders"
+    |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
+    |> B.query_add "market" market
+    |> B.query_add "asset_id" asset_id
+    |> B.fetch_json_list open_order_of_yojson
 
-  let cancel_order (t : t) =
-    Endpoints.cancel_order t.http ~credentials:t.credentials ~address:t.address
+  let cancel_order (t : t) ~order_id () =
+    B.new_delete t.http "/order"
+    |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
+    |> B.query_param "orderID" order_id
+    |> B.fetch_json cancel_response_of_yojson
 
-  let cancel_orders (t : t) =
-    Endpoints.cancel_orders t.http ~credentials:t.credentials ~address:t.address
+  let cancel_orders (t : t) ~order_ids () =
+    B.new_delete t.http "/orders"
+    |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
+    |> B.query_each "orderIDs" Fun.id (Some order_ids)
+    |> B.fetch_json cancel_response_of_yojson
 
-  let cancel_all (t : t) =
-    Endpoints.cancel_all t.http ~credentials:t.credentials ~address:t.address
+  let cancel_all (t : t) () =
+    B.new_delete t.http "/cancel-all"
+    |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
+    |> B.fetch_json cancel_response_of_yojson
 
-  let cancel_market_orders (t : t) =
-    Endpoints.cancel_market_orders t.http ~credentials:t.credentials
-      ~address:t.address
+  let cancel_market_orders (t : t) ?market ?asset_id () =
+    B.new_delete t.http "/cancel-market-orders"
+    |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
+    |> B.query_add "market" market
+    |> B.query_add "asset_id" asset_id
+    |> B.fetch_json cancel_response_of_yojson
 
-  let get_trades (t : t) =
-    Endpoints.get_trades t.http ~credentials:t.credentials ~address:t.address
+  let get_trades (t : t) ?id ?taker ?maker ?market ?before ?after () =
+    B.new_get t.http "/data/trades"
+    |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
+    |> B.query_add "id" id |> B.query_add "taker" taker
+    |> B.query_add "maker" maker
+    |> B.query_add "market" market
+    |> B.query_add "before" before
+    |> B.query_add "after" after
+    |> B.fetch_json_list clob_trade_of_yojson
 end
 
 (** {1 State Transitions} *)

@@ -56,9 +56,7 @@ let run_demo env =
 
   (* Positions *)
   Logger.header "Positions";
-  let positions =
-    Data.get_positions client ~user:sample_user ~limit:(Limit.of_int_exn 5) ()
-  in
+  let positions = Data.get_positions client ~user:sample_user ~limit:5 () in
   print_result_count "get_positions" positions;
   (match positions with
   | Ok items when List.length items > 0 ->
@@ -68,28 +66,20 @@ let run_demo env =
 
   (* Trades *)
   Logger.header "Trades";
-  let trades = Data.get_trades client ~limit:(Nonneg_int.of_int_exn 5) () in
+  let trades = Data.get_trades client ~limit:5 () in
   print_result_count "get_trades (all)" trades;
 
-  let user_trades =
-    Data.get_trades client ~user:sample_user ~limit:(Nonneg_int.of_int_exn 5) ()
-  in
+  let user_trades = Data.get_trades client ~user:sample_user ~limit:5 () in
   print_result_count "get_trades (by user)" user_trades;
 
   (* Activity *)
   Logger.header "Activity";
-  let activity =
-    Data.get_activity client ~user:sample_user ~limit:(Limit.of_int_exn 5) ()
-  in
+  let activity = Data.get_activity client ~user:sample_user ~limit:5 () in
   print_result_count "get_activity" activity;
 
   (* Holders *)
   Logger.header "Holders";
-  let holders =
-    Data.get_holders client ~market:[ sample_market ]
-      ~limit:(Holders_limit.of_int_exn 5)
-      ()
-  in
+  let holders = Data.get_holders client ~market:[ sample_market ] ~limit:5 () in
   print_result_count "get_holders" holders;
 
   (* Traded *)
@@ -116,26 +106,19 @@ let run_demo env =
 
   (* Live Volume *)
   Logger.header "Live Volume";
-  let volume =
-    Data.get_live_volume client ~id:(Pos_int.of_int_exn sample_event_id) ()
-  in
+  let volume = Data.get_live_volume client ~id:sample_event_id () in
   print_result_count "get_live_volume" volume;
 
   (* Closed Positions *)
   Logger.header "Closed Positions";
-  let closed =
-    Data.get_closed_positions client ~user:sample_user
-      ~limit:(Closed_positions_limit.of_int_exn 5)
-      ()
-  in
+  let closed = Data.get_closed_positions client ~user:sample_user ~limit:5 () in
   print_result_count "get_closed_positions" closed;
 
   (* Builder Leaderboard *)
   Logger.header "Builder Leaderboard";
   let builders =
     Data.get_builder_leaderboard client ~time_period:Data.Time_period.Week
-      ~limit:(Builder_limit.of_int_exn 5)
-      ()
+      ~limit:5 ()
   in
   print_result_count "get_builder_leaderboard" builders;
   (match builders with
@@ -157,8 +140,7 @@ let run_demo env =
     Data.get_trader_leaderboard client
       ~category:Data.Leaderboard_category.Overall
       ~time_period:Data.Time_period.Week ~order_by:Data.Leaderboard_order_by.Pnl
-      ~limit:(Leaderboard_limit.of_int_exn 5)
-      ()
+      ~limit:5 ()
   in
   print_result_count "get_trader_leaderboard" traders;
   (match traders with

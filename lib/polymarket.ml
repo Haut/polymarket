@@ -37,6 +37,15 @@ module Clob = struct
   let l1_to_unauthed = Polymarket_clob.Client.l1_to_unauthed
 end
 
+module Rfq = struct
+  (** RFQ API client for Request for Quote trading.
+
+      All RFQ endpoints require L2 authentication. *)
+
+  module Types = Polymarket_rfq.Types
+  include Polymarket_rfq.Client
+end
+
 module Wss = struct
   (** WebSocket client for real-time market and user data.
 
@@ -75,23 +84,7 @@ module Side = Polymarket_common.Primitives.Side
 module Address = Polymarket_common.Primitives.Address
 module Hash64 = Polymarket_common.Primitives.Hash64
 module Hash = Polymarket_common.Primitives.Hash
-module Nonneg_int = Polymarket_common.Primitives.Nonneg_int
-module Pos_int = Polymarket_common.Primitives.Pos_int
-module Nonneg_float = Polymarket_common.Primitives.Nonneg_float
-module Limit = Polymarket_common.Primitives.Limit
-module Offset = Polymarket_common.Primitives.Offset
 module Timestamp = Polymarket_common.Primitives.Timestamp
-module Bounded_string = Polymarket_common.Primitives.Bounded_string
-module Holders_limit = Polymarket_common.Primitives.Holders_limit
-module Min_balance = Polymarket_common.Primitives.Min_balance
-
-module Closed_positions_limit =
-  Polymarket_common.Primitives.Closed_positions_limit
-
-module Extended_offset = Polymarket_common.Primitives.Extended_offset
-module Leaderboard_limit = Polymarket_common.Primitives.Leaderboard_limit
-module Leaderboard_offset = Polymarket_common.Primitives.Leaderboard_offset
-module Builder_limit = Polymarket_common.Primitives.Builder_limit
 
 (** {1 Authentication and Crypto}
 

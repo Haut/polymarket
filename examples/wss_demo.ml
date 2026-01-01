@@ -60,9 +60,7 @@ let get_active_tokens env sw =
   in
   let rate_limiter = Rate_limiter.create ~routes ~clock () in
   let client = Gamma.create ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter () in
-  match
-    Gamma.get_markets client ~limit:(Nonneg_int.of_int_exn 3) ~closed:false ()
-  with
+  match Gamma.get_markets client ~limit:3 ~closed:false () with
   | Ok markets ->
       let token_ids =
         List.concat_map

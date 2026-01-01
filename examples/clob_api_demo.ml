@@ -93,8 +93,8 @@ let run_demo env =
   in
   (* Filter for non-closed markets with volume to find ones with order books *)
   let markets =
-    Gamma.get_markets gamma_client ~limit:(Nonneg_int.of_int_exn 50)
-      ~closed:false ~volume_num_min:1000.0 ()
+    Gamma.get_markets gamma_client ~limit:50 ~closed:false
+      ~volume_num_min:1000.0 ()
   in
 
   let markets_with_tokens =

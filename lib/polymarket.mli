@@ -37,8 +37,6 @@
     - {!Address}: Ethereum addresses (0x-prefixed, 40 hex chars)
     - {!Hash64}: 64-character hex hashes
     - {!Hash}: Variable-length hex strings
-    - {!Nonneg_int}, {!Pos_int}, {!Nonneg_float}: Numeric constraints
-    - {!Limit}, {!Offset}: Pagination parameters with bounds
 
     {2 Sub-libraries}
 
@@ -71,20 +69,7 @@ module Gamma : sig
         in
       ]} *)
 
-  include module type of Polymarket_gamma.Endpoints
-  include module type of Polymarket_gamma.Types
-
-  val default_base_url : string
-  (** Default base URL for the Polymarket Gamma API *)
-
-  val create :
-    ?base_url:string ->
-    sw:Eio.Switch.t ->
-    net:_ Eio.Net.t ->
-    rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
-    unit ->
-    t
-  (** Create a new Gamma API client instance. *)
+  include module type of Polymarket_gamma.Client
 end
 
 module Data : sig
@@ -111,20 +96,7 @@ module Data : sig
         in
       ]} *)
 
-  include module type of Polymarket_data.Endpoints
-  include module type of Polymarket_data.Types
-
-  val default_base_url : string
-  (** Default base URL for the Polymarket Data API *)
-
-  val create :
-    ?base_url:string ->
-    sw:Eio.Switch.t ->
-    net:_ Eio.Net.t ->
-    rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
-    unit ->
-    t
-  (** Create a new Data API client instance. *)
+  include module type of Polymarket_data.Client
 end
 
 module Clob : sig
@@ -174,6 +146,109 @@ module Clob : sig
   val l2_to_l1 : l2 -> l1
   val l2_to_unauthed : l2 -> unauthed
   val l1_to_unauthed : l1 -> unauthed
+end
+
+module Rfq : sig
+  (** RFQ API client for Request for Quote trading.
+
+      All RFQ endpoints require L2 authentication. *)
+
+  module Types = Polymarket_rfq.Types
+  module Auth = Polymarket_common.Auth
+  module Crypto = Polymarket_common.Crypto
+
+  val default_base_url : string
+  (** Default base URL for the RFQ API: https://clob.polymarket.com *)
+
+  type t
+  (** RFQ client with L2 authentication. *)
+
+  val create :
+    ?base_url:string ->
+    sw:Eio.Switch.t ->
+    net:_ Eio.Net.t ->
+    rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
+    private_key:Crypto.private_key ->
+    credentials:Auth.credentials ->
+    unit ->
+    t
+  (** Create a new RFQ client. *)
+
+  val address : t -> string
+  (** Get the Ethereum address derived from the private key. *)
+
+  val credentials : t -> Auth.credentials
+  (** Get the API credentials. *)
+
+  (** {2 Request Endpoints} *)
+
+  val create_request :
+    t ->
+    body:Types.create_request_body ->
+    unit ->
+    (Types.create_request_response, Types.error) result
+
+  val cancel_request :
+    t -> request_id:Types.request_id -> unit -> (unit, Types.error) result
+
+  val get_requests :
+    t ->
+    ?offset:string ->
+    ?limit:int ->
+    ?state:Types.State_filter.t ->
+    ?request_ids:string list ->
+    ?markets:string list ->
+    ?size_min:float ->
+    ?size_max:float ->
+    ?size_usdc_min:float ->
+    ?size_usdc_max:float ->
+    ?price_min:float ->
+    ?price_max:float ->
+    ?sort_by:Types.Sort_by.t ->
+    ?sort_dir:Types.Sort_dir.t ->
+    unit ->
+    (Types.get_requests_response, Types.error) result
+
+  (** {2 Quote Endpoints} *)
+
+  val create_quote :
+    t ->
+    body:Types.create_quote_body ->
+    unit ->
+    (Types.create_quote_response, Types.error) result
+
+  val cancel_quote :
+    t -> quote_id:Types.quote_id -> unit -> (unit, Types.error) result
+
+  val get_quotes :
+    t ->
+    ?offset:string ->
+    ?limit:int ->
+    ?state:Types.State_filter.t ->
+    ?quote_ids:string list ->
+    ?request_ids:string list ->
+    ?markets:string list ->
+    ?size_min:float ->
+    ?size_max:float ->
+    ?size_usdc_min:float ->
+    ?size_usdc_max:float ->
+    ?price_min:float ->
+    ?price_max:float ->
+    ?sort_by:Types.Sort_by.t ->
+    ?sort_dir:Types.Sort_dir.t ->
+    unit ->
+    (Types.get_quotes_response, Types.error) result
+
+  (** {2 Execution Endpoints} *)
+
+  val accept_quote :
+    t -> body:Types.accept_quote_body -> unit -> (unit, Types.error) result
+
+  val approve_order :
+    t ->
+    body:Types.approve_order_body ->
+    unit ->
+    (Types.approve_order_response, Types.error) result
 end
 
 module Wss : sig
@@ -399,23 +474,7 @@ module Side = Polymarket_common.Primitives.Side
 module Address = Polymarket_common.Primitives.Address
 module Hash64 = Polymarket_common.Primitives.Hash64
 module Hash = Polymarket_common.Primitives.Hash
-module Nonneg_int = Polymarket_common.Primitives.Nonneg_int
-module Pos_int = Polymarket_common.Primitives.Pos_int
-module Nonneg_float = Polymarket_common.Primitives.Nonneg_float
-module Limit = Polymarket_common.Primitives.Limit
-module Offset = Polymarket_common.Primitives.Offset
 module Timestamp = Polymarket_common.Primitives.Timestamp
-module Bounded_string = Polymarket_common.Primitives.Bounded_string
-module Holders_limit = Polymarket_common.Primitives.Holders_limit
-module Min_balance = Polymarket_common.Primitives.Min_balance
-
-module Closed_positions_limit =
-  Polymarket_common.Primitives.Closed_positions_limit
-
-module Extended_offset = Polymarket_common.Primitives.Extended_offset
-module Leaderboard_limit = Polymarket_common.Primitives.Leaderboard_limit
-module Leaderboard_offset = Polymarket_common.Primitives.Leaderboard_offset
-module Builder_limit = Polymarket_common.Primitives.Builder_limit
 
 (** {1 Authentication and Crypto}
 

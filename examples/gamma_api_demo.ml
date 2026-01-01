@@ -79,7 +79,7 @@ let run_demo env =
 
   (* ===== Tags ===== *)
   Logger.header "Tags";
-  let tags = Gamma.get_tags client ~limit:(Nonneg_int.of_int_exn 10) () in
+  let tags = Gamma.get_tags client ~limit:10 () in
   print_result_count "get_tags" tags;
 
   let tag_id, tag_slug =
@@ -108,9 +108,7 @@ let run_demo env =
 
   (* ===== Events ===== *)
   Logger.header "Events";
-  let events =
-    Gamma.get_events client ~limit:(Nonneg_int.of_int_exn 10) ~active:true ()
-  in
+  let events = Gamma.get_events client ~limit:10 ~active:true () in
   print_result_count "get_events" events;
 
   let event_id, event_slug =
@@ -140,7 +138,7 @@ let run_demo env =
 
   (* ===== Markets ===== *)
   Logger.header "Markets";
-  let markets = Gamma.get_markets client ~limit:(Nonneg_int.of_int_exn 10) () in
+  let markets = Gamma.get_markets client ~limit:10 () in
   print_result_count "get_markets" markets;
 
   let market_id, market_slug =
@@ -170,9 +168,7 @@ let run_demo env =
 
   (* ===== Series ===== *)
   Logger.header "Series";
-  let series_list =
-    Gamma.get_series_list client ~limit:(Nonneg_int.of_int_exn 10) ()
-  in
+  let series_list = Gamma.get_series_list client ~limit:10 () in
   print_result_count "get_series_list" series_list;
 
   let series_id =
@@ -194,7 +190,7 @@ let run_demo env =
     | Some eid -> (
         match int_of_string_opt eid with
         | Some eid_int ->
-            Gamma.get_comments client ~limit:(Nonneg_int.of_int_exn 10)
+            Gamma.get_comments client ~limit:10
               ~parent_entity_type:Gamma.Parent_entity_type.Event
               ~parent_entity_id:eid_int ()
         | None ->
@@ -224,8 +220,7 @@ let run_demo env =
   (match user_address with
   | Some addr ->
       let user_comments =
-        Gamma.get_user_comments client ~user_address:addr
-          ~limit:(Nonneg_int.of_int_exn 5) ()
+        Gamma.get_user_comments client ~user_address:addr ~limit:5 ()
       in
       print_result_count "get_user_comments" user_comments
   | None -> Logger.skip "get_user_comments" "no user address available");

@@ -34,7 +34,7 @@ type ready
 type not_ready
 (** Phantom type indicating request needs a body before execution *)
 
-type method_ = GET | POST | DELETE
+type method_ = GET | POST | DELETE | DELETE_WITH_BODY
 
 type 'state t = {
   client : C.t;
@@ -57,6 +57,16 @@ let new_post (client : C.t) (path : string) : not_ready t =
 
 let new_delete (client : C.t) (path : string) : ready t =
   { client; method_ = DELETE; path; params = []; headers = []; body = None }
+
+let new_delete_with_body (client : C.t) (path : string) : not_ready t =
+  {
+    client;
+    method_ = DELETE_WITH_BODY;
+    path;
+    params = [];
+    headers = [];
+    body = None;
+  }
 
 (** {1 Query Parameter Builders} *)
 
@@ -108,6 +118,7 @@ let method_to_string = function
   | GET -> "GET"
   | POST -> "POST"
   | DELETE -> "DELETE"
+  | DELETE_WITH_BODY -> "DELETE"
 
 let with_l2_auth ~credentials ~address (req : 'a t) : 'a t =
   let method_ = method_to_string req.method_ in
@@ -132,6 +143,9 @@ let fetch (req : ready t) : int * string =
   | POST ->
       let body_str = Option.get req.body in
       C.do_post ~headers:req.headers req.client uri ~body:body_str
+  | DELETE_WITH_BODY ->
+      let body_str = Option.get req.body in
+      C.do_delete_with_body ~headers:req.headers req.client uri ~body:body_str
 
 (** {1 Response Parsers}
 

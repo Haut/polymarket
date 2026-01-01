@@ -54,6 +54,15 @@ val do_delete :
 (** Perform a DELETE request and return status code and body.
     @param headers Optional list of HTTP headers to include *)
 
+val do_delete_with_body :
+  ?headers:(string * string) list ->
+  t ->
+  Uri.t ->
+  body:string ->
+  status_code * string
+(** Perform a DELETE request with JSON body and return status code and body.
+    @param headers Optional list of HTTP headers to include *)
+
 (** {1 Error Handling} *)
 
 type http_error = { status : int; body : string; message : string }
