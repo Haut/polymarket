@@ -110,14 +110,30 @@ val fetch : ready t -> int * string
 
 (** {1 Response Parsers}
 
-    These execute the request and parse the response in one step. *)
+    These execute the request and parse the response in one step.
 
-val fetch_json : (Yojson.Safe.t -> 'a) -> ready t -> ('a, Client.error) result
-(** Execute and parse response as JSON object. *)
+    Pass [~expected_fields] (from [@@deriving yojson_fields]) to log warnings
+    when the API returns fields not in our types. *)
+
+val fetch_json :
+  ?expected_fields:string list ->
+  ?context:string ->
+  (Yojson.Safe.t -> 'a) ->
+  ready t ->
+  ('a, Client.error) result
+(** Execute and parse response as JSON object.
+    @param expected_fields If provided, logs warning for unknown fields
+    @param context Description for logging (e.g. "Market.t") *)
 
 val fetch_json_list :
-  (Yojson.Safe.t -> 'a) -> ready t -> ('a list, Client.error) result
-(** Execute and parse response as JSON array. *)
+  ?expected_fields:string list ->
+  ?context:string ->
+  (Yojson.Safe.t -> 'a) ->
+  ready t ->
+  ('a list, Client.error) result
+(** Execute and parse response as JSON array.
+    @param expected_fields If provided, logs warning for unknown fields in items
+    @param context Description for logging *)
 
 val fetch_text : ready t -> (string, Client.error) result
 (** Execute and return response body as string. *)

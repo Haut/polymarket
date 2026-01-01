@@ -94,7 +94,7 @@ type create_request_response = {
   request_id : request_id; [@key "requestId"]
   expiry : int;
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Response from creating an RFQ request. *)
 
 type cancel_request_body = { request_id : request_id [@key "requestId"] }
@@ -114,7 +114,7 @@ type rfq_request = {
   price : float;
   expiry : int;
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** A single RFQ request in the list response. *)
 
 type get_requests_response = {
@@ -123,7 +123,7 @@ type get_requests_response = {
   limit : int;
   count : int;
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Response from getting RFQ requests. *)
 
 (** {1 Quote Types} *)
@@ -140,7 +140,7 @@ type create_quote_body = {
 (** Request body for creating an RFQ quote. *)
 
 type create_quote_response = { quote_id : quote_id [@key "quoteId"] }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Response from creating an RFQ quote. *)
 
 type cancel_quote_body = { quote_id : quote_id [@key "quoteId"] }
@@ -160,7 +160,7 @@ type rfq_quote = {
   size_out : float; [@key "sizeOut"]
   price : float;
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** A single RFQ quote in the list response. *)
 
 type get_quotes_response = {
@@ -169,7 +169,7 @@ type get_quotes_response = {
   limit : int;
   count : int;
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Response from getting RFQ quotes. *)
 
 (** {1 Execution Types} *)
@@ -198,7 +198,7 @@ type approve_order_body = accept_quote_body [@@deriving yojson, show, eq]
 (** Request body for approving an order (same as accept_quote_body). *)
 
 type approve_order_response = { trade_ids : trade_id list [@key "tradeIds"] }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Response from approving an order. *)
 
 (** {1 Error Type} *)

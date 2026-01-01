@@ -28,7 +28,8 @@ let create_request t ~body () =
   B.new_post t.http "/rfq/request"
   |> B.with_body (J.body (yojson_of_create_request_body body))
   |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
-  |> B.fetch_json create_request_response_of_yojson
+  |> B.fetch_json ~expected_fields:yojson_fields_of_create_request_response
+       ~context:"create_request_response" create_request_response_of_yojson
 
 let cancel_request t ~request_id () =
   B.new_delete_with_body t.http "/rfq/request"
@@ -54,7 +55,8 @@ let get_requests t ?offset ?limit ?state ?request_ids ?markets ?size_min
   |> B.query_option "priceMax" string_of_float price_max
   |> B.query_option "sortBy" Sort_by.to_string sort_by
   |> B.query_option "sortDir" Sort_dir.to_string sort_dir
-  |> B.fetch_json get_requests_response_of_yojson
+  |> B.fetch_json ~expected_fields:yojson_fields_of_get_requests_response
+       ~context:"get_requests_response" get_requests_response_of_yojson
 
 (** {1 Quote Endpoints} *)
 
@@ -62,7 +64,8 @@ let create_quote t ~body () =
   B.new_post t.http "/rfq/quote"
   |> B.with_body (J.body (yojson_of_create_quote_body body))
   |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
-  |> B.fetch_json create_quote_response_of_yojson
+  |> B.fetch_json ~expected_fields:yojson_fields_of_create_quote_response
+       ~context:"create_quote_response" create_quote_response_of_yojson
 
 let cancel_quote t ~quote_id () =
   B.new_delete_with_body t.http "/rfq/quote"
@@ -89,7 +92,8 @@ let get_quotes t ?offset ?limit ?state ?quote_ids ?request_ids ?markets
   |> B.query_option "priceMax" string_of_float price_max
   |> B.query_option "sortBy" Sort_by.to_string sort_by
   |> B.query_option "sortDir" Sort_dir.to_string sort_dir
-  |> B.fetch_json get_quotes_response_of_yojson
+  |> B.fetch_json ~expected_fields:yojson_fields_of_get_quotes_response
+       ~context:"get_quotes_response" get_quotes_response_of_yojson
 
 (** {1 Execution Endpoints} *)
 
@@ -103,4 +107,5 @@ let approve_order t ~body () =
   B.new_post t.http "/rfq/quote/approve"
   |> B.with_body (J.body (yojson_of_approve_order_body body))
   |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
-  |> B.fetch_json approve_order_response_of_yojson
+  |> B.fetch_json ~expected_fields:yojson_fields_of_approve_order_response
+       ~context:"approve_order_response" approve_order_response_of_yojson

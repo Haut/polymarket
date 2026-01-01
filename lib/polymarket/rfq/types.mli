@@ -356,3 +356,13 @@ val error_to_string : error -> string
 
 val pp_error : Format.formatter -> error -> unit
 (** Pretty printer for errors. *)
+
+(** {1 Field Lists for Extra Field Detection} *)
+
+val yojson_fields_of_create_request_response : string list
+val yojson_fields_of_rfq_request : string list
+val yojson_fields_of_get_requests_response : string list
+val yojson_fields_of_create_quote_response : string list
+val yojson_fields_of_rfq_quote : string list
+val yojson_fields_of_get_quotes_response : string list
+val yojson_fields_of_approve_order_response : string list

@@ -40,7 +40,7 @@ type pagination = {
   has_more : bool; [@key "hasMore"]
   total_results : int; [@key "totalResults"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Pagination information *)
 
 type image_optimization = {
@@ -60,7 +60,7 @@ type image_optimization = {
   field : string option; [@default None]
   relname : string option; [@default None]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Image optimization data *)
 
 (** {1 Basic Domain Types} *)
@@ -78,7 +78,7 @@ type team = {
   updated_at : Polymarket_common.Primitives.Timestamp.t option;
       [@default None] [@key "updatedAt"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Sports team *)
 
 type tag = {
@@ -96,7 +96,7 @@ type tag = {
   force_hide : bool option; [@default None] [@key "forceHide"]
   is_carousel : bool option; [@default None] [@key "isCarousel"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Tag for categorization *)
 
 type related_tag = {
@@ -105,7 +105,7 @@ type related_tag = {
   related_tag_id : int option; [@default None] [@key "relatedTagID"]
   rank : int option; [@default None]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Related tag relationship *)
 
 type category = {
@@ -119,7 +119,7 @@ type category = {
   created_at : string option; [@default None] [@key "createdAt"]
   updated_at : string option; [@default None] [@key "updatedAt"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Market category *)
 
 type event_creator = {
@@ -131,7 +131,7 @@ type event_creator = {
   created_at : string option; [@default None] [@key "createdAt"]
   updated_at : string option; [@default None] [@key "updatedAt"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Event creator *)
 
 type chat = {
@@ -145,7 +145,7 @@ type chat = {
   end_time : Polymarket_common.Primitives.Timestamp.t option;
       [@default None] [@key "endTime"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Chat channel *)
 
 type template = {
@@ -162,7 +162,7 @@ type template = {
   series_slug : string option; [@default None] [@key "seriesSlug"]
   outcomes : string option; [@default None]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Event template *)
 
 type search_tag = {
@@ -171,7 +171,7 @@ type search_tag = {
   slug : string option; [@default None]
   event_count : int option; [@default None] [@key "event_count"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Search result tag *)
 
 (** {1 Comment Types} *)
@@ -180,7 +180,7 @@ type comment_position = {
   token_id : string option; [@default None] [@key "tokenId"]
   position_size : string option; [@default None] [@key "positionSize"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Position held by a commenter *)
 
 type comment_profile = {
@@ -198,7 +198,7 @@ type comment_profile = {
       [@default None] [@key "profileImageOptimized"]
   positions : comment_position list; [@default []]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Comment author profile *)
 
 type reaction = {
@@ -210,7 +210,7 @@ type reaction = {
   created_at : string option; [@default None] [@key "createdAt"]
   profile : comment_profile option; [@default None]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Comment reaction *)
 
 type comment = {
@@ -230,7 +230,7 @@ type comment = {
   report_count : int option; [@default None] [@key "reportCount"]
   reaction_count : int option; [@default None] [@key "reactionCount"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Comment *)
 
 (** {1 Profile Types} *)
@@ -240,7 +240,7 @@ type public_profile_user = {
   creator : bool;
   is_mod : bool; [@key "mod"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Public profile user *)
 
 type public_profile_response = {
@@ -257,7 +257,7 @@ type public_profile_response = {
   x_username : string option; [@default None] [@key "xUsername"]
   verified_badge : bool option; [@default None] [@key "verifiedBadge"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Public profile response *)
 
 type profile = {
@@ -289,7 +289,7 @@ type profile = {
   is_cert_req : bool option; [@default None] [@key "isCertReq"]
   cert_req_date : string option; [@default None] [@key "certReqDate"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** User profile *)
 
 (** {1 Collection Type} *)
@@ -328,7 +328,7 @@ type collection = {
   header_image_optimized : image_optimization option;
       [@default None] [@key "headerImageOptimized"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Collection of events/markets *)
 
 (** {1 Mutually Recursive Types: Market, Event, Series}
@@ -501,7 +501,7 @@ type market = {
   event_start_time : Polymarket_common.Primitives.Timestamp.t option;
       [@default None] [@key "eventStartTime"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 
 and event = {
   id : string;
@@ -611,7 +611,7 @@ and event = {
       [@default None] [@key "scheduledDeploymentTimestamp"]
   game_status : string option; [@default None] [@key "gameStatus"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 
 and series = {
   id : string;
@@ -657,7 +657,7 @@ and series = {
   comment_count : int option; [@default None] [@key "commentCount"]
   chats : chat list; [@default []]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 
 (** {1 Pagination Response Types} *)
 
@@ -665,7 +665,7 @@ type events_pagination = {
   data : event list; [@default []]
   pagination : pagination option; [@default None]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Paginated events response *)
 
 type search = {
@@ -674,7 +674,7 @@ type search = {
   profiles : profile list option; [@default None]
   pagination : pagination option; [@default None]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Search results *)
 
 (** {1 Sports Types} *)
@@ -687,11 +687,11 @@ type sports_metadata = {
   tags : string;
   series : string;
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Sports metadata *)
 
 type sports_market_types_response = {
   market_types : string list; [@default []] [@key "marketTypes"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Sports market types response *)

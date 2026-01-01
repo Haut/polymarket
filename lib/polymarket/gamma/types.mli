@@ -639,3 +639,31 @@ type sports_metadata = {
 type sports_market_types_response = { market_types : string list }
 [@@deriving yojson, show, eq]
 (** Sports market types response *)
+
+(** {1 Field Lists for Extra Field Detection} *)
+
+val yojson_fields_of_pagination : string list
+val yojson_fields_of_image_optimization : string list
+val yojson_fields_of_team : string list
+val yojson_fields_of_tag : string list
+val yojson_fields_of_related_tag : string list
+val yojson_fields_of_category : string list
+val yojson_fields_of_event_creator : string list
+val yojson_fields_of_chat : string list
+val yojson_fields_of_template : string list
+val yojson_fields_of_search_tag : string list
+val yojson_fields_of_comment_position : string list
+val yojson_fields_of_comment_profile : string list
+val yojson_fields_of_reaction : string list
+val yojson_fields_of_comment : string list
+val yojson_fields_of_public_profile_user : string list
+val yojson_fields_of_public_profile_response : string list
+val yojson_fields_of_profile : string list
+val yojson_fields_of_collection : string list
+val yojson_fields_of_market : string list
+val yojson_fields_of_event : string list
+val yojson_fields_of_series : string list
+val yojson_fields_of_events_pagination : string list
+val yojson_fields_of_search : string list
+val yojson_fields_of_sports_metadata : string list
+val yojson_fields_of_sports_market_types_response : string list

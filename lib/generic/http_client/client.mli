@@ -104,3 +104,39 @@ val handle_response :
     @param body The response body
     @param parse_fn Parser for successful responses
     @return Parsed result or error *)
+
+(** {1 JSON Field Checking}
+
+    These functions log warnings when API responses contain fields not defined
+    in our types. Use with [@@deriving yojson_fields] to generate field lists.
+*)
+
+val check_extra_fields :
+  expected_fields:string list -> context:string -> Yojson.Safe.t -> unit
+(** Check a JSON value for unexpected fields and log warnings.
+    @param expected_fields List of field names we expect (from yojson_fields)
+    @param context Description for logging (e.g. "Market.t") *)
+
+val parse_with_field_check :
+  expected_fields:string list ->
+  context:string ->
+  string ->
+  (Yojson.Safe.t -> 'a) ->
+  ('a, error) result
+(** Parse JSON with extra field checking for single objects.
+    @param expected_fields List of expected field names
+    @param context Description for logging
+    @param body JSON string to parse
+    @param of_yojson Parser function from ppx_yojson_conv *)
+
+val parse_list_with_field_check :
+  expected_fields:string list ->
+  context:string ->
+  string ->
+  (Yojson.Safe.t -> 'a) ->
+  ('a, error) result
+(** Parse JSON with extra field checking for lists of objects.
+    @param expected_fields List of expected field names for each item
+    @param context Description for logging
+    @param body JSON string to parse
+    @param of_yojson Parser function from ppx_yojson_conv *)

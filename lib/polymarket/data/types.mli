@@ -319,3 +319,23 @@ type trader_leaderboard_entry = {
 }
 [@@deriving yojson, show, eq]
 (** Trader leaderboard entry *)
+
+(** {1 Field Lists for Extra Field Detection} *)
+
+val yojson_fields_of_health_response : string list
+val yojson_fields_of_position : string list
+val yojson_fields_of_closed_position : string list
+val yojson_fields_of_trade : string list
+val yojson_fields_of_activity : string list
+val yojson_fields_of_holder : string list
+val yojson_fields_of_meta_holder : string list
+val yojson_fields_of_traded : string list
+val yojson_fields_of_revision_entry : string list
+val yojson_fields_of_revision_payload : string list
+val yojson_fields_of_value : string list
+val yojson_fields_of_open_interest : string list
+val yojson_fields_of_market_volume : string list
+val yojson_fields_of_live_volume : string list
+val yojson_fields_of_leaderboard_entry : string list
+val yojson_fields_of_builder_volume_entry : string list
+val yojson_fields_of_trader_leaderboard_entry : string list

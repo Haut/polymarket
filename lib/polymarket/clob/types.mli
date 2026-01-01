@@ -381,3 +381,19 @@ val address_of_yojson_result : Yojson.Safe.t -> (address, string) result
 
 val signature_of_yojson_result : Yojson.Safe.t -> (signature, string) result
 (** Deserialize a signature with validation, returning a result. *)
+
+(** {1 Field Lists for Extra Field Detection} *)
+
+val yojson_fields_of_order_book_level : string list
+val yojson_fields_of_order_book_summary : string list
+val yojson_fields_of_signed_order : string list
+val yojson_fields_of_order_request : string list
+val yojson_fields_of_create_order_response : string list
+val yojson_fields_of_open_order : string list
+val yojson_fields_of_maker_order_fill : string list
+val yojson_fields_of_clob_trade : string list
+val yojson_fields_of_price_response : string list
+val yojson_fields_of_midpoint_response : string list
+val yojson_fields_of_token_price : string list
+val yojson_fields_of_price_point : string list
+val yojson_fields_of_price_history : string list

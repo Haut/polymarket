@@ -74,7 +74,8 @@ end
 
 (** {1 Response Types} *)
 
-type health_response = { data : string } [@@deriving yojson, show, eq]
+type health_response = { data : string }
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Health check response *)
 
 type error = Polymarket_http.Client.error
@@ -112,7 +113,7 @@ type position = {
   end_date : string; [@key "endDate"]
   negative_risk : bool; [@key "negativeRisk"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Position in a market *)
 
 type closed_position = {
@@ -134,7 +135,7 @@ type closed_position = {
   opposite_asset : string; [@key "oppositeAsset"]
   end_date : string; [@key "endDate"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Closed position in a market *)
 
 type trade = {
@@ -158,7 +159,7 @@ type trade = {
   profile_image_optimized : string; [@key "profileImageOptimized"]
   transaction_hash : string; [@key "transactionHash"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Trade record *)
 
 type activity = {
@@ -184,7 +185,7 @@ type activity = {
   profile_image : string; [@key "profileImage"]
   profile_image_optimized : string; [@key "profileImageOptimized"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Activity record *)
 
 type holder = {
@@ -199,51 +200,51 @@ type holder = {
   profile_image : string; [@key "profileImage"]
   profile_image_optimized : string; [@key "profileImageOptimized"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Holder of a position *)
 
 type meta_holder = { token : string; holders : holder list }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Meta holder with token and list of holders *)
 
 type traded = { user : Polymarket_common.Primitives.Address.t; traded : int }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Traded record *)
 
 type revision_entry = { revision : string; timestamp : int }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Revision entry *)
 
 type revision_payload = {
   question_id : Polymarket_common.Primitives.Hash64.t; [@key "questionID"]
   revisions : revision_entry list;
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Revision payload *)
 
 type value = { user : Polymarket_common.Primitives.Address.t; value : float }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Value record *)
 
 type open_interest = {
   market : string;  (** Can be "GLOBAL" or a condition ID hash *)
   value : float;
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Open interest for a market *)
 
 type market_volume = {
   market : Polymarket_common.Primitives.Hash64.t option; [@yojson.option]
   value : float option; [@yojson.option]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Market volume *)
 
 type live_volume = {
   total : float option; [@yojson.option]
   markets : market_volume list; [@default []]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Live volume *)
 
 (** Custom deserializer for live_volume that handles null markets *)
@@ -276,7 +277,7 @@ type leaderboard_entry = {
   verified : bool;
   builder_logo : string; [@key "builderLogo"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Leaderboard entry for builders *)
 
 type builder_volume_entry = {
@@ -288,7 +289,7 @@ type builder_volume_entry = {
   active_users : int; [@key "activeUsers"]
   rank : string;
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Builder volume entry *)
 
 type trader_leaderboard_entry = {
@@ -301,5 +302,5 @@ type trader_leaderboard_entry = {
   x_username : string; [@key "xUsername"]
   verified_badge : bool; [@key "verifiedBadge"]
 }
-[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Trader leaderboard entry *)

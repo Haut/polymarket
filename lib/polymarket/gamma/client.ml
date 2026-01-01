@@ -27,14 +27,19 @@ let get_teams t ?limit ?offset ?order ?ascending ?league ?name ?abbreviation ()
   |> B.query_each "league" Fun.id league
   |> B.query_each "name" Fun.id name
   |> B.query_each "abbreviation" Fun.id abbreviation
-  |> B.fetch_json_list team_of_yojson
+  |> B.fetch_json_list ~expected_fields:yojson_fields_of_team ~context:"team"
+       team_of_yojson
 
 let get_sports t () =
-  B.new_get t "/sports" |> B.fetch_json_list sports_metadata_of_yojson
+  B.new_get t "/sports"
+  |> B.fetch_json_list ~expected_fields:yojson_fields_of_sports_metadata
+       ~context:"sports_metadata" sports_metadata_of_yojson
 
 let get_sports_market_types t () =
   B.new_get t "/sports/market-types"
-  |> B.fetch_json sports_market_types_response_of_yojson
+  |> B.fetch_json ~expected_fields:yojson_fields_of_sports_market_types_response
+       ~context:"sports_market_types_response"
+       sports_market_types_response_of_yojson
 
 (** {1 Tags Endpoints} *)
 
@@ -47,41 +52,48 @@ let get_tags t ?limit ?offset ?order ?ascending ?include_template ?is_carousel
   |> B.query_bool "ascending" ascending
   |> B.query_bool "include_template" include_template
   |> B.query_bool "is_carousel" is_carousel
-  |> B.fetch_json_list tag_of_yojson
+  |> B.fetch_json_list ~expected_fields:yojson_fields_of_tag ~context:"tag"
+       tag_of_yojson
 
 let get_tag t ~id ?include_template () =
   B.new_get t (Printf.sprintf "/tags/%s" id)
   |> B.query_bool "include_template" include_template
-  |> B.fetch_json tag_of_yojson
+  |> B.fetch_json ~expected_fields:yojson_fields_of_tag ~context:"tag"
+       tag_of_yojson
 
 let get_tag_by_slug t ~slug ?include_template () =
   B.new_get t (Printf.sprintf "/tags/slug/%s" slug)
   |> B.query_bool "include_template" include_template
-  |> B.fetch_json tag_of_yojson
+  |> B.fetch_json ~expected_fields:yojson_fields_of_tag ~context:"tag"
+       tag_of_yojson
 
 let get_related_tags t ~id ?omit_empty ?status () =
   B.new_get t (Printf.sprintf "/tags/%s/related-tags" id)
   |> B.query_bool "omit_empty" omit_empty
   |> B.query_option "status" Status.to_string status
-  |> B.fetch_json_list related_tag_of_yojson
+  |> B.fetch_json_list ~expected_fields:yojson_fields_of_related_tag
+       ~context:"related_tag" related_tag_of_yojson
 
 let get_related_tags_by_slug t ~slug ?omit_empty ?status () =
   B.new_get t (Printf.sprintf "/tags/slug/%s/related-tags" slug)
   |> B.query_bool "omit_empty" omit_empty
   |> B.query_option "status" Status.to_string status
-  |> B.fetch_json_list related_tag_of_yojson
+  |> B.fetch_json_list ~expected_fields:yojson_fields_of_related_tag
+       ~context:"related_tag" related_tag_of_yojson
 
 let get_related_tag_tags t ~id ?omit_empty ?status () =
   B.new_get t (Printf.sprintf "/tags/%s/related-tags/tags" id)
   |> B.query_bool "omit_empty" omit_empty
   |> B.query_option "status" Status.to_string status
-  |> B.fetch_json_list tag_of_yojson
+  |> B.fetch_json_list ~expected_fields:yojson_fields_of_tag ~context:"tag"
+       tag_of_yojson
 
 let get_related_tag_tags_by_slug t ~slug ?omit_empty ?status () =
   B.new_get t (Printf.sprintf "/tags/slug/%s/related-tags/tags" slug)
   |> B.query_bool "omit_empty" omit_empty
   |> B.query_option "status" Status.to_string status
-  |> B.fetch_json_list tag_of_yojson
+  |> B.fetch_json_list ~expected_fields:yojson_fields_of_tag ~context:"tag"
+       tag_of_yojson
 
 (** {1 Events Endpoints} *)
 
@@ -117,23 +129,27 @@ let get_events t ?limit ?offset ?order ?ascending ?id ?tag_id ?exclude_tag_id
   |> B.query_option "start_date_max" P.Timestamp.to_string start_date_max
   |> B.query_option "end_date_min" P.Timestamp.to_string end_date_min
   |> B.query_option "end_date_max" P.Timestamp.to_string end_date_max
-  |> B.fetch_json_list event_of_yojson
+  |> B.fetch_json_list ~expected_fields:yojson_fields_of_event ~context:"event"
+       event_of_yojson
 
 let get_event t ~id ?include_chat ?include_template () =
   B.new_get t (Printf.sprintf "/events/%s" id)
   |> B.query_bool "include_chat" include_chat
   |> B.query_bool "include_template" include_template
-  |> B.fetch_json event_of_yojson
+  |> B.fetch_json ~expected_fields:yojson_fields_of_event ~context:"event"
+       event_of_yojson
 
 let get_event_tags t ~id () =
   B.new_get t (Printf.sprintf "/events/%s/tags" id)
-  |> B.fetch_json_list tag_of_yojson
+  |> B.fetch_json_list ~expected_fields:yojson_fields_of_tag ~context:"tag"
+       tag_of_yojson
 
 let get_event_by_slug t ~slug ?include_chat ?include_template () =
   B.new_get t (Printf.sprintf "/events/slug/%s" slug)
   |> B.query_bool "include_chat" include_chat
   |> B.query_bool "include_template" include_template
-  |> B.fetch_json event_of_yojson
+  |> B.fetch_json ~expected_fields:yojson_fields_of_event ~context:"event"
+       event_of_yojson
 
 (** {1 Markets Endpoints} *)
 
@@ -171,21 +187,25 @@ let get_markets t ?limit ?offset ?order ?ascending ?id ?slug ?clob_token_ids
   |> B.query_each "question_ids" Fun.id question_ids
   |> B.query_bool "include_tag" include_tag
   |> B.query_bool "closed" closed
-  |> B.fetch_json_list market_of_yojson
+  |> B.fetch_json_list ~expected_fields:yojson_fields_of_market
+       ~context:"market" market_of_yojson
 
 let get_market t ~id ?include_tag () =
   B.new_get t (Printf.sprintf "/markets/%s" id)
   |> B.query_bool "include_tag" include_tag
-  |> B.fetch_json market_of_yojson
+  |> B.fetch_json ~expected_fields:yojson_fields_of_market ~context:"market"
+       market_of_yojson
 
 let get_market_tags t ~id () =
   B.new_get t (Printf.sprintf "/markets/%s/tags" id)
-  |> B.fetch_json_list tag_of_yojson
+  |> B.fetch_json_list ~expected_fields:yojson_fields_of_tag ~context:"tag"
+       tag_of_yojson
 
 let get_market_by_slug t ~slug ?include_tag () =
   B.new_get t (Printf.sprintf "/markets/slug/%s" slug)
   |> B.query_bool "include_tag" include_tag
-  |> B.fetch_json market_of_yojson
+  |> B.fetch_json ~expected_fields:yojson_fields_of_market ~context:"market"
+       market_of_yojson
 
 (** {1 Series Endpoints} *)
 
@@ -202,12 +222,14 @@ let get_series_list t ?limit ?offset ?order ?ascending ?slug ?categories_ids
   |> B.query_bool "closed" closed
   |> B.query_bool "include_chat" include_chat
   |> B.query_add "recurrence" recurrence
-  |> B.fetch_json_list series_of_yojson
+  |> B.fetch_json_list ~expected_fields:yojson_fields_of_series
+       ~context:"series" series_of_yojson
 
 let get_series t ~id ?include_chat () =
   B.new_get t (Printf.sprintf "/series/%s" id)
   |> B.query_bool "include_chat" include_chat
-  |> B.fetch_json series_of_yojson
+  |> B.fetch_json ~expected_fields:yojson_fields_of_series ~context:"series"
+       series_of_yojson
 
 (** {1 Comments Endpoints} *)
 
@@ -223,12 +245,14 @@ let get_comments t ?limit ?offset ?order ?ascending ?parent_entity_type
   |> B.query_option "parent_entity_id" string_of_int parent_entity_id
   |> B.query_bool "get_positions" get_positions
   |> B.query_bool "holders_only" holders_only
-  |> B.fetch_json_list comment_of_yojson
+  |> B.fetch_json_list ~expected_fields:yojson_fields_of_comment
+       ~context:"comment" comment_of_yojson
 
 let get_comment t ~id ?get_positions () =
   B.new_get t (Printf.sprintf "/comments/%s" id)
   |> B.query_bool "get_positions" get_positions
-  |> B.fetch_json comment_of_yojson
+  |> B.fetch_json ~expected_fields:yojson_fields_of_comment ~context:"comment"
+       comment_of_yojson
 
 let get_user_comments t ~user_address ?limit ?offset ?order ?ascending () =
   B.new_get t (Printf.sprintf "/comments/user_address/%s" user_address)
@@ -236,14 +260,16 @@ let get_user_comments t ~user_address ?limit ?offset ?order ?ascending () =
   |> B.query_option "offset" string_of_int offset
   |> B.query_add "order" order
   |> B.query_bool "ascending" ascending
-  |> B.fetch_json_list comment_of_yojson
+  |> B.fetch_json_list ~expected_fields:yojson_fields_of_comment
+       ~context:"comment" comment_of_yojson
 
 (** {1 Profile Endpoints} *)
 
 let get_public_profile t ~address () =
   B.new_get t "/public-profile"
   |> B.query_param "address" address
-  |> B.fetch_json public_profile_response_of_yojson
+  |> B.fetch_json ~expected_fields:yojson_fields_of_public_profile_response
+       ~context:"public_profile_response" public_profile_response_of_yojson
 
 (** {1 Search Endpoint} *)
 
@@ -264,4 +290,5 @@ let public_search t ~q ?cache ?events_status ?limit_per_type ?page ?events_tag
   |> B.query_add "recurrence" recurrence
   |> B.query_each "exclude_tag_id" string_of_int exclude_tag_id
   |> B.query_bool "optimized" optimized
-  |> B.fetch_json search_of_yojson
+  |> B.fetch_json ~expected_fields:yojson_fields_of_search ~context:"search"
+       search_of_yojson

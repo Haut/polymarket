@@ -92,7 +92,7 @@ type order_book_level = {
   price : string option; [@yojson.option]
   size : string option; [@yojson.option]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Order book price level with price and size *)
 
 type order_book_summary = {
@@ -106,7 +106,7 @@ type order_book_summary = {
   tick_size : string option; [@yojson.option] [@key "tick_size"]
   neg_risk : bool option; [@yojson.option] [@key "neg_risk"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Order book summary for a token *)
 
 (** {1 Signed Order Types} *)
@@ -127,7 +127,7 @@ type signed_order = {
       [@yojson.option] [@key "signatureType"]
   signature : signature option; [@yojson.option]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Cryptographically signed order for the CLOB *)
 
 type order_request = {
@@ -135,7 +135,7 @@ type order_request = {
   owner : string option; [@yojson.option]
   order_type : Order_type.t option; [@yojson.option] [@key "orderType"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Request body for creating an order *)
 
 type create_order_response = {
@@ -145,7 +145,7 @@ type create_order_response = {
   order_hashes : string list; [@default []] [@key "orderHashes"]
   status : Status.t option; [@yojson.option]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Response from creating an order *)
 
 (** {1 Open Order Types} *)
@@ -167,7 +167,7 @@ type open_order = {
   created_at : string option; [@yojson.option] [@key "created_at"]
   associate_trades : string list; [@default []] [@key "associate_trades"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** An open/active order *)
 
 (** {1 Cancel Types} *)
@@ -222,7 +222,7 @@ type maker_order_fill = {
   outcome : string option; [@yojson.option]
   side : Side.t option; [@yojson.option]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Maker order that was filled in a trade *)
 
 type clob_trade = {
@@ -245,24 +245,24 @@ type clob_trade = {
   maker_orders : maker_order_fill list; [@default []] [@key "maker_orders"]
   trade_type : Trade_type.t option; [@yojson.option] [@key "type"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** A trade on the CLOB *)
 
 (** {1 Price Types} *)
 
 type price_response = { price : string option [@yojson.option] }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Response from get price endpoint *)
 
 type midpoint_response = { mid : string option [@yojson.option] }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Response from get midpoint endpoint *)
 
 type token_price = {
   buy : string option; [@yojson.option] [@key "BUY"]
   sell : string option; [@yojson.option] [@key "SELL"]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Token prices for buy and sell sides *)
 
 type prices_response = (token_id * token_price) list [@@deriving show, eq]
@@ -296,11 +296,11 @@ type price_point = {
   t : int64 option; [@yojson.option]
   p : float option; [@yojson.option]
 }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Single price point with timestamp and price *)
 
 type price_history = { history : price_point list [@default []] }
-[@@deriving yojson, show, eq]
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Historical price data *)
 
 (** {1 Error Response} *)

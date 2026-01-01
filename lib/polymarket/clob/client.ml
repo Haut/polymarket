@@ -37,23 +37,28 @@ module Make_public (M : HAS_HTTP) = struct
   let get_order_book t ~token_id () =
     B.new_get (M.http t) "/book"
     |> B.query_param "token_id" token_id
-    |> B.fetch_json order_book_summary_of_yojson
+    |> B.fetch_json ~expected_fields:Types.yojson_fields_of_order_book_summary
+         ~context:"order_book_summary" order_book_summary_of_yojson
 
   let get_order_books t ~token_ids () =
     B.new_post (M.http t) "/books"
     |> B.with_body (J.list_single_field "token_id" token_ids)
-    |> B.fetch_json_list order_book_summary_of_yojson
+    |> B.fetch_json_list
+         ~expected_fields:Types.yojson_fields_of_order_book_summary
+         ~context:"order_book_summary" order_book_summary_of_yojson
 
   let get_price t ~token_id ~side () =
     B.new_get (M.http t) "/price"
     |> B.query_param "token_id" token_id
     |> B.query_param "side" (Side.to_string side)
-    |> B.fetch_json price_response_of_yojson
+    |> B.fetch_json ~expected_fields:Types.yojson_fields_of_price_response
+         ~context:"price_response" price_response_of_yojson
 
   let get_midpoint t ~token_id () =
     B.new_get (M.http t) "/midpoint"
     |> B.query_param "token_id" token_id
-    |> B.fetch_json midpoint_response_of_yojson
+    |> B.fetch_json ~expected_fields:Types.yojson_fields_of_midpoint_response
+         ~context:"midpoint_response" midpoint_response_of_yojson
 
   let get_prices t ~requests () =
     B.new_post (M.http t) "/prices"
@@ -81,7 +86,8 @@ module Make_public (M : HAS_HTTP) = struct
     |> B.query_option "endTs" string_of_int end_ts
     |> B.query_option "interval" Interval.to_string interval
     |> B.query_option "fidelity" string_of_int fidelity
-    |> B.fetch_json price_history_of_yojson
+    |> B.fetch_json ~expected_fields:Types.yojson_fields_of_price_history
+         ~context:"price_history" price_history_of_yojson
 end
 
 (** {1 Unauthenticated Client} *)
@@ -195,7 +201,9 @@ module L2 = struct
                  ("orderType", J.string (Order_type.to_string order_type));
                ]))
     |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
-    |> B.fetch_json create_order_response_of_yojson
+    |> B.fetch_json
+         ~expected_fields:Types.yojson_fields_of_create_order_response
+         ~context:"create_order_response" create_order_response_of_yojson
 
   let create_orders (t : t) ~orders () =
     B.new_post t.http "/orders"
@@ -210,19 +218,23 @@ module L2 = struct
                 ])
             orders)
     |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
-    |> B.fetch_json_list create_order_response_of_yojson
+    |> B.fetch_json_list
+         ~expected_fields:Types.yojson_fields_of_create_order_response
+         ~context:"create_order_response" create_order_response_of_yojson
 
   let get_order (t : t) ~order_id () =
     B.new_get t.http ("/data/order/" ^ order_id)
     |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
-    |> B.fetch_json open_order_of_yojson
+    |> B.fetch_json ~expected_fields:Types.yojson_fields_of_open_order
+         ~context:"open_order" open_order_of_yojson
 
   let get_orders (t : t) ?market ?asset_id () =
     B.new_get t.http "/data/orders"
     |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
     |> B.query_add "market" market
     |> B.query_add "asset_id" asset_id
-    |> B.fetch_json_list open_order_of_yojson
+    |> B.fetch_json_list ~expected_fields:Types.yojson_fields_of_open_order
+         ~context:"open_order" open_order_of_yojson
 
   let cancel_order (t : t) ~order_id () =
     B.new_delete t.http "/order"
@@ -256,7 +268,8 @@ module L2 = struct
     |> B.query_add "market" market
     |> B.query_add "before" before
     |> B.query_add "after" after
-    |> B.fetch_json_list clob_trade_of_yojson
+    |> B.fetch_json_list ~expected_fields:Types.yojson_fields_of_clob_trade
+         ~context:"clob_trade" clob_trade_of_yojson
 end
 
 (** {1 State Transitions} *)

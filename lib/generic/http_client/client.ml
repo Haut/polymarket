@@ -198,3 +198,40 @@ let handle_response status body parse_fn =
   match status with
   | 200 -> parse_fn body
   | _ -> Error (parse_error ~status body)
+
+(** {1 JSON Field Checking} *)
+
+let check_extra_fields ~expected_fields ~context json =
+  match json with
+  | `Assoc fields ->
+      let actual = List.map fst fields in
+      let extra =
+        List.filter (fun f -> not (List.mem f expected_fields)) actual
+      in
+      if extra <> [] then
+        Logger.log_warn ~section:"JSON" ~event:"EXTRA_FIELDS"
+          [ ("context", context); ("fields", String.concat ", " extra) ]
+  | _ -> ()
+
+let parse_with_field_check ~expected_fields ~context body of_yojson =
+  try
+    let json = Yojson.Safe.from_string body in
+    check_extra_fields ~expected_fields ~context json;
+    Ok (of_yojson json)
+  with
+  | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, _) ->
+      Error (to_error (Printexc.to_string exn))
+  | exn -> Error (to_error (Printexc.to_string exn))
+
+let parse_list_with_field_check ~expected_fields ~context body of_yojson =
+  try
+    let json = Yojson.Safe.from_string body in
+    (match json with
+    | `List items ->
+        List.iter (check_extra_fields ~expected_fields ~context) items
+    | _ -> ());
+    Ok (of_yojson json)
+  with
+  | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, _) ->
+      Error (to_error (Printexc.to_string exn))
+  | exn -> Error (to_error (Printexc.to_string exn))

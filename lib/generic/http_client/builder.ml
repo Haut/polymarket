@@ -151,17 +151,25 @@ let fetch (req : ready t) : int * string =
 
     These execute the request and parse the response in one step. *)
 
-let fetch_json (parser : Yojson.Safe.t -> 'a) (req : ready t) :
-    ('a, C.error) result =
+let fetch_json ?(expected_fields : string list option) ?(context : string = "")
+    (parser : Yojson.Safe.t -> 'a) (req : ready t) : ('a, C.error) result =
   let status, body = fetch req in
   C.handle_response status body (fun b ->
-      Json.parse parser b |> Result.map_error C.to_error)
+      match expected_fields with
+      | Some fields ->
+          C.parse_with_field_check ~expected_fields:fields ~context b parser
+      | None -> Json.parse parser b |> Result.map_error C.to_error)
 
-let fetch_json_list (parser : Yojson.Safe.t -> 'a) (req : ready t) :
+let fetch_json_list ?(expected_fields : string list option)
+    ?(context : string = "") (parser : Yojson.Safe.t -> 'a) (req : ready t) :
     ('a list, C.error) result =
   let status, body = fetch req in
   C.handle_response status body (fun b ->
-      Json.parse_list parser b |> Result.map_error C.to_error)
+      match expected_fields with
+      | Some fields ->
+          C.parse_list_with_field_check ~expected_fields:fields ~context b
+            (Ppx_yojson_conv_lib.Yojson_conv.list_of_yojson parser)
+      | None -> Json.parse_list parser b |> Result.map_error C.to_error)
 
 let fetch_text (req : ready t) : (string, C.error) result =
   let status, body = fetch req in

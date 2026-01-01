@@ -1,6 +1,7 @@
 (** Unit tests for Http_client modules *)
 
 open Polymarket_http.Client
+open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 module Json = Polymarket_http.Json
 module Builder = Polymarket_http.Builder
 
@@ -161,6 +162,113 @@ let test_to_error () =
       Alcotest.(check string) "creates parse error" "test message" message
   | _ -> Alcotest.fail "expected Parse_error"
 
+(** {1 Field Checking Tests} *)
+
+type checked_record = { name : string; count : int }
+[@@yojson.allow_extra_fields] [@@deriving yojson, yojson_fields]
+
+let test_check_extra_fields_none () =
+  let json = Yojson.Safe.from_string {|{"name": "test", "count": 42}|} in
+  (* Should not raise - no extra fields *)
+  check_extra_fields ~expected_fields:yojson_fields_of_checked_record
+    ~context:"checked_record" json
+
+let test_check_extra_fields_with_extras () =
+  let json =
+    Yojson.Safe.from_string {|{"name": "test", "count": 42, "extra": "field"}|}
+  in
+  (* Should log warning but not raise *)
+  check_extra_fields ~expected_fields:yojson_fields_of_checked_record
+    ~context:"checked_record" json
+
+let test_check_extra_fields_non_object () =
+  let json = Yojson.Safe.from_string {|[1, 2, 3]|} in
+  (* Should not raise on non-objects *)
+  check_extra_fields ~expected_fields:yojson_fields_of_checked_record
+    ~context:"checked_record" json
+
+let test_parse_with_field_check_success () =
+  let json_str = {|{"name": "test", "count": 42}|} in
+  let result =
+    parse_with_field_check ~expected_fields:yojson_fields_of_checked_record
+      ~context:"checked_record" json_str checked_record_of_yojson
+  in
+  match result with
+  | Ok record ->
+      Alcotest.(check string) "parses name" "test" record.name;
+      Alcotest.(check int) "parses count" 42 record.count
+  | Error e -> Alcotest.fail ("expected success: " ^ error_to_string e)
+
+let test_parse_with_field_check_extra_fields () =
+  (* Should still parse successfully but log warning *)
+  let json_str = {|{"name": "test", "count": 42, "unknown": true}|} in
+  let result =
+    parse_with_field_check ~expected_fields:yojson_fields_of_checked_record
+      ~context:"checked_record" json_str checked_record_of_yojson
+  in
+  match result with
+  | Ok record ->
+      Alcotest.(check string) "parses name" "test" record.name;
+      Alcotest.(check int) "parses count" 42 record.count
+  | Error e -> Alcotest.fail ("expected success: " ^ error_to_string e)
+
+let test_parse_with_field_check_invalid_json () =
+  let json_str = {|not valid json|} in
+  let result =
+    parse_with_field_check ~expected_fields:yojson_fields_of_checked_record
+      ~context:"checked_record" json_str checked_record_of_yojson
+  in
+  match result with Ok _ -> Alcotest.fail "expected error" | Error _ -> ()
+
+let test_parse_with_field_check_missing_field () =
+  let json_str = {|{"name": "test"}|} in
+  let result =
+    parse_with_field_check ~expected_fields:yojson_fields_of_checked_record
+      ~context:"checked_record" json_str checked_record_of_yojson
+  in
+  match result with
+  | Ok _ -> Alcotest.fail "expected error for missing field"
+  | Error _ -> ()
+
+let test_parse_list_with_field_check_success () =
+  let json_str = {|[{"name": "a", "count": 1}, {"name": "b", "count": 2}]|} in
+  let result =
+    parse_list_with_field_check ~expected_fields:yojson_fields_of_checked_record
+      ~context:"checked_record" json_str
+      (Ppx_yojson_conv_lib.Yojson_conv.list_of_yojson checked_record_of_yojson)
+  in
+  match result with
+  | Ok records ->
+      Alcotest.(check int) "parses two records" 2 (List.length records);
+      Alcotest.(check string) "first name" "a" (List.hd records).name
+  | Error e -> Alcotest.fail ("expected success: " ^ error_to_string e)
+
+let test_parse_list_with_field_check_extra_fields () =
+  (* Should parse but log warning for extra fields in items *)
+  let json_str =
+    {|[{"name": "a", "count": 1, "extra": 1}, {"name": "b", "count": 2}]|}
+  in
+  let result =
+    parse_list_with_field_check ~expected_fields:yojson_fields_of_checked_record
+      ~context:"checked_record" json_str
+      (Ppx_yojson_conv_lib.Yojson_conv.list_of_yojson checked_record_of_yojson)
+  in
+  match result with
+  | Ok records ->
+      Alcotest.(check int) "parses two records" 2 (List.length records)
+  | Error e -> Alcotest.fail ("expected success: " ^ error_to_string e)
+
+let test_parse_list_with_field_check_empty () =
+  let json_str = {|[]|} in
+  let result =
+    parse_list_with_field_check ~expected_fields:yojson_fields_of_checked_record
+      ~context:"checked_record" json_str
+      (Ppx_yojson_conv_lib.Yojson_conv.list_of_yojson checked_record_of_yojson)
+  in
+  match result with
+  | Ok records -> Alcotest.(check int) "empty list" 0 (List.length records)
+  | Error e -> Alcotest.fail ("expected success: " ^ error_to_string e)
+
 (** {1 Test Suite} *)
 
 let tests =
@@ -190,5 +298,24 @@ let tests =
         ("parse_error fallback", `Quick, test_parse_error_fallback);
         ("parse_error empty", `Quick, test_parse_error_empty);
         ("to_error", `Quick, test_to_error);
+      ] );
+    ( "check_extra_fields",
+      [
+        ("no extras", `Quick, test_check_extra_fields_none);
+        ("with extras", `Quick, test_check_extra_fields_with_extras);
+        ("non-object", `Quick, test_check_extra_fields_non_object);
+      ] );
+    ( "parse_with_field_check",
+      [
+        ("success", `Quick, test_parse_with_field_check_success);
+        ("extra fields", `Quick, test_parse_with_field_check_extra_fields);
+        ("invalid json", `Quick, test_parse_with_field_check_invalid_json);
+        ("missing field", `Quick, test_parse_with_field_check_missing_field);
+      ] );
+    ( "parse_list_with_field_check",
+      [
+        ("success", `Quick, test_parse_list_with_field_check_success);
+        ("extra fields", `Quick, test_parse_list_with_field_check_extra_fields);
+        ("empty", `Quick, test_parse_list_with_field_check_empty);
       ] );
   ]
