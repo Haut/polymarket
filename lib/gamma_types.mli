@@ -698,3 +698,11 @@ val yojson_fields_of_events_pagination : string list
 val yojson_fields_of_search : string list
 val yojson_fields_of_sports_metadata : string list
 val yojson_fields_of_sports_market_types_response : string list
+
+(** {1 Error Types} *)
+
+type error = Primitives.api_error
+(** Structured error type for all API errors. *)
+
+val error_to_string : error -> string
+(** Convert error to human-readable string *)

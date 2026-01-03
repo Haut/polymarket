@@ -33,11 +33,16 @@
   rl_types
   ; HTTP internals
   http_builder
+  http_client
+  http_json
   ; WebSocket internals
   ws_connection
+  ws_frame
   ws_handshake
   ; Common internals
+  auth
   constants
+  crypto
   error
   order_signing
   ; API internals

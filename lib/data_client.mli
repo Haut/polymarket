@@ -5,8 +5,8 @@ include module type of Data_types
 module N = Primitives.Nonneg_int
 (** Non-negative integer type for limit/offset parameters *)
 
-type t = Http_client.t
-(** The client type (alias for HTTP client) *)
+type t
+(** The Data API client type. *)
 
 val default_base_url : string
 (** Default base URL: https://data-api.polymarket.com *)
@@ -26,7 +26,7 @@ val create :
 
 (** {1 Health Endpoint} *)
 
-val health_check : t -> (health_response, Http_client.error) result
+val health_check : t -> (health_response, error) result
 (** Check if the API is healthy.
     @return [Ok response] on success, [Error error] on failure *)
 
@@ -46,7 +46,7 @@ val get_positions :
   ?sort_direction:Sort_direction.t ->
   ?title:string ->
   unit ->
-  (position list, Http_client.error) result
+  (position list, error) result
 (** Get current positions for a user.
     @param user User address (required)
     @param market
@@ -72,7 +72,7 @@ val get_closed_positions :
   ?limit:N.t ->
   ?offset:N.t ->
   unit ->
-  (closed_position list, Http_client.error) result
+  (closed_position list, error) result
 (** Get closed positions for a user.
     @param user User address (required)
     @param market Condition IDs (mutually exclusive with event_id)
@@ -97,7 +97,7 @@ val get_trades :
   ?limit:N.t ->
   ?offset:N.t ->
   unit ->
-  (trade list, Http_client.error) result
+  (trade list, error) result
 (** Get trades for a user or markets.
     @param user User address
     @param market Condition IDs (mutually exclusive with event_id)
@@ -125,7 +125,7 @@ val get_activity :
   ?limit:N.t ->
   ?offset:N.t ->
   unit ->
-  (activity list, Http_client.error) result
+  (activity list, error) result
 (** Get user activity (on-chain).
     @param user User address (required)
     @param market Condition IDs (mutually exclusive with event_id)
@@ -147,7 +147,7 @@ val get_holders :
   ?min_balance:int ->
   ?limit:N.t ->
   unit ->
-  (meta_holder list, Http_client.error) result
+  (meta_holder list, error) result
 (** Get top holders for markets.
     @param market Condition IDs (required)
     @param min_balance Minimum balance 0-999999 (default: 1)
@@ -156,7 +156,7 @@ val get_holders :
 (** {1 User Data Endpoints} *)
 
 val get_traded :
-  t -> user:Primitives.Address.t -> unit -> (traded, Http_client.error) result
+  t -> user:Primitives.Address.t -> unit -> (traded, error) result
 (** Get total markets a user has traded.
     @param user User address (required) *)
 
@@ -165,7 +165,7 @@ val get_value :
   user:Primitives.Address.t ->
   ?market:Primitives.Hash64.t list ->
   unit ->
-  (value list, Http_client.error) result
+  (value list, error) result
 (** Get total value of a user's positions.
     @param user User address (required)
     @param market Condition IDs to filter by *)
@@ -176,12 +176,11 @@ val get_open_interest :
   t ->
   ?market:Primitives.Hash64.t list ->
   unit ->
-  (open_interest list, Http_client.error) result
+  (open_interest list, error) result
 (** Get open interest for markets.
     @param market Condition IDs to filter by *)
 
-val get_live_volume :
-  t -> id:int -> unit -> (live_volume list, Http_client.error) result
+val get_live_volume : t -> id:int -> unit -> (live_volume list, error) result
 (** Get live volume for an event.
     @param id Event ID >= 1 (required) *)
 
@@ -193,7 +192,7 @@ val get_builder_leaderboard :
   ?limit:N.t ->
   ?offset:N.t ->
   unit ->
-  (leaderboard_entry list, Http_client.error) result
+  (leaderboard_entry list, error) result
 (** Get aggregated builder leaderboard.
     @param time_period Time period to aggregate (default: DAY)
     @param limit Maximum results 0-50 (default: 25)
@@ -203,7 +202,7 @@ val get_builder_volume :
   t ->
   ?time_period:Time_period.t ->
   unit ->
-  (builder_volume_entry list, Http_client.error) result
+  (builder_volume_entry list, error) result
 (** Get daily builder volume time-series.
     @param time_period Time period for daily records (default: DAY) *)
 
@@ -217,7 +216,7 @@ val get_trader_leaderboard :
   ?limit:N.t ->
   ?offset:N.t ->
   unit ->
-  (trader_leaderboard_entry list, Http_client.error) result
+  (trader_leaderboard_entry list, error) result
 (** Get trader leaderboard rankings.
     @param category Market category (default: OVERALL)
     @param time_period Time period (default: DAY)

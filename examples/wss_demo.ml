@@ -90,7 +90,7 @@ let get_active_tokens env sw =
         None
       end
   | Error err ->
-      Logger.error "GAMMA" (Http.error_to_string err);
+      Logger.error "GAMMA" (Gamma.error_to_string err);
       None
 
 (** {1 Main Demo} *)
@@ -185,7 +185,7 @@ let run_demo env =
           | None ->
               "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
         in
-        Crypto.private_key_of_string pk_str
+        Clob.private_key_of_string pk_str
       in
 
       (* Create rate limiter for CLOB API *)
@@ -202,7 +202,7 @@ let run_demo env =
           Logger.ok "derive_api_key"
             (Printf.sprintf "api_key=%s..." (String.sub resp.api_key 0 8));
 
-          let credentials : Auth.credentials =
+          let credentials : Clob.credentials =
             {
               api_key = resp.api_key;
               secret = resp.secret;
@@ -260,7 +260,7 @@ let run_demo env =
           end
           else Logger.skip "User.connect" "no market IDs available"
       | Error err ->
-          Logger.error "derive_api_key" (Http.error_to_string err);
+          Logger.error "derive_api_key" (Clob.error_to_string err);
           Logger.skip "User.connect" "could not derive API key");
 
       (* Summary *)

@@ -320,8 +320,8 @@ val equal_price_history : price_history -> price_history -> bool
 
 (** {1 Error Types} *)
 
-type error = Http_client.error
-(** Structured error type for all API errors (alias to Http_client.error) *)
+type error = Primitives.api_error
+(** Structured error type for all API errors. *)
 
 val error_to_string : error -> string
 (** Convert error to human-readable string *)

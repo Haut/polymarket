@@ -107,8 +107,8 @@ end
 type health_response = { data : string } [@@deriving yojson, show, eq]
 (** Health check response *)
 
-type error = Http_client.error
-(** Structured error type for all API errors (alias to Http_client.error) *)
+type error = Primitives.api_error
+(** Structured error type for all API errors. *)
 
 val error_to_string : error -> string
 (** Convert error to human-readable string *)

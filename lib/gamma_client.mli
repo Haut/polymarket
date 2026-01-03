@@ -5,8 +5,8 @@ include module type of Gamma_types
 module N = Primitives.Nonneg_int
 (** Non-negative integer type for limit/offset parameters *)
 
-type t = Http_client.t
-(** The client type (alias for HTTP client) *)
+type t
+(** The Gamma API client type. *)
 
 val default_base_url : string
 (** Default base URL: https://gamma-api.polymarket.com *)
@@ -26,7 +26,7 @@ val create :
 
 (** {1 Health Endpoint} *)
 
-val status : t -> (string, Http_client.error) result
+val status : t -> (string, error) result
 (** Check if the API is healthy.
     @return [Ok "OK"] on success, [Error error] on failure *)
 
@@ -42,7 +42,7 @@ val get_teams :
   ?name:string list ->
   ?abbreviation:string list ->
   unit ->
-  (team list, Http_client.error) result
+  (team list, error) result
 (** Get list of sports teams.
     @param limit Maximum number of results (non-negative)
     @param offset Pagination offset (non-negative)
@@ -52,11 +52,11 @@ val get_teams :
     @param name Filter by team name(s)
     @param abbreviation Filter by team abbreviation(s) *)
 
-val get_sports : t -> unit -> (sports_metadata list, Http_client.error) result
+val get_sports : t -> unit -> (sports_metadata list, error) result
 (** Get list of sports with metadata. *)
 
 val get_sports_market_types :
-  t -> unit -> (sports_market_types_response, Http_client.error) result
+  t -> unit -> (sports_market_types_response, error) result
 (** Get list of sports market types. *)
 
 (** {1 Tags Endpoints} *)
@@ -70,7 +70,7 @@ val get_tags :
   ?include_template:bool ->
   ?is_carousel:bool ->
   unit ->
-  (tag list, Http_client.error) result
+  (tag list, error) result
 (** Get list of tags.
     @param limit Maximum number of results (non-negative)
     @param offset Pagination offset (non-negative)
@@ -80,21 +80,13 @@ val get_tags :
     @param is_carousel Filter by carousel flag *)
 
 val get_tag :
-  t ->
-  id:string ->
-  ?include_template:bool ->
-  unit ->
-  (tag, Http_client.error) result
+  t -> id:string -> ?include_template:bool -> unit -> (tag, error) result
 (** Get a tag by ID.
     @param id Tag ID (required)
     @param include_template Include template data if true *)
 
 val get_tag_by_slug :
-  t ->
-  slug:string ->
-  ?include_template:bool ->
-  unit ->
-  (tag, Http_client.error) result
+  t -> slug:string -> ?include_template:bool -> unit -> (tag, error) result
 (** Get a tag by slug.
     @param slug Tag slug (required)
     @param include_template Include template data if true *)
@@ -105,7 +97,7 @@ val get_related_tags :
   ?omit_empty:bool ->
   ?status:Status.t ->
   unit ->
-  (related_tag list, Http_client.error) result
+  (related_tag list, error) result
 (** Get related tags for a tag.
     @param id Tag ID (required)
     @param omit_empty Omit empty related tags
@@ -117,7 +109,7 @@ val get_related_tags_by_slug :
   ?omit_empty:bool ->
   ?status:Status.t ->
   unit ->
-  (related_tag list, Http_client.error) result
+  (related_tag list, error) result
 (** Get related tags for a tag by slug.
     @param slug Tag slug (required)
     @param omit_empty Omit empty related tags
@@ -129,7 +121,7 @@ val get_related_tag_tags :
   ?omit_empty:bool ->
   ?status:Status.t ->
   unit ->
-  (tag list, Http_client.error) result
+  (tag list, error) result
 (** Get full tag objects for tags related to a tag.
     @param id Tag ID (required)
     @param omit_empty Omit empty related tags
@@ -141,7 +133,7 @@ val get_related_tag_tags_by_slug :
   ?omit_empty:bool ->
   ?status:Status.t ->
   unit ->
-  (tag list, Http_client.error) result
+  (tag list, error) result
 (** Get full tag objects for tags related to a tag by slug.
     @param slug Tag slug (required)
     @param omit_empty Omit empty related tags
@@ -178,7 +170,7 @@ val get_events :
   ?end_date_min:Primitives.Timestamp.t ->
   ?end_date_max:Primitives.Timestamp.t ->
   unit ->
-  (event list, Http_client.error) result
+  (event list, error) result
 (** List events.
     @param limit Maximum number of results (non-negative)
     @param offset Pagination offset (non-negative)
@@ -213,7 +205,7 @@ val get_event :
   ?include_chat:bool ->
   ?include_template:bool ->
   unit ->
-  (event, Http_client.error) result
+  (event, error) result
 (** Get an event by ID.
     @param id Event ID (required)
     @param include_chat Include chat data
@@ -225,14 +217,13 @@ val get_event_by_slug :
   ?include_chat:bool ->
   ?include_template:bool ->
   unit ->
-  (event, Http_client.error) result
+  (event, error) result
 (** Get an event by slug.
     @param slug Event slug (required)
     @param include_chat Include chat data
     @param include_template Include template data *)
 
-val get_event_tags :
-  t -> id:string -> unit -> (tag list, Http_client.error) result
+val get_event_tags : t -> id:string -> unit -> (tag list, error) result
 (** Get tags for an event.
     @param id Event ID (required) *)
 
@@ -268,7 +259,7 @@ val get_markets :
   ?include_tag:bool ->
   ?closed:bool ->
   unit ->
-  (market list, Http_client.error) result
+  (market list, error) result
 (** Get list of markets.
     @param limit Maximum number of results (non-negative)
     @param offset Pagination offset (non-negative)
@@ -299,27 +290,18 @@ val get_markets :
     @param closed Filter by closed status *)
 
 val get_market :
-  t ->
-  id:string ->
-  ?include_tag:bool ->
-  unit ->
-  (market, Http_client.error) result
+  t -> id:string -> ?include_tag:bool -> unit -> (market, error) result
 (** Get a market by ID.
     @param id Market ID (required)
     @param include_tag Include tag data *)
 
 val get_market_by_slug :
-  t ->
-  slug:string ->
-  ?include_tag:bool ->
-  unit ->
-  (market, Http_client.error) result
+  t -> slug:string -> ?include_tag:bool -> unit -> (market, error) result
 (** Get a market by slug.
     @param slug Market slug (required)
     @param include_tag Include tag data *)
 
-val get_market_tags :
-  t -> id:string -> unit -> (tag list, Http_client.error) result
+val get_market_tags : t -> id:string -> unit -> (tag list, error) result
 (** Get tags for a market.
     @param id Market ID (required) *)
 
@@ -338,7 +320,7 @@ val get_series_list :
   ?include_chat:bool ->
   ?recurrence:string ->
   unit ->
-  (series list, Http_client.error) result
+  (series list, error) result
 (** Get list of series.
     @param limit Maximum number of results (non-negative)
     @param offset Pagination offset (non-negative)
@@ -352,11 +334,7 @@ val get_series_list :
     @param recurrence Filter by recurrence type *)
 
 val get_series :
-  t ->
-  id:string ->
-  ?include_chat:bool ->
-  unit ->
-  (series, Http_client.error) result
+  t -> id:string -> ?include_chat:bool -> unit -> (series, error) result
 (** Get a series by ID.
     @param id Series ID (required)
     @param include_chat Include chat data *)
@@ -374,7 +352,7 @@ val get_comments :
   ?get_positions:bool ->
   ?holders_only:bool ->
   unit ->
-  (comment list, Http_client.error) result
+  (comment list, error) result
 (** Get list of comments.
     @param limit Maximum number of results (non-negative)
     @param offset Pagination offset (non-negative)
@@ -386,11 +364,7 @@ val get_comments :
     @param holders_only Filter to holders only *)
 
 val get_comment :
-  t ->
-  id:string ->
-  ?get_positions:bool ->
-  unit ->
-  (comment, Http_client.error) result
+  t -> id:string -> ?get_positions:bool -> unit -> (comment, error) result
 (** Get a comment by ID.
     @param id Comment ID (required)
     @param get_positions Include position data *)
@@ -403,7 +377,7 @@ val get_user_comments :
   ?order:string ->
   ?ascending:bool ->
   unit ->
-  (comment list, Http_client.error) result
+  (comment list, error) result
 (** Get comments by user address.
     @param user_address User address (required)
     @param limit Maximum number of results (non-negative)
@@ -414,10 +388,7 @@ val get_user_comments :
 (** {1 Profile Endpoints} *)
 
 val get_public_profile :
-  t ->
-  address:string ->
-  unit ->
-  (public_profile_response, Http_client.error) result
+  t -> address:string -> unit -> (public_profile_response, error) result
 (** Get public profile by address.
     @param address User address (required) *)
 
@@ -440,7 +411,7 @@ val public_search :
   ?exclude_tag_id:int list ->
   ?optimized:bool ->
   unit ->
-  (search, Http_client.error) result
+  (search, error) result
 (** Search for events, tags, and profiles.
     @param q Search query (required)
     @param cache Enable caching

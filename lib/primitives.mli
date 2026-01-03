@@ -455,3 +455,29 @@ module Nonneg_int : sig
   val yojson_of_t : t -> Yojson.Safe.t
   (** Convert to JSON int. *)
 end
+
+(** {1 Error Types}
+
+    Structured error types for API operations. These are shared across
+    all API clients (CLOB, Gamma, Data, RFQ). *)
+
+type http_error = { status : int; body : string; message : string }
+(** HTTP error with status code, raw body, and extracted message. *)
+
+type parse_error = { context : string; message : string }
+(** Parse error with context and message. *)
+
+type network_error = { message : string }
+(** Network-level error (connection failed, timeout, etc.). *)
+
+type api_error =
+  | Http_error of http_error
+  | Parse_error of parse_error
+  | Network_error of network_error
+(** Structured error type for all API errors. *)
+
+val api_error_to_string : api_error -> string
+(** Convert error to human-readable string. *)
+
+val pp_api_error : Format.formatter -> api_error -> unit
+(** Pretty printer for errors. *)

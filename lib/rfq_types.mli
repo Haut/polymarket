@@ -292,7 +292,7 @@ val equal_approve_order_response :
 
 (** {1 Error Type} *)
 
-type error = Http_client.error
+type error = Primitives.api_error
 (** Structured error type for all API errors. *)
 
 val error_to_string : error -> string

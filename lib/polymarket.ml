@@ -32,6 +32,7 @@ module Clob = struct
   type credentials = Clob_client.credentials
   type error = Clob_client.error
 
+  let private_key_of_string = Clob_client.private_key_of_string
   let error_to_string = Clob_client.error_to_string
   let upgrade_to_l1 = Clob_client.upgrade_to_l1
   let upgrade_to_l2 = Clob_client.upgrade_to_l2
@@ -72,15 +73,6 @@ module Rtds = struct
   include Rtds_client
 end
 
-module Http = Http_client
-(** HTTP client utilities for making API requests. *)
-
-module Http_json = Http_json
-(** JSON parsing utilities for HTTP responses. *)
-
-module Ws_frame = Ws_frame
-(** WebSocket frame encoding/decoding utilities. *)
-
 module Rate_limiter = Rate_limiter
 (** Route-based rate limiting middleware. *)
 
@@ -104,13 +96,3 @@ module Quote_id = Primitives.Quote_id
 module Trade_id = Primitives.Trade_id
 module Timestamp = Primitives.Timestamp
 module Nonneg_int = Primitives.Nonneg_int
-
-(** {1 Authentication and Crypto}
-
-    Shared authentication types and cryptographic utilities. *)
-
-module Auth = Auth
-(** Authentication types and header builders. *)
-
-module Crypto = Crypto
-(** Cryptographic utilities for signing and address derivation. *)

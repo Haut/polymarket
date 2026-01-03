@@ -13,12 +13,12 @@ open Polymarket
 let print_result_count name result =
   match result with
   | Ok items -> Logger.ok name (Printf.sprintf "%d items" (List.length items))
-  | Error err -> Logger.error name (Http.error_to_string err)
+  | Error err -> Logger.error name (Gamma.error_to_string err)
 
 let print_result name ~on_ok result =
   match result with
   | Ok value -> Logger.ok name (on_ok value)
-  | Error err -> Logger.error name (Http.error_to_string err)
+  | Error err -> Logger.error name (Gamma.error_to_string err)
 
 (** {1 ID Extraction Helpers} *)
 

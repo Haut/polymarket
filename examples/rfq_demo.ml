@@ -44,10 +44,10 @@ let run_demo env =
             "Using test private key - set POLY_PRIVATE_KEY for real use";
           "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
     in
-    Crypto.private_key_of_string pk_str
+    Clob.private_key_of_string pk_str
   in
 
-  let credentials : Auth.credentials =
+  let credentials : Clob.credentials =
     match
       ( Sys.getenv_opt "POLY_API_KEY",
         Sys.getenv_opt "POLY_API_SECRET",

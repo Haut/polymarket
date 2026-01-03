@@ -29,6 +29,7 @@ type api_key_response = Auth.api_key_response = {
 type rate_limiter = Rate_limiter.t
 type error = H.error
 
+let private_key_of_string = Crypto.private_key_of_string
 let error_to_string = H.error_to_string
 
 (** {1 Client Types} *)

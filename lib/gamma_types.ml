@@ -711,3 +711,9 @@ type sports_market_types_response = {
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Sports market types response *)
+
+(** {1 Error Types} *)
+
+type error = Http_client.error
+
+let error_to_string = Http_client.error_to_string

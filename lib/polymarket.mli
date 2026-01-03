@@ -143,6 +143,9 @@ module Clob : sig
   type credentials = Clob_client.credentials
   type error = Clob_client.error
 
+  val private_key_of_string : string -> private_key
+  (** Create a private key from a hex string (64 chars, no 0x prefix). *)
+
   val error_to_string : error -> string
   val upgrade_to_l1 : unauthed -> private_key:private_key -> l1
   val upgrade_to_l2 : l1 -> credentials:credentials -> l2
@@ -472,15 +475,6 @@ module Rtds : sig
   end
 end
 
-module Http = Http_client
-(** HTTP client utilities for making API requests. *)
-
-module Http_json = Http_json
-(** JSON parsing utilities for HTTP responses. *)
-
-module Ws_frame = Ws_frame
-(** WebSocket frame encoding/decoding utilities. *)
-
 module Rate_limiter = Rate_limiter
 (** Route-based rate limiting middleware for HTTP clients. *)
 
@@ -503,13 +497,3 @@ module Quote_id = Primitives.Quote_id
 module Trade_id = Primitives.Trade_id
 module Timestamp = Primitives.Timestamp
 module Nonneg_int = Primitives.Nonneg_int
-
-(** {1 Authentication and Crypto}
-
-    Shared authentication types and cryptographic utilities. *)
-
-module Auth = Auth
-(** Authentication types and header builders. *)
-
-module Crypto = Crypto
-(** Cryptographic utilities for signing and address derivation. *)

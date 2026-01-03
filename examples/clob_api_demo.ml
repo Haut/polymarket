@@ -23,12 +23,12 @@ open Polymarket
 let print_result name ~on_ok result =
   match result with
   | Ok value -> Logger.ok name (on_ok value)
-  | Error err -> Logger.error name (Http.error_to_string err)
+  | Error err -> Logger.error name (Clob.error_to_string err)
 
 let print_result_count name result =
   match result with
   | Ok items -> Logger.ok name (Printf.sprintf "%d items" (List.length items))
-  | Error err -> Logger.error name (Http.error_to_string err)
+  | Error err -> Logger.error name (Clob.error_to_string err)
 
 (** {1 Token ID Extraction} *)
 
@@ -102,7 +102,7 @@ let run_demo env =
           (Printf.sprintf "found %d markets with token IDs" (List.length mwt));
         mwt
     | Error err ->
-        Logger.error "fetch_markets" (Http.error_to_string err);
+        Logger.error "fetch_markets" (Gamma.error_to_string err);
         []
   in
 
@@ -231,7 +231,7 @@ let run_demo env =
           | None ->
               "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
         in
-        Crypto.private_key_of_string pk_str
+        Clob.private_key_of_string pk_str
       in
 
       (* Upgrade to L1 client with private key *)
@@ -293,7 +293,7 @@ let run_demo env =
           let _unauthed_from_l1 = Clob.l1_to_unauthed l1_for_downgrade in
           Logger.ok "l1_to_unauthed" "downgraded from L1 to Unauthed"
       | Error err ->
-          Logger.error "derive_api_key" (Http.error_to_string err);
+          Logger.error "derive_api_key" (Clob.error_to_string err);
           Logger.skip "get_orders" "could not derive API key";
           Logger.skip "get_trades" "could not derive API key");
 

@@ -150,11 +150,17 @@ let do_delete_with_body ?(headers = []) t uri ~body:request_body =
 
 (** {1 Error Handling} *)
 
-type http_error = { status : int; body : string; message : string }
-type parse_error = { context : string; message : string }
-type network_error = { message : string }
+(* Define types locally but they are compatible with Primitives types via the mli *)
+type http_error = Primitives.http_error = {
+  status : int;
+  body : string;
+  message : string;
+}
 
-type error =
+type parse_error = Primitives.parse_error = { context : string; message : string }
+type network_error = Primitives.network_error = { message : string }
+
+type error = Primitives.api_error =
   | Http_error of http_error
   | Parse_error of parse_error
   | Network_error of network_error

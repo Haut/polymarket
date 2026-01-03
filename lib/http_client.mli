@@ -65,20 +65,17 @@ val do_delete_with_body :
 
 (** {1 Error Handling} *)
 
-type http_error = { status : int; body : string; message : string }
+type http_error = Primitives.http_error
 (** HTTP error with status code, raw body, and extracted message *)
 
-type parse_error = { context : string; message : string }
+type parse_error = Primitives.parse_error
 (** Parse error with context and message *)
 
-type network_error = { message : string }
+type network_error = Primitives.network_error
 (** Network-level error (connection failed, timeout, etc.) *)
 
-type error =
-  | Http_error of http_error
-  | Parse_error of parse_error
-  | Network_error of network_error
-      (** Structured error type for all API errors *)
+type error = Primitives.api_error
+(** Structured error type for all API errors *)
 
 val error_to_string : error -> string
 (** Convert error to human-readable string *)

@@ -54,11 +54,14 @@ type api_key_response = Auth.api_key_response = {
 type rate_limiter = Rate_limiter.t
 (** Rate limiter for enforcing API limits. *)
 
-type error = Http_client.error
+type error = Primitives.api_error
 (** Error type for API operations. *)
 
 val error_to_string : error -> string
 (** Convert an error to a human-readable string. *)
+
+val private_key_of_string : string -> private_key
+(** Create a private key from a hex string (64 chars, no 0x prefix). *)
 
 val default_base_url : string
 (** Default base URL for the CLOB API: https://clob.polymarket.com *)
