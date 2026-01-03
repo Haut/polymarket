@@ -63,9 +63,7 @@ let get_active_tokens env sw =
   let routes = Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
   let rate_limiter = Rate_limiter.create ~routes ~clock () in
   let client = Gamma.create ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter () in
-  match
-    Gamma.get_markets client ~limit:(Gamma.N.of_int_exn 3) ~closed:false ()
-  with
+  match Gamma.get_markets client ~limit:3 ~closed:false () with
   | Ok markets ->
       let token_ids =
         List.concat_map
@@ -213,10 +211,7 @@ let run_demo env =
           (* Get condition IDs for markets (User channel uses markets, not assets) *)
           let gamma_client = Gamma.create ~sw ~net ~rate_limiter () in
           let market_ids =
-            match
-              Gamma.get_markets gamma_client ~limit:(Gamma.N.of_int_exn 2)
-                ~closed:false ()
-            with
+            match Gamma.get_markets gamma_client ~limit:2 ~closed:false () with
             | Ok markets ->
                 List.filter_map
                   (fun (m : Gamma.market) -> m.condition_id)

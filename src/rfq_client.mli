@@ -7,7 +7,6 @@ module Types = Rfq_types
 
 module Auth = Auth
 module Crypto = Crypto
-module N = Primitives.Nonneg_int
 
 val default_base_url : string
 (** Default base URL for the RFQ API: https://clob.polymarket.com *)
@@ -48,7 +47,7 @@ val cancel_request :
 val get_requests :
   t ->
   ?offset:string ->
-  ?limit:N.t ->
+  ?limit:int ->
   ?state:Rfq_types.State_filter.t ->
   ?request_ids:string list ->
   ?markets:string list ->
@@ -77,7 +76,7 @@ val cancel_quote :
 val get_quotes :
   t ->
   ?offset:string ->
-  ?limit:N.t ->
+  ?limit:int ->
   ?state:Rfq_types.State_filter.t ->
   ?quote_ids:string list ->
   ?request_ids:string list ->

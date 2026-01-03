@@ -84,8 +84,8 @@ let run_demo env =
 
   (* Get active requests - shows requests from all traders *)
   let requests =
-    Rfq.get_requests rfq_client ~state:Rfq.Types.State_filter.Active
-      ~limit:(Rfq.N.of_int_exn 10) ()
+    Rfq.get_requests rfq_client ~state:Rfq.Types.State_filter.Active ~limit:10
+      ()
   in
   print_result "get_requests (active)" requests
     ~on_ok:(fun (r : Rfq.Types.get_requests_response) ->
@@ -105,8 +105,8 @@ let run_demo env =
 
   (* Get inactive (completed/canceled) requests *)
   let inactive_requests =
-    Rfq.get_requests rfq_client ~state:Rfq.Types.State_filter.Inactive
-      ~limit:(Rfq.N.of_int_exn 5) ()
+    Rfq.get_requests rfq_client ~state:Rfq.Types.State_filter.Inactive ~limit:5
+      ()
   in
   print_result "get_requests (inactive)" inactive_requests
     ~on_ok:(fun (r : Rfq.Types.get_requests_response) ->
@@ -116,8 +116,7 @@ let run_demo env =
 
   (* Get active quotes *)
   let quotes =
-    Rfq.get_quotes rfq_client ~state:Rfq.Types.State_filter.Active
-      ~limit:(Rfq.N.of_int_exn 10) ()
+    Rfq.get_quotes rfq_client ~state:Rfq.Types.State_filter.Active ~limit:10 ()
   in
   print_result "get_quotes (active)" quotes
     ~on_ok:(fun (q : Rfq.Types.get_quotes_response) ->
@@ -136,8 +135,7 @@ let run_demo env =
 
   (* Get inactive quotes *)
   let inactive_quotes =
-    Rfq.get_quotes rfq_client ~state:Rfq.Types.State_filter.Inactive
-      ~limit:(Rfq.N.of_int_exn 5) ()
+    Rfq.get_quotes rfq_client ~state:Rfq.Types.State_filter.Inactive ~limit:5 ()
   in
   print_result "get_quotes (inactive)" inactive_quotes
     ~on_ok:(fun (q : Rfq.Types.get_quotes_response) ->

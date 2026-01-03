@@ -6,6 +6,19 @@
 
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 
+(** Side option that treats empty string as None *)
+module Side_option = struct
+  type t = Primitives.Side.t option [@@deriving show, eq]
+
+  let t_of_yojson = function
+    | `String "" -> None
+    | json -> Some (Primitives.Side.t_of_yojson json)
+
+  let yojson_of_t = function
+    | None -> `String ""
+    | Some s -> Primitives.Side.yojson_of_t s
+end
+
 (** {1 Query Parameter Enums} *)
 
 module Sort_direction = Primitives.Sort_dir
@@ -172,7 +185,7 @@ type activity = {
   transaction_hash : string; [@key "transactionHash"]
   price : float;
   asset : string;
-  side : Side.t;
+  side : Side_option.t;
   outcome_index : int; [@key "outcomeIndex"]
   title : string;
   slug : string;

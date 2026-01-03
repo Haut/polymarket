@@ -47,7 +47,6 @@ module Request_id = Primitives.Request_id
 module Quote_id = Primitives.Quote_id
 module Trade_id = Primitives.Trade_id
 module Timestamp = Primitives.Timestamp
-module Nonneg_int = Primitives.Nonneg_int
 
 (** {1 Error Types} *)
 

@@ -414,48 +414,6 @@ module Sort_dir : sig
   val equal : t -> t -> bool
 end
 
-(** {1 Non-negative Integer}
-
-    Non-negative integer type for limit/offset parameters. Prevents passing
-    negative values at compile time. *)
-module Nonneg_int : sig
-  type t
-  (** A non-negative integer (>= 0) *)
-
-  val make : int -> (t, string) result
-  (** Create with validation. Returns Error if negative. *)
-
-  val make_exn : int -> t
-  (** Create with validation. Raises on negative input. *)
-
-  val of_int : int -> (t, string) result
-  (** Alias for make. *)
-
-  val of_int_exn : int -> t
-  (** Alias for make_exn. *)
-
-  val to_int : t -> int
-  (** Convert to int. *)
-
-  val to_string : t -> string
-  (** Convert to string. *)
-
-  val pp : Format.formatter -> t -> unit
-  val equal : t -> t -> bool
-
-  val zero : t
-  (** The value 0. *)
-
-  val one : t
-  (** The value 1. *)
-
-  val t_of_yojson : Yojson.Safe.t -> t
-  (** Parse from JSON int. Raises if negative. *)
-
-  val yojson_of_t : t -> Yojson.Safe.t
-  (** Convert to JSON int. *)
-end
-
 (** {1 Error Types}
 
     Structured error types for API operations. These are shared across all API

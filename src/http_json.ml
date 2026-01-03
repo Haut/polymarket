@@ -4,23 +4,49 @@ let src = Logs.Src.create "polymarket.json" ~doc:"JSON parsing"
 
 module Log = (val Logs.src_log src : Logs.LOG)
 
+(** Find the path to a specific JSON value within a larger JSON structure *)
+let rec find_path_to_value ~target ~path json =
+  if json == target then Some (List.rev path)
+  else
+    match json with
+    | `Assoc fields ->
+        List.find_map
+          (fun (key, value) ->
+            find_path_to_value ~target ~path:(key :: path) value)
+          fields
+    | `List items ->
+        List.find_mapi
+          (fun i item ->
+            find_path_to_value ~target
+              ~path:(Printf.sprintf "[%d]" i :: path)
+              item)
+          items
+    | _ -> None
+
+let format_path = function [] -> "<root>" | parts -> String.concat "." parts
+
 (** {1 JSON Parsing} *)
 
 let parse (parse_fn : Yojson.Safe.t -> 'a) (body : string) : ('a, string) result
     =
+  let root_json = ref `Null in
   try
     let json = Yojson.Safe.from_string body in
+    root_json := json;
     Ok (parse_fn json)
   with
-  | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, json) ->
-      let msg =
-        Printf.sprintf
-          "JSON parse error: %s\nProblematic value: %s\nFull response:\n%s"
-          (Printexc.to_string exn)
-          (Yojson.Safe.to_string json)
-          body
+  | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, bad_json) ->
+      let path =
+        match find_path_to_value ~target:bad_json ~path:[] !root_json with
+        | Some p -> format_path p
+        | None -> "<unknown>"
       in
-      Log.err (fun m -> m "Parse error: %s" (Printexc.to_string exn));
+      let msg =
+        Printf.sprintf "JSON parse error at field '%s': %s\nValue: %s" path
+          (Printexc.to_string exn)
+          (Yojson.Safe.to_string bad_json)
+      in
+      Log.err (fun m -> m "Parse error at %s: %s" path (Printexc.to_string exn));
       Error msg
   | Yojson.Json_error msg ->
       let err = "JSON error: " ^ msg ^ "\nBody:\n" ^ body in
@@ -36,8 +62,10 @@ let parse (parse_fn : Yojson.Safe.t -> 'a) (body : string) : ('a, string) result
 
 let parse_list (parse_item_fn : Yojson.Safe.t -> 'a) (body : string) :
     ('a list, string) result =
+  let root_json = ref `Null in
   try
     let json = Yojson.Safe.from_string body in
+    root_json := json;
     match json with
     | `List items -> Ok (List.map parse_item_fn items)
     | _ ->
@@ -45,15 +73,18 @@ let parse_list (parse_item_fn : Yojson.Safe.t -> 'a) (body : string) :
         Log.err (fun m -> m "Expected JSON array");
         Error err
   with
-  | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, json) ->
-      let msg =
-        Printf.sprintf
-          "JSON parse error: %s\nProblematic value: %s\nFull response:\n%s"
-          (Printexc.to_string exn)
-          (Yojson.Safe.to_string json)
-          body
+  | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, bad_json) ->
+      let path =
+        match find_path_to_value ~target:bad_json ~path:[] !root_json with
+        | Some p -> format_path p
+        | None -> "<unknown>"
       in
-      Log.err (fun m -> m "Parse error: %s" (Printexc.to_string exn));
+      let msg =
+        Printf.sprintf "JSON parse error at field '%s': %s\nValue: %s" path
+          (Printexc.to_string exn)
+          (Yojson.Safe.to_string bad_json)
+      in
+      Log.err (fun m -> m "Parse error at %s: %s" path (Printexc.to_string exn));
       Error msg
   | Yojson.Json_error msg ->
       let err = "JSON error: " ^ msg ^ "\nBody:\n" ^ body in

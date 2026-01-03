@@ -4,9 +4,6 @@ include module type of struct
   include Data_types
 end
 
-module N = Primitives.Nonneg_int
-(** Non-negative integer type for limit/offset parameters *)
-
 type t
 (** The Data API client type. *)
 
@@ -42,8 +39,8 @@ val get_positions :
   ?size_threshold:float ->
   ?redeemable:bool ->
   ?mergeable:bool ->
-  ?limit:N.t ->
-  ?offset:N.t ->
+  ?limit:int ->
+  ?offset:int ->
   ?sort_by:Position_sort_by.t ->
   ?sort_direction:Sort_direction.t ->
   ?title:string ->
@@ -71,8 +68,8 @@ val get_closed_positions :
   ?title:string ->
   ?sort_by:Closed_position_sort_by.t ->
   ?sort_direction:Sort_direction.t ->
-  ?limit:N.t ->
-  ?offset:N.t ->
+  ?limit:int ->
+  ?offset:int ->
   unit ->
   (closed_position list, error) result
 (** Get closed positions for a user.
@@ -96,8 +93,8 @@ val get_trades :
   ?filter_type:Filter_type.t ->
   ?filter_amount:float ->
   ?taker_only:bool ->
-  ?limit:N.t ->
-  ?offset:N.t ->
+  ?limit:int ->
+  ?offset:int ->
   unit ->
   (trade list, error) result
 (** Get trades for a user or markets.
@@ -124,8 +121,8 @@ val get_activity :
   ?end_time:int ->
   ?sort_by:Activity_sort_by.t ->
   ?sort_direction:Sort_direction.t ->
-  ?limit:N.t ->
-  ?offset:N.t ->
+  ?limit:int ->
+  ?offset:int ->
   unit ->
   (activity list, error) result
 (** Get user activity (on-chain).
@@ -147,7 +144,7 @@ val get_holders :
   t ->
   market:Primitives.Hash64.t list ->
   ?min_balance:int ->
-  ?limit:N.t ->
+  ?limit:int ->
   unit ->
   (meta_holder list, error) result
 (** Get top holders for markets.
@@ -191,8 +188,8 @@ val get_live_volume : t -> id:int -> unit -> (live_volume list, error) result
 val get_builder_leaderboard :
   t ->
   ?time_period:Time_period.t ->
-  ?limit:N.t ->
-  ?offset:N.t ->
+  ?limit:int ->
+  ?offset:int ->
   unit ->
   (leaderboard_entry list, error) result
 (** Get aggregated builder leaderboard.
@@ -215,8 +212,8 @@ val get_trader_leaderboard :
   ?order_by:Leaderboard_order_by.t ->
   ?user:Primitives.Address.t ->
   ?user_name:string ->
-  ?limit:N.t ->
-  ?offset:N.t ->
+  ?limit:int ->
+  ?offset:int ->
   unit ->
   (trader_leaderboard_entry list, error) result
 (** Get trader leaderboard rankings.

@@ -4,9 +4,6 @@ include module type of struct
   include Gamma_types
 end
 
-module N = Primitives.Nonneg_int
-(** Non-negative integer type for limit/offset parameters *)
-
 type t
 (** The Gamma API client type. *)
 
@@ -36,8 +33,8 @@ val status : t -> (string, error) result
 
 val get_teams :
   t ->
-  ?limit:N.t ->
-  ?offset:N.t ->
+  ?limit:int ->
+  ?offset:int ->
   ?order:string list ->
   ?ascending:bool ->
   ?league:string list ->
@@ -65,8 +62,8 @@ val get_sports_market_types :
 
 val get_tags :
   t ->
-  ?limit:N.t ->
-  ?offset:N.t ->
+  ?limit:int ->
+  ?offset:int ->
   ?order:string list ->
   ?ascending:bool ->
   ?include_template:bool ->
@@ -145,8 +142,8 @@ val get_related_tag_tags_by_slug :
 
 val get_events :
   t ->
-  ?limit:N.t ->
-  ?offset:N.t ->
+  ?limit:int ->
+  ?offset:int ->
   ?order:string list ->
   ?ascending:bool ->
   ?id:int list ->
@@ -233,8 +230,8 @@ val get_event_tags : t -> id:string -> unit -> (tag list, error) result
 
 val get_markets :
   t ->
-  ?limit:N.t ->
-  ?offset:N.t ->
+  ?limit:int ->
+  ?offset:int ->
   ?order:string ->
   ?ascending:bool ->
   ?id:int list ->
@@ -311,8 +308,8 @@ val get_market_tags : t -> id:string -> unit -> (tag list, error) result
 
 val get_series_list :
   t ->
-  ?limit:N.t ->
-  ?offset:N.t ->
+  ?limit:int ->
+  ?offset:int ->
   ?order:string ->
   ?ascending:bool ->
   ?slug:string list ->
@@ -345,8 +342,8 @@ val get_series :
 
 val get_comments :
   t ->
-  ?limit:N.t ->
-  ?offset:N.t ->
+  ?limit:int ->
+  ?offset:int ->
   ?order:string ->
   ?ascending:bool ->
   ?parent_entity_type:Parent_entity_type.t ->
@@ -374,8 +371,8 @@ val get_comment :
 val get_user_comments :
   t ->
   user_address:string ->
-  ?limit:N.t ->
-  ?offset:N.t ->
+  ?limit:int ->
+  ?offset:int ->
   ?order:string ->
   ?ascending:bool ->
   unit ->
@@ -401,8 +398,8 @@ val public_search :
   q:string ->
   ?cache:bool ->
   ?events_status:string ->
-  ?limit_per_type:N.t ->
-  ?page:N.t ->
+  ?limit_per_type:int ->
+  ?page:int ->
   ?events_tag:string list ->
   ?keep_closed_markets:int ->
   ?sort:string ->

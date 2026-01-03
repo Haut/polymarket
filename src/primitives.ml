@@ -185,36 +185,6 @@ module Sort_dir = struct
   type t = Asc | Desc [@@deriving enum]
 end
 
-(** {1 Non-negative Integer}
-
-    Non-negative integer type for limit/offset parameters. Prevents passing
-    negative values at compile time. *)
-
-module Nonneg_int = struct
-  type t = int
-
-  let make n = if n >= 0 then Ok n else Error "Nonneg_int: must be non-negative"
-
-  let make_exn n =
-    if n >= 0 then n else invalid_arg "Nonneg_int: must be non-negative"
-
-  let of_int n = make n
-  let of_int_exn n = make_exn n
-  let to_int t = t
-  let to_string t = string_of_int t
-  let pp fmt t = Format.fprintf fmt "%d" t
-  let equal = Int.equal
-  let zero = 0
-  let one = 1
-
-  let t_of_yojson = function
-    | `Int n when n >= 0 -> n
-    | `Int _ -> failwith "Nonneg_int: must be non-negative"
-    | _ -> failwith "Nonneg_int: expected int"
-
-  let yojson_of_t t = `Int t
-end
-
 (** {1 Error Types} *)
 
 type http_error = Http_client.http_error = {

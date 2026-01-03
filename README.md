@@ -57,7 +57,7 @@ let () =
   let client = Gamma.create ~sw ~net ~rate_limiter () in
 
   (* Get active markets *)
-  match Gamma.get_markets client ~active:true ~limit:(Nonneg_int.of_int_exn 10) () with
+  match Gamma.get_markets client ~active:true ~limit:10 () with
   | Ok markets ->
     List.iter (fun (m : Gamma.market) ->
       print_endline (Option.value ~default:"(no question)" m.question)
@@ -66,7 +66,7 @@ let () =
     print_endline ("Error: " ^ err.Http.error)
 ```
 
-The library uses validated primitive types like `Address.t`, `Hash64.t`, `Limit.t`, and `Nonneg_int.t` for type safety. Create them with `*.of_int_exn`, `*.make_exn`, or handle errors with `*.of_int`, `*.make`.
+The library uses validated primitive types like `Address.t`, `Hash64.t`, and `Timestamp.t` for type safety. Create them with `*.make_exn` or handle errors with `*.make`.
 
 ## Data API Examples
 
@@ -100,7 +100,7 @@ with
 match Data.get_trades client
   ~user:user_address
   ~side:Data.Side.Buy
-  ~limit:(Nonneg_int.of_int_exn 20)
+  ~limit:20
   ()
 with
 | Ok trades ->
@@ -144,7 +144,7 @@ The Gamma API provides access to markets, events, series, and search functionali
 let routes = Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
 let rate_limiter = Rate_limiter.create ~routes ~clock () in
 let client = Gamma.create ~sw ~net ~rate_limiter () in
-match Gamma.get_markets client ~active:true ~limit:(Nonneg_int.of_int_exn 10) () with
+match Gamma.get_markets client ~active:true ~limit:10 () with
 | Ok markets ->
   List.iter (fun (m : Gamma.market) ->
     Printf.printf "Market: %s\n"
@@ -157,7 +157,7 @@ match Gamma.get_markets client ~active:true ~limit:(Nonneg_int.of_int_exn 10) ()
 ### Get Events by Tag
 
 ```ocaml
-match Gamma.get_events client ~tag_slug:"politics" ~limit:(Nonneg_int.of_int_exn 10) () with
+match Gamma.get_events client ~tag_slug:"politics" ~limit:10 () with
 | Ok events ->
   List.iter (fun (e : Gamma.event) ->
     Printf.printf "Event: %s\n"
@@ -824,7 +824,6 @@ Polymarket_http   (* Direct access to HTTP client components *)
 | `Address.t` | Ethereum address (0x + 40 hex chars) | `Address.make_exn "0x..."` |
 | `Hash64.t` | 64-character hex hash | `Hash64.make_exn "0x..."` |
 | `Hash.t` | Variable-length hex string | `Hash.make_exn "0x..."` |
-| `Nonneg_int.t` | Non-negative integer | `Nonneg_int.of_int_exn 5` |
 | `Pos_int.t` | Positive integer | `Pos_int.of_int_exn 1` |
 | `Limit.t` | Pagination limit (1-1000) | `Limit.of_int_exn 100` |
 | `Offset.t` | Pagination offset (0-10000) | `Offset.of_int_exn 0` |

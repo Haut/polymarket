@@ -205,7 +205,8 @@ type activity = {
   transaction_hash : string;
   price : float;
   asset : string;
-  side : Side.t;
+  side : Side.t option;
+      (** None when activity type has no side (e.g., rewards) *)
   outcome_index : int;
   title : string;
   slug : string;

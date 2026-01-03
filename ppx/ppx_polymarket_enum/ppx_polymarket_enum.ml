@@ -149,6 +149,15 @@ let generate_impl ~ctxt (_rec_flag, type_declarations) =
           (* Generate to_string and of_string_opt *)
           let to_string_expr = generate_to_string ~loc ctor_info in
           let of_string_opt_expr = generate_of_string_opt ~loc ctor_info in
+          (* Build the valid values string for error messages *)
+          let valid_values =
+            ctor_info
+            |> List.map (fun (name, attrs, _) ->
+                match get_custom_value attrs with
+                | Some custom -> custom
+                | None -> constructor_to_uppercase name)
+            |> String.concat ", "
+          in
           (* Generate all functions inline - no external dependencies *)
           [%str
             let to_string = [%e to_string_expr]
@@ -157,11 +166,26 @@ let generate_impl ~ctxt (_rec_flag, type_declarations) =
             let of_string s =
               match of_string_opt s with
               | Some v -> v
-              | None -> failwith ("Unknown enum value: " ^ s)
+              | None ->
+                  failwith
+                    ("Unknown enum value \"" ^ s ^ "\", expected one of: "
+                    ^ [%e Ast_builder.Default.estring ~loc valid_values])
 
-            let t_of_yojson = function
-              | `String s -> of_string s
-              | _ -> failwith "Expected string for enum"
+            let t_of_yojson json =
+              match json with
+              | `String s -> (
+                  match of_string_opt s with
+                  | Some v -> v
+                  | None ->
+                      Ppx_yojson_conv_lib.Yojson_conv.of_yojson_error
+                        ("Unknown enum value \"" ^ s ^ "\", expected one of: "
+                        ^ [%e Ast_builder.Default.estring ~loc valid_values])
+                        json)
+              | _ ->
+                  Ppx_yojson_conv_lib.Yojson_conv.of_yojson_error
+                    ("Expected string for enum, expected one of: "
+                    ^ [%e Ast_builder.Default.estring ~loc valid_values])
+                    json
 
             let yojson_of_t t = `String (to_string t)
             let pp fmt t = Format.fprintf fmt "%s" (to_string t)
