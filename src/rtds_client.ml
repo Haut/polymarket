@@ -2,6 +2,7 @@
 
     Provides typed streaming access to crypto prices and comments. *)
 
+module Types = Rtds_types
 module Connection = Ws_connection
 
 let src = Logs.Src.create "polymarket.rtds" ~doc:"Polymarket RTDS client"

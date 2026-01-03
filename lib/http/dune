@@ -1,0 +1,16 @@
+(library
+ (name polymarket_http)
+ (public_name polymarket.http)
+ (wrapped false)
+ (libraries
+  polymarket.rate_limiter
+  eio
+  cohttp-eio
+  tls-eio
+  ca-certs
+  uri
+  logs
+  yojson
+  ppx_yojson_conv_lib)
+ (preprocess
+  (pps ppx_yojson_conv)))

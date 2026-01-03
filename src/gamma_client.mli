@@ -1,6 +1,8 @@
 (** Gamma API client for markets, events, series, and search. *)
 
-include module type of Gamma_types
+include module type of struct
+  include Gamma_types
+end
 
 module N = Primitives.Nonneg_int
 (** Non-negative integer type for limit/offset parameters *)

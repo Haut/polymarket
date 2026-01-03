@@ -2,6 +2,9 @@
 
     Provides typed streaming access to crypto prices and comments. *)
 
+module Types = Rtds_types
+(** RTDS message types. *)
+
 (** {1 Unified RTDS Client} *)
 
 type t

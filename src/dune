@@ -2,6 +2,10 @@
  (name polymarket)
  (public_name polymarket)
  (libraries
+  ; Internal libraries
+  polymarket.rate_limiter
+  polymarket.http
+  polymarket.ws
   ; Core
   eio
   eio_main
@@ -25,29 +29,15 @@
   yojson
   ppx_yojson_conv_lib)
  (private_modules
-  ; Rate limiter internals
-  rl_builder
-  rl_gcra
-  rl_matcher
-  rl_state
-  rl_types
-  ; HTTP internals
-  http_builder
-  http_client
-  http_json
-  ; WebSocket internals
-  ws_connection
-  ws_frame
-  ws_handshake
   ; Common internals
   auth
   constants
   crypto
   error
   order_signing
+  http_builder
+  http_json
   ; API internals
-  gamma_types
-  data_types
   clob_order_builder
   rfq_order_builder)
  (preprocess

@@ -7,6 +7,7 @@ module B = Http_builder
 module J = Http_json
 module Auth = Auth
 module Crypto = Crypto
+module Types = Clob_types
 open Clob_types
 
 let default_base_url = "https://clob.polymarket.com"

@@ -1,6 +1,8 @@
 (** Data API client for positions, trades, activity, and leaderboards. *)
 
-include module type of Data_types
+include module type of struct
+  include Data_types
+end
 
 module N = Primitives.Nonneg_int
 (** Non-negative integer type for limit/offset parameters *)

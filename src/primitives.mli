@@ -10,7 +10,7 @@
     Ethereum address type (0x-prefixed, 40 hex chars, total 42 chars). Pattern:
     [^0x[a-fA-F0-9]\{40\}$] *)
 module Address : sig
-  type t
+  type t = private string
 
   val make : string -> (t, string) result
   (** Create an address with validation. Returns Error if invalid. *)
@@ -51,7 +51,7 @@ end
     64-character hex hash type (0x-prefixed, 64 hex chars, total 66 chars).
     Pattern: [^0x[a-fA-F0-9]\{64\}$] *)
 module Hash64 : sig
-  type t
+  type t = private string
 
   val make : string -> (t, string) result
   (** Create a hash64 with validation. Returns Error if invalid. *)
@@ -92,7 +92,7 @@ end
     Variable-length hex hash type (0x-prefixed, any number of hex chars). Used
     for signatures and other variable-length hex data. *)
 module Hash : sig
-  type t
+  type t = private string
 
   val make : string -> (t, string) result
   (** Create a hash with validation. Returns Error if invalid. *)
@@ -133,7 +133,7 @@ end
     ERC1155 token ID (numeric string representing uint256). Token IDs must be
     non-empty strings containing only digits 0-9. *)
 module Token_id : sig
-  type t
+  type t = private string
 
   val make : string -> (t, string) result
   (** Create a token_id with validation. Returns Error if not numeric. *)
@@ -175,7 +175,7 @@ end
     a distinct type from Hash to prevent accidentally mixing signatures with
     other hex data. *)
 module Signature : sig
-  type t
+  type t = private string
 
   val make : string -> (t, string) result
   (** Create a signature with validation. Returns Error if invalid hex. *)
@@ -216,7 +216,7 @@ end
     UUID for RFQ requests. This is a distinct type from Quote_id and Trade_id to
     prevent accidentally mixing different ID kinds. *)
 module Request_id : sig
-  type t
+  type t = private string
 
   val make : string -> (t, string) result
   (** Create a request_id with validation. Returns Error if empty. *)
@@ -257,7 +257,7 @@ end
     UUID for RFQ quotes. This is a distinct type from Request_id and Trade_id to
     prevent accidentally mixing different ID kinds. *)
 module Quote_id : sig
-  type t
+  type t = private string
 
   val make : string -> (t, string) result
   (** Create a quote_id with validation. Returns Error if empty. *)
@@ -298,7 +298,7 @@ end
     UUID for trades. This is a distinct type from Request_id and Quote_id to
     prevent accidentally mixing different ID kinds. *)
 module Trade_id : sig
-  type t
+  type t = private string
 
   val make : string -> (t, string) result
   (** Create a trade_id with validation. Returns Error if empty. *)
@@ -458,23 +458,30 @@ end
 
 (** {1 Error Types}
 
-    Structured error types for API operations. These are shared across
-    all API clients (CLOB, Gamma, Data, RFQ). *)
+    Structured error types for API operations. These are shared across all API
+    clients (CLOB, Gamma, Data, RFQ). Re-exported from Http_client. *)
 
-type http_error = { status : int; body : string; message : string }
+type http_error = Http_client.http_error = {
+  status : int;
+  body : string;
+  message : string;
+}
 (** HTTP error with status code, raw body, and extracted message. *)
 
-type parse_error = { context : string; message : string }
+type parse_error = Http_client.parse_error = {
+  context : string;
+  message : string;
+}
 (** Parse error with context and message. *)
 
-type network_error = { message : string }
+type network_error = Http_client.network_error = { message : string }
 (** Network-level error (connection failed, timeout, etc.). *)
 
-type api_error =
+type api_error = Http_client.error =
   | Http_error of http_error
   | Parse_error of parse_error
   | Network_error of network_error
-(** Structured error type for all API errors. *)
+      (** Structured error type for all API errors. *)
 
 val api_error_to_string : api_error -> string
 (** Convert error to human-readable string. *)

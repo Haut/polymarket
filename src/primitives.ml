@@ -217,20 +217,23 @@ end
 
 (** {1 Error Types} *)
 
-type http_error = { status : int; body : string; message : string }
-type parse_error = { context : string; message : string }
-type network_error = { message : string }
+type http_error = Http_client.http_error = {
+  status : int;
+  body : string;
+  message : string;
+}
 
-type api_error =
+type parse_error = Http_client.parse_error = {
+  context : string;
+  message : string;
+}
+
+type network_error = Http_client.network_error = { message : string }
+
+type api_error = Http_client.error =
   | Http_error of http_error
   | Parse_error of parse_error
   | Network_error of network_error
 
-let api_error_to_string = function
-  | Http_error { status; message; _ } ->
-      Printf.sprintf "HTTP %d: %s" status message
-  | Parse_error { context; message } ->
-      Printf.sprintf "Parse error in %s: %s" context message
-  | Network_error { message } -> Printf.sprintf "Network error: %s" message
-
-let pp_api_error fmt err = Format.fprintf fmt "%s" (api_error_to_string err)
+let api_error_to_string = Http_client.error_to_string
+let pp_api_error = Http_client.pp_error

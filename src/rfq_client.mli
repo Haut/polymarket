@@ -2,6 +2,9 @@
 
     All RFQ endpoints require L2 authentication. *)
 
+module Types = Rfq_types
+(** RFQ API request/response types. *)
+
 module Auth = Auth
 module Crypto = Crypto
 module N = Primitives.Nonneg_int
@@ -97,13 +100,13 @@ val accept_quote :
   body:Rfq_types.accept_quote_body ->
   unit ->
   (unit, Rfq_types.error) result
-(** Accept a quote. Use {!Order_builder.build_accept_quote_body} to create the
-    body. *)
+(** Accept a quote. Use [Rfq_order_builder.build_accept_quote_body] to create
+    the body. *)
 
 val approve_order :
   t ->
   body:Rfq_types.approve_order_body ->
   unit ->
   (Rfq_types.approve_order_response, Rfq_types.error) result
-(** Approve an order. Use {!Order_builder.build_accept_quote_body} to create the
-    body. *)
+(** Approve an order. Use [Rfq_order_builder.build_accept_quote_body] to create
+    the body. *)

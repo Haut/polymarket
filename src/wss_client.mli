@@ -2,6 +2,9 @@
 
     Provides typed streaming access to Market and User channels. *)
 
+module Types = Wss_types
+(** WebSocket message types. *)
+
 (** {1 Market Channel Client} *)
 
 module Market : sig

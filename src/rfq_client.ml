@@ -5,6 +5,7 @@
 module H = Http_client
 module B = Http_builder
 module J = Http_json
+module Types = Rfq_types
 module Auth = Auth
 module Crypto = Crypto
 module N = Primitives.Nonneg_int

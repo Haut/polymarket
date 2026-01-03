@@ -30,6 +30,9 @@
       | Error e -> error_to_string e |> failwith
     ]} *)
 
+module Types = Clob_types
+(** CLOB API request/response types. *)
+
 (** {1 Types from Internal Libraries}
 
     These types are re-exported for convenience. *)
