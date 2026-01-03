@@ -4,6 +4,7 @@
 
 module Auth = Polymarket_common.Auth
 module Crypto = Polymarket_common.Crypto
+module N = Polymarket_common.Primitives.Nonneg_int
 
 val default_base_url : string
 (** Default base URL for the RFQ API: https://clob.polymarket.com *)
@@ -36,12 +37,12 @@ val create_request :
   (Types.create_request_response, Types.error) result
 
 val cancel_request :
-  t -> request_id:Types.request_id -> unit -> (unit, Types.error) result
+  t -> request_id:Types.P.Request_id.t -> unit -> (unit, Types.error) result
 
 val get_requests :
   t ->
   ?offset:string ->
-  ?limit:int ->
+  ?limit:N.t ->
   ?state:Types.State_filter.t ->
   ?request_ids:string list ->
   ?markets:string list ->
@@ -65,12 +66,12 @@ val create_quote :
   (Types.create_quote_response, Types.error) result
 
 val cancel_quote :
-  t -> quote_id:Types.quote_id -> unit -> (unit, Types.error) result
+  t -> quote_id:Types.P.Quote_id.t -> unit -> (unit, Types.error) result
 
 val get_quotes :
   t ->
   ?offset:string ->
-  ?limit:int ->
+  ?limit:N.t ->
   ?state:Types.State_filter.t ->
   ?quote_ids:string list ->
   ?request_ids:string list ->

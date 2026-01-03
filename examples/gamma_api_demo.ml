@@ -57,7 +57,7 @@ let find_event_with_comments client (events : Gamma.event list) =
         | None -> try_events rest
         | Some eid -> (
             match
-              Gamma.get_comments client ~limit:10
+              Gamma.get_comments client ~limit:(Gamma.N.of_int_exn 10)
                 ~parent_entity_type:Gamma.Parent_entity_type.Event
                 ~parent_entity_id:eid ()
             with
@@ -88,7 +88,7 @@ let run_demo env =
   print_result "status" status ~on_ok:(fun s -> s);
 
   (* ===== Tags ===== *)
-  let tags = Gamma.get_tags client ~limit:20 () in
+  let tags = Gamma.get_tags client ~limit:(Gamma.N.of_int_exn 20) () in
   print_result_count "get_tags" tags;
 
   (* Find a tag with related tags for better demo output *)
@@ -142,7 +142,9 @@ let run_demo env =
       Logger.skip "get_related_tag_tags" "no tag with related tags found");
 
   (* ===== Events ===== *)
-  let events = Gamma.get_events client ~limit:10 ~active:true () in
+  let events =
+    Gamma.get_events client ~limit:(Gamma.N.of_int_exn 10) ~active:true ()
+  in
   print_result_count "get_events" events;
 
   let event_id, event_slug =
@@ -171,7 +173,7 @@ let run_demo env =
   | None -> Logger.skip "get_event_by_slug" "no event slug available");
 
   (* ===== Markets ===== *)
-  let markets = Gamma.get_markets client ~limit:10 () in
+  let markets = Gamma.get_markets client ~limit:(Gamma.N.of_int_exn 10) () in
   print_result_count "get_markets" markets;
 
   let market_id, market_slug =
@@ -200,7 +202,9 @@ let run_demo env =
   | None -> Logger.skip "get_market_by_slug" "no market slug available");
 
   (* ===== Series ===== *)
-  let series_list = Gamma.get_series_list client ~limit:10 () in
+  let series_list =
+    Gamma.get_series_list client ~limit:(Gamma.N.of_int_exn 10) ()
+  in
   print_result_count "get_series_list" series_list;
 
   let series_id =
@@ -237,7 +241,8 @@ let run_demo env =
       match comment.user_address with
       | Some addr ->
           let user_comments =
-            Gamma.get_user_comments client ~user_address:addr ~limit:5 ()
+            Gamma.get_user_comments client ~user_address:addr
+              ~limit:(Gamma.N.of_int_exn 5) ()
           in
           print_result_count "get_user_comments" user_comments
       | None -> Logger.skip "get_user_comments" "no user address on comment")
@@ -270,7 +275,10 @@ let run_demo env =
   print_result_count "get_teams" teams;
 
   (* ===== Search ===== *)
-  let search = Gamma.public_search client ~q:"election" ~limit_per_type:5 () in
+  let search =
+    Gamma.public_search client ~q:"election"
+      ~limit_per_type:(Gamma.N.of_int_exn 5) ()
+  in
   print_result "public_search" search ~on_ok:(fun (s : Gamma.search) ->
       let event_count =
         match s.events with Some e -> List.length e | None -> 0

@@ -40,7 +40,7 @@ val calculate_amounts :
 
 val create_limit_order :
   private_key:Polymarket_common.Crypto.private_key ->
-  token_id:string ->
+  token_id:Types.P.Token_id.t ->
   side:Types.Side.t ->
   price:float ->
   size:float ->

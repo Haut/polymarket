@@ -8,9 +8,8 @@ open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 
 (** {1 Query Parameter Enums} *)
 
-module Sort_direction = struct
-  type t = Asc | Desc [@@deriving enum]
-end
+module Sort_direction = Polymarket_common.Primitives.Sort_dir
+(** Re-export shared Sort_dir module from Common.Primitives *)
 
 module Position_sort_by = struct
   type t =

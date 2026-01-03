@@ -128,6 +128,212 @@ module Hash : sig
   (** JSON deserialization (ppx_yojson_conv compatibility). *)
 end
 
+(** {1 Token_id Module}
+
+    ERC1155 token ID (numeric string representing uint256). Token IDs must be
+    non-empty strings containing only digits 0-9. *)
+module Token_id : sig
+  type t
+
+  val make : string -> (t, string) result
+  (** Create a token_id with validation. Returns Error if not numeric. *)
+
+  val make_exn : string -> t
+  (** Create a token_id with validation. Raises on invalid input. *)
+
+  val unsafe_of_string : string -> t
+  (** Create from string without validation. Use only for trusted sources. *)
+
+  val to_string : t -> string
+  (** Convert to string. *)
+
+  val pp : Format.formatter -> t -> unit
+  (** Pretty printer for Format. *)
+
+  val equal : t -> t -> bool
+  (** Equality comparison. *)
+
+  val of_yojson : Yojson.Safe.t -> (t, string) result
+  (** JSON deserialization with validation. *)
+
+  val of_yojson_exn : Yojson.Safe.t -> t
+  (** JSON deserialization, raises on invalid. *)
+
+  val to_yojson : t -> Yojson.Safe.t
+  (** JSON serialization. *)
+
+  val yojson_of_t : t -> Yojson.Safe.t
+  (** JSON serialization (ppx_yojson_conv compatibility). *)
+
+  val t_of_yojson : Yojson.Safe.t -> t
+  (** JSON deserialization (ppx_yojson_conv compatibility). *)
+end
+
+(** {1 Signature Module}
+
+    Hex-encoded cryptographic signature (0x-prefixed, variable length). This is
+    a distinct type from Hash to prevent accidentally mixing signatures with
+    other hex data. *)
+module Signature : sig
+  type t
+
+  val make : string -> (t, string) result
+  (** Create a signature with validation. Returns Error if invalid hex. *)
+
+  val make_exn : string -> t
+  (** Create a signature with validation. Raises on invalid input. *)
+
+  val unsafe_of_string : string -> t
+  (** Create from string without validation. Use only for trusted sources. *)
+
+  val to_string : t -> string
+  (** Convert to string. *)
+
+  val pp : Format.formatter -> t -> unit
+  (** Pretty printer for Format. *)
+
+  val equal : t -> t -> bool
+  (** Equality comparison. *)
+
+  val of_yojson : Yojson.Safe.t -> (t, string) result
+  (** JSON deserialization with validation. *)
+
+  val of_yojson_exn : Yojson.Safe.t -> t
+  (** JSON deserialization, raises on invalid. *)
+
+  val to_yojson : t -> Yojson.Safe.t
+  (** JSON serialization. *)
+
+  val yojson_of_t : t -> Yojson.Safe.t
+  (** JSON serialization (ppx_yojson_conv compatibility). *)
+
+  val t_of_yojson : Yojson.Safe.t -> t
+  (** JSON deserialization (ppx_yojson_conv compatibility). *)
+end
+
+(** {1 Request_id Module}
+
+    UUID for RFQ requests. This is a distinct type from Quote_id and Trade_id to
+    prevent accidentally mixing different ID kinds. *)
+module Request_id : sig
+  type t
+
+  val make : string -> (t, string) result
+  (** Create a request_id with validation. Returns Error if empty. *)
+
+  val make_exn : string -> t
+  (** Create a request_id with validation. Raises on invalid input. *)
+
+  val unsafe_of_string : string -> t
+  (** Create from string without validation. Use only for trusted sources. *)
+
+  val to_string : t -> string
+  (** Convert to string. *)
+
+  val pp : Format.formatter -> t -> unit
+  (** Pretty printer for Format. *)
+
+  val equal : t -> t -> bool
+  (** Equality comparison. *)
+
+  val of_yojson : Yojson.Safe.t -> (t, string) result
+  (** JSON deserialization with validation. *)
+
+  val of_yojson_exn : Yojson.Safe.t -> t
+  (** JSON deserialization, raises on invalid. *)
+
+  val to_yojson : t -> Yojson.Safe.t
+  (** JSON serialization. *)
+
+  val yojson_of_t : t -> Yojson.Safe.t
+  (** JSON serialization (ppx_yojson_conv compatibility). *)
+
+  val t_of_yojson : Yojson.Safe.t -> t
+  (** JSON deserialization (ppx_yojson_conv compatibility). *)
+end
+
+(** {1 Quote_id Module}
+
+    UUID for RFQ quotes. This is a distinct type from Request_id and Trade_id to
+    prevent accidentally mixing different ID kinds. *)
+module Quote_id : sig
+  type t
+
+  val make : string -> (t, string) result
+  (** Create a quote_id with validation. Returns Error if empty. *)
+
+  val make_exn : string -> t
+  (** Create a quote_id with validation. Raises on invalid input. *)
+
+  val unsafe_of_string : string -> t
+  (** Create from string without validation. Use only for trusted sources. *)
+
+  val to_string : t -> string
+  (** Convert to string. *)
+
+  val pp : Format.formatter -> t -> unit
+  (** Pretty printer for Format. *)
+
+  val equal : t -> t -> bool
+  (** Equality comparison. *)
+
+  val of_yojson : Yojson.Safe.t -> (t, string) result
+  (** JSON deserialization with validation. *)
+
+  val of_yojson_exn : Yojson.Safe.t -> t
+  (** JSON deserialization, raises on invalid. *)
+
+  val to_yojson : t -> Yojson.Safe.t
+  (** JSON serialization. *)
+
+  val yojson_of_t : t -> Yojson.Safe.t
+  (** JSON serialization (ppx_yojson_conv compatibility). *)
+
+  val t_of_yojson : Yojson.Safe.t -> t
+  (** JSON deserialization (ppx_yojson_conv compatibility). *)
+end
+
+(** {1 Trade_id Module}
+
+    UUID for trades. This is a distinct type from Request_id and Quote_id to
+    prevent accidentally mixing different ID kinds. *)
+module Trade_id : sig
+  type t
+
+  val make : string -> (t, string) result
+  (** Create a trade_id with validation. Returns Error if empty. *)
+
+  val make_exn : string -> t
+  (** Create a trade_id with validation. Raises on invalid input. *)
+
+  val unsafe_of_string : string -> t
+  (** Create from string without validation. Use only for trusted sources. *)
+
+  val to_string : t -> string
+  (** Convert to string. *)
+
+  val pp : Format.formatter -> t -> unit
+  (** Pretty printer for Format. *)
+
+  val equal : t -> t -> bool
+  (** Equality comparison. *)
+
+  val of_yojson : Yojson.Safe.t -> (t, string) result
+  (** JSON deserialization with validation. *)
+
+  val of_yojson_exn : Yojson.Safe.t -> t
+  (** JSON deserialization, raises on invalid. *)
+
+  val to_yojson : t -> Yojson.Safe.t
+  (** JSON serialization. *)
+
+  val yojson_of_t : t -> Yojson.Safe.t
+  (** JSON serialization (ppx_yojson_conv compatibility). *)
+
+  val t_of_yojson : Yojson.Safe.t -> t
+  (** JSON deserialization (ppx_yojson_conv compatibility). *)
+end
+
 (** {1 Timestamps}
 
     ISO 8601 timestamp type (e.g., "2023-11-07T05:31:56Z"). Used for date/time
@@ -181,4 +387,71 @@ module Side : sig
 
   val pp : Format.formatter -> t -> unit
   val equal : t -> t -> bool
+end
+
+(** {1 Sort Direction Enum}
+
+    Sort direction (Asc/Desc) shared across Data API and RFQ API. *)
+module Sort_dir : sig
+  type t = Asc | Desc  (** Ascending or Descending sort order *)
+
+  val to_string : t -> string
+  (** Convert to string ("ASC" or "DESC") *)
+
+  val of_string : string -> t
+  (** Parse from string, raises on invalid input *)
+
+  val of_string_opt : string -> t option
+  (** Parse from string, returns None on invalid input *)
+
+  val t_of_yojson : Yojson.Safe.t -> t
+  (** Parse from JSON string *)
+
+  val yojson_of_t : t -> Yojson.Safe.t
+  (** Convert to JSON string *)
+
+  val pp : Format.formatter -> t -> unit
+  val equal : t -> t -> bool
+end
+
+(** {1 Non-negative Integer}
+
+    Non-negative integer type for limit/offset parameters. Prevents passing
+    negative values at compile time. *)
+module Nonneg_int : sig
+  type t
+  (** A non-negative integer (>= 0) *)
+
+  val make : int -> (t, string) result
+  (** Create with validation. Returns Error if negative. *)
+
+  val make_exn : int -> t
+  (** Create with validation. Raises on negative input. *)
+
+  val of_int : int -> (t, string) result
+  (** Alias for make. *)
+
+  val of_int_exn : int -> t
+  (** Alias for make_exn. *)
+
+  val to_int : t -> int
+  (** Convert to int. *)
+
+  val to_string : t -> string
+  (** Convert to string. *)
+
+  val pp : Format.formatter -> t -> unit
+  val equal : t -> t -> bool
+
+  val zero : t
+  (** The value 0. *)
+
+  val one : t
+  (** The value 1. *)
+
+  val t_of_yojson : Yojson.Safe.t -> t
+  (** Parse from JSON int. Raises if negative. *)
+
+  val yojson_of_t : t -> Yojson.Safe.t
+  (** Convert to JSON int. *)
 end

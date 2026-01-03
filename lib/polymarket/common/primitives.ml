@@ -12,6 +12,8 @@ let is_hex_char = function
   | _ -> false
 
 let is_hex_string s = String.for_all is_hex_char s
+let is_digit_char = function '0' .. '9' -> true | _ -> false
+let is_numeric_string s = String.length s > 0 && String.for_all is_digit_char s
 
 let validate_hex_prefixed ~name ~expected_length s =
   let len = String.length s in
@@ -24,16 +26,16 @@ let validate_hex_prefixed ~name ~expected_length s =
     Error (Printf.sprintf "%s: contains invalid hex characters" name)
   else Ok s
 
-(** {1 Hex String Functor}
+(** {1 String Type Functors}
 
-    Shared implementation for validated hex string types. *)
+    Shared implementations for validated string types. *)
 
-module type HEX_STRING_CONFIG = sig
+module type STRING_CONFIG = sig
   val name : string
   val validate : string -> (string, string) result
 end
 
-module Make_hex_string (C : HEX_STRING_CONFIG) = struct
+module Make_string_type (C : STRING_CONFIG) = struct
   type t = string
 
   let make = C.validate
@@ -55,6 +57,11 @@ module Make_hex_string (C : HEX_STRING_CONFIG) = struct
   let yojson_of_t = to_yojson
   let t_of_yojson = of_yojson_exn
 end
+
+module type HEX_STRING_CONFIG = STRING_CONFIG
+(** Alias for backwards compatibility *)
+
+module Make_hex_string = Make_string_type
 
 (** {1 Address Module} *)
 
@@ -82,6 +89,58 @@ module Hash = Make_hex_string (struct
     else if not (is_hex_string (String.sub s 2 (len - 2))) then
       Error "Hash: contains invalid hex characters"
     else Ok s
+end)
+
+(** {1 Token_id Module}
+
+    ERC1155 token ID (numeric string representing uint256). *)
+
+module Token_id = Make_string_type (struct
+  let name = "Token_id"
+
+  let validate s =
+    if is_numeric_string s then Ok s
+    else Error "Token_id: must be a non-empty numeric string"
+end)
+
+(** {1 Signature Module}
+
+    Hex-encoded cryptographic signature (0x-prefixed, variable length). *)
+
+module Signature = Make_string_type (struct
+  let name = "Signature"
+
+  let validate s =
+    let len = String.length s in
+    if len < 3 then Error "Signature: too short"
+    else if s.[0] <> '0' || s.[1] <> 'x' then
+      Error "Signature: must start with 0x"
+    else if not (is_hex_string (String.sub s 2 (len - 2))) then
+      Error "Signature: contains invalid hex characters"
+    else Ok s
+end)
+
+(** {1 UUID-based ID Types}
+
+    These types wrap UUID strings with non-empty validation. They are distinct
+    types to prevent mixing different ID kinds. *)
+
+let validate_non_empty ~name s =
+  if String.length s > 0 then Ok s else Error (name ^ ": must be non-empty")
+
+module Request_id = Make_string_type (struct
+  let name = "Request_id"
+  let validate = validate_non_empty ~name
+end)
+
+module Quote_id = Make_string_type (struct
+  let name = "Quote_id"
+  let validate = validate_non_empty ~name
+end)
+
+module Trade_id = Make_string_type (struct
+  let name = "Trade_id"
+  let validate = validate_non_empty ~name
 end)
 
 (** {1 Timestamps} *)
@@ -116,4 +175,42 @@ end
 
 module Side = struct
   type t = Buy | Sell [@@deriving enum]
+end
+
+(** {1 Sort Direction Enum}
+
+    Sort direction (Asc/Desc) shared across Data API and RFQ API. *)
+
+module Sort_dir = struct
+  type t = Asc | Desc [@@deriving enum]
+end
+
+(** {1 Non-negative Integer}
+
+    Non-negative integer type for limit/offset parameters. Prevents passing
+    negative values at compile time. *)
+
+module Nonneg_int = struct
+  type t = int
+
+  let make n = if n >= 0 then Ok n else Error "Nonneg_int: must be non-negative"
+
+  let make_exn n =
+    if n >= 0 then n else invalid_arg "Nonneg_int: must be non-negative"
+
+  let of_int n = make n
+  let of_int_exn n = make_exn n
+  let to_int t = t
+  let to_string t = string_of_int t
+  let pp fmt t = Format.fprintf fmt "%d" t
+  let equal = Int.equal
+  let zero = 0
+  let one = 1
+
+  let t_of_yojson = function
+    | `Int n when n >= 0 -> n
+    | `Int _ -> failwith "Nonneg_int: must be non-negative"
+    | _ -> failwith "Nonneg_int: expected int"
+
+  let yojson_of_t t = `Int t
 end

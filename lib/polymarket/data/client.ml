@@ -2,6 +2,7 @@
 
 module B = Polymarket_http.Builder
 module P = Polymarket_common.Primitives
+module N = P.Nonneg_int
 include Types
 
 type t = Polymarket_http.Client.t
@@ -29,8 +30,8 @@ let get_positions t ~user ?market ?event_id ?size_threshold ?redeemable
   |> B.query_option "sizeThreshold" string_of_float size_threshold
   |> B.query_bool "redeemable" redeemable
   |> B.query_bool "mergeable" mergeable
-  |> B.query_option "limit" string_of_int limit
-  |> B.query_option "offset" string_of_int offset
+  |> B.query_option "limit" N.to_string limit
+  |> B.query_option "offset" N.to_string offset
   |> B.query_option "sortBy" Position_sort_by.to_string sort_by
   |> B.query_option "sortDirection" Sort_direction.to_string sort_direction
   |> B.query_add "title" title
@@ -42,8 +43,8 @@ let get_positions t ~user ?market ?event_id ?size_threshold ?redeemable
 let get_trades t ?user ?market ?event_id ?side ?filter_type ?filter_amount
     ?taker_only ?limit ?offset () =
   B.new_get t "/trades"
-  |> B.query_option "limit" string_of_int limit
-  |> B.query_option "offset" string_of_int offset
+  |> B.query_option "limit" N.to_string limit
+  |> B.query_option "offset" N.to_string offset
   |> B.query_bool "takerOnly" taker_only
   |> B.query_option "filterType" Filter_type.to_string filter_type
   |> B.query_option "filterAmount" string_of_float filter_amount
@@ -60,8 +61,8 @@ let get_activity t ~user ?market ?event_id ?activity_types ?side ?start_time
     ?end_time ?sort_by ?sort_direction ?limit ?offset () =
   B.new_get t "/activity"
   |> B.query_param "user" (P.Address.to_string user)
-  |> B.query_option "limit" string_of_int limit
-  |> B.query_option "offset" string_of_int offset
+  |> B.query_option "limit" N.to_string limit
+  |> B.query_option "offset" N.to_string offset
   |> B.query_list "market" P.Hash64.to_string market
   |> B.query_list "eventId" string_of_int event_id
   |> B.query_list "type" Activity_type.to_string activity_types
@@ -77,7 +78,7 @@ let get_activity t ~user ?market ?event_id ?activity_types ?side ?start_time
 
 let get_holders t ~market ?min_balance ?limit () =
   B.new_get t "/holders"
-  |> B.query_option "limit" string_of_int limit
+  |> B.query_option "limit" N.to_string limit
   |> B.query_list "market" P.Hash64.to_string (Some market)
   |> B.query_option "minBalance" string_of_int min_balance
   |> B.fetch_json_list ~expected_fields:yojson_fields_of_meta_holder
@@ -101,8 +102,8 @@ let get_closed_positions t ~user ?market ?event_id ?title ?sort_by
   |> B.query_list "market" P.Hash64.to_string market
   |> B.query_add "title" title
   |> B.query_list "eventId" string_of_int event_id
-  |> B.query_option "limit" string_of_int limit
-  |> B.query_option "offset" string_of_int offset
+  |> B.query_option "limit" N.to_string limit
+  |> B.query_option "offset" N.to_string offset
   |> B.query_option "sortBy" Closed_position_sort_by.to_string sort_by
   |> B.query_option "sortDirection" Sort_direction.to_string sort_direction
   |> B.fetch_json_list ~expected_fields:yojson_fields_of_closed_position
@@ -118,8 +119,8 @@ let get_trader_leaderboard t ?category ?time_period ?order_by ?user ?user_name
   |> B.query_option "orderBy" Leaderboard_order_by.to_string order_by
   |> B.query_option "user" P.Address.to_string user
   |> B.query_add "userName" user_name
-  |> B.query_option "limit" string_of_int limit
-  |> B.query_option "offset" string_of_int offset
+  |> B.query_option "limit" N.to_string limit
+  |> B.query_option "offset" N.to_string offset
   |> B.fetch_json_list
        ~expected_fields:yojson_fields_of_trader_leaderboard_entry
        ~context:"trader_leaderboard_entry" trader_leaderboard_entry_of_yojson
@@ -153,8 +154,8 @@ let get_live_volume t ~id () =
 let get_builder_leaderboard t ?time_period ?limit ?offset () =
   B.new_get t "/v1/builders/leaderboard"
   |> B.query_option "timePeriod" Time_period.to_string time_period
-  |> B.query_option "limit" string_of_int limit
-  |> B.query_option "offset" string_of_int offset
+  |> B.query_option "limit" N.to_string limit
+  |> B.query_option "offset" N.to_string offset
   |> B.fetch_json_list ~expected_fields:yojson_fields_of_leaderboard_entry
        ~context:"leaderboard_entry" leaderboard_entry_of_yojson
 

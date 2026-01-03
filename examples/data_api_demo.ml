@@ -47,7 +47,7 @@ let run_demo env =
       r.data);
 
   (* ===== Global Trades ===== *)
-  let trades = Data.get_trades data_client ~limit:10 () in
+  let trades = Data.get_trades data_client ~limit:(Data.N.of_int_exn 10) () in
   print_result_count "get_trades" trades;
 
   (* Extract a market (condition_id) from trades for later use *)
@@ -72,7 +72,9 @@ let run_demo env =
 
   (* ===== Live Volume ===== *)
   (* Get an event ID from Gamma for live volume *)
-  let events = Gamma.get_events gamma_client ~limit:1 ~active:true () in
+  let events =
+    Gamma.get_events gamma_client ~limit:(Gamma.N.of_int_exn 1) ~active:true ()
+  in
   (match events with
   | Ok ((e : Gamma.event) :: _) -> (
       match int_of_string_opt e.id with
@@ -85,7 +87,7 @@ let run_demo env =
   (* ===== Leaderboards ===== *)
   let builders =
     Data.get_builder_leaderboard data_client ~time_period:Data.Time_period.Week
-      ~limit:5 ()
+      ~limit:(Data.N.of_int_exn 5) ()
   in
   print_result "get_builder_leaderboard" builders ~on_ok:(fun items ->
       Printf.sprintf "%d items" (List.length items));
@@ -100,7 +102,7 @@ let run_demo env =
     Data.get_trader_leaderboard data_client
       ~category:Data.Leaderboard_category.Overall
       ~time_period:Data.Time_period.Week ~order_by:Data.Leaderboard_order_by.Pnl
-      ~limit:5 ()
+      ~limit:(Data.N.of_int_exn 5) ()
   in
   print_result "get_trader_leaderboard" traders ~on_ok:(fun items ->
       Printf.sprintf "%d items" (List.length items));
@@ -117,13 +119,19 @@ let run_demo env =
   (* ===== User Data ===== *)
   (match active_user with
   | Some user ->
-      let positions = Data.get_positions data_client ~user ~limit:5 () in
+      let positions =
+        Data.get_positions data_client ~user ~limit:(Data.N.of_int_exn 5) ()
+      in
       print_result_count "get_positions" positions;
 
-      let user_trades = Data.get_trades data_client ~user ~limit:5 () in
+      let user_trades =
+        Data.get_trades data_client ~user ~limit:(Data.N.of_int_exn 5) ()
+      in
       print_result_count "get_trades (user)" user_trades;
 
-      let activity = Data.get_activity data_client ~user ~limit:5 () in
+      let activity =
+        Data.get_activity data_client ~user ~limit:(Data.N.of_int_exn 5) ()
+      in
       print_result_count "get_activity" activity;
 
       let traded = Data.get_traded data_client ~user () in
@@ -133,7 +141,10 @@ let run_demo env =
       let value = Data.get_value data_client ~user () in
       print_result_count "get_value" value;
 
-      let closed = Data.get_closed_positions data_client ~user ~limit:5 () in
+      let closed =
+        Data.get_closed_positions data_client ~user ~limit:(Data.N.of_int_exn 5)
+          ()
+      in
       print_result_count "get_closed_positions" closed
   | None ->
       Logger.skip "get_positions" "no active user found";
@@ -147,7 +158,8 @@ let run_demo env =
   (match trade_market with
   | Some market ->
       let holders =
-        Data.get_holders data_client ~market:[ market ] ~limit:5 ()
+        Data.get_holders data_client ~market:[ market ]
+          ~limit:(Data.N.of_int_exn 5) ()
       in
       print_result_count "get_holders" holders
   | None -> Logger.skip "get_holders" "no market from trades");

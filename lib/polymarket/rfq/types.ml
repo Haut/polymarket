@@ -5,25 +5,9 @@
 
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 
-(** {1 Primitive Types} *)
+(** {1 Primitives Module Alias} *)
 
-type address = string [@@deriving yojson, show, eq]
-(** Ethereum address (0x-prefixed, 40 hex chars). *)
-
-type token_id = string [@@deriving yojson, show, eq]
-(** ERC1155 token ID or "0" for USDC. *)
-
-type request_id = string [@@deriving yojson, show, eq]
-(** UUID for an RFQ request. *)
-
-type quote_id = string [@@deriving yojson, show, eq]
-(** UUID for an RFQ quote. *)
-
-type trade_id = string [@@deriving yojson, show, eq]
-(** UUID for a trade. *)
-
-type condition_id = string [@@deriving yojson, show, eq]
-(** Market condition ID. *)
+module P = Polymarket_common.Primitives
 
 (** {1 Enum Modules} *)
 
@@ -73,16 +57,14 @@ module Sort_by = struct
   type t = Price | Expiry | Size | Created [@@deriving enum]
 end
 
+module Sort_dir = P.Sort_dir
 (** Sort direction. *)
-module Sort_dir = struct
-  type t = Asc | Desc [@@deriving enum]
-end
 
 (** {1 Request Types} *)
 
 type create_request_body = {
-  asset_in : token_id; [@key "assetIn"]
-  asset_out : token_id; [@key "assetOut"]
+  asset_in : P.Token_id.t; [@key "assetIn"]
+  asset_out : P.Token_id.t; [@key "assetOut"]
   amount_in : string; [@key "amountIn"]
   amount_out : string; [@key "amountOut"]
   user_type : User_type.t; [@key "userType"]
@@ -91,23 +73,23 @@ type create_request_body = {
 (** Request body for creating an RFQ request. *)
 
 type create_request_response = {
-  request_id : request_id; [@key "requestId"]
+  request_id : P.Request_id.t; [@key "requestId"]
   expiry : int;
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Response from creating an RFQ request. *)
 
-type cancel_request_body = { request_id : request_id [@key "requestId"] }
+type cancel_request_body = { request_id : P.Request_id.t [@key "requestId"] }
 [@@deriving yojson, show, eq]
 (** Request body for canceling an RFQ request. *)
 
 type rfq_request = {
-  request_id : request_id; [@key "requestId"]
-  user : address;
-  proxy : address;
-  market : condition_id;
-  token : token_id;
-  complement : token_id;
+  request_id : P.Request_id.t; [@key "requestId"]
+  user : P.Address.t;
+  proxy : P.Address.t;
+  market : P.Hash64.t;
+  token : P.Token_id.t;
+  complement : P.Token_id.t;
   side : Side.t;
   size_in : float; [@key "sizeIn"]
   size_out : float; [@key "sizeOut"]
@@ -129,9 +111,9 @@ type get_requests_response = {
 (** {1 Quote Types} *)
 
 type create_quote_body = {
-  request_id : request_id; [@key "requestId"]
-  asset_in : token_id; [@key "assetIn"]
-  asset_out : token_id; [@key "assetOut"]
+  request_id : P.Request_id.t; [@key "requestId"]
+  asset_in : P.Token_id.t; [@key "assetIn"]
+  asset_out : P.Token_id.t; [@key "assetOut"]
   amount_in : string; [@key "amountIn"]
   amount_out : string; [@key "amountOut"]
   user_type : User_type.t; [@key "userType"]
@@ -139,22 +121,22 @@ type create_quote_body = {
 [@@deriving yojson, show, eq]
 (** Request body for creating an RFQ quote. *)
 
-type create_quote_response = { quote_id : quote_id [@key "quoteId"] }
+type create_quote_response = { quote_id : P.Quote_id.t [@key "quoteId"] }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Response from creating an RFQ quote. *)
 
-type cancel_quote_body = { quote_id : quote_id [@key "quoteId"] }
+type cancel_quote_body = { quote_id : P.Quote_id.t [@key "quoteId"] }
 [@@deriving yojson, show, eq]
 (** Request body for canceling an RFQ quote. *)
 
 type rfq_quote = {
-  quote_id : quote_id; [@key "quoteId"]
-  request_id : request_id; [@key "requestId"]
-  user : address;
-  proxy : address;
-  market : condition_id;
-  token : token_id;
-  complement : token_id;
+  quote_id : P.Quote_id.t; [@key "quoteId"]
+  request_id : P.Request_id.t; [@key "requestId"]
+  user : P.Address.t;
+  proxy : P.Address.t;
+  market : P.Hash64.t;
+  token : P.Token_id.t;
+  complement : P.Token_id.t;
   side : Side.t;
   size_in : float; [@key "sizeIn"]
   size_out : float; [@key "sizeOut"]
@@ -175,19 +157,19 @@ type get_quotes_response = {
 (** {1 Execution Types} *)
 
 type accept_quote_body = {
-  request_id : request_id; [@key "requestId"]
-  quote_id : quote_id; [@key "quoteId"]
+  request_id : P.Request_id.t; [@key "requestId"]
+  quote_id : P.Quote_id.t; [@key "quoteId"]
   maker_amount : string; [@key "makerAmount"]
   taker_amount : string; [@key "takerAmount"]
-  token_id : token_id; [@key "tokenId"]
-  maker : address;
-  signer : address;
-  taker : address;
+  token_id : P.Token_id.t; [@key "tokenId"]
+  maker : P.Address.t;
+  signer : P.Address.t;
+  taker : P.Address.t;
   nonce : string;
   expiration : int;
   side : Side.t;
   fee_rate_bps : string; [@key "feeRateBps"]
-  signature : string;
+  signature : P.Signature.t;
   salt : string;
   owner : string;
 }
@@ -197,7 +179,9 @@ type accept_quote_body = {
 type approve_order_body = accept_quote_body [@@deriving yojson, show, eq]
 (** Request body for approving an order (same as accept_quote_body). *)
 
-type approve_order_response = { trade_ids : trade_id list [@key "tradeIds"] }
+type approve_order_response = {
+  trade_ids : P.Trade_id.t list; [@key "tradeIds"]
+}
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Response from approving an order. *)
 

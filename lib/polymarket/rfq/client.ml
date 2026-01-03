@@ -7,6 +7,7 @@ module B = Polymarket_http.Builder
 module J = Polymarket_http.Json
 module Auth = Polymarket_common.Auth
 module Crypto = Polymarket_common.Crypto
+module N = Polymarket_common.Primitives.Nonneg_int
 open Types
 
 let default_base_url = "https://clob.polymarket.com"
@@ -43,7 +44,7 @@ let get_requests t ?offset ?limit ?state ?request_ids ?markets ?size_min
   B.new_get t.http "/rfq/request"
   |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
   |> B.query_add "offset" offset
-  |> B.query_option "limit" string_of_int limit
+  |> B.query_option "limit" N.to_string limit
   |> B.query_option "state" State_filter.to_string state
   |> B.query_each "requestIds" Fun.id request_ids
   |> B.query_each "markets" Fun.id markets
@@ -79,7 +80,7 @@ let get_quotes t ?offset ?limit ?state ?quote_ids ?request_ids ?markets
   B.new_get t.http "/rfq/quote"
   |> B.with_l2_auth ~credentials:t.credentials ~address:t.address
   |> B.query_add "offset" offset
-  |> B.query_option "limit" string_of_int limit
+  |> B.query_option "limit" N.to_string limit
   |> B.query_option "state" State_filter.to_string state
   |> B.query_each "quoteIds" Fun.id quote_ids
   |> B.query_each "requestIds" Fun.id request_ids

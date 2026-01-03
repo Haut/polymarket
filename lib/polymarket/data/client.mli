@@ -2,6 +2,9 @@
 
 include module type of Types
 
+module N = Polymarket_common.Primitives.Nonneg_int
+(** Non-negative integer type for limit/offset parameters *)
+
 type t = Polymarket_http.Client.t
 (** The client type (alias for HTTP client) *)
 
@@ -37,8 +40,8 @@ val get_positions :
   ?size_threshold:float ->
   ?redeemable:bool ->
   ?mergeable:bool ->
-  ?limit:int ->
-  ?offset:int ->
+  ?limit:N.t ->
+  ?offset:N.t ->
   ?sort_by:Position_sort_by.t ->
   ?sort_direction:Sort_direction.t ->
   ?title:string ->
@@ -66,8 +69,8 @@ val get_closed_positions :
   ?title:string ->
   ?sort_by:Closed_position_sort_by.t ->
   ?sort_direction:Sort_direction.t ->
-  ?limit:int ->
-  ?offset:int ->
+  ?limit:N.t ->
+  ?offset:N.t ->
   unit ->
   (closed_position list, Polymarket_http.Client.error) result
 (** Get closed positions for a user.
@@ -91,8 +94,8 @@ val get_trades :
   ?filter_type:Filter_type.t ->
   ?filter_amount:float ->
   ?taker_only:bool ->
-  ?limit:int ->
-  ?offset:int ->
+  ?limit:N.t ->
+  ?offset:N.t ->
   unit ->
   (trade list, Polymarket_http.Client.error) result
 (** Get trades for a user or markets.
@@ -119,8 +122,8 @@ val get_activity :
   ?end_time:int ->
   ?sort_by:Activity_sort_by.t ->
   ?sort_direction:Sort_direction.t ->
-  ?limit:int ->
-  ?offset:int ->
+  ?limit:N.t ->
+  ?offset:N.t ->
   unit ->
   (activity list, Polymarket_http.Client.error) result
 (** Get user activity (on-chain).
@@ -142,7 +145,7 @@ val get_holders :
   t ->
   market:Polymarket_common.Primitives.Hash64.t list ->
   ?min_balance:int ->
-  ?limit:int ->
+  ?limit:N.t ->
   unit ->
   (meta_holder list, Polymarket_http.Client.error) result
 (** Get top holders for markets.
@@ -190,8 +193,8 @@ val get_live_volume :
 val get_builder_leaderboard :
   t ->
   ?time_period:Time_period.t ->
-  ?limit:int ->
-  ?offset:int ->
+  ?limit:N.t ->
+  ?offset:N.t ->
   unit ->
   (leaderboard_entry list, Polymarket_http.Client.error) result
 (** Get aggregated builder leaderboard.
@@ -214,8 +217,8 @@ val get_trader_leaderboard :
   ?order_by:Leaderboard_order_by.t ->
   ?user:Polymarket_common.Primitives.Address.t ->
   ?user_name:string ->
-  ?limit:int ->
-  ?offset:int ->
+  ?limit:N.t ->
+  ?offset:N.t ->
   unit ->
   (trader_leaderboard_entry list, Polymarket_http.Client.error) result
 (** Get trader leaderboard rankings.

@@ -1,6 +1,7 @@
 (** Gamma API client for markets, events, series, and search. *)
 
 module P = Polymarket_common.Primitives
+module N = P.Nonneg_int
 module B = Polymarket_http.Builder
 include Types
 
@@ -20,8 +21,8 @@ let status t = B.new_get t "/status" |> B.fetch_text
 let get_teams t ?limit ?offset ?order ?ascending ?league ?name ?abbreviation ()
     =
   B.new_get t "/teams"
-  |> B.query_option "limit" string_of_int limit
-  |> B.query_option "offset" string_of_int offset
+  |> B.query_option "limit" N.to_string limit
+  |> B.query_option "offset" N.to_string offset
   |> B.query_each "order" Fun.id order
   |> B.query_bool "ascending" ascending
   |> B.query_each "league" Fun.id league
@@ -46,8 +47,8 @@ let get_sports_market_types t () =
 let get_tags t ?limit ?offset ?order ?ascending ?include_template ?is_carousel
     () =
   B.new_get t "/tags"
-  |> B.query_option "limit" string_of_int limit
-  |> B.query_option "offset" string_of_int offset
+  |> B.query_option "limit" N.to_string limit
+  |> B.query_option "offset" N.to_string offset
   |> B.query_each "order" Fun.id order
   |> B.query_bool "ascending" ascending
   |> B.query_bool "include_template" include_template
@@ -103,8 +104,8 @@ let get_events t ?limit ?offset ?order ?ascending ?id ?tag_id ?exclude_tag_id
     ?liquidity_max ?volume_min ?volume_max ?start_date_min ?start_date_max
     ?end_date_min ?end_date_max () =
   B.new_get t "/events"
-  |> B.query_option "limit" string_of_int limit
-  |> B.query_option "offset" string_of_int offset
+  |> B.query_option "limit" N.to_string limit
+  |> B.query_option "offset" N.to_string offset
   |> B.query_each "order" Fun.id order
   |> B.query_bool "ascending" ascending
   |> B.query_each "id" string_of_int id
@@ -160,8 +161,8 @@ let get_markets t ?limit ?offset ?order ?ascending ?id ?slug ?clob_token_ids
     ?uma_resolution_status ?game_id ?sports_market_types ?rewards_min_size
     ?question_ids ?include_tag ?closed () =
   B.new_get t "/markets"
-  |> B.query_option "limit" string_of_int limit
-  |> B.query_option "offset" string_of_int offset
+  |> B.query_option "limit" N.to_string limit
+  |> B.query_option "offset" N.to_string offset
   |> B.query_add "order" order
   |> B.query_bool "ascending" ascending
   |> B.query_each "id" string_of_int id
@@ -212,8 +213,8 @@ let get_market_by_slug t ~slug ?include_tag () =
 let get_series_list t ?limit ?offset ?order ?ascending ?slug ?categories_ids
     ?categories_labels ?closed ?include_chat ?recurrence () =
   B.new_get t "/series"
-  |> B.query_option "limit" string_of_int limit
-  |> B.query_option "offset" string_of_int offset
+  |> B.query_option "limit" N.to_string limit
+  |> B.query_option "offset" N.to_string offset
   |> B.query_add "order" order
   |> B.query_bool "ascending" ascending
   |> B.query_each "slug" Fun.id slug
@@ -236,8 +237,8 @@ let get_series t ~id ?include_chat () =
 let get_comments t ?limit ?offset ?order ?ascending ?parent_entity_type
     ?parent_entity_id ?get_positions ?holders_only () =
   B.new_get t "/comments"
-  |> B.query_option "limit" string_of_int limit
-  |> B.query_option "offset" string_of_int offset
+  |> B.query_option "limit" N.to_string limit
+  |> B.query_option "offset" N.to_string offset
   |> B.query_add "order" order
   |> B.query_bool "ascending" ascending
   |> B.query_option "parent_entity_type" Parent_entity_type.to_string
@@ -256,8 +257,8 @@ let get_comment t ~id ?get_positions () =
 
 let get_user_comments t ~user_address ?limit ?offset ?order ?ascending () =
   B.new_get t (Printf.sprintf "/comments/user_address/%s" user_address)
-  |> B.query_option "limit" string_of_int limit
-  |> B.query_option "offset" string_of_int offset
+  |> B.query_option "limit" N.to_string limit
+  |> B.query_option "offset" N.to_string offset
   |> B.query_add "order" order
   |> B.query_bool "ascending" ascending
   |> B.fetch_json_list ~expected_fields:yojson_fields_of_comment
@@ -279,8 +280,8 @@ let public_search t ~q ?cache ?events_status ?limit_per_type ?page ?events_tag
   B.new_get t "/public-search"
   |> B.query_param "q" q |> B.query_bool "cache" cache
   |> B.query_add "events_status" events_status
-  |> B.query_option "limit_per_type" string_of_int limit_per_type
-  |> B.query_option "page" string_of_int page
+  |> B.query_option "limit_per_type" N.to_string limit_per_type
+  |> B.query_option "page" N.to_string page
   |> B.query_each "events_tag" Fun.id events_tag
   |> B.query_option "keep_closed_markets" string_of_int keep_closed_markets
   |> B.query_add "sort" sort

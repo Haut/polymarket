@@ -11,6 +11,26 @@ open Types
 
 let default_base_url = "https://clob.polymarket.com"
 
+(* Re-export types from internal libraries *)
+type private_key = Crypto.private_key
+
+type credentials = Auth.credentials = {
+  api_key : string;
+  secret : string;
+  passphrase : string;
+}
+
+type api_key_response = Auth.api_key_response = {
+  api_key : string;
+  secret : string;
+  passphrase : string;
+}
+
+type rate_limiter = Polymarket_rate_limiter.Rate_limiter.t
+type error = H.error
+
+let error_to_string = H.error_to_string
+
 (** {1 Client Types} *)
 
 type unauthed = { http : H.t }

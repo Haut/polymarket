@@ -3,37 +3,9 @@
     These types correspond to the Polymarket CLOB API
     (https://clob.polymarket.com). *)
 
-(** {1 Primitive Types} *)
+(** {1 Primitives Module Alias} *)
 
-type address = string
-(** Ethereum address (0x-prefixed, 40 hex chars). *)
-
-type signature = string
-(** Hex-encoded signature (0x-prefixed). *)
-
-type token_id = string
-(** ERC1155 token ID. *)
-
-val address_of_yojson : Yojson.Safe.t -> address
-val yojson_of_address : address -> Yojson.Safe.t
-val pp_address : Format.formatter -> address -> unit
-val show_address : address -> string
-val equal_address : address -> address -> bool
-val signature_of_yojson : Yojson.Safe.t -> signature
-val yojson_of_signature : signature -> Yojson.Safe.t
-val pp_signature : Format.formatter -> signature -> unit
-val show_signature : signature -> string
-val equal_signature : signature -> signature -> bool
-val token_id_of_yojson : Yojson.Safe.t -> token_id
-val yojson_of_token_id : token_id -> Yojson.Safe.t
-val pp_token_id : Format.formatter -> token_id -> unit
-val show_token_id : token_id -> string
-val equal_token_id : token_id -> token_id -> bool
-
-(** {1 Validation Errors} *)
-
-exception Invalid_address of string
-exception Invalid_signature of string
+module P = Polymarket_common.Primitives
 
 (** {1 Enum Modules} *)
 
@@ -138,10 +110,10 @@ val equal_order_book_summary : order_book_summary -> order_book_summary -> bool
 
 type signed_order = {
   salt : string option;
-  maker : address option;
-  signer : address option;
-  taker : address option;
-  token_id : token_id option;
+  maker : P.Address.t option;
+  signer : P.Address.t option;
+  taker : P.Address.t option;
+  token_id : P.Token_id.t option;
   maker_amount : string option;
   taker_amount : string option;
   expiration : string option;
@@ -149,7 +121,7 @@ type signed_order = {
   fee_rate_bps : string option;
   side : Side.t option;
   signature_type : Signature_type.t option;
-  signature : signature option;
+  signature : P.Signature.t option;
 }
 (** Cryptographically signed order for the CLOB *)
 
@@ -195,13 +167,13 @@ type open_order = {
   id : string option;
   status : Status.t option;
   market : string option;
-  asset_id : token_id option;
+  asset_id : P.Token_id.t option;
   original_size : string option;
   size_matched : string option;
   price : string option;
   side : Side.t option;
   outcome : string option;
-  maker_address : address option;
+  maker_address : P.Address.t option;
   owner : string option;
   expiration : string option;
   order_type : Order_type.t option;
@@ -234,12 +206,12 @@ val equal_cancel_response : cancel_response -> cancel_response -> bool
 
 type maker_order_fill = {
   order_id : string option;
-  maker_address : address option;
+  maker_address : P.Address.t option;
   owner : string option;
   matched_amount : string option;
   fee_rate_bps : string option;
   price : string option;
-  asset_id : token_id option;
+  asset_id : P.Token_id.t option;
   outcome : string option;
   side : Side.t option;
 }
@@ -255,7 +227,7 @@ type clob_trade = {
   id : string option;
   taker_order_id : string option;
   market : string option;
-  asset_id : token_id option;
+  asset_id : P.Token_id.t option;
   side : Side.t option;
   size : string option;
   fee_rate_bps : string option;
@@ -264,7 +236,7 @@ type clob_trade = {
   match_time : string option;
   last_update : string option;
   outcome : string option;
-  maker_address : address option;
+  maker_address : P.Address.t option;
   owner : string option;
   transaction_hash : string option;
   bucket_index : int option;
@@ -308,7 +280,7 @@ val pp_token_price : Format.formatter -> token_price -> unit
 val show_token_price : token_price -> string
 val equal_token_price : token_price -> token_price -> bool
 
-type prices_response = (token_id * token_price) list
+type prices_response = (P.Token_id.t * token_price) list
 (** Map from token_id to token_price *)
 
 val prices_response_of_yojson : Yojson.Safe.t -> prices_response
@@ -317,7 +289,7 @@ val pp_prices_response : Format.formatter -> prices_response -> unit
 val show_prices_response : prices_response -> string
 val equal_prices_response : prices_response -> prices_response -> bool
 
-type spreads_response = (token_id * string) list
+type spreads_response = (P.Token_id.t * string) list
 (** Map from token_id to spread value *)
 
 val spreads_response_of_yojson : Yojson.Safe.t -> spreads_response
@@ -357,30 +329,6 @@ val error_to_string : error -> string
 
 val pp_error : Format.formatter -> error -> unit
 (** Pretty printer for errors *)
-
-(** {1 Validation Functions} *)
-
-val is_valid_address : address -> bool
-(** Validates an address string (0x-prefixed, 40 hex chars). *)
-
-val is_valid_signature : signature -> bool
-(** Validates a hex signature string (0x-prefixed). *)
-
-(** {1 Validating Deserializers} *)
-
-val address_of_yojson_exn : Yojson.Safe.t -> address
-(** Deserialize an address with validation.
-    @raise Invalid_address if the address doesn't match the expected pattern *)
-
-val signature_of_yojson_exn : Yojson.Safe.t -> signature
-(** Deserialize a signature with validation.
-    @raise Invalid_signature if the signature is invalid *)
-
-val address_of_yojson_result : Yojson.Safe.t -> (address, string) result
-(** Deserialize an address with validation, returning a result. *)
-
-val signature_of_yojson_result : Yojson.Safe.t -> (signature, string) result
-(** Deserialize a signature with validation, returning a result. *)
 
 (** {1 Field Lists for Extra Field Detection} *)
 

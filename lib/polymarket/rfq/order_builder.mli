@@ -5,9 +5,9 @@
 
 val build_accept_quote_body :
   private_key:Polymarket_common.Crypto.private_key ->
-  request_id:Types.request_id ->
-  quote_id:Types.quote_id ->
-  token_id:Types.token_id ->
+  request_id:Types.P.Request_id.t ->
+  quote_id:Types.P.Quote_id.t ->
+  token_id:Types.P.Token_id.t ->
   maker_amount:string ->
   taker_amount:string ->
   side:Types.Side.t ->

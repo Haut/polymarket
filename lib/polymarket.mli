@@ -139,10 +139,13 @@ module Clob : sig
   module L1 = Polymarket_clob.Client.L1
   module L2 = Polymarket_clob.Client.L2
 
-  val upgrade_to_l1 :
-    unauthed -> private_key:Polymarket_common.Crypto.private_key -> l1
+  type private_key = Polymarket_clob.Client.private_key
+  type credentials = Polymarket_clob.Client.credentials
+  type error = Polymarket_clob.Client.error
 
-  val upgrade_to_l2 : l1 -> credentials:Polymarket_common.Auth.credentials -> l2
+  val error_to_string : error -> string
+  val upgrade_to_l1 : unauthed -> private_key:private_key -> l1
+  val upgrade_to_l2 : l1 -> credentials:credentials -> l2
   val l2_to_l1 : l2 -> l1
   val l2_to_unauthed : l2 -> unauthed
   val l1_to_unauthed : l1 -> unauthed
@@ -154,6 +157,7 @@ module Rfq : sig
       All RFQ endpoints require L2 authentication. *)
 
   module Types = Polymarket_rfq.Types
+  module N = Polymarket_common.Primitives.Nonneg_int
 
   val default_base_url : string
   (** Default base URL for the RFQ API: https://clob.polymarket.com *)
@@ -187,12 +191,12 @@ module Rfq : sig
     (Types.create_request_response, Types.error) result
 
   val cancel_request :
-    t -> request_id:Types.request_id -> unit -> (unit, Types.error) result
+    t -> request_id:Types.P.Request_id.t -> unit -> (unit, Types.error) result
 
   val get_requests :
     t ->
     ?offset:string ->
-    ?limit:int ->
+    ?limit:N.t ->
     ?state:Types.State_filter.t ->
     ?request_ids:string list ->
     ?markets:string list ->
@@ -216,12 +220,12 @@ module Rfq : sig
     (Types.create_quote_response, Types.error) result
 
   val cancel_quote :
-    t -> quote_id:Types.quote_id -> unit -> (unit, Types.error) result
+    t -> quote_id:Types.P.Quote_id.t -> unit -> (unit, Types.error) result
 
   val get_quotes :
     t ->
     ?offset:string ->
-    ?limit:int ->
+    ?limit:N.t ->
     ?state:Types.State_filter.t ->
     ?quote_ids:string list ->
     ?request_ids:string list ->
@@ -479,10 +483,17 @@ module Rate_limiter = Polymarket_rate_limiter.Rate_limiter
     Validated types for addresses, hashes, and numeric constraints. *)
 
 module Side = Polymarket_common.Primitives.Side
+module Sort_dir = Polymarket_common.Primitives.Sort_dir
 module Address = Polymarket_common.Primitives.Address
 module Hash64 = Polymarket_common.Primitives.Hash64
 module Hash = Polymarket_common.Primitives.Hash
+module Token_id = Polymarket_common.Primitives.Token_id
+module Signature = Polymarket_common.Primitives.Signature
+module Request_id = Polymarket_common.Primitives.Request_id
+module Quote_id = Polymarket_common.Primitives.Quote_id
+module Trade_id = Polymarket_common.Primitives.Trade_id
 module Timestamp = Polymarket_common.Primitives.Timestamp
+module Nonneg_int = Polymarket_common.Primitives.Nonneg_int
 
 (** {1 Authentication and Crypto}
 

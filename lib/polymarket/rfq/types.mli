@@ -3,56 +3,9 @@
     These types correspond to the Polymarket RFQ (Request for Quote) API at
     https://clob.polymarket.com/rfq. *)
 
-(** {1 Primitive Types} *)
+(** {1 Primitives Module Alias} *)
 
-type address = string
-(** Ethereum address (0x-prefixed, 40 hex chars). *)
-
-type token_id = string
-(** ERC1155 token ID or "0" for USDC. *)
-
-type request_id = string
-(** UUID for an RFQ request. *)
-
-type quote_id = string
-(** UUID for an RFQ quote. *)
-
-type trade_id = string
-(** UUID for a trade. *)
-
-type condition_id = string
-(** Market condition ID. *)
-
-val address_of_yojson : Yojson.Safe.t -> address
-val yojson_of_address : address -> Yojson.Safe.t
-val pp_address : Format.formatter -> address -> unit
-val show_address : address -> string
-val equal_address : address -> address -> bool
-val token_id_of_yojson : Yojson.Safe.t -> token_id
-val yojson_of_token_id : token_id -> Yojson.Safe.t
-val pp_token_id : Format.formatter -> token_id -> unit
-val show_token_id : token_id -> string
-val equal_token_id : token_id -> token_id -> bool
-val request_id_of_yojson : Yojson.Safe.t -> request_id
-val yojson_of_request_id : request_id -> Yojson.Safe.t
-val pp_request_id : Format.formatter -> request_id -> unit
-val show_request_id : request_id -> string
-val equal_request_id : request_id -> request_id -> bool
-val quote_id_of_yojson : Yojson.Safe.t -> quote_id
-val yojson_of_quote_id : quote_id -> Yojson.Safe.t
-val pp_quote_id : Format.formatter -> quote_id -> unit
-val show_quote_id : quote_id -> string
-val equal_quote_id : quote_id -> quote_id -> bool
-val trade_id_of_yojson : Yojson.Safe.t -> trade_id
-val yojson_of_trade_id : trade_id -> Yojson.Safe.t
-val pp_trade_id : Format.formatter -> trade_id -> unit
-val show_trade_id : trade_id -> string
-val equal_trade_id : trade_id -> trade_id -> bool
-val condition_id_of_yojson : Yojson.Safe.t -> condition_id
-val yojson_of_condition_id : condition_id -> Yojson.Safe.t
-val pp_condition_id : Format.formatter -> condition_id -> unit
-val show_condition_id : condition_id -> string
-val equal_condition_id : condition_id -> condition_id -> bool
+module P = Polymarket_common.Primitives
 
 (** {1 Enum Modules} *)
 
@@ -128,23 +81,14 @@ module Sort_by : sig
   val equal : t -> t -> bool
 end
 
+module Sort_dir = P.Sort_dir
 (** Sort direction. *)
-module Sort_dir : sig
-  type t = Asc | Desc
-
-  val to_string : t -> string
-  val of_string : string -> t
-  val t_of_yojson : Yojson.Safe.t -> t
-  val yojson_of_t : t -> Yojson.Safe.t
-  val pp : Format.formatter -> t -> unit
-  val equal : t -> t -> bool
-end
 
 (** {1 Request Types} *)
 
 type create_request_body = {
-  asset_in : token_id;
-  asset_out : token_id;
+  asset_in : P.Token_id.t;
+  asset_out : P.Token_id.t;
   amount_in : string;
   amount_out : string;
   user_type : User_type.t;
@@ -159,7 +103,7 @@ val show_create_request_body : create_request_body -> string
 val equal_create_request_body :
   create_request_body -> create_request_body -> bool
 
-type create_request_response = { request_id : request_id; expiry : int }
+type create_request_response = { request_id : P.Request_id.t; expiry : int }
 (** Response from creating an RFQ request. *)
 
 val create_request_response_of_yojson : Yojson.Safe.t -> create_request_response
@@ -173,7 +117,7 @@ val show_create_request_response : create_request_response -> string
 val equal_create_request_response :
   create_request_response -> create_request_response -> bool
 
-type cancel_request_body = { request_id : request_id }
+type cancel_request_body = { request_id : P.Request_id.t }
 (** Request body for canceling an RFQ request. *)
 
 val cancel_request_body_of_yojson : Yojson.Safe.t -> cancel_request_body
@@ -185,12 +129,12 @@ val equal_cancel_request_body :
   cancel_request_body -> cancel_request_body -> bool
 
 type rfq_request = {
-  request_id : request_id;
-  user : address;
-  proxy : address;
-  market : condition_id;
-  token : token_id;
-  complement : token_id;
+  request_id : P.Request_id.t;
+  user : P.Address.t;
+  proxy : P.Address.t;
+  market : P.Hash64.t;
+  token : P.Token_id.t;
+  complement : P.Token_id.t;
   side : Side.t;
   size_in : float;
   size_out : float;
@@ -224,9 +168,9 @@ val equal_get_requests_response :
 (** {1 Quote Types} *)
 
 type create_quote_body = {
-  request_id : request_id;
-  asset_in : token_id;
-  asset_out : token_id;
+  request_id : P.Request_id.t;
+  asset_in : P.Token_id.t;
+  asset_out : P.Token_id.t;
   amount_in : string;
   amount_out : string;
   user_type : User_type.t;
@@ -239,7 +183,7 @@ val pp_create_quote_body : Format.formatter -> create_quote_body -> unit
 val show_create_quote_body : create_quote_body -> string
 val equal_create_quote_body : create_quote_body -> create_quote_body -> bool
 
-type create_quote_response = { quote_id : quote_id }
+type create_quote_response = { quote_id : P.Quote_id.t }
 (** Response from creating an RFQ quote. *)
 
 val create_quote_response_of_yojson : Yojson.Safe.t -> create_quote_response
@@ -250,7 +194,7 @@ val show_create_quote_response : create_quote_response -> string
 val equal_create_quote_response :
   create_quote_response -> create_quote_response -> bool
 
-type cancel_quote_body = { quote_id : quote_id }
+type cancel_quote_body = { quote_id : P.Quote_id.t }
 (** Request body for canceling an RFQ quote. *)
 
 val cancel_quote_body_of_yojson : Yojson.Safe.t -> cancel_quote_body
@@ -260,13 +204,13 @@ val show_cancel_quote_body : cancel_quote_body -> string
 val equal_cancel_quote_body : cancel_quote_body -> cancel_quote_body -> bool
 
 type rfq_quote = {
-  quote_id : quote_id;
-  request_id : request_id;
-  user : address;
-  proxy : address;
-  market : condition_id;
-  token : token_id;
-  complement : token_id;
+  quote_id : P.Quote_id.t;
+  request_id : P.Request_id.t;
+  user : P.Address.t;
+  proxy : P.Address.t;
+  market : P.Hash64.t;
+  token : P.Token_id.t;
+  complement : P.Token_id.t;
   side : Side.t;
   size_in : float;
   size_out : float;
@@ -299,19 +243,19 @@ val equal_get_quotes_response :
 (** {1 Execution Types} *)
 
 type accept_quote_body = {
-  request_id : request_id;
-  quote_id : quote_id;
+  request_id : P.Request_id.t;
+  quote_id : P.Quote_id.t;
   maker_amount : string;
   taker_amount : string;
-  token_id : token_id;
-  maker : address;
-  signer : address;
-  taker : address;
+  token_id : P.Token_id.t;
+  maker : P.Address.t;
+  signer : P.Address.t;
+  taker : P.Address.t;
   nonce : string;
   expiration : int;
   side : Side.t;
   fee_rate_bps : string;
-  signature : string;
+  signature : P.Signature.t;
   salt : string;
   owner : string;
 }
@@ -332,7 +276,7 @@ val pp_approve_order_body : Format.formatter -> approve_order_body -> unit
 val show_approve_order_body : approve_order_body -> string
 val equal_approve_order_body : approve_order_body -> approve_order_body -> bool
 
-type approve_order_response = { trade_ids : trade_id list }
+type approve_order_response = { trade_ids : P.Trade_id.t list }
 (** Response from approving an order. *)
 
 val approve_order_response_of_yojson : Yojson.Safe.t -> approve_order_response

@@ -6,13 +6,8 @@
 
 (** {1 Query Parameter Enums} *)
 
-module Sort_direction : sig
-  type t = Asc | Desc [@@deriving yojson, eq]
-
-  val to_string : t -> string
-  val of_string : string -> t
-  val pp : Format.formatter -> t -> unit
-end
+module Sort_direction = Polymarket_common.Primitives.Sort_dir
+(** Re-export shared Sort_dir module from Common.Primitives *)
 
 module Position_sort_by : sig
   type t =

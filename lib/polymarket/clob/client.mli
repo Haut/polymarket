@@ -27,14 +27,38 @@
           (* Now we can create orders *)
           let _ = L2.create_order l2_client ~order ~owner ~order_type () in
           ()
-      | Error e -> failwith e.error
+      | Error e -> error_to_string e |> failwith
     ]} *)
 
-module Auth = Polymarket_common.Auth
-(** Re-exported authentication types from common. *)
+(** {1 Types from Internal Libraries}
 
-module Crypto = Polymarket_common.Crypto
-(** Re-exported cryptographic utilities from common. *)
+    These types are re-exported for convenience. *)
+
+type private_key = Polymarket_common.Crypto.private_key
+(** Ethereum private key (hex string, without 0x prefix). *)
+
+type credentials = Polymarket_common.Auth.credentials = {
+  api_key : string;
+  secret : string;
+  passphrase : string;
+}
+(** API credentials for L2 authentication. *)
+
+type api_key_response = Polymarket_common.Auth.api_key_response = {
+  api_key : string;
+  secret : string;
+  passphrase : string;
+}
+(** Response from API key creation/derivation endpoints. *)
+
+type rate_limiter = Polymarket_rate_limiter.Rate_limiter.t
+(** Rate limiter for enforcing API limits. *)
+
+type error = Polymarket_http.Client.error
+(** Error type for API operations. *)
+
+val error_to_string : error -> string
+(** Convert an error to a human-readable string. *)
 
 val default_base_url : string
 (** Default base URL for the CLOB API: https://clob.polymarket.com *)
@@ -64,7 +88,7 @@ module Unauthed : sig
     ?base_url:string ->
     sw:Eio.Switch.t ->
     net:_ Eio.Net.t ->
-    rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
+    rate_limiter:rate_limiter ->
     unit ->
     t
   (** Create a new unauthenticated CLOB client.
@@ -76,16 +100,13 @@ module Unauthed : sig
   (** {2 Order Book} *)
 
   val get_order_book :
-    t ->
-    token_id:string ->
-    unit ->
-    (Types.order_book_summary, Polymarket_http.Client.error) result
+    t -> token_id:string -> unit -> (Types.order_book_summary, error) result
 
   val get_order_books :
     t ->
     token_ids:string list ->
     unit ->
-    (Types.order_book_summary list, Polymarket_http.Client.error) result
+    (Types.order_book_summary list, error) result
 
   (** {2 Pricing} *)
 
@@ -94,25 +115,19 @@ module Unauthed : sig
     token_id:string ->
     side:Types.Side.t ->
     unit ->
-    (Types.price_response, Polymarket_http.Client.error) result
+    (Types.price_response, error) result
 
   val get_midpoint :
-    t ->
-    token_id:string ->
-    unit ->
-    (Types.midpoint_response, Polymarket_http.Client.error) result
+    t -> token_id:string -> unit -> (Types.midpoint_response, error) result
 
   val get_prices :
     t ->
     requests:(string * Types.Side.t) list ->
     unit ->
-    (Types.prices_response, Polymarket_http.Client.error) result
+    (Types.prices_response, error) result
 
   val get_spreads :
-    t ->
-    token_ids:string list ->
-    unit ->
-    (Types.spreads_response, Polymarket_http.Client.error) result
+    t -> token_ids:string list -> unit -> (Types.spreads_response, error) result
 
   (** {2 Timeseries} *)
 
@@ -124,7 +139,7 @@ module Unauthed : sig
     ?interval:Types.Interval.t ->
     ?fidelity:int ->
     unit ->
-    (Types.price_history, Polymarket_http.Client.error) result
+    (Types.price_history, error) result
 end
 
 (** {1 L1-Authenticated Client}
@@ -140,8 +155,8 @@ module L1 : sig
     ?base_url:string ->
     sw:Eio.Switch.t ->
     net:_ Eio.Net.t ->
-    rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
-    private_key:Crypto.private_key ->
+    rate_limiter:rate_limiter ->
+    private_key:private_key ->
     unit ->
     t
   (** Create a new L1-authenticated CLOB client.
@@ -156,33 +171,24 @@ module L1 : sig
 
   (** {2 L1 Authentication Endpoints} *)
 
-  val create_api_key :
-    t ->
-    nonce:int ->
-    (Auth.api_key_response, Polymarket_http.Client.error) result
+  val create_api_key : t -> nonce:int -> (api_key_response, error) result
   (** Create a new API key using L1 wallet authentication. Returns the API key,
       secret, and passphrase. *)
 
-  val derive_api_key :
-    t ->
-    nonce:int ->
-    (l2 * Auth.api_key_response, Polymarket_http.Client.error) result
+  val derive_api_key : t -> nonce:int -> (l2 * api_key_response, error) result
   (** Derive API key from wallet and automatically upgrade to L2 client. Returns
       both the L2 client and the raw response (for credential storage). *)
 
   (** {2 Order Book} *)
 
   val get_order_book :
-    t ->
-    token_id:string ->
-    unit ->
-    (Types.order_book_summary, Polymarket_http.Client.error) result
+    t -> token_id:string -> unit -> (Types.order_book_summary, error) result
 
   val get_order_books :
     t ->
     token_ids:string list ->
     unit ->
-    (Types.order_book_summary list, Polymarket_http.Client.error) result
+    (Types.order_book_summary list, error) result
 
   (** {2 Pricing} *)
 
@@ -191,25 +197,19 @@ module L1 : sig
     token_id:string ->
     side:Types.Side.t ->
     unit ->
-    (Types.price_response, Polymarket_http.Client.error) result
+    (Types.price_response, error) result
 
   val get_midpoint :
-    t ->
-    token_id:string ->
-    unit ->
-    (Types.midpoint_response, Polymarket_http.Client.error) result
+    t -> token_id:string -> unit -> (Types.midpoint_response, error) result
 
   val get_prices :
     t ->
     requests:(string * Types.Side.t) list ->
     unit ->
-    (Types.prices_response, Polymarket_http.Client.error) result
+    (Types.prices_response, error) result
 
   val get_spreads :
-    t ->
-    token_ids:string list ->
-    unit ->
-    (Types.spreads_response, Polymarket_http.Client.error) result
+    t -> token_ids:string list -> unit -> (Types.spreads_response, error) result
 
   (** {2 Timeseries} *)
 
@@ -221,7 +221,7 @@ module L1 : sig
     ?interval:Types.Interval.t ->
     ?fidelity:int ->
     unit ->
-    (Types.price_history, Polymarket_http.Client.error) result
+    (Types.price_history, error) result
 end
 
 (** {1 L2-Authenticated Client}
@@ -237,9 +237,9 @@ module L2 : sig
     ?base_url:string ->
     sw:Eio.Switch.t ->
     net:_ Eio.Net.t ->
-    rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
-    private_key:Crypto.private_key ->
-    credentials:Auth.credentials ->
+    rate_limiter:rate_limiter ->
+    private_key:private_key ->
+    credentials:credentials ->
     unit ->
     t
   (** Create a new L2-authenticated CLOB client.
@@ -253,21 +253,18 @@ module L2 : sig
   val address : t -> string
   (** Get the Ethereum address derived from the private key. *)
 
-  val credentials : t -> Auth.credentials
+  val credentials : t -> credentials
   (** Get the API credentials. *)
 
   (** {2 L1 Authentication Endpoints} *)
 
-  val create_api_key :
-    t ->
-    nonce:int ->
-    (Auth.api_key_response, Polymarket_http.Client.error) result
+  val create_api_key : t -> nonce:int -> (api_key_response, error) result
   (** Create a new API key using L1 wallet authentication. *)
 
-  val delete_api_key : t -> (unit, Polymarket_http.Client.error) result
+  val delete_api_key : t -> (unit, error) result
   (** Delete the current API key. *)
 
-  val get_api_keys : t -> (string list, Polymarket_http.Client.error) result
+  val get_api_keys : t -> (string list, error) result
   (** Get all API keys for this address. *)
 
   (** {2 Orders} *)
@@ -278,21 +275,18 @@ module L2 : sig
     owner:string ->
     order_type:Types.Order_type.t ->
     unit ->
-    (Types.create_order_response, Polymarket_http.Client.error) result
+    (Types.create_order_response, error) result
   (** Create a new order on the CLOB. *)
 
   val create_orders :
     t ->
     orders:(Types.signed_order * string * Types.Order_type.t) list ->
     unit ->
-    (Types.create_order_response list, Polymarket_http.Client.error) result
+    (Types.create_order_response list, error) result
   (** Create multiple orders on the CLOB. *)
 
   val get_order :
-    t ->
-    order_id:string ->
-    unit ->
-    (Types.open_order, Polymarket_http.Client.error) result
+    t -> order_id:string -> unit -> (Types.open_order, error) result
   (** Get details of a specific order. *)
 
   val get_orders :
@@ -300,27 +294,20 @@ module L2 : sig
     ?market:string ->
     ?asset_id:string ->
     unit ->
-    (Types.open_order list, Polymarket_http.Client.error) result
+    (Types.open_order list, error) result
   (** Get all open orders, optionally filtered by market or asset. *)
 
   (** {2 Cancel Orders} *)
 
   val cancel_order :
-    t ->
-    order_id:string ->
-    unit ->
-    (Types.cancel_response, Polymarket_http.Client.error) result
+    t -> order_id:string -> unit -> (Types.cancel_response, error) result
   (** Cancel a specific order. *)
 
   val cancel_orders :
-    t ->
-    order_ids:string list ->
-    unit ->
-    (Types.cancel_response, Polymarket_http.Client.error) result
+    t -> order_ids:string list -> unit -> (Types.cancel_response, error) result
   (** Cancel multiple orders. *)
 
-  val cancel_all :
-    t -> unit -> (Types.cancel_response, Polymarket_http.Client.error) result
+  val cancel_all : t -> unit -> (Types.cancel_response, error) result
   (** Cancel all open orders. *)
 
   val cancel_market_orders :
@@ -328,7 +315,7 @@ module L2 : sig
     ?market:string ->
     ?asset_id:string ->
     unit ->
-    (Types.cancel_response, Polymarket_http.Client.error) result
+    (Types.cancel_response, error) result
   (** Cancel all orders for a market or asset. *)
 
   (** {2 Trades} *)
@@ -342,22 +329,19 @@ module L2 : sig
     ?before:string ->
     ?after:string ->
     unit ->
-    (Types.clob_trade list, Polymarket_http.Client.error) result
+    (Types.clob_trade list, error) result
   (** Get trade history. *)
 
   (** {2 Order Book} *)
 
   val get_order_book :
-    t ->
-    token_id:string ->
-    unit ->
-    (Types.order_book_summary, Polymarket_http.Client.error) result
+    t -> token_id:string -> unit -> (Types.order_book_summary, error) result
 
   val get_order_books :
     t ->
     token_ids:string list ->
     unit ->
-    (Types.order_book_summary list, Polymarket_http.Client.error) result
+    (Types.order_book_summary list, error) result
 
   (** {2 Pricing} *)
 
@@ -366,25 +350,19 @@ module L2 : sig
     token_id:string ->
     side:Types.Side.t ->
     unit ->
-    (Types.price_response, Polymarket_http.Client.error) result
+    (Types.price_response, error) result
 
   val get_midpoint :
-    t ->
-    token_id:string ->
-    unit ->
-    (Types.midpoint_response, Polymarket_http.Client.error) result
+    t -> token_id:string -> unit -> (Types.midpoint_response, error) result
 
   val get_prices :
     t ->
     requests:(string * Types.Side.t) list ->
     unit ->
-    (Types.prices_response, Polymarket_http.Client.error) result
+    (Types.prices_response, error) result
 
   val get_spreads :
-    t ->
-    token_ids:string list ->
-    unit ->
-    (Types.spreads_response, Polymarket_http.Client.error) result
+    t -> token_ids:string list -> unit -> (Types.spreads_response, error) result
 
   (** {2 Timeseries} *)
 
@@ -396,18 +374,18 @@ module L2 : sig
     ?interval:Types.Interval.t ->
     ?fidelity:int ->
     unit ->
-    (Types.price_history, Polymarket_http.Client.error) result
+    (Types.price_history, error) result
 end
 
 (** {1 State Transitions}
 
     Functions to upgrade or downgrade authentication levels. *)
 
-val upgrade_to_l1 : unauthed -> private_key:Crypto.private_key -> l1
+val upgrade_to_l1 : unauthed -> private_key:private_key -> l1
 (** Upgrade an unauthenticated client to L1 by providing a private key. The
     address is derived from the private key automatically. *)
 
-val upgrade_to_l2 : l1 -> credentials:Auth.credentials -> l2
+val upgrade_to_l2 : l1 -> credentials:credentials -> l2
 (** Upgrade an L1 client to L2 by providing API credentials. *)
 
 val l2_to_l1 : l2 -> l1

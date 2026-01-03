@@ -28,6 +28,11 @@ module Clob = struct
   module L1 = Polymarket_clob.Client.L1
   module L2 = Polymarket_clob.Client.L2
 
+  type private_key = Polymarket_clob.Client.private_key
+  type credentials = Polymarket_clob.Client.credentials
+  type error = Polymarket_clob.Client.error
+
+  let error_to_string = Polymarket_clob.Client.error_to_string
   let upgrade_to_l1 = Polymarket_clob.Client.upgrade_to_l1
   let upgrade_to_l2 = Polymarket_clob.Client.upgrade_to_l2
   let l2_to_l1 = Polymarket_clob.Client.l2_to_l1
@@ -79,10 +84,17 @@ module Rate_limiter = Polymarket_rate_limiter.Rate_limiter
     re-exported at top level for convenience. *)
 
 module Side = Polymarket_common.Primitives.Side
+module Sort_dir = Polymarket_common.Primitives.Sort_dir
 module Address = Polymarket_common.Primitives.Address
 module Hash64 = Polymarket_common.Primitives.Hash64
 module Hash = Polymarket_common.Primitives.Hash
+module Token_id = Polymarket_common.Primitives.Token_id
+module Signature = Polymarket_common.Primitives.Signature
+module Request_id = Polymarket_common.Primitives.Request_id
+module Quote_id = Polymarket_common.Primitives.Quote_id
+module Trade_id = Polymarket_common.Primitives.Trade_id
 module Timestamp = Polymarket_common.Primitives.Timestamp
+module Nonneg_int = Polymarket_common.Primitives.Nonneg_int
 
 (** {1 Authentication and Crypto}
 

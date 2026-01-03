@@ -5,21 +5,9 @@
 
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 
-(** {1 Primitive Types} *)
+(** {1 Primitives Module Alias} *)
 
-type address = string [@@deriving yojson, show, eq]
-(** Ethereum address (0x-prefixed, 40 hex chars). *)
-
-type signature = string [@@deriving yojson, show, eq]
-(** Hex-encoded signature (0x-prefixed). *)
-
-type token_id = string [@@deriving yojson, show, eq]
-(** ERC1155 token ID. *)
-
-(** {1 Validation Errors} *)
-
-exception Invalid_address of string
-exception Invalid_signature of string
+module P = Polymarket_common.Primitives
 
 (** {1 Enum Modules} *)
 
@@ -113,10 +101,10 @@ type order_book_summary = {
 
 type signed_order = {
   salt : string option; [@yojson.option]
-  maker : address option; [@yojson.option]
-  signer : address option; [@yojson.option]
-  taker : address option; [@yojson.option]
-  token_id : token_id option; [@yojson.option] [@key "tokenId"]
+  maker : P.Address.t option; [@yojson.option]
+  signer : P.Address.t option; [@yojson.option]
+  taker : P.Address.t option; [@yojson.option]
+  token_id : P.Token_id.t option; [@yojson.option] [@key "tokenId"]
   maker_amount : string option; [@yojson.option] [@key "makerAmount"]
   taker_amount : string option; [@yojson.option] [@key "takerAmount"]
   expiration : string option; [@yojson.option]
@@ -125,7 +113,7 @@ type signed_order = {
   side : Side.t option; [@yojson.option]
   signature_type : Signature_type.t option;
       [@yojson.option] [@key "signatureType"]
-  signature : signature option; [@yojson.option]
+  signature : P.Signature.t option; [@yojson.option]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Cryptographically signed order for the CLOB *)
@@ -154,13 +142,13 @@ type open_order = {
   id : string option; [@yojson.option]
   status : Status.t option; [@yojson.option]
   market : string option; [@yojson.option]
-  asset_id : token_id option; [@yojson.option] [@key "asset_id"]
+  asset_id : P.Token_id.t option; [@yojson.option] [@key "asset_id"]
   original_size : string option; [@yojson.option] [@key "original_size"]
   size_matched : string option; [@yojson.option] [@key "size_matched"]
   price : string option; [@yojson.option]
   side : Side.t option; [@yojson.option]
   outcome : string option; [@yojson.option]
-  maker_address : address option; [@yojson.option] [@key "maker_address"]
+  maker_address : P.Address.t option; [@yojson.option] [@key "maker_address"]
   owner : string option; [@yojson.option]
   expiration : string option; [@yojson.option]
   order_type : Order_type.t option; [@yojson.option] [@key "type"]
@@ -213,12 +201,12 @@ let yojson_of_cancel_response resp =
 
 type maker_order_fill = {
   order_id : string option; [@yojson.option] [@key "order_id"]
-  maker_address : address option; [@yojson.option] [@key "maker_address"]
+  maker_address : P.Address.t option; [@yojson.option] [@key "maker_address"]
   owner : string option; [@yojson.option]
   matched_amount : string option; [@yojson.option] [@key "matched_amount"]
   fee_rate_bps : string option; [@yojson.option] [@key "fee_rate_bps"]
   price : string option; [@yojson.option]
-  asset_id : token_id option; [@yojson.option] [@key "asset_id"]
+  asset_id : P.Token_id.t option; [@yojson.option] [@key "asset_id"]
   outcome : string option; [@yojson.option]
   side : Side.t option; [@yojson.option]
 }
@@ -229,7 +217,7 @@ type clob_trade = {
   id : string option; [@yojson.option]
   taker_order_id : string option; [@yojson.option] [@key "taker_order_id"]
   market : string option; [@yojson.option]
-  asset_id : token_id option; [@yojson.option] [@key "asset_id"]
+  asset_id : P.Token_id.t option; [@yojson.option] [@key "asset_id"]
   side : Side.t option; [@yojson.option]
   size : string option; [@yojson.option]
   fee_rate_bps : string option; [@yojson.option] [@key "fee_rate_bps"]
@@ -238,7 +226,7 @@ type clob_trade = {
   match_time : string option; [@yojson.option] [@key "match_time"]
   last_update : string option; [@yojson.option] [@key "last_update"]
   outcome : string option; [@yojson.option]
-  maker_address : address option; [@yojson.option] [@key "maker_address"]
+  maker_address : P.Address.t option; [@yojson.option] [@key "maker_address"]
   owner : string option; [@yojson.option]
   transaction_hash : string option; [@yojson.option] [@key "transaction_hash"]
   bucket_index : int option; [@yojson.option] [@key "bucket_index"]
@@ -265,30 +253,72 @@ type token_price = {
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Token prices for buy and sell sides *)
 
-type prices_response = (token_id * token_price) list [@@deriving show, eq]
+type prices_response = (P.Token_id.t * token_price) list
+
+let equal_prices_response a b =
+  List.length a = List.length b
+  && List.for_all2
+       (fun (t1, p1) (t2, p2) ->
+         P.Token_id.equal t1 t2 && equal_token_price p1 p2)
+       a b
+
+let pp_prices_response fmt resp =
+  Format.fprintf fmt "[%a]"
+    (Format.pp_print_list
+       ~pp_sep:(fun fmt () -> Format.fprintf fmt "; ")
+       (fun fmt (tid, tp) ->
+         Format.fprintf fmt "(%a, %a)" P.Token_id.pp tid pp_token_price tp))
+    resp
+
+let show_prices_response resp = Format.asprintf "%a" pp_prices_response resp
+
 (** prices_response is a map from token_id to token_price *)
 
 let prices_response_of_yojson = function
   | `Assoc pairs ->
-      List.map (fun (token_id, v) -> (token_id, token_price_of_yojson v)) pairs
+      List.map
+        (fun (tid_str, v) ->
+          (P.Token_id.unsafe_of_string tid_str, token_price_of_yojson v))
+        pairs
   | _ -> failwith "prices_response_of_yojson: expected object"
 
 let yojson_of_prices_response resp =
-  `Assoc (List.map (fun (tid, tp) -> (tid, yojson_of_token_price tp)) resp)
+  `Assoc
+    (List.map
+       (fun (tid, tp) -> (P.Token_id.to_string tid, yojson_of_token_price tp))
+       resp)
 
-type spreads_response = (token_id * string) list [@@deriving show, eq]
+type spreads_response = (P.Token_id.t * string) list
+
+let equal_spreads_response a b =
+  List.length a = List.length b
+  && List.for_all2
+       (fun (t1, s1) (t2, s2) -> P.Token_id.equal t1 t2 && String.equal s1 s2)
+       a b
+
+let pp_spreads_response fmt resp =
+  Format.fprintf fmt "[%a]"
+    (Format.pp_print_list
+       ~pp_sep:(fun fmt () -> Format.fprintf fmt "; ")
+       (fun fmt (tid, s) -> Format.fprintf fmt "(%a, %s)" P.Token_id.pp tid s))
+    resp
+
+let show_spreads_response resp = Format.asprintf "%a" pp_spreads_response resp
+
 (** spreads_response is a map from token_id to spread value *)
 
 let spreads_response_of_yojson = function
   | `Assoc pairs ->
       List.filter_map
-        (fun (token_id, v) ->
-          match v with `String s -> Some (token_id, s) | _ -> None)
+        (fun (tid_str, v) ->
+          match v with
+          | `String s -> Some (P.Token_id.unsafe_of_string tid_str, s)
+          | _ -> None)
         pairs
   | _ -> failwith "spreads_response_of_yojson: expected object"
 
 let yojson_of_spreads_response resp =
-  `Assoc (List.map (fun (tid, s) -> (tid, `String s)) resp)
+  `Assoc (List.map (fun (tid, s) -> (P.Token_id.to_string tid, `String s)) resp)
 
 (** {1 Timeseries Types} *)
 
@@ -310,52 +340,3 @@ type error = Polymarket_http.Client.error
 
 let error_to_string = Polymarket_http.Client.error_to_string
 let pp_error = Polymarket_http.Client.pp_error
-
-(** {1 Validation Functions}
-
-    These functions delegate to Polymarket_common.Primitives for validation
-    logic. This ensures a single source of truth for validation rules. *)
-
-(** Validates an address string (0x-prefixed, 40 hex chars). *)
-let is_valid_address s =
-  match Polymarket_common.Primitives.Address.make s with
-  | Ok _ -> true
-  | Error _ -> false
-
-(** Validates a hex signature string (0x-prefixed). *)
-let is_valid_signature s =
-  match Polymarket_common.Primitives.Hash.make s with
-  | Ok _ -> true
-  | Error _ -> false
-
-(** {1 Validating Deserializers} *)
-
-(** Deserialize an address with validation.
-    @raise Invalid_address if the address doesn't match the expected pattern *)
-let address_of_yojson_exn json =
-  let addr = address_of_yojson json in
-  if is_valid_address addr then addr else raise (Invalid_address addr)
-
-(** Deserialize a signature with validation.
-    @raise Invalid_signature if the signature is invalid *)
-let signature_of_yojson_exn json =
-  let sig_ = signature_of_yojson json in
-  if is_valid_signature sig_ then sig_ else raise (Invalid_signature sig_)
-
-(** Deserialize an address with validation, returning a result. *)
-let address_of_yojson_result json =
-  try
-    let addr = address_of_yojson json in
-    if is_valid_address addr then Ok addr
-    else Error ("Invalid address format: " ^ addr)
-  with Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, _) ->
-    Error ("JSON parse error: " ^ Printexc.to_string exn)
-
-(** Deserialize a signature with validation, returning a result. *)
-let signature_of_yojson_result json =
-  try
-    let sig_ = signature_of_yojson json in
-    if is_valid_signature sig_ then Ok sig_
-    else Error ("Invalid signature format: " ^ sig_)
-  with Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, _) ->
-    Error ("JSON parse error: " ^ Printexc.to_string exn)

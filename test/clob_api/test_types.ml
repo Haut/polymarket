@@ -1,8 +1,12 @@
 (** Unit tests for Clob_api.Types module *)
 
 open Polymarket_clob.Types
+module P = Polymarket_common.Primitives
 
 (** {1 Address Validation Tests} *)
+
+let is_valid_address addr = Result.is_ok (P.Address.make addr)
+let is_valid_signature sig_ = Result.is_ok (P.Signature.make sig_)
 
 let test_address_valid () =
   let valid_addresses =
@@ -262,65 +266,64 @@ let test_trade_type_json_roundtrip () =
         (Trade_type.equal tt result))
     types
 
-(** {1 Validating Deserializer Tests} *)
+(** {1 Primitive Type JSON Tests} *)
 
-let test_address_of_yojson_exn_valid () =
+let test_address_of_yojson_valid () =
   let json = `String "0x1234567890abcdef1234567890abcdef12345678" in
-  let result = address_of_yojson_exn json in
-  Alcotest.(check string)
-    "parses valid" "0x1234567890abcdef1234567890abcdef12345678" result
-
-let test_address_of_yojson_exn_invalid () =
-  let json = `String "invalid" in
-  try
-    let _ = address_of_yojson_exn json in
-    Alcotest.fail "expected exception"
-  with Invalid_address addr ->
-    Alcotest.(check string) "raises with address" "invalid" addr
-
-let test_signature_of_yojson_exn_valid () =
-  let json = `String "0x1234567890abcdef1234567890abcdef" in
-  let result = signature_of_yojson_exn json in
-  Alcotest.(check string)
-    "parses valid" "0x1234567890abcdef1234567890abcdef" result
-
-let test_signature_of_yojson_exn_invalid () =
-  let json = `String "invalid" in
-  try
-    let _ = signature_of_yojson_exn json in
-    Alcotest.fail "expected exception"
-  with Invalid_signature sig_ ->
-    Alcotest.(check string) "raises with signature" "invalid" sig_
-
-let test_address_of_yojson_result_valid () =
-  let json = `String "0x1234567890abcdef1234567890abcdef12345678" in
-  match address_of_yojson_result json with
+  match P.Address.of_yojson json with
   | Ok addr ->
       Alcotest.(check string)
-        "returns Ok" "0x1234567890abcdef1234567890abcdef12345678" addr
+        "parses valid" "0x1234567890abcdef1234567890abcdef12345678"
+        (P.Address.to_string addr)
   | Error _ -> Alcotest.fail "expected Ok"
 
-let test_address_of_yojson_result_invalid () =
+let test_address_of_yojson_invalid () =
   let json = `String "invalid" in
-  match address_of_yojson_result json with
+  match P.Address.of_yojson json with
   | Ok _ -> Alcotest.fail "expected Error"
   | Error msg ->
       Alcotest.(check bool) "returns Error" true (String.length msg > 0)
 
-let test_signature_of_yojson_result_valid () =
+let test_signature_of_yojson_valid () =
   let json = `String "0x1234567890abcdef1234567890abcdef" in
-  match signature_of_yojson_result json with
+  match P.Signature.of_yojson json with
   | Ok sig_ ->
       Alcotest.(check string)
-        "returns Ok" "0x1234567890abcdef1234567890abcdef" sig_
+        "parses valid" "0x1234567890abcdef1234567890abcdef"
+        (P.Signature.to_string sig_)
   | Error _ -> Alcotest.fail "expected Ok"
 
-let test_signature_of_yojson_result_invalid () =
+let test_signature_of_yojson_invalid () =
   let json = `String "invalid" in
-  match signature_of_yojson_result json with
+  match P.Signature.of_yojson json with
   | Ok _ -> Alcotest.fail "expected Error"
   | Error msg ->
       Alcotest.(check bool) "returns Error" true (String.length msg > 0)
+
+let test_token_id_valid () =
+  let valid_ids = [ "12345"; "0"; "999999999999999999999999" ] in
+  List.iter
+    (fun id ->
+      match P.Token_id.make id with
+      | Ok _ -> ()
+      | Error _ -> Alcotest.fail ("expected Ok for " ^ id))
+    valid_ids
+
+let test_token_id_invalid () =
+  let invalid_cases =
+    [
+      ("", "empty string");
+      ("abc", "non-numeric");
+      ("123abc", "mixed");
+      ("-123", "negative");
+    ]
+  in
+  List.iter
+    (fun (id, desc) ->
+      match P.Token_id.make id with
+      | Ok _ -> Alcotest.fail ("expected Error for " ^ desc)
+      | Error _ -> ())
+    invalid_cases
 
 (** {1 Test Suite} *)
 
@@ -366,29 +369,13 @@ let tests =
         ("string values", `Quick, test_trade_type_string_values);
         ("JSON roundtrip", `Quick, test_trade_type_json_roundtrip);
       ] );
-    ( "validating deserializers",
+    ( "primitive types JSON",
       [
-        ("address_of_yojson_exn valid", `Quick, test_address_of_yojson_exn_valid);
-        ( "address_of_yojson_exn invalid",
-          `Quick,
-          test_address_of_yojson_exn_invalid );
-        ( "signature_of_yojson_exn valid",
-          `Quick,
-          test_signature_of_yojson_exn_valid );
-        ( "signature_of_yojson_exn invalid",
-          `Quick,
-          test_signature_of_yojson_exn_invalid );
-        ( "address_of_yojson_result valid",
-          `Quick,
-          test_address_of_yojson_result_valid );
-        ( "address_of_yojson_result invalid",
-          `Quick,
-          test_address_of_yojson_result_invalid );
-        ( "signature_of_yojson_result valid",
-          `Quick,
-          test_signature_of_yojson_result_valid );
-        ( "signature_of_yojson_result invalid",
-          `Quick,
-          test_signature_of_yojson_result_invalid );
+        ("Address.of_yojson valid", `Quick, test_address_of_yojson_valid);
+        ("Address.of_yojson invalid", `Quick, test_address_of_yojson_invalid);
+        ("Signature.of_yojson valid", `Quick, test_signature_of_yojson_valid);
+        ("Signature.of_yojson invalid", `Quick, test_signature_of_yojson_invalid);
+        ("Token_id.make valid", `Quick, test_token_id_valid);
+        ("Token_id.make invalid", `Quick, test_token_id_invalid);
       ] );
   ]
