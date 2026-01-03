@@ -3,41 +3,41 @@
 (** {1 Flattened API Modules}
 
     These modules combine client functions with their response types for
-    ergonomic usage. Instead of [Polymarket_gamma.Client.get_events] and
+    ergonomic usage. Instead of [Gamma_client.get_events] and
     [Polymarket_gamma.Responses.event], use [Polymarket.Gamma.get_events] and
     [Polymarket.Gamma.event]. *)
 
-module Gamma = Polymarket_gamma.Client
+module Gamma = Gamma_client
 (** Gamma API client for markets, events, series, and search. *)
 
-module Data = Polymarket_data.Client
+module Data = Data_client
 (** Data API client for positions, trades, activity, and leaderboards. *)
 
 module Clob = struct
   (** CLOB API client for order books, pricing, and trading. *)
 
-  let default_base_url = Polymarket_clob.Client.default_base_url
+  let default_base_url = Clob_client.default_base_url
 
-  module Types = Polymarket_clob.Types
+  module Types = Clob_types
 
-  type unauthed = Polymarket_clob.Client.unauthed
-  type l1 = Polymarket_clob.Client.l1
-  type l2 = Polymarket_clob.Client.l2
+  type unauthed = Clob_client.unauthed
+  type l1 = Clob_client.l1
+  type l2 = Clob_client.l2
 
-  module Unauthed = Polymarket_clob.Client.Unauthed
-  module L1 = Polymarket_clob.Client.L1
-  module L2 = Polymarket_clob.Client.L2
+  module Unauthed = Clob_client.Unauthed
+  module L1 = Clob_client.L1
+  module L2 = Clob_client.L2
 
-  type private_key = Polymarket_clob.Client.private_key
-  type credentials = Polymarket_clob.Client.credentials
-  type error = Polymarket_clob.Client.error
+  type private_key = Clob_client.private_key
+  type credentials = Clob_client.credentials
+  type error = Clob_client.error
 
-  let error_to_string = Polymarket_clob.Client.error_to_string
-  let upgrade_to_l1 = Polymarket_clob.Client.upgrade_to_l1
-  let upgrade_to_l2 = Polymarket_clob.Client.upgrade_to_l2
-  let l2_to_l1 = Polymarket_clob.Client.l2_to_l1
-  let l2_to_unauthed = Polymarket_clob.Client.l2_to_unauthed
-  let l1_to_unauthed = Polymarket_clob.Client.l1_to_unauthed
+  let error_to_string = Clob_client.error_to_string
+  let upgrade_to_l1 = Clob_client.upgrade_to_l1
+  let upgrade_to_l2 = Clob_client.upgrade_to_l2
+  let l2_to_l1 = Clob_client.l2_to_l1
+  let l2_to_unauthed = Clob_client.l2_to_unauthed
+  let l1_to_unauthed = Clob_client.l1_to_unauthed
 end
 
 module Rfq = struct
@@ -45,8 +45,8 @@ module Rfq = struct
 
       All RFQ endpoints require L2 authentication. *)
 
-  module Types = Polymarket_rfq.Types
-  include Polymarket_rfq.Client
+  module Types = Rfq_types
+  include Rfq_client
 end
 
 module Wss = struct
@@ -54,9 +54,9 @@ module Wss = struct
 
       Uses pure-OCaml TLS (tls-eio) for cross-platform compatibility. *)
 
-  module Types = Polymarket_wss.Types
-  module Market = Polymarket_wss.Client.Market
-  module User = Polymarket_wss.Client.User
+  module Types = Wss_types
+  module Market = Wss_client.Market
+  module User = Wss_client.User
 end
 
 module Rtds = struct
@@ -68,40 +68,49 @@ module Rtds = struct
 
       Uses pure-OCaml TLS (tls-eio) for cross-platform compatibility. *)
 
-  module Types = Polymarket_rtds.Types
-  include Polymarket_rtds.Client
+  module Types = Rtds_types
+  include Rtds_client
 end
 
-module Http = Polymarket_http.Client
+module Http = Http_client
 (** HTTP client utilities for making API requests. *)
 
-module Rate_limiter = Polymarket_rate_limiter.Rate_limiter
+module Http_json = Http_json
+(** JSON parsing utilities for HTTP responses. *)
+
+module Ws_frame = Ws_frame
+(** WebSocket frame encoding/decoding utilities. *)
+
+module Rate_limiter = Rate_limiter
 (** Route-based rate limiting middleware. *)
+
+module Rate_limit_presets = Rate_limit_presets
+(** Pre-configured rate limits for Polymarket APIs. *)
 
 (** {1 Primitive Types}
 
     Validated types for addresses, hashes, and numeric constraints. These are
     re-exported at top level for convenience. *)
 
-module Side = Polymarket_common.Primitives.Side
-module Sort_dir = Polymarket_common.Primitives.Sort_dir
-module Address = Polymarket_common.Primitives.Address
-module Hash64 = Polymarket_common.Primitives.Hash64
-module Hash = Polymarket_common.Primitives.Hash
-module Token_id = Polymarket_common.Primitives.Token_id
-module Signature = Polymarket_common.Primitives.Signature
-module Request_id = Polymarket_common.Primitives.Request_id
-module Quote_id = Polymarket_common.Primitives.Quote_id
-module Trade_id = Polymarket_common.Primitives.Trade_id
-module Timestamp = Polymarket_common.Primitives.Timestamp
-module Nonneg_int = Polymarket_common.Primitives.Nonneg_int
+module Side = Primitives.Side
+module Sort_dir = Primitives.Sort_dir
+module Address = Primitives.Address
+module Hash64 = Primitives.Hash64
+module Hash = Primitives.Hash
+module Token_id = Primitives.Token_id
+module Signature = Primitives.Signature
+module Request_id = Primitives.Request_id
+module Quote_id = Primitives.Quote_id
+module Trade_id = Primitives.Trade_id
+module Timestamp = Primitives.Timestamp
+module Nonneg_int = Primitives.Nonneg_int
 
 (** {1 Authentication and Crypto}
 
     Shared authentication types and cryptographic utilities. *)
 
-module Auth = Polymarket_common.Auth
+module Auth = Auth
 (** Authentication types and header builders. *)
 
-module Crypto = Polymarket_common.Crypto
+module Crypto = Crypto
 (** Cryptographic utilities for signing and address derivation. *)

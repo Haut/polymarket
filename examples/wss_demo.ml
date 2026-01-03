@@ -60,9 +60,7 @@ let parse_token_ids s =
 let get_active_tokens env sw =
   Logger.info "Fetching active markets from Gamma API";
   let clock = Eio.Stdenv.clock env in
-  let routes =
-    Polymarket_common.Rate_limit_presets.all ~behavior:Rate_limiter.Delay
-  in
+  let routes = Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
   let rate_limiter = Rate_limiter.create ~routes ~clock () in
   let client = Gamma.create ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter () in
   match
@@ -191,9 +189,7 @@ let run_demo env =
       in
 
       (* Create rate limiter for CLOB API *)
-      let routes =
-        Polymarket_common.Rate_limit_presets.all ~behavior:Rate_limiter.Delay
-      in
+      let routes = Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
       let rate_limiter = Rate_limiter.create ~routes ~clock () in
 
       (* Derive API credentials via CLOB API *)

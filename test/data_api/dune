@@ -1,3 +1,3 @@
 (library
  (name test_data_api)
- (libraries polymarket_data alcotest))
+ (libraries polymarket alcotest))

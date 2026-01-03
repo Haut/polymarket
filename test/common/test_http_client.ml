@@ -1,9 +1,8 @@
 (** Unit tests for Http_client modules *)
 
-open Polymarket_http.Client
+open Polymarket.Http
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
-module Json = Polymarket_http.Json
-module Builder = Polymarket_http.Builder
+module Json = Polymarket.Http_json
 
 let params_testable =
   Alcotest.testable

@@ -32,9 +32,7 @@ let run_demo env =
     (Printf.sprintf "Starting Data API demo (%s)" Data.default_base_url);
 
   (* Create shared rate limiter *)
-  let routes =
-    Polymarket_common.Rate_limit_presets.all ~behavior:Rate_limiter.Delay
-  in
+  let routes = Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
   let rate_limiter = Rate_limiter.create ~routes ~clock () in
 
   (* Create clients *)

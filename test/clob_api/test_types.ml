@@ -1,7 +1,7 @@
 (** Unit tests for Clob_api.Types module *)
 
-open Polymarket_clob.Types
-module P = Polymarket_common.Primitives
+open Polymarket.Clob.Types
+module P = Polymarket
 
 (** {1 Address Validation Tests} *)
 

@@ -69,7 +69,7 @@ module Gamma : sig
         in
       ]} *)
 
-  include module type of Polymarket_gamma.Client
+  include module type of Gamma_client
 end
 
 module Data : sig
@@ -96,7 +96,7 @@ module Data : sig
         in
       ]} *)
 
-  include module type of Polymarket_data.Client
+  include module type of Data_client
 end
 
 module Clob : sig
@@ -129,19 +129,19 @@ module Clob : sig
 
   val default_base_url : string
 
-  module Types = Polymarket_clob.Types
+  module Types = Clob_types
 
-  type unauthed = Polymarket_clob.Client.unauthed
-  type l1 = Polymarket_clob.Client.l1
-  type l2 = Polymarket_clob.Client.l2
+  type unauthed = Clob_client.unauthed
+  type l1 = Clob_client.l1
+  type l2 = Clob_client.l2
 
-  module Unauthed = Polymarket_clob.Client.Unauthed
-  module L1 = Polymarket_clob.Client.L1
-  module L2 = Polymarket_clob.Client.L2
+  module Unauthed = Clob_client.Unauthed
+  module L1 = Clob_client.L1
+  module L2 = Clob_client.L2
 
-  type private_key = Polymarket_clob.Client.private_key
-  type credentials = Polymarket_clob.Client.credentials
-  type error = Polymarket_clob.Client.error
+  type private_key = Clob_client.private_key
+  type credentials = Clob_client.credentials
+  type error = Clob_client.error
 
   val error_to_string : error -> string
   val upgrade_to_l1 : unauthed -> private_key:private_key -> l1
@@ -156,8 +156,8 @@ module Rfq : sig
 
       All RFQ endpoints require L2 authentication. *)
 
-  module Types = Polymarket_rfq.Types
-  module N = Polymarket_common.Primitives.Nonneg_int
+  module Types = Rfq_types
+  module N = Primitives.Nonneg_int
 
   val default_base_url : string
   (** Default base URL for the RFQ API: https://clob.polymarket.com *)
@@ -169,9 +169,9 @@ module Rfq : sig
     ?base_url:string ->
     sw:Eio.Switch.t ->
     net:_ Eio.Net.t ->
-    rate_limiter:Polymarket_rate_limiter.Rate_limiter.t ->
-    private_key:Polymarket_common.Crypto.private_key ->
-    credentials:Polymarket_common.Auth.credentials ->
+    rate_limiter:Rate_limiter.t ->
+    private_key:Crypto.private_key ->
+    credentials:Auth.credentials ->
     unit ->
     t
   (** Create a new RFQ client. *)
@@ -179,7 +179,7 @@ module Rfq : sig
   val address : t -> string
   (** Get the Ethereum address derived from the private key. *)
 
-  val credentials : t -> Polymarket_common.Auth.credentials
+  val credentials : t -> Auth.credentials
   (** Get the API credentials. *)
 
   (** {2 Request Endpoints} *)
@@ -295,9 +295,9 @@ module Wss : sig
         | _ -> ()
       ]} *)
 
-  module Types = Polymarket_wss.Types
-  module Market = Polymarket_wss.Client.Market
-  module User = Polymarket_wss.Client.User
+  module Types = Wss_types
+  module Market = Wss_client.Market
+  module User = Wss_client.User
 end
 
 module Rtds : sig
@@ -381,7 +381,7 @@ module Rtds : sig
         | _ -> ()
       ]} *)
 
-  module Types = Polymarket_rtds.Types
+  module Types = Rtds_types
 
   (** {1 Unified Client} *)
 
@@ -472,35 +472,44 @@ module Rtds : sig
   end
 end
 
-module Http = Polymarket_http.Client
+module Http = Http_client
 (** HTTP client utilities for making API requests. *)
 
-module Rate_limiter = Polymarket_rate_limiter.Rate_limiter
+module Http_json = Http_json
+(** JSON parsing utilities for HTTP responses. *)
+
+module Ws_frame = Ws_frame
+(** WebSocket frame encoding/decoding utilities. *)
+
+module Rate_limiter = Rate_limiter
 (** Route-based rate limiting middleware for HTTP clients. *)
+
+module Rate_limit_presets = Rate_limit_presets
+(** Pre-configured rate limits for Polymarket APIs. *)
 
 (** {1 Primitive Types}
 
     Validated types for addresses, hashes, and numeric constraints. *)
 
-module Side = Polymarket_common.Primitives.Side
-module Sort_dir = Polymarket_common.Primitives.Sort_dir
-module Address = Polymarket_common.Primitives.Address
-module Hash64 = Polymarket_common.Primitives.Hash64
-module Hash = Polymarket_common.Primitives.Hash
-module Token_id = Polymarket_common.Primitives.Token_id
-module Signature = Polymarket_common.Primitives.Signature
-module Request_id = Polymarket_common.Primitives.Request_id
-module Quote_id = Polymarket_common.Primitives.Quote_id
-module Trade_id = Polymarket_common.Primitives.Trade_id
-module Timestamp = Polymarket_common.Primitives.Timestamp
-module Nonneg_int = Polymarket_common.Primitives.Nonneg_int
+module Side = Primitives.Side
+module Sort_dir = Primitives.Sort_dir
+module Address = Primitives.Address
+module Hash64 = Primitives.Hash64
+module Hash = Primitives.Hash
+module Token_id = Primitives.Token_id
+module Signature = Primitives.Signature
+module Request_id = Primitives.Request_id
+module Quote_id = Primitives.Quote_id
+module Trade_id = Primitives.Trade_id
+module Timestamp = Primitives.Timestamp
+module Nonneg_int = Primitives.Nonneg_int
 
 (** {1 Authentication and Crypto}
 
     Shared authentication types and cryptographic utilities. *)
 
-module Auth = Polymarket_common.Auth
+module Auth = Auth
 (** Authentication types and header builders. *)
 
-module Crypto = Polymarket_common.Crypto
+module Crypto = Crypto
 (** Cryptographic utilities for signing and address derivation. *)

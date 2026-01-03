@@ -1,6 +1,6 @@
 (** Tests for the Crypto module. *)
 
-module Crypto = Polymarket_common.Crypto
+module Crypto = Polymarket.Crypto
 
 (** {1 Test Helpers} *)
 

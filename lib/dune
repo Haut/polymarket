@@ -2,12 +2,48 @@
  (name polymarket)
  (public_name polymarket)
  (libraries
-  polymarket_common
-  polymarket_http
-  polymarket_rate_limiter
-  polymarket_clob
-  polymarket_data
-  polymarket_gamma
-  polymarket_wss
-  polymarket_rtds
-  polymarket_rfq))
+  ; Core
+  eio
+  eio_main
+  logs
+  logs.fmt
+  fmt
+  uri
+  unix
+  ptime
+  ; HTTP
+  cohttp-eio
+  tls-eio
+  ca-certs
+  ; Crypto
+  digestif
+  secp256k1-internal
+  base64
+  hex
+  cstruct
+  ; JSON
+  yojson
+  ppx_yojson_conv_lib)
+ (private_modules
+  ; Rate limiter internals
+  rl_builder
+  rl_gcra
+  rl_matcher
+  rl_state
+  rl_types
+  ; HTTP internals
+  http_builder
+  ; WebSocket internals
+  ws_connection
+  ws_handshake
+  ; Common internals
+  constants
+  error
+  order_signing
+  ; API internals
+  gamma_types
+  data_types
+  clob_order_builder
+  rfq_order_builder)
+ (preprocess
+  (pps ppx_yojson_conv ppx_deriving.show ppx_deriving.eq ppx_polymarket_enum)))

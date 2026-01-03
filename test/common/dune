@@ -1,10 +1,5 @@
 (library
  (name test_common)
- (libraries
-  polymarket_common
-  polymarket_http
-  alcotest
-  test_utils
-  ppx_yojson_conv_lib)
+ (libraries polymarket alcotest test_utils ppx_yojson_conv_lib)
  (preprocess
   (pps ppx_yojson_conv)))

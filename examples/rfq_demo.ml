@@ -68,9 +68,7 @@ let run_demo env =
   in
 
   (* Create shared rate limiter with Polymarket presets *)
-  let routes =
-    Polymarket_common.Rate_limit_presets.all ~behavior:Rate_limiter.Delay
-  in
+  let routes = Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
   let rate_limiter = Rate_limiter.create ~routes ~clock () in
 
   (* Create the RFQ client - requires L2 authentication *)

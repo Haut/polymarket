@@ -1,6 +1,6 @@
 (** Unit tests for Gamma_api.Types module *)
 
-open Polymarket_gamma.Types
+open Polymarket.Gamma
 
 (** {1 Status Enum Tests} *)
 

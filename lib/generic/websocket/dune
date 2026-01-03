@@ -1,4 +1,0 @@
-(library
- (name websocket)
- (public_name polymarket.websocket)
- (libraries logs eio tls-eio ca-certs cstruct digestif base64))
