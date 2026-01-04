@@ -2,7 +2,7 @@
 
     See {!Client_typestate} for documentation. *)
 
-module H = Http_client
+module H = Client
 module B = Http_builder
 module J = Http_json
 module Auth = Auth

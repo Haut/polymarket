@@ -417,25 +417,22 @@ end
 (** {1 Error Types}
 
     Structured error types for API operations. These are shared across all API
-    clients (CLOB, Gamma, Data, RFQ). Re-exported from Http_client. *)
+    clients (CLOB, Gamma, Data, RFQ). Re-exported from Client. *)
 
-type http_error = Http_client.http_error = {
+type http_error = Client.http_error = {
   status : int;
   body : string;
   message : string;
 }
 (** HTTP error with status code, raw body, and extracted message. *)
 
-type parse_error = Http_client.parse_error = {
-  context : string;
-  message : string;
-}
+type parse_error = Client.parse_error = { context : string; message : string }
 (** Parse error with context and message. *)
 
-type network_error = Http_client.network_error = { message : string }
+type network_error = Client.network_error = { message : string }
 (** Network-level error (connection failed, timeout, etc.). *)
 
-type api_error = Http_client.error =
+type api_error = Client.error =
   | Http_error of http_error
   | Parse_error of parse_error
   | Network_error of network_error

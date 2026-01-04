@@ -714,6 +714,6 @@ type sports_market_types_response = {
 
 (** {1 Error Types} *)
 
-type error = Http_client.error
+type error = Client.error
 
-let error_to_string = Http_client.error_to_string
+let error_to_string = Client.error_to_string

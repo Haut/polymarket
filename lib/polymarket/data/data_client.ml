@@ -4,12 +4,12 @@ module B = Http_builder
 module P = Primitives
 include Data_types
 
-type t = Http_client.t
+type t = Client.t
 
 let default_base_url = "https://data-api.polymarket.com"
 
 let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter () =
-  Http_client.create ~base_url ~sw ~net ~rate_limiter ()
+  Client.create ~base_url ~sw ~net ~rate_limiter ()
 
 (** {1 Health Endpoint} *)
 

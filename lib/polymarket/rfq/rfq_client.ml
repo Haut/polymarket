@@ -2,7 +2,7 @@
 
     All RFQ endpoints require L2 authentication. *)
 
-module H = Http_client
+module H = Client
 module B = Http_builder
 module J = Http_json
 module Types = Rfq_types

@@ -37,16 +37,16 @@ type 'state t
 
 (** {1 Request Constructors} *)
 
-val new_get : Http_client.t -> string -> ready t
+val new_get : Client.t -> string -> ready t
 (** Create a GET request. Ready to execute immediately. *)
 
-val new_post : Http_client.t -> string -> not_ready t
+val new_post : Client.t -> string -> not_ready t
 (** Create a POST request. Requires [with_body] before execution. *)
 
-val new_delete : Http_client.t -> string -> ready t
+val new_delete : Client.t -> string -> ready t
 (** Create a DELETE request. Ready to execute immediately. *)
 
-val new_delete_with_body : Http_client.t -> string -> not_ready t
+val new_delete_with_body : Client.t -> string -> not_ready t
 (** Create a DELETE request with body. Requires [with_body] before execution.
     Used for APIs that require a JSON body in DELETE requests. *)
 
@@ -113,7 +113,7 @@ val fetch_json :
   ?context:string ->
   (Yojson.Safe.t -> 'a) ->
   ready t ->
-  ('a, Http_client.error) result
+  ('a, Client.error) result
 (** Execute and parse response as JSON object.
     @param expected_fields If provided, logs warning for unknown fields
     @param context Description for logging (e.g. "Market.t") *)
@@ -123,13 +123,13 @@ val fetch_json_list :
   ?context:string ->
   (Yojson.Safe.t -> 'a) ->
   ready t ->
-  ('a list, Http_client.error) result
+  ('a list, Client.error) result
 (** Execute and parse response as JSON array.
     @param expected_fields If provided, logs warning for unknown fields in items
     @param context Description for logging *)
 
-val fetch_text : ready t -> (string, Http_client.error) result
+val fetch_text : ready t -> (string, Client.error) result
 (** Execute and return response body as string. *)
 
-val fetch_unit : ready t -> (unit, Http_client.error) result
+val fetch_unit : ready t -> (unit, Client.error) result
 (** Execute and discard response body. Succeeds on 200/201/204. *)

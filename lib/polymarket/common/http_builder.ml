@@ -25,7 +25,7 @@
       |> fun (status, body) -> ...
     ]} *)
 
-module C = Http_client
+module C = Client
 module Auth = Auth
 
 type ready
@@ -37,7 +37,7 @@ type not_ready
 type method_ = GET | POST | DELETE | DELETE_WITH_BODY
 
 type 'state t = {
-  client : Http_client.t;
+  client : Client.t;
   method_ : method_;
   path : string;
   params : C.params;
@@ -49,17 +49,16 @@ type 'state t = {
 
 (** {1 Request Constructors} *)
 
-let new_get (client : Http_client.t) (path : string) : ready t =
+let new_get (client : Client.t) (path : string) : ready t =
   { client; method_ = GET; path; params = []; headers = []; body = None }
 
-let new_post (client : Http_client.t) (path : string) : not_ready t =
+let new_post (client : Client.t) (path : string) : not_ready t =
   { client; method_ = POST; path; params = []; headers = []; body = None }
 
-let new_delete (client : Http_client.t) (path : string) : ready t =
+let new_delete (client : Client.t) (path : string) : ready t =
   { client; method_ = DELETE; path; params = []; headers = []; body = None }
 
-let new_delete_with_body (client : Http_client.t) (path : string) : not_ready t
-    =
+let new_delete_with_body (client : Client.t) (path : string) : not_ready t =
   {
     client;
     method_ = DELETE_WITH_BODY;
@@ -137,7 +136,7 @@ let with_body (body : string) (req : not_ready t) : ready t =
 (** {1 Execution} *)
 
 let fetch (req : ready t) : int * string =
-  let uri = Http_client.build_uri (C.base_url req.client) req.path req.params in
+  let uri = Client.build_uri (C.base_url req.client) req.path req.params in
   match req.method_ with
   | GET -> C.do_get ~headers:req.headers req.client uri
   | DELETE -> C.do_delete ~headers:req.headers req.client uri
@@ -159,8 +158,7 @@ let fetch_json ?(expected_fields : string list option) ?(context : string = "")
       match expected_fields with
       | Some fields ->
           C.parse_with_field_check ~expected_fields:fields ~context b parser
-      | None ->
-          Http_json.parse parser b |> Result.map_error Http_client.to_error)
+      | None -> Http_json.parse parser b |> Result.map_error Client.to_error)
 
 let fetch_json_list ?(expected_fields : string list option)
     ?(context : string = "") (parser : Yojson.Safe.t -> 'a) (req : ready t) :
@@ -172,7 +170,7 @@ let fetch_json_list ?(expected_fields : string list option)
           C.parse_list_with_field_check ~expected_fields:fields ~context b
             (Ppx_yojson_conv_lib.Yojson_conv.list_of_yojson parser)
       | None ->
-          Http_json.parse_list parser b |> Result.map_error Http_client.to_error)
+          Http_json.parse_list parser b |> Result.map_error Client.to_error)
 
 let fetch_text (req : ready t) : (string, C.error) result =
   let status, body = fetch req in

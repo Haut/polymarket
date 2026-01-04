@@ -90,11 +90,11 @@ type health_response = { data : string }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Health check response *)
 
-type error = Http_client.error
+type error = Client.error
 (** Structured error type for all API errors *)
 
-let error_to_string = Http_client.error_to_string
-let pp_error = Http_client.pp_error
+let error_to_string = Client.error_to_string
+let pp_error = Client.pp_error
 
 (** {1 Domain Models} *)
 
