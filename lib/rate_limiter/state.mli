@@ -18,7 +18,7 @@ val create : clock:_ Eio.Time.clock -> ?max_idle_time:float -> unit -> t
 val check_limits :
   t ->
   route_key:route_key ->
-  limits:Rl_types.limit_config list ->
+  limits:Types.limit_config list ->
   (unit, float) result
 (** Check all limits for a route.
     @return

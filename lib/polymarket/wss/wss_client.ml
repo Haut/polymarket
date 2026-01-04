@@ -3,7 +3,7 @@
     Provides typed streaming access to Market and User channels. *)
 
 module Types = Wss_types
-module Connection = Ws_connection
+module Connection = Connection
 
 let src = Logs.Src.create "polymarket.wss" ~doc:"Polymarket WebSocket client"
 

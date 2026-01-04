@@ -3,4 +3,4 @@
  (public_name polymarket.rate_limiter)
  (wrapped false)
  (libraries eio ptime uri logs)
- (private_modules rl_builder rl_gcra rl_matcher rl_state rl_types))
+ (private_modules gcra matcher state))

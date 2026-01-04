@@ -4,8 +4,8 @@ type t = {
   host : string option;
   method_ : string option;
   path_prefix : string option;
-  limits : Rl_types.limit_config list;
-  behavior : Rl_types.behavior option;
+  limits : Types.limit_config list;
+  behavior : Types.behavior option;
 }
 
 let route () =
@@ -22,18 +22,18 @@ let method_ m t = { t with method_ = Some m }
 let path p t = { t with path_prefix = Some p }
 
 let limit ~requests ~window_seconds t =
-  let lim = Rl_types.limit ~requests ~window_seconds in
+  let lim = Types.limit ~requests ~window_seconds in
   { t with limits = t.limits @ [ lim ] }
 
 let on_limit b t = { t with behavior = Some b }
 
-let build t : Rl_types.route_config =
+let build t : Types.route_config =
   if t.limits = [] then
     invalid_arg "Builder.build: at least one limit must be configured";
-  let pattern : Rl_types.route_pattern =
+  let pattern : Types.route_pattern =
     { host = t.host; method_ = t.method_; path_prefix = t.path_prefix }
   in
-  let behavior = Option.value ~default:Rl_types.Delay t.behavior in
+  let behavior = Option.value ~default:Types.Delay t.behavior in
   { pattern; limits = t.limits; behavior }
 
 let simple ?host:h ?method_:m ?path:p ~requests ~window_seconds ?behavior () =

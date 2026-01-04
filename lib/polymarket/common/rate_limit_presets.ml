@@ -3,7 +3,7 @@
     Based on official documentation:
     https://docs.polymarket.com/#/api-rate-limits *)
 
-module B = Rl_builder
+module B = Rate_limiter.Builder
 
 (* {1 General Rate Limits} *)
 

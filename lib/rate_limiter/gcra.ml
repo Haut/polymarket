@@ -6,7 +6,7 @@ type t = {
   burst_allowance : float;  (** Maximum burst allowance in seconds *)
 }
 
-let create (config : Rl_types.limit_config) =
+let create (config : Types.limit_config) =
   let emission_interval =
     config.window_seconds /. float_of_int config.requests
   in

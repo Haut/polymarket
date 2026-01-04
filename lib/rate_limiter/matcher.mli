@@ -4,8 +4,7 @@
     configurations. Pattern matching uses segment boundaries for paths, not
     simple prefix matching. *)
 
-val matches_pattern :
-  method_:string -> uri:Uri.t -> Rl_types.route_pattern -> bool
+val matches_pattern : method_:string -> uri:Uri.t -> Types.route_pattern -> bool
 (** Check if a request matches a route pattern.
     @param method_ HTTP method (e.g., "GET", "POST")
     @param uri Request URI *)
@@ -13,14 +12,14 @@ val matches_pattern :
 val find_matching_routes :
   method_:string ->
   uri:Uri.t ->
-  Rl_types.route_config list ->
-  Rl_types.route_config list
+  Types.route_config list ->
+  Types.route_config list
 (** Find all route configs that match the request. Routes are returned in the
     order they appear in the config list. All matching routes apply (not just
     first match). *)
 
 val make_route_key :
-  method_:string -> uri:Uri.t -> Rl_types.route_pattern -> Rl_state.route_key
+  method_:string -> uri:Uri.t -> Types.route_pattern -> State.route_key
 (** Generate a unique key for state lookup. The key format is:
     "host:method:path_prefix" *)
 

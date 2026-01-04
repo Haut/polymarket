@@ -3,4 +3,4 @@
  (public_name polymarket.ws)
  (wrapped false)
  (libraries eio tls-eio ca-certs cohttp base64 digestif cstruct logs)
- (private_modules ws_frame ws_handshake))
+ (private_modules frame handshake))

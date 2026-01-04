@@ -108,16 +108,16 @@ let connect_internal t =
 
   (* Perform WebSocket handshake *)
   match
-    Ws_handshake.perform ~flow ~host:t.config.host ~port:t.config.port
+    Handshake.perform ~flow ~host:t.config.host ~port:t.config.port
       ~resource:t.config.resource
   with
-  | Ws_handshake.Success ->
+  | Handshake.Success ->
       t.flow <- Some flow;
       t.state <- Connected;
       t.current_backoff <- t.config.initial_backoff;
       Log.debug (fun m -> m "Connected");
       true
-  | Ws_handshake.Failed msg ->
+  | Handshake.Failed msg ->
       Log.err (fun m -> m "Handshake failed: %s" msg);
       t.state <- Disconnected;
       false
@@ -126,19 +126,19 @@ let connect_internal t =
 let send_frame t frame =
   match t.flow with
   | Some flow ->
-      let data = Ws_frame.encode ~mask:true frame in
+      let data = Frame.encode ~mask:true frame in
       Eio.Flow.copy_string data flow;
       Log.debug (fun m ->
-          m "Frame sent (opcode %d)" (Ws_frame.Opcode.to_int frame.opcode))
+          m "Frame sent (opcode %d)" (Frame.Opcode.to_int frame.opcode))
   | None -> Log.warn (fun m -> m "Send failed: not connected")
 
 (** Send a text message *)
 let send t msg =
-  send_frame t (Ws_frame.text msg);
+  send_frame t (Frame.text msg);
   Log.debug (fun m -> m "Message sent")
 
 (** Send a ping *)
-let send_ping t = send_frame t (Ws_frame.ping ())
+let send_ping t = send_frame t (Frame.ping ())
 
 (** Receive loop - reads frames and dispatches to message stream *)
 let receive_loop t =
@@ -147,16 +147,16 @@ let receive_loop t =
   | Some flow -> (
       try
         while t.state = Connected do
-          let frame = Ws_frame.decode flow in
+          let frame = Frame.decode flow in
           match frame.opcode with
-          | Ws_frame.Opcode.Text | Ws_frame.Opcode.Binary ->
+          | Frame.Opcode.Text | Frame.Opcode.Binary ->
               Eio.Stream.add t.message_stream frame.payload
-          | Ws_frame.Opcode.Ping ->
+          | Frame.Opcode.Ping ->
               (* Respond with pong *)
-              send_frame t (Ws_frame.pong ~payload:frame.payload ());
+              send_frame t (Frame.pong ~payload:frame.payload ());
               Log.debug (fun m -> m "Ping received")
-          | Ws_frame.Opcode.Pong -> Log.debug (fun m -> m "Pong received")
-          | Ws_frame.Opcode.Close ->
+          | Frame.Opcode.Pong -> Log.debug (fun m -> m "Pong received")
+          | Frame.Opcode.Close ->
               Log.debug (fun m -> m "Close received");
               t.state <- Closed
           | _ -> ()
@@ -220,7 +220,7 @@ let close t =
     (match t.flow with
     | Some flow ->
         (try
-           send_frame t (Ws_frame.close ());
+           send_frame t (Frame.close ());
            Eio.Flow.close flow
          with _ -> ());
         t.flow <- None

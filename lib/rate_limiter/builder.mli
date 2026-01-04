@@ -39,14 +39,14 @@ val limit : requests:int -> window_seconds:float -> t -> t
 
 (** {1 Behavior} *)
 
-val on_limit : Rl_types.behavior -> t -> t
+val on_limit : Types.behavior -> t -> t
 (** Set what happens when the rate limit is exceeded.
     - [Delay]: Sleep until the request can proceed (default)
     - [Error]: Return an error immediately *)
 
 (** {1 Building} *)
 
-val build : t -> Rl_types.route_config
+val build : t -> Types.route_config
 (** Build the final route configuration. Uses [Delay] behavior if not specified.
     At least one limit must be configured. *)
 
@@ -58,9 +58,9 @@ val simple :
   ?path:string ->
   requests:int ->
   window_seconds:float ->
-  ?behavior:Rl_types.behavior ->
+  ?behavior:Types.behavior ->
   unit ->
-  Rl_types.route_config
+  Types.route_config
 (** Create a simple route configuration with a single limit. Example:
     {[
       simple ~host:"api.example.com" ~requests:100 ~window_seconds:10.0 ()
@@ -69,16 +69,16 @@ val simple :
 val global :
   requests:int ->
   window_seconds:float ->
-  behavior:Rl_types.behavior ->
-  Rl_types.route_config
+  behavior:Types.behavior ->
+  Types.route_config
 (** Create a global rate limit that matches all routes *)
 
 val per_host :
   host:string ->
   requests:int ->
   window_seconds:float ->
-  behavior:Rl_types.behavior ->
-  Rl_types.route_config
+  behavior:Types.behavior ->
+  Types.route_config
 (** Create a rate limit for all routes to a specific host *)
 
 val per_endpoint :
@@ -87,8 +87,8 @@ val per_endpoint :
   path:string ->
   requests:int ->
   window_seconds:float ->
-  behavior:Rl_types.behavior ->
-  Rl_types.route_config
+  behavior:Types.behavior ->
+  Types.route_config
 (** Create a rate limit for a specific endpoint *)
 
 (** {1 Host-Scoped Builder}
@@ -105,5 +105,5 @@ val for_host : string -> host_builder
 val add_route : t -> host_builder -> host_builder
 (** Add a route to the host builder. The route inherits the host. *)
 
-val build_host : host_builder -> Rl_types.route_config list
+val build_host : host_builder -> Types.route_config list
 (** Build all routes for this host *)

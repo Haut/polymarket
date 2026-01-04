@@ -13,7 +13,7 @@
 type t
 (** GCRA state for a single limit *)
 
-val create : Rl_types.limit_config -> t
+val create : Types.limit_config -> t
 (** Create a new GCRA state from a limit configuration *)
 
 val check : t -> now:float -> (unit, float) result

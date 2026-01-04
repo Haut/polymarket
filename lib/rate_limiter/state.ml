@@ -1,7 +1,7 @@
 (** State management for rate limiting. *)
 
 type route_key = string
-type state_entry = { gcras : Rl_gcra.t list; mutable last_used : float }
+type state_entry = { gcras : Gcra.t list; mutable last_used : float }
 
 type t = {
   now : unit -> float;
@@ -25,7 +25,7 @@ let check_limits t ~route_key ~limits =
             entry.last_used <- now_time;
             entry
         | None ->
-            let gcras = List.map Rl_gcra.create limits in
+            let gcras = List.map Gcra.create limits in
             let entry = { gcras; last_used = now_time } in
             Hashtbl.add t.table route_key entry;
             entry
@@ -38,12 +38,12 @@ let check_limits t ~route_key ~limits =
             | None ->
                 (* All passed, update all states *)
                 List.iter
-                  (fun gcra -> Rl_gcra.update gcra ~now:now_time)
+                  (fun gcra -> Gcra.update gcra ~now:now_time)
                   entry.gcras;
                 Ok ()
             | Some retry -> Error retry)
         | gcra :: rest -> (
-            match Rl_gcra.check gcra ~now:now_time with
+            match Gcra.check gcra ~now:now_time with
             | Ok () -> check_all rest max_retry
             | Error retry ->
                 let new_max =

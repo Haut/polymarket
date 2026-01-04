@@ -16,7 +16,7 @@ let path_matches_prefix ~path ~prefix =
       prefix_len = path_len || (prefix_len < path_len && path.[prefix_len] = '/')
     else false
 
-let matches_pattern ~method_ ~uri (pattern : Rl_types.route_pattern) =
+let matches_pattern ~method_ ~uri (pattern : Types.route_pattern) =
   let host_matches =
     match pattern.host with None -> true | Some h -> Uri.host uri = Some h
   in
@@ -36,11 +36,10 @@ let matches_pattern ~method_ ~uri (pattern : Rl_types.route_pattern) =
 
 let find_matching_routes ~method_ ~uri routes =
   List.filter
-    (fun (rc : Rl_types.route_config) ->
-      matches_pattern ~method_ ~uri rc.pattern)
+    (fun (rc : Types.route_config) -> matches_pattern ~method_ ~uri rc.pattern)
     routes
 
-let make_route_key ~method_ ~uri (pattern : Rl_types.route_pattern) =
+let make_route_key ~method_ ~uri (pattern : Types.route_pattern) =
   let host = Option.value ~default:"*" (Uri.host uri) in
   let path = Option.value ~default:"/" pattern.path_prefix in
   (* Use pattern.method_ if specified, otherwise use actual request method *)

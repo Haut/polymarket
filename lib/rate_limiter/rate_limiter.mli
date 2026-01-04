@@ -26,31 +26,31 @@
 
 (** {1 Core Types} *)
 
-type behavior = Rl_types.behavior =
+type behavior = Types.behavior =
   | Delay
   | Error  (** Behavior when rate limit is exceeded *)
 
-type route_pattern = Rl_types.route_pattern = {
+type route_pattern = Types.route_pattern = {
   host : string option;
   method_ : string option;
   path_prefix : string option;
 }
 (** Route matching pattern *)
 
-type limit_config = Rl_types.limit_config = {
+type limit_config = Types.limit_config = {
   requests : int;
   window_seconds : float;
 }
 (** Rate limit configuration *)
 
-type route_config = Rl_types.route_config = {
+type route_config = Types.route_config = {
   pattern : route_pattern;
   limits : limit_config list;
   behavior : behavior;
 }
 (** Complete route configuration *)
 
-type error = Rl_types.error =
+type error = Types.error =
   | Rate_limited of { retry_after : float; route_key : string }
       (** Rate limiter error *)
 
@@ -102,8 +102,8 @@ val reset : t -> unit
 
 (** {1 Sub-modules} *)
 
-module Types = Rl_types
-module Builder = Rl_builder
-module Gcra = Rl_gcra
-module State = Rl_state
-module Matcher = Rl_matcher
+module Types = Types
+module Builder = Builder
+module Gcra = Gcra
+module State = State
+module Matcher = Matcher
