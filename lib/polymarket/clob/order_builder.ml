@@ -3,10 +3,10 @@
     This module provides ergonomic functions for building signed orders with
     proper EIP-712 signatures, amount calculations, and nonce generation. *)
 
-module Crypto = Crypto
-module Constants = Constants
-module Order_signing = Order_signing
-module P = Primitives
+module Crypto = Common.Crypto
+module Constants = Common.Constants
+module Order_signing = Common.Order_signing
+module P = Common.Primitives
 
 let src = Logs.Src.create "polymarket.clob.order" ~doc:"CLOB order builder"
 
@@ -20,18 +20,18 @@ let calculate_amounts ~side ~price ~size =
   let size_scaled = size *. Constants.token_scale in
   let usdc_amount = price *. size *. Constants.token_scale in
   match side with
-  | Clob_types.Side.Buy ->
+  | Types.Side.Buy ->
       let maker_amount = Printf.sprintf "%.0f" usdc_amount in
       let taker_amount = Printf.sprintf "%.0f" size_scaled in
       (maker_amount, taker_amount)
-  | Clob_types.Side.Sell ->
+  | Types.Side.Sell ->
       let maker_amount = Printf.sprintf "%.0f" size_scaled in
       let taker_amount = Printf.sprintf "%.0f" usdc_amount in
       (maker_amount, taker_amount)
 
 (** {1 Public API} *)
 
-let create_limit_order ~private_key ~token_id ~(side : Clob_types.Side.t) ~price
+let create_limit_order ~private_key ~token_id ~(side : Types.Side.t) ~price
     ~size ?expiration ?nonce ?(fee_rate_bps = default_fee_rate_bps) () =
   let address_str = Crypto.private_key_to_address private_key in
   let address = P.Address.unsafe_of_string address_str in
@@ -40,7 +40,7 @@ let create_limit_order ~private_key ~token_id ~(side : Clob_types.Side.t) ~price
   let token_id_str = P.Token_id.to_string token_id in
   Log.debug (fun m ->
       m "Building order: side=%s price=%.4f size=%.2f -> maker=%s taker=%s"
-        (Clob_types.Side.to_string side)
+        (Types.Side.to_string side)
         price size maker_amount taker_amount);
   let expiration =
     match expiration with
@@ -50,9 +50,7 @@ let create_limit_order ~private_key ~token_id ~(side : Clob_types.Side.t) ~price
         Printf.sprintf "%.0f" (now +. Constants.one_year_seconds)
   in
   let nonce = match nonce with Some n -> string_of_int n | None -> "0" in
-  let side_int =
-    match side with Clob_types.Side.Buy -> 0 | Clob_types.Side.Sell -> 1
-  in
+  let side_int = match side with Types.Side.Buy -> 0 | Types.Side.Sell -> 1 in
   Log.debug (fun m ->
       m "Signing order: token=%s...%s expiration=%s nonce=%s"
         (String.sub token_id_str 0 (min 8 (String.length token_id_str)))
@@ -69,7 +67,7 @@ let create_limit_order ~private_key ~token_id ~(side : Clob_types.Side.t) ~price
   let zero_address = P.Address.unsafe_of_string Constants.zero_address in
   Log.debug (fun m ->
       m "Order signed: sig=%s..." (String.sub signature_str 0 16));
-  Clob_types.
+  Types.
     {
       salt = Some salt;
       maker = Some address;
@@ -87,5 +85,5 @@ let create_limit_order ~private_key ~token_id ~(side : Clob_types.Side.t) ~price
     }
 
 let create_order_request ~order ~order_type =
-  let owner = Option.map P.Address.to_string order.Clob_types.maker in
-  Clob_types.{ order = Some order; owner; order_type = Some order_type }
+  let owner = Option.map P.Address.to_string order.Types.maker in
+  Types.{ order = Some order; owner; order_type = Some order_type }

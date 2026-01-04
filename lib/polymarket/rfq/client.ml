@@ -2,13 +2,12 @@
 
     All RFQ endpoints require L2 authentication. *)
 
-module H = Client
-module B = Request
-module J = Json
-module Types = Rfq_types
-module Auth = Auth
-module Crypto = Crypto
-open Rfq_types
+module H = Polymarket_http.Client
+module B = Polymarket_http.Request
+module J = Polymarket_http.Json
+module Auth = Common.Auth
+module Crypto = Common.Crypto
+open Types
 
 let default_base_url = "https://clob.polymarket.com"
 

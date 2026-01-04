@@ -7,15 +7,15 @@ open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 
 (** {1 Primitives Module Alias} *)
 
-module P = Primitives
+module P = Common.Primitives
 
 (** {1 Enum Modules} *)
 
-module User_type = Clob_types.Signature_type
+module User_type = Clob.Types.Signature_type
 (** Reuse Signature_type from CLOB as User_type. EOA = 0, POLY_PROXY = 1,
     POLY_GNOSIS_SAFE = 2 *)
 
-module Side = Primitives.Side
+module Side = Common.Primitives.Side
 
 (** State filter for GET requests. *)
 module State_filter = struct
@@ -187,8 +187,8 @@ type approve_order_response = {
 
 (** {1 Error Type} *)
 
-type error = Client.error
+type error = Polymarket_http.Client.error
 (** Structured error type for all API errors. *)
 
-let error_to_string = Client.error_to_string
-let pp_error = Client.pp_error
+let error_to_string = Polymarket_http.Client.error_to_string
+let pp_error = Polymarket_http.Client.pp_error

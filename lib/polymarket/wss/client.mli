@@ -2,9 +2,6 @@
 
     Provides typed streaming access to Market and User channels. *)
 
-module Types = Wss_types
-(** WebSocket message types. *)
-
 (** {1 Market Channel Client} *)
 
 module Market : sig
@@ -20,7 +17,7 @@ module Market : sig
     t
   (** Connect to the market channel with initial asset subscriptions. *)
 
-  val stream : t -> Wss_types.message Eio.Stream.t
+  val stream : t -> Types.message Eio.Stream.t
   (** Get the stream of market messages. *)
 
   val subscribe : t -> asset_ids:string list -> unit
@@ -43,13 +40,13 @@ module User : sig
     sw:Eio.Switch.t ->
     net:'a Eio.Net.t ->
     clock:float Eio.Time.clock_ty Eio.Resource.t ->
-    credentials:Auth.credentials ->
+    credentials:Common.Auth.credentials ->
     markets:string list ->
     unit ->
     t
   (** Connect to the user channel with authentication. *)
 
-  val stream : t -> Wss_types.message Eio.Stream.t
+  val stream : t -> Types.message Eio.Stream.t
   (** Get the stream of user messages. *)
 
   val close : t -> unit

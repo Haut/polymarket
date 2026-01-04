@@ -230,7 +230,7 @@ val market_subscribe_json : asset_ids:string list -> string
 (** Create a JSON subscribe message for the market channel. *)
 
 val user_subscribe_json :
-  credentials:Auth.credentials -> markets:string list -> string
+  credentials:Common.Auth.credentials -> markets:string list -> string
 (** Create a JSON subscribe message for the user channel with auth. *)
 
 val subscribe_assets_json : asset_ids:string list -> string

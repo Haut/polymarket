@@ -6,7 +6,7 @@
 
 (** {1 Query Parameter Enums} *)
 
-module Sort_direction = Primitives.Sort_dir
+module Sort_direction = Common.Primitives.Sort_dir
 (** Re-export shared Sort_dir module from Common.Primitives *)
 
 module Position_sort_by : sig
@@ -89,7 +89,7 @@ end
 
 (** {1 Domain Enums} *)
 
-module Side = Primitives.Side
+module Side = Common.Primitives.Side
 
 module Activity_type : sig
   type t = Trade | Split | Merge | Redeem | Reward | Conversion
@@ -107,7 +107,7 @@ end
 type health_response = { data : string } [@@deriving yojson, show, eq]
 (** Health check response *)
 
-type error = Primitives.api_error
+type error = Polymarket_http.Client.error
 (** Structured error type for all API errors. *)
 
 val error_to_string : error -> string
@@ -119,9 +119,9 @@ val pp_error : Format.formatter -> error -> unit
 (** {1 Domain Models} *)
 
 type position = {
-  proxy_wallet : Primitives.Address.t;
+  proxy_wallet : Common.Primitives.Address.t;
   asset : string;
-  condition_id : Primitives.Hash64.t;
+  condition_id : Common.Primitives.Hash64.t;
   size : float;
   avg_price : float;
   initial_value : float;
@@ -150,9 +150,9 @@ type position = {
 (** Position in a market *)
 
 type closed_position = {
-  proxy_wallet : Primitives.Address.t;
+  proxy_wallet : Common.Primitives.Address.t;
   asset : string;
-  condition_id : Primitives.Hash64.t;
+  condition_id : Common.Primitives.Hash64.t;
   avg_price : float;
   total_bought : float;
   realized_pnl : float;
@@ -172,10 +172,10 @@ type closed_position = {
 (** Closed position in a market *)
 
 type trade = {
-  proxy_wallet : Primitives.Address.t;
+  proxy_wallet : Common.Primitives.Address.t;
   side : Side.t;
   asset : string;
-  condition_id : Primitives.Hash64.t;
+  condition_id : Common.Primitives.Hash64.t;
   size : float;
   price : float;
   timestamp : int64;
@@ -196,9 +196,9 @@ type trade = {
 (** Trade record *)
 
 type activity = {
-  proxy_wallet : Primitives.Address.t;
+  proxy_wallet : Common.Primitives.Address.t;
   timestamp : int64;
-  condition_id : Primitives.Hash64.t;
+  condition_id : Common.Primitives.Hash64.t;
   activity_type : Activity_type.t;
   size : float;
   usdc_size : float;
@@ -223,7 +223,7 @@ type activity = {
 (** Activity record *)
 
 type holder = {
-  proxy_wallet : Primitives.Address.t;
+  proxy_wallet : Common.Primitives.Address.t;
   bio : string;
   asset : string;
   pseudonym : string;
@@ -241,7 +241,7 @@ type meta_holder = { token : string; holders : holder list }
 [@@deriving yojson, show, eq]
 (** Meta holder with token and list of holders *)
 
-type traded = { user : Primitives.Address.t; traded : int }
+type traded = { user : Common.Primitives.Address.t; traded : int }
 [@@deriving yojson, show, eq]
 (** Traded record *)
 
@@ -250,13 +250,13 @@ type revision_entry = { revision : string; timestamp : int }
 (** Revision entry *)
 
 type revision_payload = {
-  question_id : Primitives.Hash64.t;
+  question_id : Common.Primitives.Hash64.t;
   revisions : revision_entry list;
 }
 [@@deriving yojson, show, eq]
 (** Revision payload *)
 
-type value = { user : Primitives.Address.t; value : float }
+type value = { user : Common.Primitives.Address.t; value : float }
 [@@deriving yojson, show, eq]
 (** Value record *)
 
@@ -268,7 +268,7 @@ type open_interest = {
 (** Open interest for a market *)
 
 type market_volume = {
-  market : Primitives.Hash64.t option;
+  market : Common.Primitives.Hash64.t option;
   value : float option;
 }
 [@@deriving yojson, show, eq]
@@ -292,7 +292,7 @@ type leaderboard_entry = {
 (** Leaderboard entry for builders *)
 
 type builder_volume_entry = {
-  dt : Primitives.Timestamp.t;
+  dt : Common.Primitives.Timestamp.t;
   builder : string;
   builder_logo : string;
   verified : bool;
@@ -305,7 +305,7 @@ type builder_volume_entry = {
 
 type trader_leaderboard_entry = {
   rank : string;
-  proxy_wallet : Primitives.Address.t;
+  proxy_wallet : Common.Primitives.Address.t;
   user_name : string;
   vol : float;
   pnl : float;

@@ -2,9 +2,6 @@
 
     Provides typed streaming access to crypto prices and comments. *)
 
-module Types = Rtds_types
-(** RTDS message types. *)
-
 (** {1 Unified RTDS Client} *)
 
 type t
@@ -18,13 +15,13 @@ val connect :
   t
 (** Connect to the RTDS WebSocket. *)
 
-val stream : t -> Rtds_types.message Eio.Stream.t
+val stream : t -> Types.message Eio.Stream.t
 (** Get the stream of parsed messages. *)
 
-val subscribe : t -> subscriptions:Rtds_types.subscription list -> unit
+val subscribe : t -> subscriptions:Types.subscription list -> unit
 (** Subscribe to topics. *)
 
-val unsubscribe : t -> subscriptions:Rtds_types.subscription list -> unit
+val unsubscribe : t -> subscriptions:Types.subscription list -> unit
 (** Unsubscribe from topics. *)
 
 val close : t -> unit
@@ -58,7 +55,7 @@ module Crypto_prices : sig
     t
   (** Connect to Chainlink crypto price stream. *)
 
-  val stream : t -> Rtds_types.crypto_message Eio.Stream.t
+  val stream : t -> Types.crypto_message Eio.Stream.t
   (** Get the stream of crypto price messages. *)
 
   val symbols : t -> string list option
@@ -81,15 +78,15 @@ module Comments : sig
     sw:Eio.Switch.t ->
     net:'a Eio.Net.t ->
     clock:float Eio.Time.clock_ty Eio.Resource.t ->
-    ?gamma_auth:Rtds_types.gamma_auth ->
+    ?gamma_auth:Types.gamma_auth ->
     unit ->
     t
   (** Connect to comments stream. *)
 
-  val stream : t -> Rtds_types.comment Eio.Stream.t
+  val stream : t -> Types.comment Eio.Stream.t
   (** Get the stream of comment messages. *)
 
-  val gamma_auth : t -> Rtds_types.gamma_auth option
+  val gamma_auth : t -> Types.gamma_auth option
   (** Get the gamma authentication used for the connection. *)
 
   val close : t -> unit

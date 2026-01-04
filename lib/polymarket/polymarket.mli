@@ -21,7 +21,7 @@
       let client = Polymarket.Gamma.create ~sw ~net ~rate_limiter () in
       match Polymarket.Gamma.get_events client () with
       | Ok events -> List.iter (fun e -> print_endline e.title) events
-      | Error err -> print_endline (Polymarket.api_error_to_string err)
+      | Error err -> print_endline (Polymarket.Error.to_string err)
     ]}
 
     {2 Rate Limiting}
@@ -58,7 +58,6 @@
 
 (** {1 API Modules} *)
 
-module Gamma = Gamma_client
 (** Gamma API client for markets, events, series, and search.
 
     {2 Module-based Enums}
@@ -76,8 +75,14 @@ module Gamma = Gamma_client
           ~parent_entity_id:123 ()
       in
     ]} *)
+module Gamma : sig
+  include module type of struct
+    include Gamma.Client
+  end
 
-module Data = Data_client
+  module Types = Gamma.Types
+end
+
 (** Data API client for positions, trades, activity, and leaderboards.
 
     {2 Module-based Enums}
@@ -100,8 +105,14 @@ module Data = Data_client
           ~order_by:Data.Leaderboard_order_by.Pnl ()
       in
     ]} *)
+module Data : sig
+  include module type of struct
+    include Data.Client
+  end
 
-module Clob = Clob_client
+  module Types = Data.Types
+end
+
 (** CLOB API client for order books, pricing, and trading.
 
     {2 Typestate Authentication}
@@ -130,13 +141,27 @@ module Clob = Clob_client
       | Ok (l2, resp) -> Clob.L2.get_orders l2 ()
       | Error _ -> ...
     ]} *)
+module Clob : sig
+  include module type of struct
+    include Clob.Client
+  end
 
-module Rfq = Rfq_client
+  module Types = Clob.Types
+  module Order_builder = Clob.Order_builder
+end
+
 (** RFQ API client for Request for Quote trading.
 
     All RFQ endpoints require L2 authentication. *)
+module Rfq : sig
+  include module type of struct
+    include Rfq.Client
+  end
 
-module Wss = Wss_client
+  module Types = Rfq.Types
+  module Order_builder = Rfq.Order_builder
+end
+
 (** WebSocket client for real-time market and user data.
 
     Uses pure-OCaml TLS (tls-eio) for cross-platform compatibility.
@@ -175,8 +200,14 @@ module Wss = Wss_client
           Printf.printf "Trade: %s at %s\n" msg.id msg.price
       | _ -> ()
     ]} *)
+module Wss : sig
+  include module type of struct
+    include Wss.Client
+  end
 
-module Rtds = Rtds_client
+  module Types = Wss.Types
+end
+
 (** Real-Time Data Socket (RTDS) client for streaming data.
 
     Provides real-time updates for:
@@ -255,52 +286,64 @@ module Rtds = Rtds_client
           Printf.printf "Comment: %s\n" msg.payload.body
       | _ -> ()
     ]} *)
+module Rtds : sig
+  include module type of struct
+    include Rtds.Client
+  end
+
+  module Types = Rtds.Types
+end
 
 module Rate_limiter = Rate_limiter
 (** Route-based rate limiting middleware for HTTP clients. *)
 
-module Rate_limit_presets = Rate_limit_presets
+module Rate_limit_presets = Common.Rate_limit_presets
 (** Pre-configured rate limits for Polymarket APIs. *)
 
 (** {1 Primitive Types}
 
-    Validated types for addresses, hashes, and numeric constraints. *)
+    Validated types for addresses, hashes, and numeric constraints.
 
-module Side = Primitives.Side
-module Sort_dir = Primitives.Sort_dir
-module Address = Primitives.Address
-module Hash64 = Primitives.Hash64
-module Hash = Primitives.Hash
-module Token_id = Primitives.Token_id
-module Signature = Primitives.Signature
-module Request_id = Primitives.Request_id
-module Quote_id = Primitives.Quote_id
-module Trade_id = Primitives.Trade_id
-module Timestamp = Primitives.Timestamp
+    - {!Primitives.Side}: Buy/Sell side
+    - {!Primitives.Sort_dir}: Asc/Desc sort direction
+    - {!Primitives.Address}: Ethereum addresses (0x-prefixed, 40 hex chars)
+    - {!Primitives.Hash64}: 64-character hex hashes
+    - {!Primitives.Hash}: Variable-length hex strings
+    - {!Primitives.Token_id}: ERC1155 token IDs
+    - {!Primitives.Signature}: Cryptographic signatures
+    - {!Primitives.Timestamp}: ISO 8601 timestamps *)
 
-(** {1 Error Types} *)
+module Primitives = Common.Primitives
 
-type http_error = Primitives.http_error = {
-  status : int;
-  body : string;
-  message : string;
-}
-(** HTTP error with status code, raw body, and extracted message. *)
+(** {1 Error Types}
 
-type parse_error = Primitives.parse_error = {
-  context : string;
-  message : string;
-}
-(** Parse error with context and message. *)
+    Structured error types for API operations. *)
 
-type network_error = Primitives.network_error = { message : string }
-(** Network-level error (connection failed, timeout, etc.). *)
+module Error : sig
+  type http = Polymarket_http.Client.http_error = {
+    status : int;
+    body : string;
+    message : string;
+  }
+  (** HTTP error with status code, raw body, and extracted message. *)
 
-type api_error = Primitives.api_error =
-  | Http_error of http_error
-  | Parse_error of parse_error
-  | Network_error of network_error
-      (** Structured error type for all API errors. *)
+  type parse = Polymarket_http.Client.parse_error = {
+    context : string;
+    message : string;
+  }
+  (** Parse error with context and message. *)
 
-val api_error_to_string : api_error -> string
-(** Convert error to human-readable string. *)
+  type network = Polymarket_http.Client.network_error = { message : string }
+  (** Network-level error (connection failed, timeout, etc.). *)
+
+  type t = Polymarket_http.Client.error =
+    | Http_error of http
+    | Parse_error of parse
+    | Network_error of network  (** Structured error type for all API errors. *)
+
+  val to_string : t -> string
+  (** Convert error to human-readable string. *)
+
+  val pp : Format.formatter -> t -> unit
+  (** Pretty printer for errors. *)
+end

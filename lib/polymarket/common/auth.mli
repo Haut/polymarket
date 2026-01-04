@@ -77,11 +77,14 @@ val with_l1_auth :
   private_key:Crypto.private_key ->
   address:string ->
   nonce:int ->
-  'a Request.t ->
-  'a Request.t
+  'a Polymarket_http.Request.t ->
+  'a Polymarket_http.Request.t
 (** Add L1 authentication headers to a request builder. *)
 
 val with_l2_auth :
-  credentials:credentials -> address:string -> 'a Request.t -> 'a Request.t
+  credentials:credentials ->
+  address:string ->
+  'a Polymarket_http.Request.t ->
+  'a Polymarket_http.Request.t
 (** Add L2 authentication headers to a request builder. Computes headers from
     the request's method, path, and body. *)

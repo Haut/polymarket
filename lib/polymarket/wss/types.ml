@@ -273,7 +273,7 @@ let market_subscribe_json ~asset_ids =
     { assets_ids = asset_ids; type_ = "MARKET"; custom_feature_enabled = true }
   |> Yojson.Safe.to_string
 
-let user_subscribe_json ~(credentials : Auth.credentials) ~markets =
+let user_subscribe_json ~(credentials : Common.Auth.credentials) ~markets =
   let auth =
     {
       apiKey = credentials.api_key;

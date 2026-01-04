@@ -4,18 +4,18 @@
     approve_order request bodies. *)
 
 val build_accept_quote_body :
-  private_key:Crypto.private_key ->
-  request_id:Rfq_types.P.Request_id.t ->
-  quote_id:Rfq_types.P.Quote_id.t ->
-  token_id:Rfq_types.P.Token_id.t ->
+  private_key:Common.Crypto.private_key ->
+  request_id:Types.P.Request_id.t ->
+  quote_id:Types.P.Quote_id.t ->
+  token_id:Types.P.Token_id.t ->
   maker_amount:string ->
   taker_amount:string ->
-  side:Rfq_types.Side.t ->
+  side:Types.Side.t ->
   ?expiration:int ->
   ?nonce:string ->
   ?fee_rate_bps:string ->
   unit ->
-  Rfq_types.accept_quote_body
+  Types.accept_quote_body
 (** Build a signed accept_quote request body.
 
     @param private_key Ethereum private key

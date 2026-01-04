@@ -1,7 +1,7 @@
 (** Gamma API client for markets, events, series, and search. *)
 
 include module type of struct
-  include Gamma_types
+  include Types
 end
 
 type t
@@ -164,10 +164,10 @@ val get_events :
   ?liquidity_max:float ->
   ?volume_min:float ->
   ?volume_max:float ->
-  ?start_date_min:Primitives.Timestamp.t ->
-  ?start_date_max:Primitives.Timestamp.t ->
-  ?end_date_min:Primitives.Timestamp.t ->
-  ?end_date_max:Primitives.Timestamp.t ->
+  ?start_date_min:Common.Primitives.Timestamp.t ->
+  ?start_date_max:Common.Primitives.Timestamp.t ->
+  ?end_date_min:Common.Primitives.Timestamp.t ->
+  ?end_date_max:Common.Primitives.Timestamp.t ->
   unit ->
   (event list, error) result
 (** List events.
@@ -243,10 +243,10 @@ val get_markets :
   ?liquidity_num_max:float ->
   ?volume_num_min:float ->
   ?volume_num_max:float ->
-  ?start_date_min:Primitives.Timestamp.t ->
-  ?start_date_max:Primitives.Timestamp.t ->
-  ?end_date_min:Primitives.Timestamp.t ->
-  ?end_date_max:Primitives.Timestamp.t ->
+  ?start_date_min:Common.Primitives.Timestamp.t ->
+  ?start_date_max:Common.Primitives.Timestamp.t ->
+  ?end_date_min:Common.Primitives.Timestamp.t ->
+  ?end_date_max:Common.Primitives.Timestamp.t ->
   ?tag_id:int ->
   ?related_tags:bool ->
   ?cyom:bool ->

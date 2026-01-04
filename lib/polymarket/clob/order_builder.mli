@@ -9,7 +9,7 @@
         Order_builder.create_limit_order
           ~private_key:"your_private_key_hex"
           ~token_id:"12345..."
-          ~side:Clob_types.Side.Buy
+          ~side:Types.Side.Buy
           ~price:0.65
           ~size:100.0
           ()
@@ -17,7 +17,7 @@
       let request =
         Order_builder.create_order_request
           ~order
-          ~order_type:Clob_types.Order_type.Gtc
+          ~order_type:Types.Order_type.Gtc
       in
       (* Submit with Clob.L2.create_order *)
     ]} *)
@@ -25,7 +25,7 @@
 (** {1 Amount Calculations} *)
 
 val calculate_amounts :
-  side:Clob_types.Side.t -> price:float -> size:float -> string * string
+  side:Types.Side.t -> price:float -> size:float -> string * string
 (** Calculate maker and taker amounts for an order.
 
     For BUY orders: maker provides USDC, receives CTF tokens For SELL orders:
@@ -39,16 +39,16 @@ val calculate_amounts :
 (** {1 Order Building} *)
 
 val create_limit_order :
-  private_key:Crypto.private_key ->
-  token_id:Clob_types.P.Token_id.t ->
-  side:Clob_types.Side.t ->
+  private_key:Common.Crypto.private_key ->
+  token_id:Types.P.Token_id.t ->
+  side:Types.Side.t ->
   price:float ->
   size:float ->
   ?expiration:string ->
   ?nonce:int ->
   ?fee_rate_bps:string ->
   unit ->
-  Clob_types.signed_order
+  Types.signed_order
 (** Create a signed limit order ready for submission.
 
     @param private_key Ethereum private key (64 hex chars, no 0x prefix)
@@ -62,9 +62,9 @@ val create_limit_order :
     @return A fully signed order with all required fields *)
 
 val create_order_request :
-  order:Clob_types.signed_order ->
-  order_type:Clob_types.Order_type.t ->
-  Clob_types.order_request
+  order:Types.signed_order ->
+  order_type:Types.Order_type.t ->
+  Types.order_request
 (** Create an order request for API submission.
 
     @param order The signed order from create_limit_order

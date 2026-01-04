@@ -1,15 +1,15 @@
 (** Gamma API client for markets, events, series, and search. *)
 
-module P = Primitives
-module B = Request
-include Gamma_types
+module P = Common.Primitives
+module B = Polymarket_http.Request
+include Types
 
-type t = Client.t
+type t = Polymarket_http.Client.t
 
 let default_base_url = "https://gamma-api.polymarket.com"
 
 let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter () =
-  Client.create ~base_url ~sw ~net ~rate_limiter ()
+  Polymarket_http.Client.create ~base_url ~sw ~net ~rate_limiter ()
 
 (** {1 Health Endpoint} *)
 

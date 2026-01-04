@@ -87,8 +87,8 @@ type team = {
   logo : string option;
   abbreviation : string option;
   alias : string option;
-  created_at : Primitives.Timestamp.t option;
-  updated_at : Primitives.Timestamp.t option;
+  created_at : Common.Primitives.Timestamp.t option;
+  updated_at : Common.Primitives.Timestamp.t option;
   provider_id : int option;
   color : string option;
 }
@@ -103,8 +103,8 @@ type tag = {
   published_at : string option;
   created_by : int option;
   updated_by : int option;
-  created_at : Primitives.Timestamp.t option;
-  updated_at : Primitives.Timestamp.t option;
+  created_at : Common.Primitives.Timestamp.t option;
+  updated_at : Common.Primitives.Timestamp.t option;
   force_hide : bool option;
   is_carousel : bool option;
   requires_translation : bool option;
@@ -153,8 +153,8 @@ type chat = {
   channel_name : string option;
   channel_image : string option;
   live : bool option;
-  start_time : Primitives.Timestamp.t option;
-  end_time : Primitives.Timestamp.t option;
+  start_time : Common.Primitives.Timestamp.t option;
+  end_time : Common.Primitives.Timestamp.t option;
 }
 [@@deriving yojson, show, eq]
 (** Chat channel *)
@@ -230,8 +230,8 @@ type comment = {
   parent_comment_id : string option;
   user_address : string option;
   reply_address : string option;
-  created_at : Primitives.Timestamp.t option;
-  updated_at : Primitives.Timestamp.t option;
+  created_at : Common.Primitives.Timestamp.t option;
+  updated_at : Common.Primitives.Timestamp.t option;
   profile : comment_profile option;
   reactions : reaction list;
   report_count : int option;
@@ -247,7 +247,7 @@ type public_profile_user = { id : string; creator : bool; is_mod : bool }
 (** Public profile user *)
 
 type public_profile_response = {
-  created_at : Primitives.Timestamp.t option;
+  created_at : Common.Primitives.Timestamp.t option;
   proxy_wallet : string option;
   profile_image : string option;
   display_username_public : bool option;
@@ -268,8 +268,8 @@ type profile = {
   referral : string option;
   created_by : int option;
   updated_by : int option;
-  created_at : Primitives.Timestamp.t option;
-  updated_at : Primitives.Timestamp.t option;
+  created_at : Common.Primitives.Timestamp.t option;
+  updated_at : Common.Primitives.Timestamp.t option;
   utm_source : string option;
   utm_medium : string option;
   utm_campaign : string option;
@@ -346,13 +346,13 @@ type market = {
   slug : string option;
   twitter_card_image : string option;
   resolution_source : string option;
-  end_date : Primitives.Timestamp.t option;
+  end_date : Common.Primitives.Timestamp.t option;
   category : string option;
   amm_type : string option;
   liquidity : string option;
   sponsor_name : string option;
   sponsor_image : string option;
-  start_date : Primitives.Timestamp.t option;
+  start_date : Common.Primitives.Timestamp.t option;
   x_axis_value : string option;
   y_axis_value : string option;
   denomination_token : string option;
@@ -374,8 +374,8 @@ type market = {
   market_maker_address : string option;
   created_by : int option;
   updated_by : int option;
-  created_at : Primitives.Timestamp.t option;
-  updated_at : Primitives.Timestamp.t option;
+  created_at : Common.Primitives.Timestamp.t option;
+  updated_at : Common.Primitives.Timestamp.t option;
   closed_time : string option;
   wide_format : bool option;
   is_new : bool option;
@@ -445,9 +445,9 @@ type market = {
   ready : bool option;
   funded : bool option;
   past_slugs : string option;
-  ready_timestamp : Primitives.Timestamp.t option;
-  funded_timestamp : Primitives.Timestamp.t option;
-  accepting_orders_timestamp : Primitives.Timestamp.t option;
+  ready_timestamp : Common.Primitives.Timestamp.t option;
+  funded_timestamp : Common.Primitives.Timestamp.t option;
+  accepting_orders_timestamp : Common.Primitives.Timestamp.t option;
   competitive : float option;
   rewards_min_size : float option;
   rewards_max_spread : float option;
@@ -476,10 +476,10 @@ type market = {
   uma_resolution_statuses : string option;
   pending_deployment : bool option;
   deploying : bool option;
-  deploying_timestamp : Primitives.Timestamp.t option;
-  scheduled_deployment_timestamp : Primitives.Timestamp.t option;
+  deploying_timestamp : Common.Primitives.Timestamp.t option;
+  scheduled_deployment_timestamp : Common.Primitives.Timestamp.t option;
   rfq_enabled : bool option;
-  event_start_time : Primitives.Timestamp.t option;
+  event_start_time : Common.Primitives.Timestamp.t option;
   cyom : bool option;
   pager_duty_notification_enabled : bool option;
   approved : bool option;
@@ -503,9 +503,9 @@ and event = {
   subtitle : string option;
   description : string option;
   resolution_source : string option;
-  start_date : Primitives.Timestamp.t option;
-  creation_date : Primitives.Timestamp.t option;
-  end_date : Primitives.Timestamp.t option;
+  start_date : Common.Primitives.Timestamp.t option;
+  creation_date : Common.Primitives.Timestamp.t option;
+  end_date : Common.Primitives.Timestamp.t option;
   image : string option;
   icon : string option;
   active : bool option;
@@ -525,8 +525,8 @@ and event = {
   published_at : string option;
   created_by : string option;
   updated_by : string option;
-  created_at : Primitives.Timestamp.t option;
-  updated_at : Primitives.Timestamp.t option;
+  created_at : Common.Primitives.Timestamp.t option;
+  updated_at : Common.Primitives.Timestamp.t option;
   comments_enabled : bool option;
   competitive : float option;
   volume_24hr : float option;
@@ -553,14 +553,14 @@ and event = {
   collections : collection list;
   tags : tag list;
   cyom : bool option;
-  closed_time : Primitives.Timestamp.t option;
+  closed_time : Common.Primitives.Timestamp.t option;
   show_all_outcomes : bool option;
   show_market_images : bool option;
   automatically_resolved : bool option;
   enable_neg_risk : bool option;
   automatically_active : bool option;
   event_date : string option;
-  start_time : Primitives.Timestamp.t option;
+  start_time : Common.Primitives.Timestamp.t option;
   event_week : int option;
   series_slug : string option;
   score : string option;
@@ -568,7 +568,7 @@ and event = {
   period : string option;
   live : bool option;
   ended : bool option;
-  finished_timestamp : Primitives.Timestamp.t option;
+  finished_timestamp : Common.Primitives.Timestamp.t option;
   gmp_chart_mode : string option;
   event_creators : event_creator list;
   tweet_count : int option;
@@ -583,8 +583,8 @@ and event = {
   carousel_map : string option;
   pending_deployment : bool option;
   deploying : bool option;
-  deploying_timestamp : Primitives.Timestamp.t option;
-  scheduled_deployment_timestamp : Primitives.Timestamp.t option;
+  deploying_timestamp : Common.Primitives.Timestamp.t option;
+  scheduled_deployment_timestamp : Common.Primitives.Timestamp.t option;
   game_status : string option;
   neg_risk_augmented : bool option;
   requires_translation : bool option;
@@ -615,14 +615,14 @@ and series = {
   published_at : string option;
   created_by : string option;
   updated_by : string option;
-  created_at : Primitives.Timestamp.t option;
-  updated_at : Primitives.Timestamp.t option;
+  created_at : Common.Primitives.Timestamp.t option;
+  updated_at : Common.Primitives.Timestamp.t option;
   comments_enabled : bool option;
   competitive : string option;
   volume_24hr : float option;
   volume : float option;
   liquidity : float option;
-  start_date : Primitives.Timestamp.t option;
+  start_date : Common.Primitives.Timestamp.t option;
   pyth_token_id : string option;
   cg_asset_name : string option;
   score : int option;
@@ -701,7 +701,7 @@ val yojson_fields_of_sports_market_types_response : string list
 
 (** {1 Error Types} *)
 
-type error = Primitives.api_error
+type error = Polymarket_http.Client.error
 (** Structured error type for all API errors. *)
 
 val error_to_string : error -> string

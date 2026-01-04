@@ -7,11 +7,11 @@ open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 
 (** {1 Primitives Module Alias} *)
 
-module P = Primitives
+module P = Common.Primitives
 
 (** {1 Enum Modules} *)
 
-module Side = Primitives.Side
+module Side = Common.Primitives.Side
 (** Re-export shared Side module from Common.Primitives *)
 
 (** Gtc: Good Till Cancelled, Gtd: Good Till Date, Fok: Fill or Kill, Fak: Fill
@@ -335,8 +335,8 @@ type price_history = { history : price_point list [@default []] }
 
 (** {1 Error Response} *)
 
-type error = Client.error
+type error = Polymarket_http.Client.error
 (** Structured error type for all API errors *)
 
-let error_to_string = Client.error_to_string
-let pp_error = Client.pp_error
+let error_to_string = Polymarket_http.Client.error_to_string
+let pp_error = Polymarket_http.Client.pp_error

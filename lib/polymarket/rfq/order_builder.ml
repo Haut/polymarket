@@ -3,11 +3,11 @@
     This module provides functions for building signed accept_quote and
     approve_order request bodies. *)
 
-module Crypto = Crypto
-module Constants = Constants
-module Order_signing = Order_signing
-module P = Primitives
-open Rfq_types
+module Crypto = Common.Crypto
+module Constants = Common.Constants
+module Order_signing = Common.Order_signing
+module P = Common.Primitives
+open Types
 
 let src = Logs.Src.create "polymarket.rfq.order" ~doc:"RFQ order builder"
 

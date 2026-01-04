@@ -5,15 +5,15 @@
 
 (** {1 Primitives Module Alias} *)
 
-module P = Primitives
+module P = Common.Primitives
 
 (** {1 Enum Modules} *)
 
-module User_type = Clob_types.Signature_type
+module User_type = Clob.Types.Signature_type
 (** Reuse Signature_type from CLOB as User_type. EOA = 0, POLY_PROXY = 1,
     POLY_GNOSIS_SAFE = 2 *)
 
-module Side = Primitives.Side
+module Side = Common.Primitives.Side
 
 (** State filter for GET requests. *)
 module State_filter : sig
@@ -292,7 +292,7 @@ val equal_approve_order_response :
 
 (** {1 Error Type} *)
 
-type error = Primitives.api_error
+type error = Polymarket_http.Client.error
 (** Structured error type for all API errors. *)
 
 val error_to_string : error -> string

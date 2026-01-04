@@ -2,11 +2,8 @@
 
     All RFQ endpoints require L2 authentication. *)
 
-module Types = Rfq_types
-(** RFQ API request/response types. *)
-
-module Auth = Auth
-module Crypto = Crypto
+module Auth = Common.Auth
+module Crypto = Common.Crypto
 
 val default_base_url : string
 (** Default base URL for the RFQ API: https://clob.polymarket.com *)
@@ -34,21 +31,18 @@ val credentials : t -> Auth.credentials
 
 val create_request :
   t ->
-  body:Rfq_types.create_request_body ->
+  body:Types.create_request_body ->
   unit ->
-  (Rfq_types.create_request_response, Rfq_types.error) result
+  (Types.create_request_response, Types.error) result
 
 val cancel_request :
-  t ->
-  request_id:Rfq_types.P.Request_id.t ->
-  unit ->
-  (unit, Rfq_types.error) result
+  t -> request_id:Types.P.Request_id.t -> unit -> (unit, Types.error) result
 
 val get_requests :
   t ->
   ?offset:string ->
   ?limit:int ->
-  ?state:Rfq_types.State_filter.t ->
+  ?state:Types.State_filter.t ->
   ?request_ids:string list ->
   ?markets:string list ->
   ?size_min:float ->
@@ -57,27 +51,27 @@ val get_requests :
   ?size_usdc_max:float ->
   ?price_min:float ->
   ?price_max:float ->
-  ?sort_by:Rfq_types.Sort_by.t ->
-  ?sort_dir:Rfq_types.Sort_dir.t ->
+  ?sort_by:Types.Sort_by.t ->
+  ?sort_dir:Types.Sort_dir.t ->
   unit ->
-  (Rfq_types.get_requests_response, Rfq_types.error) result
+  (Types.get_requests_response, Types.error) result
 
 (** {1 Quote Endpoints} *)
 
 val create_quote :
   t ->
-  body:Rfq_types.create_quote_body ->
+  body:Types.create_quote_body ->
   unit ->
-  (Rfq_types.create_quote_response, Rfq_types.error) result
+  (Types.create_quote_response, Types.error) result
 
 val cancel_quote :
-  t -> quote_id:Rfq_types.P.Quote_id.t -> unit -> (unit, Rfq_types.error) result
+  t -> quote_id:Types.P.Quote_id.t -> unit -> (unit, Types.error) result
 
 val get_quotes :
   t ->
   ?offset:string ->
   ?limit:int ->
-  ?state:Rfq_types.State_filter.t ->
+  ?state:Types.State_filter.t ->
   ?quote_ids:string list ->
   ?request_ids:string list ->
   ?markets:string list ->
@@ -87,25 +81,22 @@ val get_quotes :
   ?size_usdc_max:float ->
   ?price_min:float ->
   ?price_max:float ->
-  ?sort_by:Rfq_types.Sort_by.t ->
-  ?sort_dir:Rfq_types.Sort_dir.t ->
+  ?sort_by:Types.Sort_by.t ->
+  ?sort_dir:Types.Sort_dir.t ->
   unit ->
-  (Rfq_types.get_quotes_response, Rfq_types.error) result
+  (Types.get_quotes_response, Types.error) result
 
 (** {1 Execution Endpoints} *)
 
 val accept_quote :
-  t ->
-  body:Rfq_types.accept_quote_body ->
-  unit ->
-  (unit, Rfq_types.error) result
+  t -> body:Types.accept_quote_body -> unit -> (unit, Types.error) result
 (** Accept a quote. Use [Rfq_order_builder.build_accept_quote_body] to create
     the body. *)
 
 val approve_order :
   t ->
-  body:Rfq_types.approve_order_body ->
+  body:Types.approve_order_body ->
   unit ->
-  (Rfq_types.approve_order_response, Rfq_types.error) result
+  (Types.approve_order_response, Types.error) result
 (** Approve an order. Use [Rfq_order_builder.build_accept_quote_body] to create
     the body. *)

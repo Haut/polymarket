@@ -5,11 +5,11 @@
 
 (** {1 Primitives Module Alias} *)
 
-module P = Primitives
+module P = Common.Primitives
 
 (** {1 Enum Modules} *)
 
-module Side = Primitives.Side
+module Side = Common.Primitives.Side
 
 module Order_type : sig
   type t =
@@ -320,7 +320,7 @@ val equal_price_history : price_history -> price_history -> bool
 
 (** {1 Error Types} *)
 
-type error = Primitives.api_error
+type error = Polymarket_http.Client.error
 (** Structured error type for all API errors. *)
 
 val error_to_string : error -> string

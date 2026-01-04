@@ -73,8 +73,10 @@ type team = {
   logo : string option; [@default None]
   abbreviation : string option; [@default None]
   alias : string option; [@default None]
-  created_at : Primitives.Timestamp.t option; [@default None] [@key "createdAt"]
-  updated_at : Primitives.Timestamp.t option; [@default None] [@key "updatedAt"]
+  created_at : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "createdAt"]
+  updated_at : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "updatedAt"]
   provider_id : int option; [@default None] [@key "providerId"]
   color : string option; [@default None]
 }
@@ -89,8 +91,10 @@ type tag = {
   published_at : string option; [@default None] [@key "publishedAt"]
   created_by : int option; [@default None] [@key "createdBy"]
   updated_by : int option; [@default None] [@key "updatedBy"]
-  created_at : Primitives.Timestamp.t option; [@default None] [@key "createdAt"]
-  updated_at : Primitives.Timestamp.t option; [@default None] [@key "updatedAt"]
+  created_at : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "createdAt"]
+  updated_at : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "updatedAt"]
   force_hide : bool option; [@default None] [@key "forceHide"]
   is_carousel : bool option; [@default None] [@key "isCarousel"]
   requires_translation : bool option;
@@ -140,8 +144,10 @@ type chat = {
   channel_name : string option; [@default None] [@key "channelName"]
   channel_image : string option; [@default None] [@key "channelImage"]
   live : bool option; [@default None]
-  start_time : Primitives.Timestamp.t option; [@default None] [@key "startTime"]
-  end_time : Primitives.Timestamp.t option; [@default None] [@key "endTime"]
+  start_time : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "startTime"]
+  end_time : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "endTime"]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Chat channel *)
@@ -219,8 +225,10 @@ type comment = {
   parent_comment_id : string option; [@default None] [@key "parentCommentID"]
   user_address : string option; [@default None] [@key "userAddress"]
   reply_address : string option; [@default None] [@key "replyAddress"]
-  created_at : Primitives.Timestamp.t option; [@default None] [@key "createdAt"]
-  updated_at : Primitives.Timestamp.t option; [@default None] [@key "updatedAt"]
+  created_at : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "createdAt"]
+  updated_at : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "updatedAt"]
   profile : comment_profile option; [@default None]
   reactions : reaction list; [@default []]
   report_count : int option; [@default None] [@key "reportCount"]
@@ -240,7 +248,8 @@ type public_profile_user = {
 (** Public profile user *)
 
 type public_profile_response = {
-  created_at : Primitives.Timestamp.t option; [@default None] [@key "createdAt"]
+  created_at : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "createdAt"]
   proxy_wallet : string option; [@default None] [@key "proxyWallet"]
   profile_image : string option; [@default None] [@key "profileImage"]
   display_username_public : bool option;
@@ -262,8 +271,10 @@ type profile = {
   referral : string option; [@default None]
   created_by : int option; [@default None] [@key "createdBy"]
   updated_by : int option; [@default None] [@key "updatedBy"]
-  created_at : Primitives.Timestamp.t option; [@default None] [@key "createdAt"]
-  updated_at : Primitives.Timestamp.t option; [@default None] [@key "updatedAt"]
+  created_at : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "createdAt"]
+  updated_at : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "updatedAt"]
   utm_source : string option; [@default None] [@key "utmSource"]
   utm_medium : string option; [@default None] [@key "utmMedium"]
   utm_campaign : string option; [@default None] [@key "utmCampaign"]
@@ -347,13 +358,15 @@ type market = {
   slug : string option; [@default None]
   twitter_card_image : string option; [@default None] [@key "twitterCardImage"]
   resolution_source : string option; [@default None] [@key "resolutionSource"]
-  end_date : Primitives.Timestamp.t option; [@default None] [@key "endDate"]
+  end_date : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "endDate"]
   category : string option; [@default None]
   amm_type : string option; [@default None] [@key "ammType"]
   liquidity : string option; [@default None]
   sponsor_name : string option; [@default None] [@key "sponsorName"]
   sponsor_image : string option; [@default None] [@key "sponsorImage"]
-  start_date : Primitives.Timestamp.t option; [@default None] [@key "startDate"]
+  start_date : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "startDate"]
   x_axis_value : string option; [@default None] [@key "xAxisValue"]
   y_axis_value : string option; [@default None] [@key "yAxisValue"]
   denomination_token : string option; [@default None] [@key "denominationToken"]
@@ -376,8 +389,10 @@ type market = {
       [@default None] [@key "marketMakerAddress"]
   created_by : int option; [@default None] [@key "createdBy"]
   updated_by : int option; [@default None] [@key "updatedBy"]
-  created_at : Primitives.Timestamp.t option; [@default None] [@key "createdAt"]
-  updated_at : Primitives.Timestamp.t option; [@default None] [@key "updatedAt"]
+  created_at : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "createdAt"]
+  updated_at : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "updatedAt"]
   closed_time : string option; [@default None] [@key "closedTime"]
   wide_format : bool option; [@default None] [@key "wideFormat"]
   is_new : bool option; [@default None] [@key "new"]
@@ -454,11 +469,11 @@ type market = {
   ready : bool option; [@default None]
   funded : bool option; [@default None]
   past_slugs : string option; [@default None] [@key "pastSlugs"]
-  ready_timestamp : Primitives.Timestamp.t option;
+  ready_timestamp : Common.Primitives.Timestamp.t option;
       [@default None] [@key "readyTimestamp"]
-  funded_timestamp : Primitives.Timestamp.t option;
+  funded_timestamp : Common.Primitives.Timestamp.t option;
       [@default None] [@key "fundedTimestamp"]
-  accepting_orders_timestamp : Primitives.Timestamp.t option;
+  accepting_orders_timestamp : Common.Primitives.Timestamp.t option;
       [@default None] [@key "acceptingOrdersTimestamp"]
   competitive : float option; [@default None]
   rewards_min_size : float option; [@default None] [@key "rewardsMinSize"]
@@ -496,12 +511,12 @@ type market = {
       [@default None] [@key "umaResolutionStatuses"]
   pending_deployment : bool option; [@default None] [@key "pendingDeployment"]
   deploying : bool option; [@default None]
-  deploying_timestamp : Primitives.Timestamp.t option;
+  deploying_timestamp : Common.Primitives.Timestamp.t option;
       [@default None] [@key "deployingTimestamp"]
-  scheduled_deployment_timestamp : Primitives.Timestamp.t option;
+  scheduled_deployment_timestamp : Common.Primitives.Timestamp.t option;
       [@default None] [@key "scheduledDeploymentTimestamp"]
   rfq_enabled : bool option; [@default None] [@key "rfqEnabled"]
-  event_start_time : Primitives.Timestamp.t option;
+  event_start_time : Common.Primitives.Timestamp.t option;
       [@default None] [@key "eventStartTime"]
   cyom : bool option; [@default None]
   pager_duty_notification_enabled : bool option;
@@ -528,10 +543,12 @@ and event = {
   subtitle : string option; [@default None]
   description : string option; [@default None]
   resolution_source : string option; [@default None] [@key "resolutionSource"]
-  start_date : Primitives.Timestamp.t option; [@default None] [@key "startDate"]
-  creation_date : Primitives.Timestamp.t option;
+  start_date : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "startDate"]
+  creation_date : Common.Primitives.Timestamp.t option;
       [@default None] [@key "creationDate"]
-  end_date : Primitives.Timestamp.t option; [@default None] [@key "endDate"]
+  end_date : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "endDate"]
   image : string option; [@default None]
   icon : string option; [@default None]
   active : bool option; [@default None]
@@ -551,8 +568,10 @@ and event = {
   published_at : string option; [@default None] [@key "published_at"]
   created_by : string option; [@default None] [@key "createdBy"]
   updated_by : string option; [@default None] [@key "updatedBy"]
-  created_at : Primitives.Timestamp.t option; [@default None] [@key "createdAt"]
-  updated_at : Primitives.Timestamp.t option; [@default None] [@key "updatedAt"]
+  created_at : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "createdAt"]
+  updated_at : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "updatedAt"]
   comments_enabled : bool option; [@default None] [@key "commentsEnabled"]
   competitive : float option; [@default None]
   volume_24hr : float option; [@default None] [@key "volume24hr"]
@@ -582,7 +601,7 @@ and event = {
   collections : collection list; [@default []]
   tags : tag list; [@default []]
   cyom : bool option; [@default None]
-  closed_time : Primitives.Timestamp.t option;
+  closed_time : Common.Primitives.Timestamp.t option;
       [@default None] [@key "closedTime"]
   show_all_outcomes : bool option; [@default None] [@key "showAllOutcomes"]
   show_market_images : bool option; [@default None] [@key "showMarketImages"]
@@ -592,7 +611,8 @@ and event = {
   automatically_active : bool option;
       [@default None] [@key "automaticallyActive"]
   event_date : string option; [@default None] [@key "eventDate"]
-  start_time : Primitives.Timestamp.t option; [@default None] [@key "startTime"]
+  start_time : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "startTime"]
   event_week : int option; [@default None] [@key "eventWeek"]
   series_slug : string option; [@default None] [@key "seriesSlug"]
   score : string option; [@default None]
@@ -600,7 +620,7 @@ and event = {
   period : string option; [@default None]
   live : bool option; [@default None]
   ended : bool option; [@default None]
-  finished_timestamp : Primitives.Timestamp.t option;
+  finished_timestamp : Common.Primitives.Timestamp.t option;
       [@default None] [@key "finishedTimestamp"]
   gmp_chart_mode : string option; [@default None] [@key "gmpChartMode"]
   event_creators : event_creator list; [@default []] [@key "eventCreators"]
@@ -616,9 +636,9 @@ and event = {
   carousel_map : string option; [@default None] [@key "carouselMap"]
   pending_deployment : bool option; [@default None] [@key "pendingDeployment"]
   deploying : bool option; [@default None] [@key "deploying"]
-  deploying_timestamp : Primitives.Timestamp.t option;
+  deploying_timestamp : Common.Primitives.Timestamp.t option;
       [@default None] [@key "deployingTimestamp"]
-  scheduled_deployment_timestamp : Primitives.Timestamp.t option;
+  scheduled_deployment_timestamp : Common.Primitives.Timestamp.t option;
       [@default None] [@key "scheduledDeploymentTimestamp"]
   game_status : string option; [@default None] [@key "gameStatus"]
   neg_risk_augmented : bool option; [@default None] [@key "negRiskAugmented"]
@@ -650,14 +670,17 @@ and series = {
   published_at : string option; [@default None] [@key "publishedAt"]
   created_by : string option; [@default None] [@key "createdBy"]
   updated_by : string option; [@default None] [@key "updatedBy"]
-  created_at : Primitives.Timestamp.t option; [@default None] [@key "createdAt"]
-  updated_at : Primitives.Timestamp.t option; [@default None] [@key "updatedAt"]
+  created_at : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "createdAt"]
+  updated_at : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "updatedAt"]
   comments_enabled : bool option; [@default None] [@key "commentsEnabled"]
   competitive : string option; [@default None]
   volume_24hr : float option; [@default None] [@key "volume24hr"]
   volume : float option; [@default None]
   liquidity : float option; [@default None]
-  start_date : Primitives.Timestamp.t option; [@default None] [@key "startDate"]
+  start_date : Common.Primitives.Timestamp.t option;
+      [@default None] [@key "startDate"]
   pyth_token_id : string option; [@default None] [@key "pythTokenID"]
   cg_asset_name : string option; [@default None] [@key "cgAssetName"]
   score : int option; [@default None]
@@ -714,6 +737,6 @@ type sports_market_types_response = {
 
 (** {1 Error Types} *)
 
-type error = Client.error
+type error = Polymarket_http.Client.error
 
-let error_to_string = Client.error_to_string
+let error_to_string = Polymarket_http.Client.error_to_string

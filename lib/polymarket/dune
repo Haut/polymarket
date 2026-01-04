@@ -1,4 +1,4 @@
-(include_subdirs unqualified)
+(include_subdirs qualified)
 
 (library
  (name polymarket)
@@ -30,15 +30,6 @@
   ; JSON
   yojson
   ppx_yojson_conv_lib)
- (private_modules
-  ; Common internals
-  auth
-  constants
-  crypto
-  error
-  order_signing
-  ; API internals
-  clob_order_builder
-  rfq_order_builder)
+ ; Temporarily disabled private_modules for debugging
  (preprocess
   (pps ppx_yojson_conv ppx_deriving.show ppx_deriving.eq ppx_polymarket_enum)))

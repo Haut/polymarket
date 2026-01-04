@@ -1,7 +1,7 @@
 (library
  (name polymarket_http)
  (public_name polymarket.http)
- (wrapped false)
+ (wrapped true)
  (libraries
   polymarket.rate_limiter
   eio

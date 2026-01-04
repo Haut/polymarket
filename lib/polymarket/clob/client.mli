@@ -30,24 +30,21 @@
       | Error e -> error_to_string e |> failwith
     ]} *)
 
-module Types = Clob_types
-(** CLOB API request/response types. *)
-
 (** {1 Types from Internal Libraries}
 
     These types are re-exported for convenience. *)
 
-type private_key = Crypto.private_key
+type private_key = Common.Crypto.private_key
 (** Ethereum private key (hex string, without 0x prefix). *)
 
-type credentials = Auth.credentials = {
+type credentials = Common.Auth.credentials = {
   api_key : string;
   secret : string;
   passphrase : string;
 }
 (** API credentials for L2 authentication. *)
 
-type api_key_response = Auth.api_key_response = {
+type api_key_response = Common.Auth.api_key_response = {
   api_key : string;
   secret : string;
   passphrase : string;
@@ -57,7 +54,7 @@ type api_key_response = Auth.api_key_response = {
 type rate_limiter = Rate_limiter.t
 (** Rate limiter for enforcing API limits. *)
 
-type error = Primitives.api_error
+type error = Polymarket_http.Client.error
 (** Error type for API operations. *)
 
 val error_to_string : error -> string
@@ -106,40 +103,34 @@ module Unauthed : sig
   (** {2 Order Book} *)
 
   val get_order_book :
-    t ->
-    token_id:string ->
-    unit ->
-    (Clob_types.order_book_summary, error) result
+    t -> token_id:string -> unit -> (Types.order_book_summary, error) result
 
   val get_order_books :
     t ->
     token_ids:string list ->
     unit ->
-    (Clob_types.order_book_summary list, error) result
+    (Types.order_book_summary list, error) result
 
   (** {2 Pricing} *)
 
   val get_price :
     t ->
     token_id:string ->
-    side:Clob_types.Side.t ->
+    side:Types.Side.t ->
     unit ->
-    (Clob_types.price_response, error) result
+    (Types.price_response, error) result
 
   val get_midpoint :
-    t -> token_id:string -> unit -> (Clob_types.midpoint_response, error) result
+    t -> token_id:string -> unit -> (Types.midpoint_response, error) result
 
   val get_prices :
     t ->
-    requests:(string * Clob_types.Side.t) list ->
+    requests:(string * Types.Side.t) list ->
     unit ->
-    (Clob_types.prices_response, error) result
+    (Types.prices_response, error) result
 
   val get_spreads :
-    t ->
-    token_ids:string list ->
-    unit ->
-    (Clob_types.spreads_response, error) result
+    t -> token_ids:string list -> unit -> (Types.spreads_response, error) result
 
   (** {2 Timeseries} *)
 
@@ -148,10 +139,10 @@ module Unauthed : sig
     market:string ->
     ?start_ts:int ->
     ?end_ts:int ->
-    ?interval:Clob_types.Interval.t ->
+    ?interval:Types.Interval.t ->
     ?fidelity:int ->
     unit ->
-    (Clob_types.price_history, error) result
+    (Types.price_history, error) result
 end
 
 (** {1 L1-Authenticated Client}
@@ -194,40 +185,34 @@ module L1 : sig
   (** {2 Order Book} *)
 
   val get_order_book :
-    t ->
-    token_id:string ->
-    unit ->
-    (Clob_types.order_book_summary, error) result
+    t -> token_id:string -> unit -> (Types.order_book_summary, error) result
 
   val get_order_books :
     t ->
     token_ids:string list ->
     unit ->
-    (Clob_types.order_book_summary list, error) result
+    (Types.order_book_summary list, error) result
 
   (** {2 Pricing} *)
 
   val get_price :
     t ->
     token_id:string ->
-    side:Clob_types.Side.t ->
+    side:Types.Side.t ->
     unit ->
-    (Clob_types.price_response, error) result
+    (Types.price_response, error) result
 
   val get_midpoint :
-    t -> token_id:string -> unit -> (Clob_types.midpoint_response, error) result
+    t -> token_id:string -> unit -> (Types.midpoint_response, error) result
 
   val get_prices :
     t ->
-    requests:(string * Clob_types.Side.t) list ->
+    requests:(string * Types.Side.t) list ->
     unit ->
-    (Clob_types.prices_response, error) result
+    (Types.prices_response, error) result
 
   val get_spreads :
-    t ->
-    token_ids:string list ->
-    unit ->
-    (Clob_types.spreads_response, error) result
+    t -> token_ids:string list -> unit -> (Types.spreads_response, error) result
 
   (** {2 Timeseries} *)
 
@@ -236,10 +221,10 @@ module L1 : sig
     market:string ->
     ?start_ts:int ->
     ?end_ts:int ->
-    ?interval:Clob_types.Interval.t ->
+    ?interval:Types.Interval.t ->
     ?fidelity:int ->
     unit ->
-    (Clob_types.price_history, error) result
+    (Types.price_history, error) result
 end
 
 (** {1 L2-Authenticated Client}
@@ -289,22 +274,22 @@ module L2 : sig
 
   val create_order :
     t ->
-    order:Clob_types.signed_order ->
+    order:Types.signed_order ->
     owner:string ->
-    order_type:Clob_types.Order_type.t ->
+    order_type:Types.Order_type.t ->
     unit ->
-    (Clob_types.create_order_response, error) result
+    (Types.create_order_response, error) result
   (** Create a new order on the CLOB. *)
 
   val create_orders :
     t ->
-    orders:(Clob_types.signed_order * string * Clob_types.Order_type.t) list ->
+    orders:(Types.signed_order * string * Types.Order_type.t) list ->
     unit ->
-    (Clob_types.create_order_response list, error) result
+    (Types.create_order_response list, error) result
   (** Create multiple orders on the CLOB. *)
 
   val get_order :
-    t -> order_id:string -> unit -> (Clob_types.open_order, error) result
+    t -> order_id:string -> unit -> (Types.open_order, error) result
   (** Get details of a specific order. *)
 
   val get_orders :
@@ -312,23 +297,20 @@ module L2 : sig
     ?market:string ->
     ?asset_id:string ->
     unit ->
-    (Clob_types.open_order list, error) result
+    (Types.open_order list, error) result
   (** Get all open orders, optionally filtered by market or asset. *)
 
   (** {2 Cancel Orders} *)
 
   val cancel_order :
-    t -> order_id:string -> unit -> (Clob_types.cancel_response, error) result
+    t -> order_id:string -> unit -> (Types.cancel_response, error) result
   (** Cancel a specific order. *)
 
   val cancel_orders :
-    t ->
-    order_ids:string list ->
-    unit ->
-    (Clob_types.cancel_response, error) result
+    t -> order_ids:string list -> unit -> (Types.cancel_response, error) result
   (** Cancel multiple orders. *)
 
-  val cancel_all : t -> unit -> (Clob_types.cancel_response, error) result
+  val cancel_all : t -> unit -> (Types.cancel_response, error) result
   (** Cancel all open orders. *)
 
   val cancel_market_orders :
@@ -336,7 +318,7 @@ module L2 : sig
     ?market:string ->
     ?asset_id:string ->
     unit ->
-    (Clob_types.cancel_response, error) result
+    (Types.cancel_response, error) result
   (** Cancel all orders for a market or asset. *)
 
   (** {2 Trades} *)
@@ -350,46 +332,40 @@ module L2 : sig
     ?before:string ->
     ?after:string ->
     unit ->
-    (Clob_types.clob_trade list, error) result
+    (Types.clob_trade list, error) result
   (** Get trade history. *)
 
   (** {2 Order Book} *)
 
   val get_order_book :
-    t ->
-    token_id:string ->
-    unit ->
-    (Clob_types.order_book_summary, error) result
+    t -> token_id:string -> unit -> (Types.order_book_summary, error) result
 
   val get_order_books :
     t ->
     token_ids:string list ->
     unit ->
-    (Clob_types.order_book_summary list, error) result
+    (Types.order_book_summary list, error) result
 
   (** {2 Pricing} *)
 
   val get_price :
     t ->
     token_id:string ->
-    side:Clob_types.Side.t ->
+    side:Types.Side.t ->
     unit ->
-    (Clob_types.price_response, error) result
+    (Types.price_response, error) result
 
   val get_midpoint :
-    t -> token_id:string -> unit -> (Clob_types.midpoint_response, error) result
+    t -> token_id:string -> unit -> (Types.midpoint_response, error) result
 
   val get_prices :
     t ->
-    requests:(string * Clob_types.Side.t) list ->
+    requests:(string * Types.Side.t) list ->
     unit ->
-    (Clob_types.prices_response, error) result
+    (Types.prices_response, error) result
 
   val get_spreads :
-    t ->
-    token_ids:string list ->
-    unit ->
-    (Clob_types.spreads_response, error) result
+    t -> token_ids:string list -> unit -> (Types.spreads_response, error) result
 
   (** {2 Timeseries} *)
 
@@ -398,10 +374,10 @@ module L2 : sig
     market:string ->
     ?start_ts:int ->
     ?end_ts:int ->
-    ?interval:Clob_types.Interval.t ->
+    ?interval:Types.Interval.t ->
     ?fidelity:int ->
     unit ->
-    (Clob_types.price_history, error) result
+    (Types.price_history, error) result
 end
 
 (** {1 State Transitions}

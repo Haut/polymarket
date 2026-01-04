@@ -68,11 +68,11 @@ let build_l2_headers ~(credentials : credentials) ~address ~method_ ~path ~body
 
 let with_l1_auth ~private_key ~address ~nonce req =
   let headers = build_l1_headers ~private_key ~address ~nonce in
-  Request.header_list headers req
+  Polymarket_http.Request.header_list headers req
 
 let with_l2_auth ~credentials ~address req =
-  let method_ = Request.method_string req in
-  let path = Request.path req in
-  let body = Option.value ~default:"" (Request.body_opt req) in
+  let method_ = Polymarket_http.Request.method_string req in
+  let path = Polymarket_http.Request.path req in
+  let body = Option.value ~default:"" (Polymarket_http.Request.body_opt req) in
   let headers = build_l2_headers ~credentials ~address ~method_ ~path ~body in
-  Request.header_list headers req
+  Polymarket_http.Request.header_list headers req

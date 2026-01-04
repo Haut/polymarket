@@ -184,22 +184,3 @@ end
 module Sort_dir = struct
   type t = Asc | Desc [@@deriving enum]
 end
-
-(** {1 Error Types} *)
-
-type http_error = Client.http_error = {
-  status : int;
-  body : string;
-  message : string;
-}
-
-type parse_error = Client.parse_error = { context : string; message : string }
-type network_error = Client.network_error = { message : string }
-
-type api_error = Client.error =
-  | Http_error of http_error
-  | Parse_error of parse_error
-  | Network_error of network_error
-
-let api_error_to_string = Client.error_to_string
-let pp_api_error = Client.pp_error

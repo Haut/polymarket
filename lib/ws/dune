@@ -1,6 +1,6 @@
 (library
  (name polymarket_ws)
  (public_name polymarket.ws)
- (wrapped false)
+ (wrapped true)
  (libraries eio tls-eio ca-certs cohttp base64 digestif cstruct logs)
  (private_modules frame handshake))
