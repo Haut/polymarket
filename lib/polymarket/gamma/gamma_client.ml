@@ -1,7 +1,7 @@
 (** Gamma API client for markets, events, series, and search. *)
 
 module P = Primitives
-module B = Http_builder
+module B = Request
 include Gamma_types
 
 type t = Client.t

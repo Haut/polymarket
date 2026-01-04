@@ -26,7 +26,6 @@
     ]} *)
 
 module C = Client
-module Auth = Auth
 
 type ready
 (** Phantom type indicating request is ready to execute *)
@@ -108,25 +107,16 @@ let header_add (key : string) (value : string) (req : 'a t) : 'a t =
 let header_list (hs : (string * string) list) (req : 'a t) : 'a t =
   { req with headers = hs @ req.headers }
 
-(** {1 Auth} *)
+(** {1 Request Accessors} *)
 
-let with_l1_auth ~private_key ~address ~nonce (req : 'a t) : 'a t =
-  let headers = Auth.build_l1_headers ~private_key ~address ~nonce in
-  { req with headers = headers @ req.headers }
-
-let method_to_string = function
+let method_string (req : 'a t) : string =
+  match req.method_ with
   | GET -> "GET"
   | POST -> "POST"
-  | DELETE -> "DELETE"
-  | DELETE_WITH_BODY -> "DELETE"
+  | DELETE | DELETE_WITH_BODY -> "DELETE"
 
-let with_l2_auth ~credentials ~address (req : 'a t) : 'a t =
-  let method_ = method_to_string req.method_ in
-  let body = Option.value ~default:"" req.body in
-  let headers =
-    Auth.build_l2_headers ~credentials ~address ~method_ ~path:req.path ~body
-  in
-  { req with headers = headers @ req.headers }
+let path (req : 'a t) : string = req.path
+let body_opt (req : 'a t) : string option = req.body
 
 (** {1 Body} *)
 
@@ -158,7 +148,7 @@ let fetch_json ?(expected_fields : string list option) ?(context : string = "")
       match expected_fields with
       | Some fields ->
           C.parse_with_field_check ~expected_fields:fields ~context b parser
-      | None -> Http_json.parse parser b |> Result.map_error Client.to_error)
+      | None -> Json.parse parser b |> Result.map_error Client.to_error)
 
 let fetch_json_list ?(expected_fields : string list option)
     ?(context : string = "") (parser : Yojson.Safe.t -> 'a) (req : ready t) :
@@ -169,8 +159,7 @@ let fetch_json_list ?(expected_fields : string list option)
       | Some fields ->
           C.parse_list_with_field_check ~expected_fields:fields ~context b
             (Ppx_yojson_conv_lib.Yojson_conv.list_of_yojson parser)
-      | None ->
-          Http_json.parse_list parser b |> Result.map_error Client.to_error)
+      | None -> Json.parse_list parser b |> Result.map_error Client.to_error)
 
 let fetch_text (req : ready t) : (string, C.error) result =
   let status, body = fetch req in

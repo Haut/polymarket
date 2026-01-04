@@ -1,6 +1,6 @@
 (** Data API client for positions, trades, activity, and leaderboards. *)
 
-module B = Http_builder
+module B = Request
 module P = Primitives
 include Data_types
 

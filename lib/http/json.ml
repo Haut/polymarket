@@ -1,6 +1,6 @@
 (** JSON parsing and body building utilities. *)
 
-let src = Logs.Src.create "polymarket.json" ~doc:"JSON parsing"
+let src = Logs.Src.create "http.json" ~doc:"JSON parsing"
 
 module Log = (val Logs.src_log src : Logs.LOG)
 

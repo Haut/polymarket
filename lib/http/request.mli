@@ -79,16 +79,16 @@ val header_add : string -> string -> 'a t -> 'a t
 val header_list : (string * string) list -> 'a t -> 'a t
 (** Add multiple headers. *)
 
-(** {1 Auth} *)
+(** {1 Request Accessors} *)
 
-val with_l1_auth :
-  private_key:Crypto.private_key -> address:string -> nonce:int -> 'a t -> 'a t
-(** Add L1 authentication headers for wallet-based endpoints. *)
+val method_string : 'a t -> string
+(** Get the HTTP method as a string ("GET", "POST", "DELETE"). *)
 
-val with_l2_auth :
-  credentials:Auth.credentials -> address:string -> 'a t -> 'a t
-(** Add L2 authentication headers. Computes headers from the request's method,
-    path, and body. Must be called after [with_body] for POST requests. *)
+val path : 'a t -> string
+(** Get the request path. *)
+
+val body_opt : 'a t -> string option
+(** Get the request body if set. *)
 
 (** {1 Body} *)
 
