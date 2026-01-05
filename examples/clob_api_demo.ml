@@ -86,7 +86,7 @@ let run_demo env =
 
   (* First, get markets from Gamma API to find token IDs with active order books *)
   let gamma_client =
-    Gamma.create ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter ()
+    Gamma.create_exn ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter ()
   in
   (* Filter for non-closed markets with volume to find ones with order books *)
   let markets =

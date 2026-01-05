@@ -46,16 +46,25 @@ type t = {
 }
 (** Internal connection type *)
 
+(** TLS/connection error type *)
+type init_error =
+  | Ca_certs_error of string
+  | Tls_config_error of string
+  | Dns_error of string
+
+let string_of_init_error = function
+  | Ca_certs_error msg -> "CA certs error: " ^ msg
+  | Tls_config_error msg -> "TLS config error: " ^ msg
+  | Dns_error msg -> "DNS error: " ^ msg
+
 (** Create TLS configuration *)
 let make_tls_config () =
-  let authenticator =
-    match Ca_certs.authenticator () with
-    | Ok auth -> auth
-    | Error (`Msg msg) -> failwith ("CA certs error: " ^ msg)
-  in
-  match Tls.Config.client ~authenticator () with
-  | Ok cfg -> cfg
-  | Error (`Msg msg) -> failwith ("TLS config error: " ^ msg)
+  match Ca_certs.authenticator () with
+  | Error (`Msg msg) -> Error (Ca_certs_error msg)
+  | Ok authenticator -> (
+      match Tls.Config.client ~authenticator () with
+      | Ok cfg -> Ok cfg
+      | Error (`Msg msg) -> Error (Tls_config_error msg))
 
 (** Create a new connection *)
 let create ~sw ~net ~clock ~host ~resource ?(ping_interval = 30.0)
@@ -83,44 +92,50 @@ let connect_tls t =
   Log.debug (fun m -> m "Connecting to %s:%d" host port);
 
   (* Resolve address *)
-  let addr =
-    match Eio.Net.getaddrinfo_stream net host ~service:(string_of_int port) with
-    | [] -> failwith ("Failed to resolve host: " ^ host)
-    | addr :: _ -> addr
-  in
+  match Eio.Net.getaddrinfo_stream net host ~service:(string_of_int port) with
+  | [] -> Error (Dns_error ("Failed to resolve host: " ^ host))
+  | addr :: _ -> (
+      (* Connect TCP *)
+      let socket = Eio.Net.connect ~sw:t.sw net addr in
 
-  (* Connect TCP *)
-  let socket = Eio.Net.connect ~sw:t.sw net addr in
-
-  (* Upgrade to TLS *)
-  let tls_config = make_tls_config () in
-  let host_name = Domain_name.of_string_exn host |> Domain_name.host_exn in
-  Log.debug (fun m -> m "TLS handshake");
-  let tls_flow = Tls_eio.client_of_flow tls_config ~host:host_name socket in
-  Log.debug (fun m -> m "TLS connected");
-
-  tls_flow
+      (* Upgrade to TLS *)
+      match make_tls_config () with
+      | Error e -> Error e
+      | Ok tls_config ->
+          let host_name =
+            Domain_name.of_string_exn host |> Domain_name.host_exn
+          in
+          Log.debug (fun m -> m "TLS handshake");
+          let tls_flow =
+            Tls_eio.client_of_flow tls_config ~host:host_name socket
+          in
+          Log.debug (fun m -> m "TLS connected");
+          Ok tls_flow)
 
 (** Connect and perform WebSocket handshake *)
 let connect_internal t =
   t.state <- Connecting;
-  let flow = connect_tls t in
-
-  (* Perform WebSocket handshake *)
-  match
-    Handshake.perform ~flow ~host:t.config.host ~port:t.config.port
-      ~resource:t.config.resource
-  with
-  | Handshake.Success ->
-      t.flow <- Some flow;
-      t.state <- Connected;
-      t.current_backoff <- t.config.initial_backoff;
-      Log.debug (fun m -> m "Connected");
-      true
-  | Handshake.Failed msg ->
-      Log.err (fun m -> m "Handshake failed: %s" msg);
+  match connect_tls t with
+  | Error e ->
+      Log.err (fun m -> m "Connection failed: %s" (string_of_init_error e));
       t.state <- Disconnected;
       false
+  | Ok flow -> (
+      (* Perform WebSocket handshake *)
+      match
+        Handshake.perform ~flow ~host:t.config.host ~port:t.config.port
+          ~resource:t.config.resource
+      with
+      | Handshake.Success ->
+          t.flow <- Some flow;
+          t.state <- Connected;
+          t.current_backoff <- t.config.initial_backoff;
+          Log.debug (fun m -> m "Connected");
+          true
+      | Handshake.Failed msg ->
+          Log.err (fun m -> m "Handshake failed: %s" msg);
+          t.state <- Disconnected;
+          false)
 
 (** Send a frame *)
 let send_frame t frame =

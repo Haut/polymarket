@@ -60,7 +60,7 @@ let clob_trading ~behavior =
       route () |> host clob_api_host |> method_ meth |> path p
       |> limit ~requests:burst ~window_seconds:10.0
       |> limit ~requests:sustained ~window_seconds:600.0
-      |> on_limit behavior |> build)
+      |> on_limit behavior |> build_exn)
   in
   [
     ep ~meth:"POST" ~p:"/order" ~burst:3500 ~sustained:36000;

@@ -231,7 +231,7 @@ end
       in
       let stream = Rtds.Crypto_prices.stream client in
       match Eio.Stream.take stream with
-      | `Binance msg -> Printf.printf "BTC: %.2f\n" msg.payload.value
+      | Binance msg -> Printf.printf "BTC: %.2f\n" msg.payload.value
       | _ -> ()
     ]}
 
@@ -246,7 +246,7 @@ end
       in
       let stream = Rtds.Crypto_prices.stream client in
       match Eio.Stream.take stream with
-      | `Chainlink msg -> Printf.printf "ETH: %.2f\n" msg.payload.value
+      | Chainlink msg -> Printf.printf "ETH: %.2f\n" msg.payload.value
       | _ -> ()
     ]}
 
@@ -258,7 +258,7 @@ end
       let client = Rtds.Comments.connect ~sw ~net ~clock () in
       let stream = Rtds.Comments.stream client in
       match Eio.Stream.take stream with
-      | `Comment_created msg ->
+      | Comment_created msg ->
           Printf.printf "New comment: %s\n" msg.payload.body
       | _ -> ()
     ]}
@@ -280,9 +280,8 @@ end
       Rtds.subscribe client ~subscriptions;
       let stream = Rtds.stream client in
       match Eio.Stream.take stream with
-      | `Crypto (`Binance msg) ->
-          Printf.printf "Price: %.2f\n" msg.payload.value
-      | `Comment (`Comment_created msg) ->
+      | Crypto (Binance msg) -> Printf.printf "Price: %.2f\n" msg.payload.value
+      | Comment (Comment_created msg) ->
           Printf.printf "Comment: %s\n" msg.payload.body
       | _ -> ()
     ]} *)

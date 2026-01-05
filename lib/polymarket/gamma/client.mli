@@ -7,6 +7,12 @@ end
 type t
 (** The Gamma API client type. *)
 
+type init_error = Polymarket_http.Client.init_error
+(** TLS/CA initialization error type *)
+
+val string_of_init_error : init_error -> string
+(** Convert initialization error to string *)
+
 val default_base_url : string
 (** Default base URL: https://gamma-api.polymarket.com *)
 
@@ -16,12 +22,23 @@ val create :
   net:'a Eio.Net.t ->
   rate_limiter:Rate_limiter.t ->
   unit ->
-  t
+  (t, init_error) result
 (** Create a Gamma API client.
     @param base_url Override the default base URL
     @param sw Eio switch for resource management
     @param net Eio network capability
-    @param rate_limiter Rate limiter for API requests *)
+    @param rate_limiter Rate limiter for API requests
+    @return Ok client on success, Error on TLS initialization failure *)
+
+val create_exn :
+  ?base_url:string ->
+  sw:Eio.Switch.t ->
+  net:'a Eio.Net.t ->
+  rate_limiter:Rate_limiter.t ->
+  unit ->
+  t
+(** Create a Gamma API client, raising an exception on failure.
+    @raise Failure if TLS initialization fails *)
 
 (** {1 Health Endpoint} *)
 

@@ -27,6 +27,7 @@
   base64
   hex
   cstruct
+  mirage-crypto-rng
   ; JSON
   yojson
   ppx_yojson_conv_lib)

@@ -10,12 +10,7 @@ module Log = (val Logs.src_log src : Logs.LOG)
 let websocket_guid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
 (** Generate a random 16-byte nonce and base64 encode it *)
-let generate_key () =
-  let bytes = Bytes.create 16 in
-  for i = 0 to 15 do
-    Bytes.set bytes i (Char.chr (Random.int 256))
-  done;
-  Base64.encode_string (Bytes.to_string bytes)
+let generate_key () = Base64.encode_string (Mirage_crypto_rng.generate 16)
 
 (** Calculate expected Sec-WebSocket-Accept value *)
 let expected_accept key =
@@ -47,10 +42,11 @@ let read_line flow =
 let parse_status_line line =
   (* HTTP/1.1 101 Switching Protocols *)
   match String.split_on_char ' ' line with
-  | version :: code :: _ ->
-      let code = int_of_string code in
-      (version, code)
-  | _ -> failwith ("Invalid HTTP status line: " ^ line)
+  | version :: code :: _ -> (
+      match int_of_string_opt code with
+      | Some code -> Ok (version, code)
+      | None -> Error ("Invalid status code in HTTP status line: " ^ line))
+  | _ -> Error ("Invalid HTTP status line: " ^ line)
 
 (** Parse HTTP headers until empty line *)
 let parse_headers flow =
@@ -110,34 +106,37 @@ let perform ~flow ~host ~port ~resource =
   let status_line = read_line flow in
   Log.debug (fun m -> m "Status: %s" status_line);
 
-  let _version, status_code = parse_status_line status_line in
-
-  if status_code <> 101 then begin
-    let msg = Printf.sprintf "Expected 101, got %d" status_code in
-    Log.err (fun m -> m "Handshake failed: %s" msg);
-    Failed msg
-  end
-  else begin
-    (* Parse headers *)
-    let headers = parse_headers flow in
-
-    (* Verify Sec-WebSocket-Accept *)
-    let accept =
-      match Hashtbl.find_opt headers "sec-websocket-accept" with
-      | Some v -> v
-      | None -> ""
-    in
-
-    if accept <> expected then begin
-      let msg =
-        Printf.sprintf "Invalid Sec-WebSocket-Accept: expected %s, got %s"
-          expected accept
-      in
+  match parse_status_line status_line with
+  | Error msg ->
       Log.err (fun m -> m "Handshake failed: %s" msg);
       Failed msg
-    end
-    else begin
-      Log.debug (fun m -> m "Handshake successful");
-      Success
-    end
-  end
+  | Ok (_version, status_code) ->
+      if status_code <> 101 then begin
+        let msg = Printf.sprintf "Expected 101, got %d" status_code in
+        Log.err (fun m -> m "Handshake failed: %s" msg);
+        Failed msg
+      end
+      else begin
+        (* Parse headers *)
+        let headers = parse_headers flow in
+
+        (* Verify Sec-WebSocket-Accept *)
+        let accept =
+          match Hashtbl.find_opt headers "sec-websocket-accept" with
+          | Some v -> v
+          | None -> ""
+        in
+
+        if accept <> expected then begin
+          let msg =
+            Printf.sprintf "Invalid Sec-WebSocket-Accept: expected %s, got %s"
+              expected accept
+          in
+          Log.err (fun m -> m "Handshake failed: %s" msg);
+          Failed msg
+        end
+        else begin
+          Log.debug (fun m -> m "Handshake successful");
+          Success
+        end
+      end

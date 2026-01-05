@@ -163,57 +163,70 @@ type order_message = {
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Order message from user channel *)
 
-(** {1 Unified Message Type (Polymorphic Variants)} *)
+(** {1 Unified Message Types} *)
 
+(** Market channel messages. *)
 type market_message =
-  [ `Book of book_message
-  | `Price_change of price_change_message
-  | `Tick_size_change of tick_size_change_message
-  | `Last_trade_price of last_trade_price_message
-  | `Best_bid_ask of best_bid_ask_message ]
+  | Book of book_message
+  | Price_change of price_change_message
+  | Tick_size_change of tick_size_change_message
+  | Last_trade_price of last_trade_price_message
+  | Best_bid_ask of best_bid_ask_message
 [@@deriving show, eq]
-(** Market channel messages using polymorphic variants for extensibility. *)
 
-type user_message = [ `Trade of trade_message | `Order of order_message ]
+(** User channel messages. *)
+type user_message = Trade of trade_message | Order of order_message
 [@@deriving show, eq]
-(** User channel messages using polymorphic variants for extensibility. *)
 
+(** Top-level message type. *)
 type message =
-  [ `Market of market_message | `User of user_message | `Unknown of string ]
+  | Market of market_message
+  | User of user_message
+  | Unknown of string
 [@@deriving show, eq]
-(** Top-level message type using polymorphic variants. Allows pattern matching
-    on all message types at once. *)
 
 (** {1 Message Parsing} *)
 
-let parse_market_message (json : Yojson.Safe.t) : market_message =
+let parse_market_message (json : Yojson.Safe.t) :
+    (market_message, string) result =
   match json with
   | `Assoc fields -> (
       match List.assoc_opt "event_type" fields with
-      | Some (`String "book") -> `Book (book_message_of_yojson json)
+      | Some (`String "book") -> Ok (Book (book_message_of_yojson json))
       | Some (`String "price_change") ->
-          `Price_change (price_change_message_of_yojson json)
+          Ok (Price_change (price_change_message_of_yojson json))
       | Some (`String "tick_size_change") ->
-          `Tick_size_change (tick_size_change_message_of_yojson json)
+          Ok (Tick_size_change (tick_size_change_message_of_yojson json))
       | Some (`String "last_trade_price") ->
-          `Last_trade_price (last_trade_price_message_of_yojson json)
+          Ok (Last_trade_price (last_trade_price_message_of_yojson json))
       | Some (`String "best_bid_ask") ->
-          `Best_bid_ask (best_bid_ask_message_of_yojson json)
-      | Some (`String s) -> failwith ("Unknown market event_type: " ^ s)
-      | _ -> failwith "Missing or invalid event_type in market message")
-  | _ -> failwith "Market message must be a JSON object"
+          Ok (Best_bid_ask (best_bid_ask_message_of_yojson json))
+      | Some (`String s) -> Error ("Unknown market event_type: " ^ s)
+      | _ -> Error "Missing or invalid event_type in market message")
+  | _ -> Error "Market message must be a JSON object"
 
-let parse_user_message (json : Yojson.Safe.t) : user_message =
+let parse_user_message (json : Yojson.Safe.t) : (user_message, string) result =
   match json with
   | `Assoc fields -> (
       match List.assoc_opt "event_type" fields with
-      | Some (`String "trade") -> `Trade (trade_message_of_yojson json)
-      | Some (`String "order") -> `Order (order_message_of_yojson json)
-      | Some (`String s) -> failwith ("Unknown user event_type: " ^ s)
-      | _ -> failwith "Missing or invalid event_type in user message")
-  | _ -> failwith "User message must be a JSON object"
+      | Some (`String "trade") -> Ok (Trade (trade_message_of_yojson json))
+      | Some (`String "order") -> Ok (Order (order_message_of_yojson json))
+      | Some (`String s) -> Error ("Unknown user event_type: " ^ s)
+      | _ -> Error "Missing or invalid event_type in user message")
+  | _ -> Error "User message must be a JSON object"
 
 let parse_message ~channel (raw : string) : message list =
+  let parse_single json =
+    match channel with
+    | Channel.Market -> (
+        match parse_market_message json with
+        | Ok msg -> Some (Market msg)
+        | Error e -> Some (Unknown e))
+    | Channel.User -> (
+        match parse_user_message json with
+        | Ok msg -> Some (User msg)
+        | Error e -> Some (Unknown e))
+  in
   try
     let json = Yojson.Safe.from_string raw in
     match json with
@@ -221,22 +234,14 @@ let parse_message ~channel (raw : string) : message list =
     | `List items ->
         (* Array of messages - parse each one *)
         List.filter_map
-          (fun item ->
-            try
-              Some
-                (match channel with
-                | Channel.Market -> `Market (parse_market_message item)
-                | Channel.User -> `User (parse_user_message item))
-            with _ -> None)
+          (fun item -> try parse_single item with _ -> None)
           items
-    | _ ->
+    | _ -> (
         (* Single message object *)
-        [
-          (match channel with
-          | Channel.Market -> `Market (parse_market_message json)
-          | Channel.User -> `User (parse_user_message json));
-        ]
-  with _ -> [ `Unknown (Printf.sprintf "Parse error: %s" raw) ]
+        match parse_single json with
+        | Some msg -> [ msg ]
+        | None -> [])
+  with _ -> [ Unknown (Printf.sprintf "Parse error: %s" raw) ]
 
 (** {1 Subscription Request Types} *)
 

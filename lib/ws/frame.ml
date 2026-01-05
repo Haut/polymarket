@@ -77,12 +77,7 @@ type t = { fin : bool; opcode : Opcode.t; payload : string }
 (** A WebSocket frame *)
 
 (** Generate a random 4-byte masking key *)
-let generate_mask () =
-  let key = Bytes.create 4 in
-  for i = 0 to 3 do
-    Bytes.set key i (Char.chr (Random.int 256))
-  done;
-  Bytes.to_string key
+let generate_mask () = Mirage_crypto_rng.generate 4
 
 (** Apply XOR mask to payload *)
 let apply_mask ~key payload =

@@ -2,5 +2,14 @@
  (name polymarket_ws)
  (public_name polymarket.ws)
  (wrapped true)
- (libraries eio tls-eio ca-certs cohttp base64 digestif cstruct logs)
+ (libraries
+  eio
+  tls-eio
+  ca-certs
+  cohttp
+  base64
+  digestif
+  cstruct
+  logs
+  mirage-crypto-rng)
  (private_modules frame handshake))

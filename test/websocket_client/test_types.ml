@@ -144,7 +144,7 @@ let test_parse_book_message () =
     {|{"event_type":"book","asset_id":"123","market":"abc","timestamp":"1234567890","hash":"0x123","bids":[{"price":"0.5","size":"100"}],"asks":[]}|}
   in
   match parse_message ~channel:Channel.Market json with
-  | [ `Market (`Book msg) ] ->
+  | [ Market (Book msg) ] ->
       Alcotest.(check string) "asset_id" "123" msg.asset_id;
       Alcotest.(check int) "bids count" 1 (List.length msg.bids);
       Alcotest.(check int) "asks count" 0 (List.length msg.asks)
@@ -155,7 +155,7 @@ let test_parse_price_change_message () =
     {|{"event_type":"price_change","market":"abc","price_changes":[],"timestamp":"123"}|}
   in
   match parse_message ~channel:Channel.Market json with
-  | [ `Market (`Price_change msg) ] ->
+  | [ Market (Price_change msg) ] ->
       Alcotest.(check string) "market" "abc" msg.market
   | _ -> Alcotest.fail "expected Price_change message"
 
@@ -169,7 +169,7 @@ let test_parse_empty_array () =
 let test_parse_invalid_json () =
   let json = "not valid json" in
   match parse_message ~channel:Channel.Market json with
-  | [ `Unknown _ ] -> ()
+  | [ Unknown _ ] -> ()
   | _ -> Alcotest.fail "expected Unknown message for invalid JSON"
 
 (** {1 Subscription JSON Tests} *)

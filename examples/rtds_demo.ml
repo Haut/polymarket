@@ -11,16 +11,16 @@ open Polymarket
 
 let handle_crypto_message (msg : Rtds.Types.crypto_message) =
   match msg with
-  | `Binance m ->
+  | Binance m ->
       Logger.ok "BINANCE"
         (Printf.sprintf "symbol=%s price=%.2f" m.payload.symbol m.payload.value)
-  | `Chainlink m ->
+  | Chainlink m ->
       Logger.ok "CHAINLINK"
         (Printf.sprintf "symbol=%s price=%.2f" m.payload.symbol m.payload.value)
 
 let handle_comment (msg : Rtds.Types.comment) =
   match msg with
-  | `Comment_created m ->
+  | Comment_created m ->
       let body_preview =
         if String.length m.payload.body > 50 then
           String.sub m.payload.body 0 50 ^ "..."
@@ -29,18 +29,18 @@ let handle_comment (msg : Rtds.Types.comment) =
       Logger.ok "COMMENT"
         (Printf.sprintf "id=%s user=%s body=\"%s\"" m.payload.id
            m.payload.profile.name body_preview)
-  | `Comment_removed m ->
+  | Comment_removed m ->
       Logger.ok "REMOVED" (Printf.sprintf "id=%s" m.payload.id)
-  | `Reaction_created m ->
+  | Reaction_created m ->
       Logger.ok "REACTION+" (Printf.sprintf "comment_id=%s" m.payload.id)
-  | `Reaction_removed m ->
+  | Reaction_removed m ->
       Logger.ok "REACTION-" (Printf.sprintf "comment_id=%s" m.payload.id)
 
 let handle_message (msg : Rtds.Types.message) =
   match msg with
-  | `Crypto m -> handle_crypto_message m
-  | `Comment m -> handle_comment m
-  | `Unknown raw ->
+  | Crypto m -> handle_crypto_message m
+  | Comment m -> handle_comment m
+  | Unknown raw ->
       if String.length raw > 80 then
         Logger.skip "MSG" (String.sub raw 0 80 ^ "...")
       else Logger.skip "MSG" raw

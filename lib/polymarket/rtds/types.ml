@@ -80,86 +80,51 @@ type comment_message = {
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Comment message envelope *)
 
-(** {1 Unified Message Type (Polymorphic Variants)} *)
+(** {1 Unified Message Types} *)
 
-type crypto_message =
-  [ `Binance of crypto_price_message | `Chainlink of crypto_price_message ]
 (** Crypto price messages distinguished by source *)
+type crypto_message =
+  | Binance of crypto_price_message
+  | Chainlink of crypto_price_message
+[@@deriving show, eq]
 
-let show_crypto_message : crypto_message -> string = function
-  | `Binance m -> "Binance " ^ show_crypto_price_message m
-  | `Chainlink m -> "Chainlink " ^ show_crypto_price_message m
-
-let pp_crypto_message fmt m = Format.fprintf fmt "%s" (show_crypto_message m)
-
-let equal_crypto_message (a : crypto_message) (b : crypto_message) =
-  match (a, b) with
-  | `Binance a, `Binance b -> equal_crypto_price_message a b
-  | `Chainlink a, `Chainlink b -> equal_crypto_price_message a b
-  | _ -> false
-
-type comment =
-  [ `Comment_created of comment_message
-  | `Comment_removed of comment_message
-  | `Reaction_created of comment_message
-  | `Reaction_removed of comment_message ]
 (** Comment-related messages *)
+type comment =
+  | Comment_created of comment_message
+  | Comment_removed of comment_message
+  | Reaction_created of comment_message
+  | Reaction_removed of comment_message
+[@@deriving show, eq]
 
-let show_comment : comment -> string = function
-  | `Comment_created m -> "Comment_created " ^ show_comment_message m
-  | `Comment_removed m -> "Comment_removed " ^ show_comment_message m
-  | `Reaction_created m -> "Reaction_created " ^ show_comment_message m
-  | `Reaction_removed m -> "Reaction_removed " ^ show_comment_message m
-
-let pp_comment fmt m = Format.fprintf fmt "%s" (show_comment m)
-
-let equal_comment (a : comment) (b : comment) =
-  match (a, b) with
-  | `Comment_created a, `Comment_created b -> equal_comment_message a b
-  | `Comment_removed a, `Comment_removed b -> equal_comment_message a b
-  | `Reaction_created a, `Reaction_created b -> equal_comment_message a b
-  | `Reaction_removed a, `Reaction_removed b -> equal_comment_message a b
-  | _ -> false
-
-type message =
-  [ `Crypto of crypto_message | `Comment of comment | `Unknown of string ]
 (** Top-level message type for all RTDS messages *)
-
-let show_message : message -> string = function
-  | `Crypto m -> "Crypto (" ^ show_crypto_message m ^ ")"
-  | `Comment m -> "Comment (" ^ show_comment m ^ ")"
-  | `Unknown s -> "Unknown " ^ s
-
-let pp_message fmt m = Format.fprintf fmt "%s" (show_message m)
-
-let equal_message (a : message) (b : message) =
-  match (a, b) with
-  | `Crypto a, `Crypto b -> equal_crypto_message a b
-  | `Comment a, `Comment b -> equal_comment a b
-  | `Unknown a, `Unknown b -> String.equal a b
-  | _ -> false
+type message =
+  | Crypto of crypto_message
+  | Comment of comment
+  | Unknown of string
+[@@deriving show, eq]
 
 (** {1 Message Parsing} *)
 
-let parse_crypto_message (json : Yojson.Safe.t) : crypto_message =
+let parse_crypto_message (json : Yojson.Safe.t) :
+    (crypto_message, string) result =
   let msg = crypto_price_message_of_yojson json in
   match msg.topic with
-  | "crypto_prices" -> `Binance msg
-  | "crypto_prices_chainlink" -> `Chainlink msg
-  | topic -> failwith ("Unknown crypto topic: " ^ topic)
+  | "crypto_prices" -> Ok (Binance msg)
+  | "crypto_prices_chainlink" -> Ok (Chainlink msg)
+  | topic -> Error ("Unknown crypto topic: " ^ topic)
 
-let parse_comment_message (json : Yojson.Safe.t) : comment =
+let parse_comment_message (json : Yojson.Safe.t) : (comment, string) result =
   match json with
   | `Assoc fields -> (
       let msg = comment_message_of_yojson json in
       match List.assoc_opt "type" fields with
-      | Some (`String "comment_created") -> `Comment_created msg
-      | Some (`String "comment_removed") -> `Comment_removed msg
-      | Some (`String "reaction_created") -> `Reaction_created msg
-      | Some (`String "reaction_removed") -> `Reaction_removed msg
-      | Some (`String s) -> failwith ("Unknown comment type: " ^ s)
-      | _ -> failwith "Missing or invalid type in comment message")
-  | _ -> failwith "Comment message must be a JSON object"
+      | Some (`String "comment_created") -> Ok (Comment_created msg)
+      | Some (`String "comment_removed") -> Ok (Comment_removed msg)
+      | Some (`String "reaction_created") -> Ok (Reaction_created msg)
+      | Some (`String "reaction_removed") -> Ok (Reaction_removed msg)
+      | Some (`String s) -> Error ("Unknown comment type: " ^ s)
+      | _ -> Error "Missing or invalid type in comment message")
+  | _ -> Error "Comment message must be a JSON object"
 
 let parse_message (raw : string) : message list =
   try
@@ -168,15 +133,20 @@ let parse_message (raw : string) : message list =
     | `Assoc fields -> (
         match List.assoc_opt "topic" fields with
         | Some (`String "crypto_prices")
-        | Some (`String "crypto_prices_chainlink") ->
-            [ `Crypto (parse_crypto_message json) ]
-        | Some (`String "comments") -> [ `Comment (parse_comment_message json) ]
+        | Some (`String "crypto_prices_chainlink") -> (
+            match parse_crypto_message json with
+            | Ok msg -> [ Crypto msg ]
+            | Error e -> [ Unknown e ])
+        | Some (`String "comments") -> (
+            match parse_comment_message json with
+            | Ok msg -> [ Comment msg ]
+            | Error e -> [ Unknown e ])
         | Some (`String topic) ->
-            [ `Unknown (Printf.sprintf "Unknown topic: %s" topic) ]
-        | _ -> [ `Unknown (Printf.sprintf "No topic in message: %s" raw) ])
-    | _ -> [ `Unknown (Printf.sprintf "Expected JSON object: %s" raw) ]
+            [ Unknown (Printf.sprintf "Unknown topic: %s" topic) ]
+        | _ -> [ Unknown (Printf.sprintf "No topic in message: %s" raw) ])
+    | _ -> [ Unknown (Printf.sprintf "Expected JSON object: %s" raw) ]
   with exn ->
-    [ `Unknown (Printf.sprintf "Parse error: %s" (Printexc.to_string exn)) ]
+    [ Unknown (Printf.sprintf "Parse error: %s" (Printexc.to_string exn)) ]
 
 (** {1 Authentication Types} *)
 

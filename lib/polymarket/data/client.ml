@@ -1,15 +1,23 @@
 (** Data API client for positions, trades, activity, and leaderboards. *)
 
 module B = Polymarket_http.Request
+module H = Polymarket_http.Client
 module P = Common.Primitives
 include Types
 
-type t = Polymarket_http.Client.t
+type t = H.t
+type init_error = Polymarket_http.Client.init_error
 
+let string_of_init_error = Polymarket_http.Client.string_of_init_error
 let default_base_url = "https://data-api.polymarket.com"
 
 let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter () =
-  Polymarket_http.Client.create ~base_url ~sw ~net ~rate_limiter ()
+  H.create ~base_url ~sw ~net ~rate_limiter ()
+
+let create_exn ?base_url ~sw ~net ~rate_limiter () =
+  match create ?base_url ~sw ~net ~rate_limiter () with
+  | Ok client -> client
+  | Error e -> failwith (string_of_init_error e)
 
 (** {1 Health Endpoint} *)
 

@@ -278,7 +278,10 @@ let live_volume_of_yojson json =
         | _ -> []
       in
       { total; markets }
-  | _ -> failwith "live_volume_of_yojson: expected object"
+  | _ ->
+      raise
+        (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
+           (Failure "live_volume: expected object", json))
 
 (** {1 Leaderboard Types} *)
 

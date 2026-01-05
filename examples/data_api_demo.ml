@@ -36,8 +36,8 @@ let run_demo env =
   let rate_limiter = Rate_limiter.create ~routes ~clock () in
 
   (* Create clients *)
-  let data_client = Data.create ~sw ~net ~rate_limiter () in
-  let gamma_client = Gamma.create ~sw ~net ~rate_limiter () in
+  let data_client = Data.create_exn ~sw ~net ~rate_limiter () in
+  let gamma_client = Gamma.create_exn ~sw ~net ~rate_limiter () in
 
   (* ===== Health Check ===== *)
   let health = Data.health_check data_client in

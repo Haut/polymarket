@@ -91,29 +91,26 @@ type comment_message = {
 
 (** {1 Unified Message Types} *)
 
-type crypto_message =
-  [ `Binance of crypto_price_message | `Chainlink of crypto_price_message ]
 (** Crypto price messages distinguished by source *)
+type crypto_message =
+  | Binance of crypto_price_message
+  | Chainlink of crypto_price_message
+[@@deriving show, eq]
 
-val pp_crypto_message : Format.formatter -> crypto_message -> unit
-val equal_crypto_message : crypto_message -> crypto_message -> bool
-
-type comment =
-  [ `Comment_created of comment_message
-  | `Comment_removed of comment_message
-  | `Reaction_created of comment_message
-  | `Reaction_removed of comment_message ]
 (** Comment-related messages *)
+type comment =
+  | Comment_created of comment_message
+  | Comment_removed of comment_message
+  | Reaction_created of comment_message
+  | Reaction_removed of comment_message
+[@@deriving show, eq]
 
-val pp_comment : Format.formatter -> comment -> unit
-val equal_comment : comment -> comment -> bool
-
-type message =
-  [ `Crypto of crypto_message | `Comment of comment | `Unknown of string ]
 (** Top-level message type for all RTDS messages *)
-
-val pp_message : Format.formatter -> message -> unit
-val equal_message : message -> message -> bool
+type message =
+  | Crypto of crypto_message
+  | Comment of comment
+  | Unknown of string
+[@@deriving show, eq]
 
 (** {1 Message Parsing} *)
 

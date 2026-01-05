@@ -8,18 +8,25 @@
 type t
 (** The client type holding connection configuration *)
 
+(** TLS initialization error type *)
+type init_error = Ca_certs_error of string | Tls_config_error of string
+
+val string_of_init_error : init_error -> string
+(** Convert initialization error to string *)
+
 val create :
   base_url:string ->
   sw:Eio.Switch.t ->
   net:_ Eio.Net.t ->
   rate_limiter:Rate_limiter.t ->
   unit ->
-  t
+  (t, init_error) result
 (** Create a new client instance.
     @param base_url The API base URL
     @param sw The Eio switch for resource management
     @param net The Eio network interface
-    @param rate_limiter Shared rate limiter for enforcing API limits *)
+    @param rate_limiter Shared rate limiter for enforcing API limits
+    @return Ok client on success, Error on TLS initialization failure *)
 
 val base_url : t -> string
 (** Get the base URL of the client *)

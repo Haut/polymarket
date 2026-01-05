@@ -52,18 +52,31 @@ module Signature_type = struct
     | 2 -> Some Poly_gnosis_safe
     | _ -> None
 
-  let of_int n =
+  let of_int_exn n =
     match of_int_opt n with
     | Some v -> v
-    | None -> failwith (Printf.sprintf "Unknown Signature_type: %d" n)
+    | None ->
+        invalid_arg
+          (Printf.sprintf "Signature_type.of_int_exn: unknown value %d" n)
 
-  let t_of_yojson = function
-    | `Int n -> of_int n
+  let t_of_yojson json =
+    let error msg =
+      raise
+        (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (Failure msg, json))
+    in
+    match json with
+    | `Int n -> (
+        match of_int_opt n with
+        | Some v -> v
+        | None -> error (Printf.sprintf "Unknown Signature_type: %d" n))
     | `String s -> (
         match int_of_string_opt s with
-        | Some n -> of_int n
-        | None -> failwith ("Expected int for Signature_type, got: " ^ s))
-    | _ -> failwith "Expected int for Signature_type"
+        | Some n -> (
+            match of_int_opt n with
+            | Some v -> v
+            | None -> error (Printf.sprintf "Unknown Signature_type: %d" n))
+        | None -> error ("Expected int for Signature_type, got: " ^ s))
+    | _ -> error "Expected int for Signature_type"
 
   let yojson_of_t t = `Int (to_int t)
   let pp fmt t = Format.fprintf fmt "%d" (to_int t)
@@ -187,7 +200,10 @@ let cancel_response_of_yojson json =
         | _ -> []
       in
       { canceled; not_canceled }
-  | _ -> failwith "cancel_response_of_yojson: expected object"
+  | _ ->
+      raise
+        (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
+           (Failure "cancel_response: expected object", json))
 
 let yojson_of_cancel_response resp =
   `Assoc
@@ -274,13 +290,17 @@ let show_prices_response resp = Format.asprintf "%a" pp_prices_response resp
 
 (** prices_response is a map from token_id to token_price *)
 
-let prices_response_of_yojson = function
+let prices_response_of_yojson json =
+  match json with
   | `Assoc pairs ->
       List.map
         (fun (tid_str, v) ->
           (P.Token_id.unsafe_of_string tid_str, token_price_of_yojson v))
         pairs
-  | _ -> failwith "prices_response_of_yojson: expected object"
+  | _ ->
+      raise
+        (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
+           (Failure "prices_response: expected object", json))
 
 let yojson_of_prices_response resp =
   `Assoc
@@ -307,7 +327,8 @@ let show_spreads_response resp = Format.asprintf "%a" pp_spreads_response resp
 
 (** spreads_response is a map from token_id to spread value *)
 
-let spreads_response_of_yojson = function
+let spreads_response_of_yojson json =
+  match json with
   | `Assoc pairs ->
       List.filter_map
         (fun (tid_str, v) ->
@@ -315,7 +336,10 @@ let spreads_response_of_yojson = function
           | `String s -> Some (P.Token_id.unsafe_of_string tid_str, s)
           | _ -> None)
         pairs
-  | _ -> failwith "spreads_response_of_yojson: expected object"
+  | _ ->
+      raise
+        (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
+           (Failure "spreads_response: expected object", json))
 
 let yojson_of_spreads_response resp =
   `Assoc (List.map (fun (tid, s) -> (P.Token_id.to_string tid, `String s)) resp)

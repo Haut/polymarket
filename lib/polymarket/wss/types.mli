@@ -200,24 +200,25 @@ type order_message = {
 
 (** {1 Unified Message Types} *)
 
+(** Market channel messages. *)
 type market_message =
-  [ `Book of book_message
-  | `Price_change of price_change_message
-  | `Tick_size_change of tick_size_change_message
-  | `Last_trade_price of last_trade_price_message
-  | `Best_bid_ask of best_bid_ask_message ]
+  | Book of book_message
+  | Price_change of price_change_message
+  | Tick_size_change of tick_size_change_message
+  | Last_trade_price of last_trade_price_message
+  | Best_bid_ask of best_bid_ask_message
 [@@deriving eq]
-(** Market channel messages using polymorphic variants for extensibility. *)
 
-type user_message = [ `Trade of trade_message | `Order of order_message ]
+(** User channel messages. *)
+type user_message = Trade of trade_message | Order of order_message
 [@@deriving eq]
-(** User channel messages using polymorphic variants for extensibility. *)
 
+(** Top-level message type. *)
 type message =
-  [ `Market of market_message | `User of user_message | `Unknown of string ]
+  | Market of market_message
+  | User of user_message
+  | Unknown of string
 [@@deriving eq]
-(** Top-level message type using polymorphic variants. Allows pattern matching
-    on all message types at once. *)
 
 (** {1 Message Parsing} *)
 

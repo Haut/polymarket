@@ -51,7 +51,11 @@ module Make_string_type (C : STRING_CONFIG) = struct
     | _ -> Error (C.name ^ ".of_yojson: expected string")
 
   let of_yojson_exn json =
-    match of_yojson json with Ok v -> v | Error msg -> failwith msg
+    match of_yojson json with
+    | Ok v -> v
+    | Error msg ->
+        raise
+          (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (Failure msg, json))
 
   let to_yojson t = `String t
   let yojson_of_t = to_yojson
@@ -160,9 +164,13 @@ module Timestamp = struct
   let to_ptime t = t
   let of_ptime t = t
 
-  let t_of_yojson = function
+  let t_of_yojson json =
+    match json with
     | `String s -> of_string_exn s
-    | _ -> failwith "Timestamp: expected string"
+    | _ ->
+        raise
+          (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
+             (Failure "Timestamp: expected string", json))
 
   let yojson_of_t t = `String (to_string t)
   let pp fmt t = Format.fprintf fmt "%s" (to_string t)

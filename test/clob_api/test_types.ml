@@ -143,7 +143,7 @@ let test_signature_type_int_roundtrip () =
   List.iter
     (fun st ->
       let i = Signature_type.to_int st in
-      let result = Signature_type.of_int i in
+      let result = Signature_type.of_int_exn i in
       Alcotest.(check bool)
         (Printf.sprintf "Signature_type %d roundtrip" i)
         true

@@ -106,7 +106,9 @@ module Crypto_prices = struct
     source : source;
   }
 
-  let crypto_filter = function `Crypto m -> Some m | _ -> None
+  let crypto_filter : Types.message -> _ = function
+    | Types.Crypto m -> Some m
+    | _ -> None
 
   let connect_binance ~sw ~net ~clock ?symbols () =
     Log.debug (fun m ->
@@ -158,7 +160,9 @@ module Comments = struct
     gamma_auth : Types.gamma_auth option;
   }
 
-  let comment_filter = function `Comment m -> Some m | _ -> None
+  let comment_filter : Types.message -> _ = function
+    | Types.Comment m -> Some m
+    | _ -> None
 
   let connect ~sw ~net ~clock ?gamma_auth () =
     Log.debug (fun m ->

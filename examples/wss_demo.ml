@@ -18,28 +18,28 @@ open Polymarket
 
 let handle_market_message (msg : Wss.Types.message) =
   match msg with
-  | `Market (`Book book) ->
+  | Market (Book book) ->
       Logger.ok "BOOK"
         (Printf.sprintf "asset=%s bids=%d asks=%d" book.asset_id
            (List.length book.bids) (List.length book.asks))
-  | `Market (`Price_change change) ->
+  | Market (Price_change change) ->
       let n = List.length change.price_changes in
       Logger.ok "PRICE" (Printf.sprintf "market=%s changes=%d" change.market n)
-  | `Market (`Last_trade_price trade) ->
+  | Market (Last_trade_price trade) ->
       Logger.ok "TRADE"
         (Printf.sprintf "asset=%s price=%s" trade.asset_id trade.price)
-  | `Market (`Tick_size_change _) -> Logger.ok "TICK_SIZE" "tick size changed"
-  | `Market (`Best_bid_ask bba) ->
+  | Market (Tick_size_change _) -> Logger.ok "TICK_SIZE" "tick size changed"
+  | Market (Best_bid_ask bba) ->
       Logger.ok "BBA"
         (Printf.sprintf "asset=%s bid=%s ask=%s" bba.asset_id bba.best_bid
            bba.best_ask)
-  | `User (`Trade trade) ->
+  | User (Trade trade) ->
       Logger.ok "USER_TRADE"
         (Printf.sprintf "id=%s price=%s size=%s" trade.id trade.price trade.size)
-  | `User (`Order order) ->
+  | User (Order order) ->
       Logger.ok "USER_ORDER"
         (Printf.sprintf "id=%s side=%s price=%s" order.id order.side order.price)
-  | `Unknown raw ->
+  | Unknown raw ->
       if String.length raw > 80 then
         Logger.skip "MSG" (String.sub raw 0 80 ^ "...")
       else Logger.skip "MSG" raw
@@ -62,7 +62,9 @@ let get_active_tokens env sw =
   let clock = Eio.Stdenv.clock env in
   let routes = Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
   let rate_limiter = Rate_limiter.create ~routes ~clock () in
-  let client = Gamma.create ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter () in
+  let client =
+    Gamma.create_exn ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter ()
+  in
   match Gamma.get_markets client ~limit:3 ~closed:false () with
   | Ok markets ->
       let token_ids =
@@ -209,7 +211,7 @@ let run_demo env =
           in
 
           (* Get condition IDs for markets (User channel uses markets, not assets) *)
-          let gamma_client = Gamma.create ~sw ~net ~rate_limiter () in
+          let gamma_client = Gamma.create_exn ~sw ~net ~rate_limiter () in
           let market_ids =
             match Gamma.get_markets gamma_client ~limit:2 ~closed:false () with
             | Ok markets ->

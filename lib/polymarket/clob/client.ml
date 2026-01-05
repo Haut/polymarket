@@ -11,6 +11,12 @@ open Types
 
 let default_base_url = "https://clob.polymarket.com"
 
+(** Helper to unwrap HTTP client creation Result *)
+let create_http_exn ~base_url ~sw ~net ~rate_limiter () =
+  match H.create ~base_url ~sw ~net ~rate_limiter () with
+  | Ok client -> client
+  | Error e -> failwith (H.string_of_init_error e)
+
 (* Re-export types from internal libraries *)
 type private_key = Crypto.private_key
 
@@ -123,7 +129,7 @@ module Unauthed = struct
   end)
 
   let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter () =
-    let http = H.create ~base_url ~sw ~net ~rate_limiter () in
+    let http = create_http_exn ~base_url ~sw ~net ~rate_limiter () in
     ({ http } : t)
 end
 
@@ -134,7 +140,7 @@ module L1 = struct
 
   let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter ~private_key
       () =
-    let http = H.create ~base_url ~sw ~net ~rate_limiter () in
+    let http = create_http_exn ~base_url ~sw ~net ~rate_limiter () in
     let address = Crypto.private_key_to_address private_key in
     ({ http; private_key; address } : t)
 
@@ -179,7 +185,7 @@ module L2 = struct
 
   let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter ~private_key
       ~credentials () =
-    let http = H.create ~base_url ~sw ~net ~rate_limiter () in
+    let http = create_http_exn ~base_url ~sw ~net ~rate_limiter () in
     let address = Crypto.private_key_to_address private_key in
     ({ http; private_key; address; credentials } : t)
 
@@ -209,7 +215,10 @@ module L2 = struct
     |> B.fetch_json_list (fun json ->
         match json with
         | `String s -> s
-        | _ -> failwith "Expected string in API keys list")
+        | _ ->
+            raise
+              (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
+                 (Failure "Expected string in API keys list", json)))
 
   let create_order (t : t) ~order ~owner ~order_type () =
     B.new_post t.http "/order"

@@ -7,9 +7,10 @@
 (** {1 Salt Generation} *)
 
 let generate_salt () =
+  let bytes = Mirage_crypto_rng.generate 8 in
   let n = ref Int64.zero in
-  for _ = 1 to 8 do
-    n := Int64.(logor (shift_left !n 8) (of_int (Random.int 256)))
+  for i = 0 to 7 do
+    n := Int64.(logor (shift_left !n 8) (of_int (Char.code bytes.[i])))
   done;
   Int64.(to_string (logand !n max_int))
 

@@ -79,7 +79,9 @@ let run_demo env =
   (* Create shared rate limiter with Polymarket presets *)
   let routes = Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
   let rate_limiter = Rate_limiter.create ~routes ~clock () in
-  let client = Gamma.create ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter () in
+  let client =
+    Gamma.create_exn ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter ()
+  in
 
   (* ===== Health Check ===== *)
   let status = Gamma.status client in

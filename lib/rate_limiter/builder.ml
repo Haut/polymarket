@@ -27,14 +27,19 @@ let limit ~requests ~window_seconds t =
 
 let on_limit b t = { t with behavior = Some b }
 
-let build t : Types.route_config =
-  if t.limits = [] then
-    invalid_arg "Builder.build: at least one limit must be configured";
-  let pattern : Types.route_pattern =
-    { host = t.host; method_ = t.method_; path_prefix = t.path_prefix }
-  in
-  let behavior = Option.value ~default:Types.Delay t.behavior in
-  { pattern; limits = t.limits; behavior }
+let build t : (Types.route_config, string) result =
+  if t.limits = [] then Error "at least one limit must be configured"
+  else
+    let pattern : Types.route_pattern =
+      { host = t.host; method_ = t.method_; path_prefix = t.path_prefix }
+    in
+    let behavior = Option.value ~default:Types.Delay t.behavior in
+    Ok { pattern; limits = t.limits; behavior }
+
+let build_exn t : Types.route_config =
+  match build t with
+  | Ok config -> config
+  | Error msg -> invalid_arg ("Builder.build_exn: " ^ msg)
 
 let simple ?host:h ?method_:m ?path:p ~requests ~window_seconds ?behavior () =
   let b = route () in
@@ -43,7 +48,7 @@ let simple ?host:h ?method_:m ?path:p ~requests ~window_seconds ?behavior () =
   let b = match p with Some pv -> path pv b | None -> b in
   let b = limit ~requests ~window_seconds b in
   let b = match behavior with Some beh -> on_limit beh b | None -> b in
-  build b
+  build_exn b
 
 let global ~requests ~window_seconds ~behavior =
   simple ~requests ~window_seconds ~behavior ()
@@ -63,4 +68,4 @@ let add_route r hb =
   let r_with_host = { r with host = Some hb.hb_host } in
   { hb with routes = hb.routes @ [ r_with_host ] }
 
-let build_host hb = List.map build hb.routes
+let build_host hb = List.map build_exn hb.routes

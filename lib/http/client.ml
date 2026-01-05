@@ -19,33 +19,41 @@ type t = {
   client : Cohttp_eio.Client.t;
 }
 
+(** TLS initialization error type *)
+type init_error = Ca_certs_error of string | Tls_config_error of string
+
+let string_of_init_error = function
+  | Ca_certs_error msg -> "CA certs error: " ^ msg
+  | Tls_config_error msg -> "TLS config error: " ^ msg
+
 let make_https_handler _net =
-  let authenticator =
-    match Ca_certs.authenticator () with
-    | Ok auth -> auth
-    | Error (`Msg msg) -> failwith ("CA certs error: " ^ msg)
-  in
-  let tls_config =
-    match Tls.Config.client ~authenticator () with
-    | Ok cfg -> cfg
-    | Error (`Msg msg) -> failwith ("TLS config error: " ^ msg)
-  in
-  fun uri socket ->
-    let host =
-      (* Extract host for SNI *)
-      match Uri.host uri with
-      | Some h -> h
-      | None -> "localhost"
-    in
-    Tls_eio.client_of_flow tls_config
-      ~host:(Domain_name.of_string_exn host |> Domain_name.host_exn)
-      socket
+  match Ca_certs.authenticator () with
+  | Error (`Msg msg) -> Error (Ca_certs_error msg)
+  | Ok authenticator -> (
+      match Tls.Config.client ~authenticator () with
+      | Error (`Msg msg) -> Error (Tls_config_error msg)
+      | Ok tls_config ->
+          Ok
+            (fun uri socket ->
+              let host =
+                (* Extract host for SNI *)
+                match Uri.host uri with
+                | Some h -> h
+                | None -> "localhost"
+              in
+              Tls_eio.client_of_flow tls_config
+                ~host:(Domain_name.of_string_exn host |> Domain_name.host_exn)
+                socket))
 
 let create ~base_url ~sw ~net ~rate_limiter () =
-  let client =
-    Cohttp_eio.Client.make ~https:(Some (make_https_handler net)) net
-  in
-  { base_url; sw; rate_limiter; client }
+  match make_https_handler net with
+  | Error e ->
+      Log.err (fun m ->
+          m "TLS initialization failed: %s" (string_of_init_error e));
+      Error e
+  | Ok https_handler ->
+      let client = Cohttp_eio.Client.make ~https:(Some https_handler) net in
+      Ok { base_url; sw; rate_limiter; client }
 
 let base_url t = t.base_url
 

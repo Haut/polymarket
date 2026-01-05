@@ -8,7 +8,7 @@
       route () |> host "api.example.com" |> method_ "POST" |> path "/orders"
       |> limit ~requests:100 ~window_seconds:10.0
       |> limit ~requests:1000 ~window_seconds:600.0
-      |> on_limit Delay |> build
+      |> on_limit Delay |> build_exn
     ]} *)
 
 type t
@@ -46,9 +46,14 @@ val on_limit : Types.behavior -> t -> t
 
 (** {1 Building} *)
 
-val build : t -> Types.route_config
+val build : t -> (Types.route_config, string) result
 (** Build the final route configuration. Uses [Delay] behavior if not specified.
-    At least one limit must be configured. *)
+    @return
+      [Ok config] if at least one limit is configured, [Error msg] otherwise *)
+
+val build_exn : t -> Types.route_config
+(** Build the final route configuration, raising [Invalid_argument] if no limits
+    are configured. Uses [Delay] behavior if not specified. *)
 
 (** {1 Convenience Constructors} *)
 
