@@ -4,6 +4,22 @@
     compatible with Polymarket's CTF Exchange contract. Used by both CLOB and
     RFQ APIs. *)
 
+(** {1 Default Values} *)
+
+val default_fee_rate_bps : string
+(** Default fee rate: "0" basis points. *)
+
+val default_nonce : string
+(** Default nonce: "0". *)
+
+val default_expiration_string : unit -> string
+(** Default expiration as decimal string (current time + 1 year). *)
+
+val default_expiration_int : unit -> int
+(** Default expiration as integer (current time + 1 year). *)
+
+(** {1 Salt Generation} *)
+
 val generate_salt : unit -> string
 (** Generate a random salt as a decimal string. Uses 63 bits of randomness. *)
 

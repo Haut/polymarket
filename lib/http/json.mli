@@ -1,5 +1,19 @@
 (** JSON parsing and body building utilities. *)
 
+(** {1 Error Path Utilities} *)
+
+val find_path_to_value :
+  target:Yojson.Safe.t ->
+  path:string list ->
+  Yojson.Safe.t ->
+  string list option
+(** Find the path to a specific JSON value within a larger JSON structure.
+    Returns the path as a list of field names/indices. *)
+
+val format_path : string list -> string
+(** Format a path list as a dot-separated string. Empty path returns "<root>".
+*)
+
 (** {1 JSON Parsing} *)
 
 val parse : (Yojson.Safe.t -> 'a) -> string -> ('a, string) result

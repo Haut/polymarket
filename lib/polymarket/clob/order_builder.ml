@@ -12,8 +12,6 @@ let src = Logs.Src.create "polymarket.clob.order" ~doc:"CLOB order builder"
 
 module Log = (val Logs.src_log src : Logs.LOG)
 
-let default_fee_rate_bps = "0"
-
 (** {1 Amount Calculations} *)
 
 let calculate_amounts ~side ~price ~size =
@@ -32,7 +30,8 @@ let calculate_amounts ~side ~price ~size =
 (** {1 Public API} *)
 
 let create_limit_order ~private_key ~token_id ~(side : Types.Side.t) ~price
-    ~size ?expiration ?nonce ?(fee_rate_bps = default_fee_rate_bps) () =
+    ~size ?expiration ?nonce
+    ?(fee_rate_bps = Order_signing.default_fee_rate_bps) () =
   let address_str = Crypto.private_key_to_address private_key in
   let address = P.Address.unsafe_of_string address_str in
   let salt = Order_signing.generate_salt () in
@@ -45,11 +44,13 @@ let create_limit_order ~private_key ~token_id ~(side : Types.Side.t) ~price
   let expiration =
     match expiration with
     | Some e -> e
-    | None ->
-        let now = Unix.gettimeofday () in
-        Printf.sprintf "%.0f" (now +. Constants.one_year_seconds)
+    | None -> Order_signing.default_expiration_string ()
   in
-  let nonce = match nonce with Some n -> string_of_int n | None -> "0" in
+  let nonce =
+    match nonce with
+    | Some n -> string_of_int n
+    | None -> Order_signing.default_nonce
+  in
   let side_int = match side with Types.Side.Buy -> 0 | Types.Side.Sell -> 1 in
   Log.debug (fun m ->
       m "Signing order: token=%s...%s expiration=%s nonce=%s"

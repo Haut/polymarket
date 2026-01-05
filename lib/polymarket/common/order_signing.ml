@@ -4,6 +4,19 @@
     compatible with Polymarket's CTF Exchange contract. Used by both CLOB and
     RFQ APIs. *)
 
+(** {1 Default Values} *)
+
+let default_fee_rate_bps = "0"
+let default_nonce = "0"
+
+let default_expiration_float () =
+  Unix.gettimeofday () +. Constants.one_year_seconds
+
+let default_expiration_string () =
+  Printf.sprintf "%.0f" (default_expiration_float ())
+
+let default_expiration_int () = int_of_float (default_expiration_float ())
+
 (** {1 Salt Generation} *)
 
 let generate_salt () =

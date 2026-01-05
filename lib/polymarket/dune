@@ -31,6 +31,5 @@
   ; JSON
   yojson
   ppx_yojson_conv_lib)
- ; Temporarily disabled private_modules for debugging
  (preprocess
   (pps ppx_yojson_conv ppx_deriving.show ppx_deriving.eq ppx_polymarket_enum)))

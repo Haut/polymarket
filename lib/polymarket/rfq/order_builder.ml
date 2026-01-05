@@ -13,11 +13,9 @@ let src = Logs.Src.create "polymarket.rfq.order" ~doc:"RFQ order builder"
 
 module Log = (val Logs.src_log src : Logs.LOG)
 
-let default_fee_rate_bps = "0"
-
 let build_accept_quote_body ~private_key ~request_id ~quote_id ~token_id
     ~maker_amount ~taker_amount ~(side : Side.t) ?expiration ?nonce
-    ?(fee_rate_bps = default_fee_rate_bps) () =
+    ?(fee_rate_bps = Order_signing.default_fee_rate_bps) () =
   let address_str = Crypto.private_key_to_address private_key in
   let address = P.Address.unsafe_of_string address_str in
   let salt = Order_signing.generate_salt () in
@@ -31,11 +29,11 @@ let build_accept_quote_body ~private_key ~request_id ~quote_id ~token_id
   let expiration =
     match expiration with
     | Some e -> e
-    | None ->
-        let now = Unix.gettimeofday () in
-        int_of_float (now +. Constants.one_year_seconds)
+    | None -> Order_signing.default_expiration_int ()
   in
-  let nonce = match nonce with Some n -> n | None -> "0" in
+  let nonce =
+    match nonce with Some n -> n | None -> Order_signing.default_nonce
+  in
   let side_int = match side with Side.Buy -> 0 | Side.Sell -> 1 in
   Log.debug (fun m ->
       m "Signing: token=%s...%s expiration=%d nonce=%s"

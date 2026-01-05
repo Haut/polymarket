@@ -213,27 +213,6 @@ let handle_response status body parse_fn =
 
 (** {1 JSON Field Checking} *)
 
-(** Find the path to a specific JSON value within a larger JSON structure *)
-let rec find_path_to_value ~target ~path json =
-  if json == target then Some (List.rev path)
-  else
-    match json with
-    | `Assoc fields ->
-        List.find_map
-          (fun (key, value) ->
-            find_path_to_value ~target ~path:(key :: path) value)
-          fields
-    | `List items ->
-        List.find_mapi
-          (fun i item ->
-            find_path_to_value ~target
-              ~path:(Printf.sprintf "[%d]" i :: path)
-              item)
-          items
-    | _ -> None
-
-let format_path = function [] -> "<root>" | parts -> String.concat "." parts
-
 let check_extra_fields ~expected_fields ~context json =
   match json with
   | `Assoc fields ->
@@ -262,8 +241,8 @@ let parse_with_field_check ~expected_fields ~context body of_yojson =
   with
   | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, bad_json) ->
       let path =
-        match find_path_to_value ~target:bad_json ~path:[] !root_json with
-        | Some p -> format_path p
+        match Json.find_path_to_value ~target:bad_json ~path:[] !root_json with
+        | Some p -> Json.format_path p
         | None -> "<unknown>"
       in
       let reason =
@@ -286,8 +265,8 @@ let parse_list_with_field_check ~expected_fields ~context body of_yojson =
   with
   | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, bad_json) ->
       let path =
-        match find_path_to_value ~target:bad_json ~path:[] !root_json with
-        | Some p -> format_path p
+        match Json.find_path_to_value ~target:bad_json ~path:[] !root_json with
+        | Some p -> Json.format_path p
         | None -> "<unknown>"
       in
       let reason =
