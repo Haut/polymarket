@@ -24,8 +24,12 @@ let hmac_sha256 ~key message =
   Digestif.SHA256.(to_raw_string (hmac_string ~key message))
 
 let sign_l2_request ~secret ~timestamp ~method_ ~path ~body =
-  (* Decode base64 secret *)
-  let key = Base64.decode_exn secret in
+  (* Decode base64 secret with error handling *)
+  let key =
+    match Base64.decode secret with
+    | Ok k -> k
+    | Error (`Msg msg) -> failwith ("Invalid base64 secret: " ^ msg)
+  in
   (* Construct message: timestamp + method + path + body *)
   let message = timestamp ^ method_ ^ path ^ body in
   (* Compute HMAC-SHA256 *)
@@ -129,6 +133,11 @@ let sign_hash ~private_key hash_hex =
   (* Serialize signature (65 bytes: 64 bytes r+s + 1 byte recovery id) *)
   let sig_bytes = Sign.to_bytes ctx signature in
   let sig_str = Bigstring.to_string sig_bytes in
+  (* Validate signature length before slicing *)
+  if String.length sig_str < 65 then
+    failwith
+      (Printf.sprintf "Invalid signature length: expected 65 bytes, got %d"
+         (String.length sig_str));
   (* First 64 bytes are r+s, last byte is recovery id *)
   let rs_hex = Hex.of_string (String.sub sig_str 0 64) in
   let recid = Char.code sig_str.[64] in
@@ -154,19 +163,23 @@ let private_key_to_address private_key =
   (* Serialize uncompressed public key (65 bytes: 0x04 + 64 bytes) *)
   let pk_bytes = Key.to_bytes ~compress:false ctx pk in
   let pk_str = Bigstring.to_string pk_bytes in
+  (* Validate public key length before slicing *)
+  if String.length pk_str < 65 then
+    failwith
+      (Printf.sprintf "Invalid public key length: expected 65 bytes, got %d"
+         (String.length pk_str));
   (* Take last 64 bytes (skip 0x04 prefix), hash with keccak256, take last 20 bytes *)
   let pk_data = String.sub pk_str 1 64 in
   let hash = Digestif.KECCAK_256.digest_string pk_data in
   let hash_hex = Digestif.KECCAK_256.to_hex hash in
+  (* Validate hash length before slicing (keccak256 always produces 64 hex chars) *)
+  if String.length hash_hex < 40 then
+    failwith
+      (Printf.sprintf "Invalid hash length: expected >= 40 chars, got %d"
+         (String.length hash_hex));
   (* Last 40 chars (20 bytes) of hash = address *)
   "0x" ^ String.sub hash_hex (String.length hash_hex - 40) 40
 
 let current_timestamp_ms () =
   let t = Unix.gettimeofday () in
   Printf.sprintf "%.0f" (t *. 1000.0)
-
-module Private = struct
-  let pad_hex_32 = pad_hex_32
-  let encode_uint256 = encode_uint256
-  let sign_hash = sign_hash
-end

@@ -60,10 +60,16 @@ let parse_token_ids s =
 let get_active_tokens env sw =
   Logger.info "Fetching active markets from Gamma API";
   let clock = Eio.Stdenv.clock env in
-  let routes = Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
+  let routes =
+    match Rate_limit_presets.all ~behavior:Rate_limiter.Delay with
+    | Ok r -> r
+    | Error msg -> failwith ("Rate limit preset error: " ^ msg)
+  in
   let rate_limiter = Rate_limiter.create ~routes ~clock () in
   let client =
-    Gamma.create_exn ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter ()
+    match Gamma.create ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter () with
+    | Ok c -> c
+    | Error e -> failwith ("Gamma client error: " ^ Gamma.string_of_init_error e)
   in
   match Gamma.get_markets client ~limit:3 ~closed:false () with
   | Ok markets ->
@@ -189,11 +195,20 @@ let run_demo env =
       in
 
       (* Create rate limiter for CLOB API *)
-      let routes = Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
+      let routes =
+        match Rate_limit_presets.all ~behavior:Rate_limiter.Delay with
+        | Ok r -> r
+        | Error msg -> failwith ("Rate limit preset error: " ^ msg)
+      in
       let rate_limiter = Rate_limiter.create ~routes ~clock () in
 
       (* Derive API credentials via CLOB API *)
-      let unauthed_client = Clob.Unauthed.create ~sw ~net ~rate_limiter () in
+      let unauthed_client =
+        match Clob.Unauthed.create ~sw ~net ~rate_limiter () with
+        | Ok c -> c
+        | Error e ->
+            failwith ("CLOB client error: " ^ Clob.init_error_to_string e)
+      in
       let l1_client = Clob.upgrade_to_l1 unauthed_client ~private_key in
       let nonce = int_of_float (Unix.gettimeofday () *. 1000.0) mod 1000000 in
 
@@ -211,7 +226,12 @@ let run_demo env =
           in
 
           (* Get condition IDs for markets (User channel uses markets, not assets) *)
-          let gamma_client = Gamma.create_exn ~sw ~net ~rate_limiter () in
+          let gamma_client =
+            match Gamma.create ~sw ~net ~rate_limiter () with
+            | Ok c -> c
+            | Error e ->
+                failwith ("Gamma client error: " ^ Gamma.string_of_init_error e)
+          in
           let market_ids =
             match Gamma.get_markets gamma_client ~limit:2 ~closed:false () with
             | Ok markets ->

@@ -32,12 +32,24 @@ let run_demo env =
     (Printf.sprintf "Starting Data API demo (%s)" Data.default_base_url);
 
   (* Create shared rate limiter *)
-  let routes = Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
+  let routes =
+    match Rate_limit_presets.all ~behavior:Rate_limiter.Delay with
+    | Ok r -> r
+    | Error msg -> failwith ("Rate limit preset error: " ^ msg)
+  in
   let rate_limiter = Rate_limiter.create ~routes ~clock () in
 
   (* Create clients *)
-  let data_client = Data.create_exn ~sw ~net ~rate_limiter () in
-  let gamma_client = Gamma.create_exn ~sw ~net ~rate_limiter () in
+  let data_client =
+    match Data.create ~sw ~net ~rate_limiter () with
+    | Ok c -> c
+    | Error e -> failwith ("Data client error: " ^ Data.string_of_init_error e)
+  in
+  let gamma_client =
+    match Gamma.create ~sw ~net ~rate_limiter () with
+    | Ok c -> c
+    | Error e -> failwith ("Gamma client error: " ^ Gamma.string_of_init_error e)
+  in
 
   (* ===== Health Check ===== *)
   let health = Data.health_check data_client in

@@ -14,11 +14,6 @@ let default_base_url = "https://gamma-api.polymarket.com"
 let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter () =
   H.create ~base_url ~sw ~net ~rate_limiter ()
 
-let create_exn ?base_url ~sw ~net ~rate_limiter () =
-  match create ?base_url ~sw ~net ~rate_limiter () with
-  | Ok client -> client
-  | Error e -> failwith (string_of_init_error e)
-
 (** {1 Health Endpoint} *)
 
 let status t = B.new_get t "/status" |> B.fetch_text

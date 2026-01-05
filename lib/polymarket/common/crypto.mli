@@ -57,12 +57,10 @@ val private_key_to_address : private_key -> string
 val current_timestamp_ms : unit -> string
 (** Get current Unix timestamp in milliseconds as string. *)
 
-(** {1 Internal} *)
+(** {1 Low-level Signing} *)
 
-module Private : sig
-  (** {b For internal use only. Do not depend on this module.} *)
-
-  val pad_hex_32 : string -> string
-  val encode_uint256 : int -> string
-  val sign_hash : private_key:string -> string -> string
-end
+val sign_hash : private_key:private_key -> string -> string
+(** Sign a 32-byte keccak256 hash with a private key.
+    @param private_key The signing key
+    @param hash_hex The hash as a hex string (no 0x prefix)
+    @return Signature with recovery id as 0x-prefixed hex string *)

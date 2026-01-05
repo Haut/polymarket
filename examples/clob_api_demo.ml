@@ -76,17 +76,27 @@ let run_demo env =
     (Printf.sprintf "Starting CLOB API demo (%s)" Clob.default_base_url);
 
   (* Create shared rate limiter with Polymarket presets *)
-  let routes = Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
+  let routes =
+    match Rate_limit_presets.all ~behavior:Rate_limiter.Delay with
+    | Ok r -> r
+    | Error msg -> failwith ("Rate limit preset error: " ^ msg)
+  in
   let rate_limiter = Rate_limiter.create ~routes ~clock () in
 
   (* Create an unauthenticated client for public endpoints *)
   let unauthed_client =
-    Clob.Unauthed.create ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter ()
+    match
+      Clob.Unauthed.create ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter ()
+    with
+    | Ok c -> c
+    | Error e -> failwith ("CLOB client error: " ^ Clob.init_error_to_string e)
   in
 
   (* First, get markets from Gamma API to find token IDs with active order books *)
   let gamma_client =
-    Gamma.create_exn ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter ()
+    match Gamma.create ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter () with
+    | Ok c -> c
+    | Error e -> failwith ("Gamma client error: " ^ Gamma.string_of_init_error e)
   in
   (* Filter for non-closed markets with volume to find ones with order books *)
   let markets =

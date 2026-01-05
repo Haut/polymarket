@@ -68,13 +68,23 @@ let run_demo env =
   in
 
   (* Create shared rate limiter with Polymarket presets *)
-  let routes = Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
+  let routes =
+    match Rate_limit_presets.all ~behavior:Rate_limiter.Delay with
+    | Ok r -> r
+    | Error msg -> failwith ("Rate limit preset error: " ^ msg)
+  in
   let rate_limiter = Rate_limiter.create ~routes ~clock () in
 
   (* Create the RFQ client - requires L2 authentication *)
   let rfq_client =
-    Rfq.create ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter ~private_key
-      ~credentials ()
+    match
+      Rfq.create ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter ~private_key
+        ~credentials ()
+    with
+    | Ok c -> c
+    | Error e ->
+        failwith
+          ("RFQ client error: " ^ Polymarket_http.Client.string_of_init_error e)
   in
 
   Logger.info

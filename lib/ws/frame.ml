@@ -163,11 +163,18 @@ let decode flow =
     end
     else begin
       let ext = read_exactly flow 8 in
-      (* Assume payload < 2^31 for simplicity *)
+      (* Validate that high-order bytes are zero to prevent overflow.
+         OCaml int is 63-bit on 64-bit platforms, but we limit to 2^31
+         for practical memory allocation limits. *)
+      for i = 0 to 3 do
+        if Char.code ext.[i] <> 0 then
+          failwith "WebSocket frame too large (exceeds 2^31 bytes)"
+      done;
       let len = ref 0 in
-      for i = 0 to 7 do
+      for i = 4 to 7 do
         len := (!len lsl 8) lor Char.code ext.[i]
       done;
+      if !len < 0 then failwith "WebSocket frame length overflow";
       !len
     end
   in

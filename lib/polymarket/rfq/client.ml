@@ -12,18 +12,15 @@ open Types
 let default_base_url = "https://clob.polymarket.com"
 
 type t = { http : H.t; address : string; credentials : Auth.credentials }
-
-(** Helper to unwrap HTTP client creation Result *)
-let create_http_exn ~base_url ~sw ~net ~rate_limiter () =
-  match H.create ~base_url ~sw ~net ~rate_limiter () with
-  | Ok client -> client
-  | Error e -> failwith (H.string_of_init_error e)
+type init_error = H.init_error
 
 let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter ~private_key
     ~credentials () =
-  let http = create_http_exn ~base_url ~sw ~net ~rate_limiter () in
-  let address = Crypto.private_key_to_address private_key in
-  { http; address; credentials }
+  match H.create ~base_url ~sw ~net ~rate_limiter () with
+  | Ok http ->
+      let address = Crypto.private_key_to_address private_key in
+      Ok { http; address; credentials }
+  | Error e -> Error e
 
 let address t = t.address
 let credentials t = t.credentials

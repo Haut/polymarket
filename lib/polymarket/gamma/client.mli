@@ -30,16 +30,6 @@ val create :
     @param rate_limiter Rate limiter for API requests
     @return Ok client on success, Error on TLS initialization failure *)
 
-val create_exn :
-  ?base_url:string ->
-  sw:Eio.Switch.t ->
-  net:'a Eio.Net.t ->
-  rate_limiter:Rate_limiter.t ->
-  unit ->
-  t
-(** Create a Gamma API client, raising an exception on failure.
-    @raise Failure if TLS initialization fails *)
-
 (** {1 Health Endpoint} *)
 
 val status : t -> (string, error) result

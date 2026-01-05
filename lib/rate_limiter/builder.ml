@@ -36,11 +36,6 @@ let build t : (Types.route_config, string) result =
     let behavior = Option.value ~default:Types.Delay t.behavior in
     Ok { pattern; limits = t.limits; behavior }
 
-let build_exn t : Types.route_config =
-  match build t with
-  | Ok config -> config
-  | Error msg -> invalid_arg ("Builder.build_exn: " ^ msg)
-
 let simple ?host:h ?method_:m ?path:p ~requests ~window_seconds ?behavior () =
   let b = route () in
   let b = match h with Some hv -> host hv b | None -> b in
@@ -48,7 +43,7 @@ let simple ?host:h ?method_:m ?path:p ~requests ~window_seconds ?behavior () =
   let b = match p with Some pv -> path pv b | None -> b in
   let b = limit ~requests ~window_seconds b in
   let b = match behavior with Some beh -> on_limit beh b | None -> b in
-  build_exn b
+  build b
 
 let global ~requests ~window_seconds ~behavior =
   simple ~requests ~window_seconds ~behavior ()
@@ -68,4 +63,12 @@ let add_route r hb =
   let r_with_host = { r with host = Some hb.hb_host } in
   { hb with routes = hb.routes @ [ r_with_host ] }
 
-let build_host hb = List.map build_exn hb.routes
+let build_host hb =
+  let rec build_all acc = function
+    | [] -> Ok (List.rev acc)
+    | r :: rest -> (
+        match build r with
+        | Ok cfg -> build_all (cfg :: acc) rest
+        | Error e -> Error e)
+  in
+  build_all [] hb.routes

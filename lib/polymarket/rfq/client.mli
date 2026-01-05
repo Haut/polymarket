@@ -11,6 +11,9 @@ val default_base_url : string
 type t
 (** RFQ client with L2 authentication. *)
 
+type init_error = Polymarket_http.Client.init_error
+(** Error type for client initialization (TLS setup). *)
+
 val create :
   ?base_url:string ->
   sw:Eio.Switch.t ->
@@ -19,7 +22,9 @@ val create :
   private_key:Crypto.private_key ->
   credentials:Auth.credentials ->
   unit ->
-  t
+  (t, init_error) result
+(** Create a new RFQ client.
+    @return Ok client on success, Error on TLS initialization failure *)
 
 val address : t -> string
 (** Get the Ethereum address derived from the private key. *)

@@ -11,12 +11,6 @@ open Types
 
 let default_base_url = "https://clob.polymarket.com"
 
-(** Helper to unwrap HTTP client creation Result *)
-let create_http_exn ~base_url ~sw ~net ~rate_limiter () =
-  match H.create ~base_url ~sw ~net ~rate_limiter () with
-  | Ok client -> client
-  | Error e -> failwith (H.string_of_init_error e)
-
 (* Re-export types from internal libraries *)
 type private_key = Crypto.private_key
 
@@ -34,9 +28,11 @@ type api_key_response = Auth.api_key_response = {
 
 type rate_limiter = Rate_limiter.t
 type error = H.error
+type init_error = H.init_error
 
 let private_key_of_string = Crypto.private_key_of_string
 let error_to_string = H.error_to_string
+let init_error_to_string = H.string_of_init_error
 
 (** {1 Client Types} *)
 
@@ -129,8 +125,9 @@ module Unauthed = struct
   end)
 
   let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter () =
-    let http = create_http_exn ~base_url ~sw ~net ~rate_limiter () in
-    ({ http } : t)
+    match H.create ~base_url ~sw ~net ~rate_limiter () with
+    | Ok http -> Ok ({ http } : t)
+    | Error e -> Error e
 end
 
 (** {1 L1-Authenticated Client} *)
@@ -140,9 +137,11 @@ module L1 = struct
 
   let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter ~private_key
       () =
-    let http = create_http_exn ~base_url ~sw ~net ~rate_limiter () in
-    let address = Crypto.private_key_to_address private_key in
-    ({ http; private_key; address } : t)
+    match H.create ~base_url ~sw ~net ~rate_limiter () with
+    | Ok http ->
+        let address = Crypto.private_key_to_address private_key in
+        Ok ({ http; private_key; address } : t)
+    | Error e -> Error e
 
   let address (t : t) = t.address
 
@@ -185,9 +184,11 @@ module L2 = struct
 
   let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter ~private_key
       ~credentials () =
-    let http = create_http_exn ~base_url ~sw ~net ~rate_limiter () in
-    let address = Crypto.private_key_to_address private_key in
-    ({ http; private_key; address; credentials } : t)
+    match H.create ~base_url ~sw ~net ~rate_limiter () with
+    | Ok http ->
+        let address = Crypto.private_key_to_address private_key in
+        Ok ({ http; private_key; address; credentials } : t)
+    | Error e -> Error e
 
   let address (t : t) = t.address
   let credentials (t : t) = t.credentials

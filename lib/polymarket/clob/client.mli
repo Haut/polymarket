@@ -15,19 +15,21 @@
 
     {[
       (* Start with an unauthenticated client for public data *)
-      let client = Unauthed.create ~sw ~net ~rate_limiter () in
-      let order_book = Unauthed.get_order_book client ~token_id () in
+      match Unauthed.create ~sw ~net ~rate_limiter () with
+      | Error e -> init_error_to_string e |> failwith
+      | Ok client -> (
+          let order_book = Unauthed.get_order_book client ~token_id () in
 
-      (* Upgrade to L1 for wallet-based operations *)
-      let l1_client = upgrade_to_l1 client ~private_key in
+          (* Upgrade to L1 for wallet-based operations *)
+          let l1_client = upgrade_to_l1 client ~private_key in
 
-      (* Derive API credentials and upgrade to L2 *)
-      match L1.derive_api_key l1_client ~nonce:0 with
-      | Ok (l2_client, _resp) ->
-          (* Now we can create orders *)
-          let _ = L2.create_order l2_client ~order ~owner ~order_type () in
-          ()
-      | Error e -> error_to_string e |> failwith
+          (* Derive API credentials and upgrade to L2 *)
+          match L1.derive_api_key l1_client ~nonce:0 with
+          | Ok (l2_client, _resp) ->
+              (* Now we can create orders *)
+              let _ = L2.create_order l2_client ~order ~owner ~order_type () in
+              ()
+          | Error e -> error_to_string e |> failwith)
     ]} *)
 
 (** {1 Types from Internal Libraries}
@@ -57,8 +59,14 @@ type rate_limiter = Rate_limiter.t
 type error = Polymarket_http.Client.error
 (** Error type for API operations. *)
 
+type init_error = Polymarket_http.Client.init_error
+(** Error type for client initialization (TLS setup). *)
+
 val error_to_string : error -> string
 (** Convert an error to a human-readable string. *)
+
+val init_error_to_string : init_error -> string
+(** Convert an initialization error to a human-readable string. *)
 
 val private_key_of_string : string -> private_key
 (** Create a private key from a hex string (64 chars, no 0x prefix). *)
@@ -93,12 +101,13 @@ module Unauthed : sig
     net:_ Eio.Net.t ->
     rate_limiter:rate_limiter ->
     unit ->
-    t
+    (t, init_error) result
   (** Create a new unauthenticated CLOB client.
       @param base_url Optional base URL (defaults to {!default_base_url})
       @param sw The Eio switch for resource management
       @param net The Eio network interface
-      @param rate_limiter Shared rate limiter for enforcing API limits *)
+      @param rate_limiter Shared rate limiter for enforcing API limits
+      @return Ok client on success, Error on TLS initialization failure *)
 
   (** {2 Order Book} *)
 
@@ -161,13 +170,14 @@ module L1 : sig
     rate_limiter:rate_limiter ->
     private_key:private_key ->
     unit ->
-    t
+    (t, init_error) result
   (** Create a new L1-authenticated CLOB client.
       @param base_url Optional base URL (defaults to {!default_base_url})
       @param sw The Eio switch for resource management
       @param net The Eio network interface
       @param rate_limiter Shared rate limiter for enforcing API limits
-      @param private_key The wallet's private key for signing *)
+      @param private_key The wallet's private key for signing
+      @return Ok client on success, Error on TLS initialization failure *)
 
   val address : t -> string
   (** Get the Ethereum address derived from the private key. *)
@@ -244,14 +254,15 @@ module L2 : sig
     private_key:private_key ->
     credentials:credentials ->
     unit ->
-    t
+    (t, init_error) result
   (** Create a new L2-authenticated CLOB client.
       @param base_url Optional base URL (defaults to {!default_base_url})
       @param sw The Eio switch for resource management
       @param net The Eio network interface
       @param rate_limiter Shared rate limiter for enforcing API limits
       @param private_key The wallet's private key (for L1 operations)
-      @param credentials The API credentials (api_key, secret, passphrase) *)
+      @param credentials The API credentials (api_key, secret, passphrase)
+      @return Ok client on success, Error on TLS initialization failure *)
 
   val address : t -> string
   (** Get the Ethereum address derived from the private key. *)

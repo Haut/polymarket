@@ -30,18 +30,11 @@ let check_limits t ~route_key ~limits =
             Hashtbl.add t.table route_key entry;
             entry
       in
-      (* Check all limits, collect maximum retry_after if any fail *)
+      (* First pass: check all limits and collect maximum retry_after if any fail.
+         We check all limits before updating any to get accurate retry times. *)
       let rec check_all gcras max_retry =
         match gcras with
-        | [] -> (
-            match max_retry with
-            | None ->
-                (* All passed, update all states *)
-                List.iter
-                  (fun gcra -> Gcra.update gcra ~now:now_time)
-                  entry.gcras;
-                Ok ()
-            | Some retry -> Error retry)
+        | [] -> max_retry
         | gcra :: rest -> (
             match Gcra.check gcra ~now:now_time with
             | Ok () -> check_all rest max_retry
@@ -53,7 +46,13 @@ let check_limits t ~route_key ~limits =
                 in
                 check_all rest new_max)
       in
-      check_all entry.gcras None)
+      match check_all entry.gcras None with
+      | Some retry -> Error retry
+      | None ->
+          (* All checks passed. Now atomically update all states within the
+             same mutex-protected region to prevent TOCTOU race conditions. *)
+          List.iter (fun gcra -> Gcra.update gcra ~now:now_time) entry.gcras;
+          Ok ())
 
 let cleanup t =
   let now_time = t.now () in

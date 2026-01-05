@@ -8,7 +8,7 @@
       route () |> host "api.example.com" |> method_ "POST" |> path "/orders"
       |> limit ~requests:100 ~window_seconds:10.0
       |> limit ~requests:1000 ~window_seconds:600.0
-      |> on_limit Delay |> build_exn
+      |> on_limit Delay |> build
     ]} *)
 
 type t
@@ -51,10 +51,6 @@ val build : t -> (Types.route_config, string) result
     @return
       [Ok config] if at least one limit is configured, [Error msg] otherwise *)
 
-val build_exn : t -> Types.route_config
-(** Build the final route configuration, raising [Invalid_argument] if no limits
-    are configured. Uses [Delay] behavior if not specified. *)
-
 (** {1 Convenience Constructors} *)
 
 val simple :
@@ -65,7 +61,7 @@ val simple :
   window_seconds:float ->
   ?behavior:Types.behavior ->
   unit ->
-  Types.route_config
+  (Types.route_config, string) result
 (** Create a simple route configuration with a single limit. Example:
     {[
       simple ~host:"api.example.com" ~requests:100 ~window_seconds:10.0 ()
@@ -75,7 +71,7 @@ val global :
   requests:int ->
   window_seconds:float ->
   behavior:Types.behavior ->
-  Types.route_config
+  (Types.route_config, string) result
 (** Create a global rate limit that matches all routes *)
 
 val per_host :
@@ -83,7 +79,7 @@ val per_host :
   requests:int ->
   window_seconds:float ->
   behavior:Types.behavior ->
-  Types.route_config
+  (Types.route_config, string) result
 (** Create a rate limit for all routes to a specific host *)
 
 val per_endpoint :
@@ -93,7 +89,7 @@ val per_endpoint :
   requests:int ->
   window_seconds:float ->
   behavior:Types.behavior ->
-  Types.route_config
+  (Types.route_config, string) result
 (** Create a rate limit for a specific endpoint *)
 
 (** {1 Host-Scoped Builder}
@@ -110,5 +106,5 @@ val for_host : string -> host_builder
 val add_route : t -> host_builder -> host_builder
 (** Add a route to the host builder. The route inherits the host. *)
 
-val build_host : host_builder -> Types.route_config list
+val build_host : host_builder -> (Types.route_config list, string) result
 (** Build all routes for this host *)

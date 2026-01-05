@@ -37,6 +37,7 @@ type t = {
   sw : Eio.Switch.t;
   net : net_t;
   clock : float Eio.Time.clock_ty Eio.Resource.t;
+  state_mutex : Eio.Mutex.t;  (** Protects mutable state access *)
   mutable state : state;
   mutable flow : Tls_eio.t option;
   message_stream : string Eio.Stream.t;
@@ -75,6 +76,7 @@ let create ~sw ~net ~clock ~host ~resource ?(ping_interval = 30.0)
     sw;
     net = Net net;
     clock;
+    state_mutex = Eio.Mutex.create ();
     state = Disconnected;
     flow = None;
     message_stream = Eio.Stream.create buffer_size;
@@ -114,11 +116,12 @@ let connect_tls t =
 
 (** Connect and perform WebSocket handshake *)
 let connect_internal t =
-  t.state <- Connecting;
+  Eio.Mutex.use_rw ~protect:true t.state_mutex (fun () -> t.state <- Connecting);
   match connect_tls t with
   | Error e ->
       Log.err (fun m -> m "Connection failed: %s" (string_of_init_error e));
-      t.state <- Disconnected;
+      Eio.Mutex.use_rw ~protect:true t.state_mutex (fun () ->
+          t.state <- Disconnected);
       false
   | Ok flow -> (
       (* Perform WebSocket handshake *)
@@ -127,14 +130,16 @@ let connect_internal t =
           ~resource:t.config.resource
       with
       | Handshake.Success ->
-          t.flow <- Some flow;
-          t.state <- Connected;
-          t.current_backoff <- t.config.initial_backoff;
+          Eio.Mutex.use_rw ~protect:true t.state_mutex (fun () ->
+              t.flow <- Some flow;
+              t.state <- Connected;
+              t.current_backoff <- t.config.initial_backoff);
           Log.debug (fun m -> m "Connected");
           true
       | Handshake.Failed msg ->
           Log.err (fun m -> m "Handshake failed: %s" msg);
-          t.state <- Disconnected;
+          Eio.Mutex.use_rw ~protect:true t.state_mutex (fun () ->
+              t.state <- Disconnected);
           false)
 
 (** Send a frame *)
@@ -161,7 +166,7 @@ let receive_loop t =
   | None -> ()
   | Some flow -> (
       try
-        while t.state = Connected do
+        while Eio.Mutex.use_ro t.state_mutex (fun () -> t.state = Connected) do
           let frame = Frame.decode flow in
           match frame.opcode with
           | Frame.Opcode.Text | Frame.Opcode.Binary ->
@@ -173,23 +178,30 @@ let receive_loop t =
           | Frame.Opcode.Pong -> Log.debug (fun m -> m "Pong received")
           | Frame.Opcode.Close ->
               Log.debug (fun m -> m "Close received");
-              t.state <- Closed
+              Eio.Mutex.use_rw ~protect:true t.state_mutex (fun () ->
+                  t.state <- Closed)
           | _ -> ()
         done
       with
       | End_of_file ->
           Log.debug (fun m -> m "EOF");
-          t.state <- Disconnected
+          Eio.Mutex.use_rw ~protect:true t.state_mutex (fun () ->
+              t.state <- Disconnected)
       | exn ->
           Log.err (fun m -> m "Receive error: %s" (Printexc.to_string exn));
-          t.state <- Disconnected)
+          Eio.Mutex.use_rw ~protect:true t.state_mutex (fun () ->
+              t.state <- Disconnected))
 
 (** Ping loop - sends periodic pings *)
 let ping_loop t =
+  let should_continue () =
+    Eio.Mutex.use_ro t.state_mutex (fun () ->
+        t.state = Connected && not t.closed)
+  in
   try
-    while t.state = Connected && not t.closed do
+    while should_continue () do
       Eio.Time.sleep t.clock t.config.ping_interval;
-      if t.state = Connected then begin
+      if Eio.Mutex.use_ro t.state_mutex (fun () -> t.state = Connected) then begin
         send_ping t;
         Log.debug (fun m -> m "Ping sent")
       end
@@ -200,7 +212,7 @@ let ping_loop t =
 
 (** Connect with exponential backoff retry *)
 let rec connect_with_retry t =
-  if t.closed then ()
+  if Eio.Mutex.use_ro t.state_mutex (fun () -> t.closed) then ()
   else if connect_internal t then begin
     (* Send subscription message if set *)
     match t.subscription_msg with
@@ -212,7 +224,8 @@ let rec connect_with_retry t =
   else begin
     Log.warn (fun m -> m "Retrying in %.1fs" t.current_backoff);
     Eio.Time.sleep t.clock t.current_backoff;
-    t.current_backoff <- min (t.current_backoff *. 2.0) t.config.max_backoff;
+    Eio.Mutex.use_rw ~protect:true t.state_mutex (fun () ->
+        t.current_backoff <- min (t.current_backoff *. 2.0) t.config.max_backoff);
     connect_with_retry t
   end
 
@@ -223,36 +236,50 @@ let set_subscription t msg = t.subscription_msg <- Some msg
 let message_stream t = t.message_stream
 
 (** Check if connected *)
-let is_connected t = t.state = Connected
+let is_connected t =
+  Eio.Mutex.use_ro t.state_mutex (fun () -> t.state = Connected)
 
 (** Check if closed *)
-let is_closed t = t.closed
+let is_closed t = Eio.Mutex.use_ro t.state_mutex (fun () -> t.closed)
 
 (** Close connection *)
 let close t =
-  if not t.closed then begin
-    t.closed <- true;
-    (match t.flow with
-    | Some flow ->
-        (try
-           send_frame t (Frame.close ());
-           Eio.Flow.close flow
-         with _ -> ());
-        t.flow <- None
-    | None -> ());
-    t.state <- Closed;
-    Log.debug (fun m -> m "Closed")
-  end
+  Eio.Mutex.use_rw ~protect:true t.state_mutex (fun () ->
+      if not t.closed then begin
+        t.closed <- true;
+        (match t.flow with
+        | Some flow ->
+            (try
+               send_frame t (Frame.close ());
+               Eio.Flow.close flow
+             with _ -> ());
+            t.flow <- None
+        | None -> ());
+        t.state <- Closed;
+        Log.debug (fun m -> m "Closed")
+      end)
 
 (** Start the connection with receive loop *)
 let start t =
+  let get_state () =
+    Eio.Mutex.use_ro t.state_mutex (fun () -> (t.state, t.closed))
+  in
   Eio.Fiber.fork ~sw:t.sw (fun () ->
       try
-        while not t.closed do
-          if t.state = Disconnected then connect_with_retry t;
-          if t.state = Connected then receive_loop t;
+        let state, closed = get_state () in
+        let state = ref state in
+        let closed = ref closed in
+        while not !closed do
+          if !state = Disconnected then connect_with_retry t;
+          let s, c = get_state () in
+          state := s;
+          closed := c;
+          if !state = Connected then receive_loop t;
+          let s, c = get_state () in
+          state := s;
+          closed := c;
           (* Small delay before reconnect attempt *)
-          if t.state = Disconnected && not t.closed then
+          if !state = Disconnected && not !closed then
             Eio.Time.sleep t.clock 0.1
         done
       with Eio.Cancel.Cancelled _ ->
@@ -275,7 +302,7 @@ let start_parsing_fiber (type a) ~sw ~channel_name ~conn
   Eio.Fiber.fork ~sw (fun () ->
       try
         let raw_stream = conn.message_stream in
-        while not conn.closed do
+        while not (Eio.Mutex.use_ro conn.state_mutex (fun () -> conn.closed)) do
           let raw = Eio.Stream.take raw_stream in
           let msgs = parse raw in
           List.iter (fun msg -> Eio.Stream.add output_stream msg) msgs

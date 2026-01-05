@@ -77,10 +77,16 @@ let run_demo env =
     (Printf.sprintf "Starting Gamma API demo (%s)" Gamma.default_base_url);
 
   (* Create shared rate limiter with Polymarket presets *)
-  let routes = Rate_limit_presets.all ~behavior:Rate_limiter.Delay in
+  let routes =
+    match Rate_limit_presets.all ~behavior:Rate_limiter.Delay with
+    | Ok r -> r
+    | Error msg -> failwith ("Rate limit preset error: " ^ msg)
+  in
   let rate_limiter = Rate_limiter.create ~routes ~clock () in
   let client =
-    Gamma.create_exn ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter ()
+    match Gamma.create ~sw ~net:(Eio.Stdenv.net env) ~rate_limiter () with
+    | Ok c -> c
+    | Error e -> failwith ("Gamma client error: " ^ Gamma.string_of_init_error e)
   in
 
   (* ===== Health Check ===== *)

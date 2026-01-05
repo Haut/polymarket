@@ -33,7 +33,7 @@ let create_limit_order ~private_key ~token_id ~(side : Types.Side.t) ~price
     ~size ?expiration ?nonce
     ?(fee_rate_bps = Order_signing.default_fee_rate_bps) () =
   let address_str = Crypto.private_key_to_address private_key in
-  let address = P.Address.unsafe_of_string address_str in
+  let address = P.Address.make_exn address_str in
   let salt = Order_signing.generate_salt () in
   let maker_amount, taker_amount = calculate_amounts ~side ~price ~size in
   let token_id_str = P.Token_id.to_string token_id in
@@ -64,8 +64,8 @@ let create_limit_order ~private_key ~token_id ~(side : Types.Side.t) ~price
       ~maker_amount ~taker_amount ~expiration ~nonce ~fee_rate_bps
       ~side:side_int ~signature_type:0
   in
-  let signature = P.Signature.unsafe_of_string signature_str in
-  let zero_address = P.Address.unsafe_of_string Constants.zero_address in
+  let signature = P.Signature.make_exn signature_str in
+  let zero_address = P.Address.make_exn Constants.zero_address in
   Log.debug (fun m ->
       m "Order signed: sig=%s..." (String.sub signature_str 0 16));
   Types.

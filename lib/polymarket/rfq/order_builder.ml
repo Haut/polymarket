@@ -17,7 +17,7 @@ let build_accept_quote_body ~private_key ~request_id ~quote_id ~token_id
     ~maker_amount ~taker_amount ~(side : Side.t) ?expiration ?nonce
     ?(fee_rate_bps = Order_signing.default_fee_rate_bps) () =
   let address_str = Crypto.private_key_to_address private_key in
-  let address = P.Address.unsafe_of_string address_str in
+  let address = P.Address.make_exn address_str in
   let salt = Order_signing.generate_salt () in
   let request_id_str = P.Request_id.to_string request_id in
   let quote_id_str = P.Quote_id.to_string quote_id in
@@ -47,8 +47,8 @@ let build_accept_quote_body ~private_key ~request_id ~quote_id ~token_id
       ~maker_amount ~taker_amount ~expiration:(string_of_int expiration) ~nonce
       ~fee_rate_bps ~side:side_int ~signature_type:0
   in
-  let signature = P.Signature.unsafe_of_string signature_str in
-  let zero_address = P.Address.unsafe_of_string Constants.zero_address in
+  let signature = P.Signature.make_exn signature_str in
+  let zero_address = P.Address.make_exn Constants.zero_address in
   Log.debug (fun m -> m "Signed: sig=%s..." (String.sub signature_str 0 16));
   {
     request_id;

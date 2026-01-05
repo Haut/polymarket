@@ -9,15 +9,27 @@ open Ppx_yojson_conv_lib.Yojson_conv.Primitives
 (** {1 Types} *)
 
 type credentials = { api_key : string; secret : string; passphrase : string }
-[@@deriving show, eq]
+[@@deriving eq]
+
+let pp_credentials fmt c =
+  Format.fprintf fmt
+    "{ api_key = %S; secret = <redacted>; passphrase = <redacted> }" c.api_key
+
+let show_credentials c = Format.asprintf "%a" pp_credentials c
 
 type api_key_response = {
   api_key : string; [@key "apiKey"]
   secret : string;
   passphrase : string;
 }
-[@@deriving yojson, show, eq]
+[@@deriving yojson, eq]
 (** Response from API key endpoints (create or derive). *)
+
+let pp_api_key_response fmt r =
+  Format.fprintf fmt
+    "{ api_key = %S; secret = <redacted>; passphrase = <redacted> }" r.api_key
+
+let show_api_key_response r = Format.asprintf "%a" pp_api_key_response r
 
 (** {1 Conversion} *)
 
