@@ -101,8 +101,11 @@ Used for creating or deriving API credentials. Signs messages with your Ethereum
 
 ```ocaml
 (* Upgrade unauthenticated client to L1 *)
-let l1_client = Clob.upgrade_to_l1 unauthed_client ~private_key in
-Printf.printf "Wallet address: %s\n" (Clob.L1.address l1_client)
+match Clob.upgrade_to_l1 unauthed_client ~private_key with
+| Ok l1_client ->
+    Printf.printf "Wallet address: %s\n" (Clob.L1.address l1_client)
+| Error e ->
+    Printf.printf "Error: %s\n" (Crypto.string_of_error e)
 ```
 
 ### L2: API Key Authentication
@@ -132,15 +135,17 @@ let _ = Clob.Unauthed.get_order_book unauthed ~token_id () in  (* OK *)
 (* Clob.Unauthed.get_orders unauthed ()  -- Won't compile! *)
 
 (* Type: Clob.L1.t - public + key creation *)
-let l1 = Clob.upgrade_to_l1 unauthed ~private_key in
+match Clob.upgrade_to_l1 unauthed ~private_key with
+| Error _ -> failwith "Invalid private key"
+| Ok l1 ->
 
 (* Type: Clob.L2.t - full access *)
-match Clob.L1.derive_api_key l1 ~nonce:0 with
+(match Clob.L1.derive_api_key l1 ~nonce:0 with
 | Ok (l2, _) ->
     let _ = Clob.L2.get_orders l2 () in       (* OK - trading endpoint *)
     let _ = Clob.L2.get_order_book l2 ~token_id () in  (* OK - public still works *)
     ()
-| Error _ -> ()
+| Error _ -> ())
 ```
 
 ## Examples
@@ -170,7 +175,7 @@ match Gamma.public_search client ~q:"bitcoin" ~limit_per_type:5 () with
 
 ```ocaml
 let client = Data.create ~sw ~net ~rate_limiter () in
-let user = Primitives.Address.make_exn "0x1234..." in
+let user = Primitives.Address.unsafe_of_string "0x1234..." in
 
 match Data.get_positions client
   ~user

@@ -98,7 +98,7 @@ Generic, reusable components with no Polymarket-specific knowledge:
 
 Shared Polymarket utilities used by all API clients:
 
-- `primitives.ml`: Type-safe wrappers with validation (`Address.make`, `Hash64.make_exn`)
+- `primitives.ml`: Type-safe wrappers with validation (`Address.make`, `Hash64.make`)
 - `auth.ml`: Builds L1 (EIP-712) and L2 (HMAC-SHA256) authentication headers
 - `crypto.ml`: Cryptographic operations, private key to address derivation
 - `rate_limit_presets.ml`: Pre-configured limits matching official API docs
@@ -157,7 +157,7 @@ val create_api_key : l1 -> ...        (* Requires L1 or higher *)
 val create_order : l2 -> ...          (* Requires L2 *)
 
 (* Upgrade functions return new types *)
-val upgrade_to_l1 : unauthed -> private_key:string -> l1
+val upgrade_to_l1 : unauthed -> private_key:string -> (l1, Crypto.error) result
 val upgrade_to_l2 : l1 -> credentials:Auth.credentials -> l2
 ```
 
@@ -165,22 +165,21 @@ val upgrade_to_l2 : l1 -> credentials:Auth.credentials -> l2
 
 ### Naming (Jane Street Style)
 
-The "easy" name is the safe one. Opt into exceptions explicitly:
+The "easy" name is the safe one:
 
 | Pattern | Returns | Use When |
 |---------|---------|----------|
-| `foo` | `Result` or `option` | Default - handles invalid input |
-| `foo_opt` | `option` | When you only care about success |
-| `foo_exn` | raises | When you know input is valid |
+| `foo` | `Result` | Default - handles invalid input |
+| `unsafe_of_*` | value directly | For trusted/validated sources only |
 
 ```ocaml
-(* Safe by default *)
+(* Safe by default - returns typed error *)
 match Address.make user_input with
 | Ok addr -> use addr
-| Error msg -> handle_error msg
+| Error e -> handle_error (Primitives.string_of_validation_error e)
 
-(* Explicit exception when you're sure *)
-let addr = Address.make_exn "0x1234..."
+(* Unsafe - use only for trusted sources *)
+let addr = Address.unsafe_of_string "0x1234..."
 ```
 
 ### Error Handling
@@ -204,12 +203,19 @@ let t_of_yojson json =
                (Failure "expected string", json))
 ```
 
-**Validation errors**: Return `(t, string) result`
+**Validation errors**: Return typed errors
 
 ```ocaml
+(* Primitives use validation_error *)
 let make input =
   if is_valid input then Ok (create input)
-  else Error "invalid input: must be 40 hex chars"
+  else Error (Invalid_length { type_name = "Address"; expected = 42; actual = len })
+
+(* Crypto uses Crypto.error *)
+match Crypto.sign_hash ~private_key hash with
+| Ok sig -> use sig
+| Error Crypto.Invalid_private_key -> handle_invalid_key ()
+| Error e -> log (Crypto.string_of_error e)
 ```
 
 ### Module Organization
@@ -265,17 +271,17 @@ Available helpers:
 
 ### Type Design
 
-**Primitive wrappers**: Abstract types with validation
+**Primitive wrappers**: Abstract types with typed validation errors
 
 ```ocaml
 module Address : sig
   type t
-  val make : string -> (t, string) result
-  val make_exn : string -> t
+  val make : string -> (t, validation_error) result
+  val unsafe_of_string : string -> t  (* For trusted sources *)
   val to_string : t -> string
   val equal : t -> t -> bool
   val pp : Format.formatter -> t -> unit
-  val t_of_yojson : Yojson.Safe.t -> t
+  val of_yojson : Yojson.Safe.t -> (t, validation_error) result
   val yojson_of_t : t -> Yojson.Safe.t
 end
 ```
@@ -370,14 +376,14 @@ let tests = [
 
 Before submitting a PR:
 
-- [ ] Functions that can fail return `Result` or `option`
-- [ ] Exception-raising variants have `_exn` suffix
+- [ ] Functions that can fail return `Result` with typed errors
+- [ ] Unsafe variants have `unsafe_of_*` naming for trusted sources
 - [ ] New public modules have `.mli` files
 - [ ] Types use appropriate PPX derivers (`yojson`, `show`, `eq`)
 - [ ] Rate limits configured for new endpoints
 - [ ] Tests added for new functionality
 - [ ] No `Random` usage for security (use `mirage-crypto-rng`)
-- [ ] No bare `failwith` in library code
+- [ ] No bare `failwith` in library code (use Result types)
 
 ## Security
 
