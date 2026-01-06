@@ -103,16 +103,20 @@ let connect_tls t =
       (* Upgrade to TLS *)
       match make_tls_config () with
       | Error e -> Error e
-      | Ok tls_config ->
-          let host_name =
-            Domain_name.of_string_exn host |> Domain_name.host_exn
-          in
-          Log.debug (fun m -> m "TLS handshake");
-          let tls_flow =
-            Tls_eio.client_of_flow tls_config ~host:host_name socket
-          in
-          Log.debug (fun m -> m "TLS connected");
-          Ok tls_flow)
+      | Ok tls_config -> (
+          match Domain_name.of_string host with
+          | Error (`Msg msg) -> Error (Dns_error ("Invalid hostname: " ^ msg))
+          | Ok dn -> (
+              match Domain_name.host dn with
+              | Error (`Msg msg) ->
+                  Error (Dns_error ("Not a valid host: " ^ msg))
+              | Ok host_name ->
+                  Log.debug (fun m -> m "TLS handshake");
+                  let tls_flow =
+                    Tls_eio.client_of_flow tls_config ~host:host_name socket
+                  in
+                  Log.debug (fun m -> m "TLS connected");
+                  Ok tls_flow)))
 
 (** Connect and perform WebSocket handshake *)
 let connect_internal t =

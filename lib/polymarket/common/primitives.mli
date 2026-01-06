@@ -5,6 +5,22 @@
     input, making it impossible to have invalid addresses or hashes in the
     system. *)
 
+(** {1 Validation Errors} *)
+
+type validation_error =
+  | Invalid_length of { type_name : string; expected : int; actual : int }
+  | Missing_prefix of { type_name : string; expected : string }
+  | Invalid_hex of { type_name : string }
+  | Empty_value of { type_name : string }
+  | Invalid_format of { type_name : string; reason : string }
+      (** Typed errors returned by validation functions. *)
+
+val string_of_validation_error : validation_error -> string
+(** Convert a validation error to a human-readable string. *)
+
+val pp_validation_error : Format.formatter -> validation_error -> unit
+(** Pretty-printer for validation errors. *)
+
 (** {1 Address Module}
 
     Ethereum address type (0x-prefixed, 40 hex chars, total 42 chars). Pattern:
@@ -12,11 +28,8 @@
 module Address : sig
   type t = private string
 
-  val make : string -> (t, string) result
+  val make : string -> (t, validation_error) result
   (** Create an address with validation. Returns Error if invalid. *)
-
-  val make_exn : string -> t
-  (** Create an address with validation. Raises on invalid input. *)
 
   val unsafe_of_string : string -> t
   (** Create from string without validation. Use only for trusted sources. *)
@@ -30,11 +43,8 @@ module Address : sig
   val equal : t -> t -> bool
   (** Equality comparison. *)
 
-  val of_yojson : Yojson.Safe.t -> (t, string) result
+  val of_yojson : Yojson.Safe.t -> (t, validation_error) result
   (** JSON deserialization with validation. *)
-
-  val of_yojson_exn : Yojson.Safe.t -> t
-  (** JSON deserialization, raises on invalid. *)
 
   val to_yojson : t -> Yojson.Safe.t
   (** JSON serialization. *)
@@ -53,11 +63,8 @@ end
 module Hash64 : sig
   type t = private string
 
-  val make : string -> (t, string) result
+  val make : string -> (t, validation_error) result
   (** Create a hash64 with validation. Returns Error if invalid. *)
-
-  val make_exn : string -> t
-  (** Create a hash64 with validation. Raises on invalid input. *)
 
   val unsafe_of_string : string -> t
   (** Create from string without validation. Use only for trusted sources. *)
@@ -71,11 +78,8 @@ module Hash64 : sig
   val equal : t -> t -> bool
   (** Equality comparison. *)
 
-  val of_yojson : Yojson.Safe.t -> (t, string) result
+  val of_yojson : Yojson.Safe.t -> (t, validation_error) result
   (** JSON deserialization with validation. *)
-
-  val of_yojson_exn : Yojson.Safe.t -> t
-  (** JSON deserialization, raises on invalid. *)
 
   val to_yojson : t -> Yojson.Safe.t
   (** JSON serialization. *)
@@ -94,11 +98,8 @@ end
 module Hash : sig
   type t = private string
 
-  val make : string -> (t, string) result
+  val make : string -> (t, validation_error) result
   (** Create a hash with validation. Returns Error if invalid. *)
-
-  val make_exn : string -> t
-  (** Create a hash with validation. Raises on invalid input. *)
 
   val unsafe_of_string : string -> t
   (** Create from string without validation. Use only for trusted sources. *)
@@ -112,11 +113,8 @@ module Hash : sig
   val equal : t -> t -> bool
   (** Equality comparison. *)
 
-  val of_yojson : Yojson.Safe.t -> (t, string) result
+  val of_yojson : Yojson.Safe.t -> (t, validation_error) result
   (** JSON deserialization with validation. *)
-
-  val of_yojson_exn : Yojson.Safe.t -> t
-  (** JSON deserialization, raises on invalid. *)
 
   val to_yojson : t -> Yojson.Safe.t
   (** JSON serialization. *)
@@ -135,11 +133,8 @@ end
 module Token_id : sig
   type t = private string
 
-  val make : string -> (t, string) result
+  val make : string -> (t, validation_error) result
   (** Create a token_id with validation. Returns Error if not numeric. *)
-
-  val make_exn : string -> t
-  (** Create a token_id with validation. Raises on invalid input. *)
 
   val unsafe_of_string : string -> t
   (** Create from string without validation. Use only for trusted sources. *)
@@ -153,11 +148,8 @@ module Token_id : sig
   val equal : t -> t -> bool
   (** Equality comparison. *)
 
-  val of_yojson : Yojson.Safe.t -> (t, string) result
+  val of_yojson : Yojson.Safe.t -> (t, validation_error) result
   (** JSON deserialization with validation. *)
-
-  val of_yojson_exn : Yojson.Safe.t -> t
-  (** JSON deserialization, raises on invalid. *)
 
   val to_yojson : t -> Yojson.Safe.t
   (** JSON serialization. *)
@@ -177,11 +169,8 @@ end
 module Signature : sig
   type t = private string
 
-  val make : string -> (t, string) result
+  val make : string -> (t, validation_error) result
   (** Create a signature with validation. Returns Error if invalid hex. *)
-
-  val make_exn : string -> t
-  (** Create a signature with validation. Raises on invalid input. *)
 
   val unsafe_of_string : string -> t
   (** Create from string without validation. Use only for trusted sources. *)
@@ -195,11 +184,8 @@ module Signature : sig
   val equal : t -> t -> bool
   (** Equality comparison. *)
 
-  val of_yojson : Yojson.Safe.t -> (t, string) result
+  val of_yojson : Yojson.Safe.t -> (t, validation_error) result
   (** JSON deserialization with validation. *)
-
-  val of_yojson_exn : Yojson.Safe.t -> t
-  (** JSON deserialization, raises on invalid. *)
 
   val to_yojson : t -> Yojson.Safe.t
   (** JSON serialization. *)
@@ -218,11 +204,8 @@ end
 module Request_id : sig
   type t = private string
 
-  val make : string -> (t, string) result
+  val make : string -> (t, validation_error) result
   (** Create a request_id with validation. Returns Error if empty. *)
-
-  val make_exn : string -> t
-  (** Create a request_id with validation. Raises on invalid input. *)
 
   val unsafe_of_string : string -> t
   (** Create from string without validation. Use only for trusted sources. *)
@@ -236,11 +219,8 @@ module Request_id : sig
   val equal : t -> t -> bool
   (** Equality comparison. *)
 
-  val of_yojson : Yojson.Safe.t -> (t, string) result
+  val of_yojson : Yojson.Safe.t -> (t, validation_error) result
   (** JSON deserialization with validation. *)
-
-  val of_yojson_exn : Yojson.Safe.t -> t
-  (** JSON deserialization, raises on invalid. *)
 
   val to_yojson : t -> Yojson.Safe.t
   (** JSON serialization. *)
@@ -259,11 +239,8 @@ end
 module Quote_id : sig
   type t = private string
 
-  val make : string -> (t, string) result
+  val make : string -> (t, validation_error) result
   (** Create a quote_id with validation. Returns Error if empty. *)
-
-  val make_exn : string -> t
-  (** Create a quote_id with validation. Raises on invalid input. *)
 
   val unsafe_of_string : string -> t
   (** Create from string without validation. Use only for trusted sources. *)
@@ -277,11 +254,8 @@ module Quote_id : sig
   val equal : t -> t -> bool
   (** Equality comparison. *)
 
-  val of_yojson : Yojson.Safe.t -> (t, string) result
+  val of_yojson : Yojson.Safe.t -> (t, validation_error) result
   (** JSON deserialization with validation. *)
-
-  val of_yojson_exn : Yojson.Safe.t -> t
-  (** JSON deserialization, raises on invalid. *)
 
   val to_yojson : t -> Yojson.Safe.t
   (** JSON serialization. *)
@@ -300,11 +274,8 @@ end
 module Trade_id : sig
   type t = private string
 
-  val make : string -> (t, string) result
+  val make : string -> (t, validation_error) result
   (** Create a trade_id with validation. Returns Error if empty. *)
-
-  val make_exn : string -> t
-  (** Create a trade_id with validation. Raises on invalid input. *)
 
   val unsafe_of_string : string -> t
   (** Create from string without validation. Use only for trusted sources. *)
@@ -318,11 +289,8 @@ module Trade_id : sig
   val equal : t -> t -> bool
   (** Equality comparison. *)
 
-  val of_yojson : Yojson.Safe.t -> (t, string) result
+  val of_yojson : Yojson.Safe.t -> (t, validation_error) result
   (** JSON deserialization with validation. *)
-
-  val of_yojson_exn : Yojson.Safe.t -> t
-  (** JSON deserialization, raises on invalid. *)
 
   val to_yojson : t -> Yojson.Safe.t
   (** JSON serialization. *)
@@ -344,9 +312,6 @@ module Timestamp : sig
 
   val of_string : string -> t option
   (** Parse from ISO 8601 string *)
-
-  val of_string_exn : string -> t
-  (** Parse from ISO 8601 string, raises on invalid format *)
 
   val to_string : t -> string
   (** Convert to ISO 8601 string *)

@@ -19,7 +19,7 @@ let build_accept_quote_body ~private_key ~request_id ~quote_id ~token_id
   match Crypto.private_key_to_address private_key with
   | Error msg -> Error msg
   | Ok address_str -> (
-      let address = P.Address.make_exn address_str in
+      let address = P.Address.unsafe_of_string address_str in
       let salt = Order_signing.generate_salt () in
       let request_id_str = P.Request_id.to_string request_id in
       let quote_id_str = P.Quote_id.to_string quote_id in
@@ -54,8 +54,10 @@ let build_accept_quote_body ~private_key ~request_id ~quote_id ~token_id
       with
       | Error msg -> Error msg
       | Ok signature_str ->
-          let signature = P.Signature.make_exn signature_str in
-          let zero_address = P.Address.make_exn Constants.zero_address in
+          let signature = P.Signature.unsafe_of_string signature_str in
+          let zero_address =
+            P.Address.unsafe_of_string Constants.zero_address
+          in
           Log.debug (fun m ->
               m "Signed: sig=%s..." (String.sub signature_str 0 16));
           Ok

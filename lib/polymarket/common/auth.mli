@@ -44,12 +44,12 @@ val build_l1_headers :
   private_key:Crypto.private_key ->
   address:string ->
   nonce:int ->
-  ((string * string) list, string) result
+  ((string * string) list, Crypto.error) result
 (** Build L1 authentication headers for wallet-based endpoints.
     @param private_key The Ethereum private key (hex, without 0x prefix)
     @param address The Ethereum address (hex, with 0x prefix)
     @param nonce A unique nonce for this request
-    @return [Ok headers] or [Error msg] if signing fails *)
+    @return [Ok headers] or [Error e] if signing fails *)
 
 (** {1 L2 Authentication}
 
@@ -62,14 +62,14 @@ val build_l2_headers :
   method_:string ->
   path:string ->
   body:string ->
-  ((string * string) list, string) result
+  ((string * string) list, Crypto.error) result
 (** Build L2 authentication headers for API key-authenticated endpoints.
     @param credentials The API credentials (api_key, secret, passphrase)
     @param address The Ethereum address (hex, with 0x prefix)
     @param method_ The HTTP method (GET, POST, DELETE)
     @param path The request path (e.g., "/orders")
     @param body The request body (empty string for GET/DELETE)
-    @return [Ok headers] or [Error msg] if signing fails *)
+    @return [Ok headers] or [Error e] if signing fails *)
 
 (** {1 Request Builder Helpers}
 
@@ -80,15 +80,15 @@ val with_l1_auth :
   address:string ->
   nonce:int ->
   'a Polymarket_http.Request.t ->
-  ('a Polymarket_http.Request.t, string) result
+  ('a Polymarket_http.Request.t, Crypto.error) result
 (** Add L1 authentication headers to a request builder.
-    @return [Ok request] with headers added, or [Error msg] if signing fails *)
+    @return [Ok request] with headers added, or [Error e] if signing fails *)
 
 val with_l2_auth :
   credentials:credentials ->
   address:string ->
   'a Polymarket_http.Request.t ->
-  ('a Polymarket_http.Request.t, string) result
+  ('a Polymarket_http.Request.t, Crypto.error) result
 (** Add L2 authentication headers to a request builder. Computes headers from
     the request's method, path, and body.
-    @return [Ok request] with headers added, or [Error msg] if signing fails *)
+    @return [Ok request] with headers added, or [Error e] if signing fails *)

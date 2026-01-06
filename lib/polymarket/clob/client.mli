@@ -395,10 +395,11 @@ end
 
     Functions to upgrade or downgrade authentication levels. *)
 
-val upgrade_to_l1 : unauthed -> private_key:private_key -> (l1, string) result
+val upgrade_to_l1 :
+  unauthed -> private_key:private_key -> (l1, Common.Crypto.error) result
 (** Upgrade an unauthenticated client to L1 by providing a private key. The
-    address is derived from the private key automatically. Returns [Error msg]
-    if the address cannot be derived from the private key. *)
+    address is derived from the private key automatically. Returns [Error e] if
+    the address cannot be derived from the private key. *)
 
 val upgrade_to_l2 : l1 -> credentials:credentials -> l2
 (** Upgrade an L1 client to L2 by providing API credentials. *)

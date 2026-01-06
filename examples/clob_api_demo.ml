@@ -246,7 +246,8 @@ let run_demo env =
 
       (* Upgrade to L1 client with private key *)
       (match Clob.upgrade_to_l1 unauthed_client ~private_key with
-      | Error msg ->
+      | Error e ->
+          let msg = Crypto.string_of_error e in
           Logger.error "upgrade_to_l1" msg;
           failwith msg
       | Ok l1_client -> (

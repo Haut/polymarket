@@ -59,7 +59,6 @@ module Signature_type : sig
 
   val to_int : t -> int
   val of_int_opt : int -> t option
-  val of_int_exn : int -> t
   val t_of_yojson : Yojson.Safe.t -> t
   val yojson_of_t : t -> Yojson.Safe.t
   val pp : Format.formatter -> t -> unit

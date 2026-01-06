@@ -314,6 +314,12 @@ module Rate_limit_presets = Common.Rate_limit_presets
 
 module Primitives = Common.Primitives
 
+(** {1 Cryptographic Utilities}
+
+    EIP-712 signing, HMAC-SHA256, and Ethereum address derivation. *)
+
+module Crypto = Common.Crypto
+
 (** {1 Error Types}
 
     Structured error types for API operations. *)

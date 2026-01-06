@@ -57,6 +57,10 @@ module Rate_limit_presets = Common.Rate_limit_presets
 
 module Primitives = Common.Primitives
 
+(** {1 Cryptographic Utilities} *)
+
+module Crypto = Common.Crypto
+
 (** {1 Error Types} *)
 
 module Error = struct

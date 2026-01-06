@@ -3,6 +3,32 @@
     This module provides EIP-712 signing, HMAC-SHA256, and Ethereum address
     derivation for API authentication. *)
 
+(** {1 Error Types} *)
+
+type error =
+  | Invalid_base64 of string
+  | Invalid_private_key
+  | Signing_failed
+  | Invalid_signature_length of { expected : int; actual : int }
+  | Public_key_derivation_failed
+  | Invalid_public_key_length of { expected : int; actual : int }
+  | Unexpected_error of string
+
+let string_of_error = function
+  | Invalid_base64 msg -> "Invalid base64: " ^ msg
+  | Invalid_private_key -> "Invalid private key format"
+  | Signing_failed -> "Signing failed"
+  | Invalid_signature_length { expected; actual } ->
+      Printf.sprintf "Invalid signature length: expected %d bytes, got %d"
+        expected actual
+  | Public_key_derivation_failed -> "Failed to derive public key"
+  | Invalid_public_key_length { expected; actual } ->
+      Printf.sprintf "Invalid public key length: expected %d bytes, got %d"
+        expected actual
+  | Unexpected_error msg -> msg
+
+let pp_error fmt e = Format.fprintf fmt "%s" (string_of_error e)
+
 type private_key = string
 
 let private_key_of_string s = s
@@ -26,14 +52,16 @@ let hmac_sha256 ~key message =
 let sign_l2_request ~secret ~timestamp ~method_ ~path ~body =
   (* Decode base64 secret with error handling *)
   match Base64.decode secret with
-  | Error (`Msg msg) -> Error ("Invalid base64 secret: " ^ msg)
-  | Ok key ->
+  | Error (`Msg msg) -> Error (Invalid_base64 msg)
+  | Ok key -> (
       (* Construct message: timestamp + method + path + body *)
       let message = timestamp ^ method_ ^ path ^ body in
       (* Compute HMAC-SHA256 *)
       let signature = hmac_sha256 ~key message in
       (* Encode result as base64 *)
-      Ok (Base64.encode_exn signature)
+      match Base64.encode signature with
+      | Ok encoded -> Ok encoded
+      | Error (`Msg msg) -> Error (Invalid_base64 msg))
 
 (** {1 EIP-712 Helpers} *)
 
@@ -119,30 +147,36 @@ let compute_eip712_hash ~address ~timestamp ~nonce =
 (** Sign a 32-byte hash with private key, returns signature with recovery id *)
 let sign_hash ~private_key hash_hex =
   let open Libsecp256k1.External in
-  (* Create signing context *)
-  let ctx = Context.create ~sign:true ~verify:true () in
-  (* Parse private key (hex string to bytes) *)
-  let sk_bytes = Bigstring.of_string (Hex.to_string (`Hex private_key)) in
-  let sk = Key.read_sk_exn ctx sk_bytes in
-  (* Parse hash (hex string to bytes) *)
-  let hash_bytes = Bigstring.of_string (Hex.to_string (`Hex hash_hex)) in
-  (* Sign with recoverable signature *)
-  let signature = Sign.sign_recoverable_exn ctx ~sk hash_bytes in
-  (* Serialize signature (65 bytes: 64 bytes r+s + 1 byte recovery id) *)
-  let sig_bytes = Sign.to_bytes ctx signature in
-  let sig_str = Bigstring.to_string sig_bytes in
-  (* Validate signature length before slicing *)
-  if String.length sig_str < 65 then
-    Error
-      (Printf.sprintf "Invalid signature length: expected 65 bytes, got %d"
-         (String.length sig_str))
-  else
-    (* First 64 bytes are r+s, last byte is recovery id *)
-    let rs_hex = Hex.of_string (String.sub sig_str 0 64) in
-    let recid = Char.code sig_str.[64] in
-    let v = recid + 27 in
-    let (`Hex rs_str) = rs_hex in
-    Ok (Printf.sprintf "0x%s%02x" rs_str v)
+  try
+    (* Create signing context *)
+    let ctx = Context.create ~sign:true ~verify:true () in
+    (* Parse private key (hex string to bytes) *)
+    let sk_bytes = Bigstring.of_string (Hex.to_string (`Hex private_key)) in
+    match Key.read_sk ctx sk_bytes with
+    | Error _ -> Error Invalid_private_key
+    | Ok sk -> (
+        (* Parse hash (hex string to bytes) *)
+        let hash_bytes = Bigstring.of_string (Hex.to_string (`Hex hash_hex)) in
+        (* Sign with recoverable signature *)
+        match Sign.sign_recoverable ctx ~sk hash_bytes with
+        | Error _ -> Error Signing_failed
+        | Ok signature ->
+            (* Serialize signature (65 bytes: 64 bytes r+s + 1 byte recovery id) *)
+            let sig_bytes = Sign.to_bytes ctx signature in
+            let sig_str = Bigstring.to_string sig_bytes in
+            (* Validate signature length before slicing *)
+            if String.length sig_str < 65 then
+              Error
+                (Invalid_signature_length
+                   { expected = 65; actual = String.length sig_str })
+            else
+              (* First 64 bytes are r+s, last byte is recovery id *)
+              let rs_hex = Hex.of_string (String.sub sig_str 0 64) in
+              let recid = Char.code sig_str.[64] in
+              let v = recid + 27 in
+              let (`Hex rs_str) = rs_hex in
+              Ok (Printf.sprintf "0x%s%02x" rs_str v))
+  with exn -> Error (Unexpected_error (Printexc.to_string exn))
 
 (** {1 Public API} *)
 
@@ -152,34 +186,34 @@ let sign_clob_auth_message ~private_key ~address ~timestamp ~nonce =
 
 let private_key_to_address private_key =
   let open Libsecp256k1.External in
-  (* Create context *)
-  let ctx = Context.create ~sign:true ~verify:true () in
-  (* Parse private key *)
-  let sk_bytes = Bigstring.of_string (Hex.to_string (`Hex private_key)) in
-  let sk = Key.read_sk_exn ctx sk_bytes in
-  (* Derive public key *)
-  let pk = Key.neuterize_exn ctx sk in
-  (* Serialize uncompressed public key (65 bytes: 0x04 + 64 bytes) *)
-  let pk_bytes = Key.to_bytes ~compress:false ctx pk in
-  let pk_str = Bigstring.to_string pk_bytes in
-  (* Validate public key length before slicing *)
-  if String.length pk_str < 65 then
-    Error
-      (Printf.sprintf "Invalid public key length: expected 65 bytes, got %d"
-         (String.length pk_str))
-  else
-    (* Take last 64 bytes (skip 0x04 prefix), hash with keccak256, take last 20 bytes *)
-    let pk_data = String.sub pk_str 1 64 in
-    let hash = Digestif.KECCAK_256.digest_string pk_data in
-    let hash_hex = Digestif.KECCAK_256.to_hex hash in
-    (* Validate hash length before slicing (keccak256 always produces 64 hex chars) *)
-    if String.length hash_hex < 40 then
-      Error
-        (Printf.sprintf "Invalid hash length: expected >= 40 chars, got %d"
-           (String.length hash_hex))
-    else
-      (* Last 40 chars (20 bytes) of hash = address *)
-      Ok ("0x" ^ String.sub hash_hex (String.length hash_hex - 40) 40)
+  try
+    (* Create context *)
+    let ctx = Context.create ~sign:true ~verify:true () in
+    (* Parse private key *)
+    let sk_bytes = Bigstring.of_string (Hex.to_string (`Hex private_key)) in
+    match Key.read_sk ctx sk_bytes with
+    | Error _ -> Error Invalid_private_key
+    | Ok sk -> (
+        (* Derive public key *)
+        match Key.neuterize ctx sk with
+        | None -> Error Public_key_derivation_failed
+        | Some pk ->
+            (* Serialize uncompressed public key (65 bytes: 0x04 + 64 bytes) *)
+            let pk_bytes = Key.to_bytes ~compress:false ctx pk in
+            let pk_str = Bigstring.to_string pk_bytes in
+            (* Validate public key length before slicing *)
+            if String.length pk_str < 65 then
+              Error
+                (Invalid_public_key_length
+                   { expected = 65; actual = String.length pk_str })
+            else
+              (* Take last 64 bytes (skip 0x04 prefix), hash with keccak256, take last 20 bytes *)
+              let pk_data = String.sub pk_str 1 64 in
+              let hash = Digestif.KECCAK_256.digest_string pk_data in
+              let hash_hex = Digestif.KECCAK_256.to_hex hash in
+              (* Last 40 chars (20 bytes) of hash = address *)
+              Ok ("0x" ^ String.sub hash_hex (String.length hash_hex - 40) 40))
+  with exn -> Error (Unexpected_error (Printexc.to_string exn))
 
 let current_timestamp_ms () =
   let t = Unix.gettimeofday () in

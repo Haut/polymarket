@@ -141,7 +141,7 @@ module L1 = struct
     | Error e -> Error e
     | Ok http -> (
         match Crypto.private_key_to_address private_key with
-        | Error msg -> Error (H.Crypto_error msg)
+        | Error e -> Error (H.Crypto_error (Crypto.string_of_error e))
         | Ok address -> Ok ({ http; private_key; address } : t))
 
   let address (t : t) = t.address
@@ -157,7 +157,7 @@ module L1 = struct
     match
       Auth.with_l1_auth ~private_key:t.private_key ~address:t.address ~nonce req
     with
-    | Error msg -> Error (H.to_error msg)
+    | Error e -> Error (H.to_error (Crypto.string_of_error e))
     | Ok r -> B.fetch_json Auth.api_key_response_of_yojson r
 
   let derive_api_key (t : t) ~nonce =
@@ -165,7 +165,7 @@ module L1 = struct
     match
       Auth.with_l1_auth ~private_key:t.private_key ~address:t.address ~nonce req
     with
-    | Error msg -> Error (H.to_error msg)
+    | Error e -> Error (H.to_error (Crypto.string_of_error e))
     | Ok r -> (
         match B.fetch_json Auth.api_key_response_of_yojson r with
         | Error e -> Error e
@@ -193,7 +193,7 @@ module L2 = struct
     | Error e -> Error e
     | Ok http -> (
         match Crypto.private_key_to_address private_key with
-        | Error msg -> Error (H.Crypto_error msg)
+        | Error e -> Error (H.Crypto_error (Crypto.string_of_error e))
         | Ok address -> Ok ({ http; private_key; address; credentials } : t))
 
   let address (t : t) = t.address
@@ -208,13 +208,13 @@ module L2 = struct
   (** Helper to run L1-authenticated requests *)
   let with_l1_request req ~private_key ~address ~nonce f =
     match Auth.with_l1_auth ~private_key ~address ~nonce req with
-    | Error msg -> Error (H.to_error msg)
+    | Error e -> Error (H.to_error (Crypto.string_of_error e))
     | Ok r -> f r
 
   (** Helper to run L2-authenticated requests *)
   let with_l2_request req ~credentials ~address f =
     match Auth.with_l2_auth ~credentials ~address req with
-    | Error msg -> Error (H.to_error msg)
+    | Error e -> Error (H.to_error (Crypto.string_of_error e))
     | Ok r -> f r
 
   let create_api_key (t : t) ~nonce =

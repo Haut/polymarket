@@ -30,6 +30,14 @@ let string_of_init_error = function
   | Tls_config_error msg -> "TLS config error: " ^ msg
   | Crypto_error msg -> "Crypto error: " ^ msg
 
+let parse_hostname host =
+  match Domain_name.of_string host with
+  | Error (`Msg msg) -> failwith ("Invalid hostname for TLS: " ^ msg)
+  | Ok dn -> (
+      match Domain_name.host dn with
+      | Error (`Msg msg) -> failwith ("Not a valid host: " ^ msg)
+      | Ok h -> h)
+
 let make_https_handler _net =
   match Ca_certs.authenticator () with
   | Error (`Msg msg) -> Error (Ca_certs_error msg)
@@ -45,8 +53,7 @@ let make_https_handler _net =
                 | Some h -> h
                 | None -> "localhost"
               in
-              Tls_eio.client_of_flow tls_config
-                ~host:(Domain_name.of_string_exn host |> Domain_name.host_exn)
+              Tls_eio.client_of_flow tls_config ~host:(parse_hostname host)
                 socket))
 
 let create ~base_url ~sw ~net ~rate_limiter () =
@@ -79,7 +86,9 @@ let make_headers headers = Http.Header.of_list headers
 
 (** Helper to read body string from cohttp response *)
 let body_to_string body =
-  Eio.Buf_read.(parse_exn take_all) body ~max_size:max_int
+  match Eio.Buf_read.(parse take_all) body ~max_size:max_int with
+  | Ok s -> s
+  | Error (`Msg msg) -> failwith ("Failed to read response body: " ^ msg)
 
 let log_request ~method_ uri =
   Log.debug (fun m -> m "%s %s" method_ (Uri.to_string uri))

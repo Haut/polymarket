@@ -210,8 +210,8 @@ let run_demo env =
             failwith ("CLOB client error: " ^ Clob.init_error_to_string e)
       in
       (match Clob.upgrade_to_l1 unauthed_client ~private_key with
-      | Error msg ->
-          Logger.error "upgrade_to_l1" msg;
+      | Error e ->
+          Logger.error "upgrade_to_l1" (Crypto.string_of_error e);
           Logger.skip "User.connect" "could not upgrade to L1"
       | Ok l1_client -> (
           let nonce =

@@ -48,7 +48,7 @@ val create_limit_order :
   ?nonce:int ->
   ?fee_rate_bps:string ->
   unit ->
-  (Types.signed_order, string) result
+  (Types.signed_order, Common.Crypto.error) result
 (** Create a signed limit order ready for submission.
 
     @param private_key Ethereum private key (64 hex chars, no 0x prefix)
@@ -59,7 +59,7 @@ val create_limit_order :
     @param expiration Optional Unix timestamp for order expiry (default: 1 year)
     @param nonce Optional order nonce (default: 0)
     @param fee_rate_bps Optional fee rate in basis points (default: "0")
-    @return [Ok order] fully signed with all required fields, or [Error msg] *)
+    @return [Ok order] fully signed with all required fields, or [Error e] *)
 
 val create_order_request :
   order:Types.signed_order ->

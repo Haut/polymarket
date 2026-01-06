@@ -20,7 +20,7 @@ let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter ~private_key
   | Error e -> Error e
   | Ok http -> (
       match Crypto.private_key_to_address private_key with
-      | Error msg -> Error (H.Crypto_error msg)
+      | Error e -> Error (H.Crypto_error (Crypto.string_of_error e))
       | Ok address -> Ok { http; address; credentials })
 
 let address t = t.address
@@ -29,7 +29,7 @@ let credentials t = t.credentials
 (** Helper to run L2-authenticated requests *)
 let with_l2_request t req f =
   match Auth.with_l2_auth ~credentials:t.credentials ~address:t.address req with
-  | Error msg -> Error (H.to_error msg)
+  | Error e -> Error (H.to_error (Crypto.string_of_error e))
   | Ok r -> f r
 
 (** {1 Request Endpoints} *)

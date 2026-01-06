@@ -3,6 +3,8 @@
 open Alcotest
 open Polymarket.Primitives
 
+let error_to_string = string_of_validation_error
+
 (** {1 Address Module Tests} *)
 
 let valid_addresses =
@@ -30,7 +32,7 @@ let test_address_make_valid () =
     (fun addr ->
       match Address.make addr with
       | Ok t -> check string "round-trip" addr (Address.to_string t)
-      | Error msg -> fail ("Expected Ok, got Error: " ^ msg))
+      | Error e -> fail ("Expected Ok, got Error: " ^ error_to_string e))
     valid_addresses
 
 let test_address_make_invalid () =
@@ -44,10 +46,13 @@ let test_address_make_invalid () =
 let test_address_json_roundtrip () =
   List.iter
     (fun addr ->
-      let t = Address.make_exn addr in
-      let json = Address.to_yojson t in
-      let t' = Address.of_yojson_exn json in
-      check string "json round-trip" addr (Address.to_string t'))
+      match Address.make addr with
+      | Error e -> fail ("make failed: " ^ error_to_string e)
+      | Ok t -> (
+          let json = Address.to_yojson t in
+          match Address.of_yojson json with
+          | Error e -> fail ("of_yojson failed: " ^ error_to_string e)
+          | Ok t' -> check string "json round-trip" addr (Address.to_string t')))
     valid_addresses
 
 (** {1 Hash64 Module Tests} *)
@@ -75,7 +80,7 @@ let test_hash64_make_valid () =
     (fun hash ->
       match Hash64.make hash with
       | Ok t -> check string "round-trip" hash (Hash64.to_string t)
-      | Error msg -> fail ("Expected Ok, got Error: " ^ msg))
+      | Error e -> fail ("Expected Ok, got Error: " ^ error_to_string e))
     valid_hash64s
 
 let test_hash64_make_invalid () =
@@ -103,7 +108,7 @@ let test_hash_make_valid () =
     (fun hash ->
       match Hash.make hash with
       | Ok t -> check string "round-trip" hash (Hash.to_string t)
-      | Error msg -> fail ("Expected Ok, got Error: " ^ msg))
+      | Error e -> fail ("Expected Ok, got Error: " ^ error_to_string e))
     valid_hashes
 
 let test_hash_make_invalid () =

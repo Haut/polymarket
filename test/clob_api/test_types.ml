@@ -143,11 +143,13 @@ let test_signature_type_int_roundtrip () =
   List.iter
     (fun st ->
       let i = Signature_type.to_int st in
-      let result = Signature_type.of_int_exn i in
-      Alcotest.(check bool)
-        (Printf.sprintf "Signature_type %d roundtrip" i)
-        true
-        (Signature_type.equal st result))
+      match Signature_type.of_int_opt i with
+      | None -> Alcotest.fail (Printf.sprintf "of_int_opt %d returned None" i)
+      | Some result ->
+          Alcotest.(check bool)
+            (Printf.sprintf "Signature_type %d roundtrip" i)
+            true
+            (Signature_type.equal st result))
     types
 
 let test_signature_type_int_values () =
@@ -281,7 +283,8 @@ let test_address_of_yojson_invalid () =
   let json = `String "invalid" in
   match P.Address.of_yojson json with
   | Ok _ -> Alcotest.fail "expected Error"
-  | Error msg ->
+  | Error e ->
+      let msg = P.string_of_validation_error e in
       Alcotest.(check bool) "returns Error" true (String.length msg > 0)
 
 let test_signature_of_yojson_valid () =
@@ -297,7 +300,8 @@ let test_signature_of_yojson_invalid () =
   let json = `String "invalid" in
   match P.Signature.of_yojson json with
   | Ok _ -> Alcotest.fail "expected Error"
-  | Error msg ->
+  | Error e ->
+      let msg = P.string_of_validation_error e in
       Alcotest.(check bool) "returns Error" true (String.length msg > 0)
 
 let test_token_id_valid () =

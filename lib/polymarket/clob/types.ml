@@ -52,13 +52,6 @@ module Signature_type = struct
     | 2 -> Some Poly_gnosis_safe
     | _ -> None
 
-  let of_int_exn n =
-    match of_int_opt n with
-    | Some v -> v
-    | None ->
-        invalid_arg
-          (Printf.sprintf "Signature_type.of_int_exn: unknown value %d" n)
-
   let t_of_yojson json =
     let error msg =
       raise
