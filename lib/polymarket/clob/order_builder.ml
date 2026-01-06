@@ -32,58 +32,65 @@ let calculate_amounts ~side ~price ~size =
 let create_limit_order ~private_key ~token_id ~(side : Types.Side.t) ~price
     ~size ?expiration ?nonce
     ?(fee_rate_bps = Order_signing.default_fee_rate_bps) () =
-  let address_str = Crypto.private_key_to_address private_key in
-  let address = P.Address.make_exn address_str in
-  let salt = Order_signing.generate_salt () in
-  let maker_amount, taker_amount = calculate_amounts ~side ~price ~size in
-  let token_id_str = P.Token_id.to_string token_id in
-  Log.debug (fun m ->
-      m "Building order: side=%s price=%.4f size=%.2f -> maker=%s taker=%s"
-        (Types.Side.to_string side)
-        price size maker_amount taker_amount);
-  let expiration =
-    match expiration with
-    | Some e -> e
-    | None -> Order_signing.default_expiration_string ()
-  in
-  let nonce =
-    match nonce with
-    | Some n -> string_of_int n
-    | None -> Order_signing.default_nonce
-  in
-  let side_int = match side with Types.Side.Buy -> 0 | Types.Side.Sell -> 1 in
-  Log.debug (fun m ->
-      m "Signing order: token=%s...%s expiration=%s nonce=%s"
-        (String.sub token_id_str 0 (min 8 (String.length token_id_str)))
-        (let len = String.length token_id_str in
-         if len > 8 then String.sub token_id_str (len - 4) 4 else "")
-        expiration nonce);
-  let signature_str =
-    Order_signing.sign_order ~private_key ~salt ~maker:address_str
-      ~signer:address_str ~taker:Constants.zero_address ~token_id:token_id_str
-      ~maker_amount ~taker_amount ~expiration ~nonce ~fee_rate_bps
-      ~side:side_int ~signature_type:0
-  in
-  let signature = P.Signature.make_exn signature_str in
-  let zero_address = P.Address.make_exn Constants.zero_address in
-  Log.debug (fun m ->
-      m "Order signed: sig=%s..." (String.sub signature_str 0 16));
-  Types.
-    {
-      salt = Some salt;
-      maker = Some address;
-      signer = Some address;
-      taker = Some zero_address;
-      token_id = Some token_id;
-      maker_amount = Some maker_amount;
-      taker_amount = Some taker_amount;
-      expiration = Some expiration;
-      nonce = Some nonce;
-      fee_rate_bps = Some fee_rate_bps;
-      side = Some side;
-      signature_type = Some Signature_type.Eoa;
-      signature = Some signature;
-    }
+  match Crypto.private_key_to_address private_key with
+  | Error msg -> Error msg
+  | Ok address_str -> (
+      let address = P.Address.make_exn address_str in
+      let salt = Order_signing.generate_salt () in
+      let maker_amount, taker_amount = calculate_amounts ~side ~price ~size in
+      let token_id_str = P.Token_id.to_string token_id in
+      Log.debug (fun m ->
+          m "Building order: side=%s price=%.4f size=%.2f -> maker=%s taker=%s"
+            (Types.Side.to_string side)
+            price size maker_amount taker_amount);
+      let expiration =
+        match expiration with
+        | Some e -> e
+        | None -> Order_signing.default_expiration_string ()
+      in
+      let nonce =
+        match nonce with
+        | Some n -> string_of_int n
+        | None -> Order_signing.default_nonce
+      in
+      let side_int =
+        match side with Types.Side.Buy -> 0 | Types.Side.Sell -> 1
+      in
+      Log.debug (fun m ->
+          m "Signing order: token=%s...%s expiration=%s nonce=%s"
+            (String.sub token_id_str 0 (min 8 (String.length token_id_str)))
+            (let len = String.length token_id_str in
+             if len > 8 then String.sub token_id_str (len - 4) 4 else "")
+            expiration nonce);
+      match
+        Order_signing.sign_order ~private_key ~salt ~maker:address_str
+          ~signer:address_str ~taker:Constants.zero_address
+          ~token_id:token_id_str ~maker_amount ~taker_amount ~expiration ~nonce
+          ~fee_rate_bps ~side:side_int ~signature_type:0
+      with
+      | Error msg -> Error msg
+      | Ok signature_str ->
+          let signature = P.Signature.make_exn signature_str in
+          let zero_address = P.Address.make_exn Constants.zero_address in
+          Log.debug (fun m ->
+              m "Order signed: sig=%s..." (String.sub signature_str 0 16));
+          Ok
+            Types.
+              {
+                salt = Some salt;
+                maker = Some address;
+                signer = Some address;
+                taker = Some zero_address;
+                token_id = Some token_id;
+                maker_amount = Some maker_amount;
+                taker_amount = Some taker_amount;
+                expiration = Some expiration;
+                nonce = Some nonce;
+                fee_rate_bps = Some fee_rate_bps;
+                side = Some side;
+                signature_type = Some Signature_type.Eoa;
+                signature = Some signature;
+              })
 
 let create_order_request ~order ~order_type =
   let owner = Option.map P.Address.to_string order.Types.maker in

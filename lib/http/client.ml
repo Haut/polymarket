@@ -19,12 +19,16 @@ type t = {
   client : Cohttp_eio.Client.t;
 }
 
-(** TLS initialization error type *)
-type init_error = Ca_certs_error of string | Tls_config_error of string
+(** Initialization error type *)
+type init_error =
+  | Ca_certs_error of string
+  | Tls_config_error of string
+  | Crypto_error of string
 
 let string_of_init_error = function
   | Ca_certs_error msg -> "CA certs error: " ^ msg
   | Tls_config_error msg -> "TLS config error: " ^ msg
+  | Crypto_error msg -> "Crypto error: " ^ msg
 
 let make_https_handler _net =
   match Ca_certs.authenticator () with

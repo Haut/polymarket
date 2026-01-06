@@ -9,7 +9,10 @@ type t
 (** The client type holding connection configuration *)
 
 (** TLS initialization error type *)
-type init_error = Ca_certs_error of string | Tls_config_error of string
+type init_error =
+  | Ca_certs_error of string
+  | Tls_config_error of string
+  | Crypto_error of string
 
 val string_of_init_error : init_error -> string
 (** Convert initialization error to string *)

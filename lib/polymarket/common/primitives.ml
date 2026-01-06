@@ -39,7 +39,7 @@ module Make_string_type (C : STRING_CONFIG) = struct
   type t = string
 
   let make = C.validate
-  let make_exn s = match make s with Ok v -> v | Error msg -> failwith msg
+  let make_exn s = match make s with Ok v -> v | Error msg -> invalid_arg msg
   let unsafe_of_string s = s
   let to_string t = t
   let pp fmt t = Format.fprintf fmt "%s" t

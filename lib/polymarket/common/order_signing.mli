@@ -43,7 +43,7 @@ val sign_order :
   fee_rate_bps:string ->
   side:int ->
   signature_type:int ->
-  string
+  (string, string) result
 (** Sign an order using EIP-712.
 
     @param private_key Ethereum private key
@@ -59,4 +59,5 @@ val sign_order :
     @param fee_rate_bps Fee rate in basis points (decimal string)
     @param side 0 for Buy, 1 for Sell
     @param signature_type 0 for EOA, 1 for Poly_proxy, 2 for Poly_gnosis_safe
-    @return Signature hex string with 0x prefix *)
+    @return [Ok signature] hex string with 0x prefix, or [Error msg] on failure
+*)

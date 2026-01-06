@@ -138,10 +138,11 @@ module L1 = struct
   let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter ~private_key
       () =
     match H.create ~base_url ~sw ~net ~rate_limiter () with
-    | Ok http ->
-        let address = Crypto.private_key_to_address private_key in
-        Ok ({ http; private_key; address } : t)
     | Error e -> Error e
+    | Ok http -> (
+        match Crypto.private_key_to_address private_key with
+        | Error msg -> Error (H.Crypto_error msg)
+        | Ok address -> Ok ({ http; private_key; address } : t))
 
   let address (t : t) = t.address
 
@@ -152,29 +153,33 @@ module L1 = struct
   end)
 
   let create_api_key (t : t) ~nonce =
-    B.new_post t.http "/auth/api-key"
-    |> B.with_body "{}"
-    |> Auth.with_l1_auth ~private_key:t.private_key ~address:t.address ~nonce
-    |> B.fetch_json Auth.api_key_response_of_yojson
+    let req = B.new_post t.http "/auth/api-key" |> B.with_body "{}" in
+    match
+      Auth.with_l1_auth ~private_key:t.private_key ~address:t.address ~nonce req
+    with
+    | Error msg -> Error (H.to_error msg)
+    | Ok r -> B.fetch_json Auth.api_key_response_of_yojson r
 
   let derive_api_key (t : t) ~nonce =
+    let req = B.new_get t.http "/auth/derive-api-key" in
     match
-      B.new_get t.http "/auth/derive-api-key"
-      |> Auth.with_l1_auth ~private_key:t.private_key ~address:t.address ~nonce
-      |> B.fetch_json Auth.api_key_response_of_yojson
+      Auth.with_l1_auth ~private_key:t.private_key ~address:t.address ~nonce req
     with
-    | Ok resp ->
-        let credentials = Auth.credentials_of_api_key_response resp in
-        let l2_client : l2 =
-          {
-            http = t.http;
-            private_key = t.private_key;
-            address = t.address;
-            credentials;
-          }
-        in
-        Ok (l2_client, resp)
-    | Error e -> Error e
+    | Error msg -> Error (H.to_error msg)
+    | Ok r -> (
+        match B.fetch_json Auth.api_key_response_of_yojson r with
+        | Error e -> Error e
+        | Ok resp ->
+            let credentials = Auth.credentials_of_api_key_response resp in
+            let l2_client : l2 =
+              {
+                http = t.http;
+                private_key = t.private_key;
+                address = t.address;
+                credentials;
+              }
+            in
+            Ok (l2_client, resp))
 end
 
 (** {1 L2-Authenticated Client} *)
@@ -185,10 +190,11 @@ module L2 = struct
   let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter ~private_key
       ~credentials () =
     match H.create ~base_url ~sw ~net ~rate_limiter () with
-    | Ok http ->
-        let address = Crypto.private_key_to_address private_key in
-        Ok ({ http; private_key; address; credentials } : t)
     | Error e -> Error e
+    | Ok http -> (
+        match Crypto.private_key_to_address private_key with
+        | Error msg -> Error (H.Crypto_error msg)
+        | Ok address -> Ok ({ http; private_key; address; credentials } : t))
 
   let address (t : t) = t.address
   let credentials (t : t) = t.credentials
@@ -199,115 +205,140 @@ module L2 = struct
     let http (t : t) = t.http
   end)
 
+  (** Helper to run L1-authenticated requests *)
+  let with_l1_request req ~private_key ~address ~nonce f =
+    match Auth.with_l1_auth ~private_key ~address ~nonce req with
+    | Error msg -> Error (H.to_error msg)
+    | Ok r -> f r
+
+  (** Helper to run L2-authenticated requests *)
+  let with_l2_request req ~credentials ~address f =
+    match Auth.with_l2_auth ~credentials ~address req with
+    | Error msg -> Error (H.to_error msg)
+    | Ok r -> f r
+
   let create_api_key (t : t) ~nonce =
-    B.new_post t.http "/auth/api-key"
-    |> B.with_body "{}"
-    |> Auth.with_l1_auth ~private_key:t.private_key ~address:t.address ~nonce
-    |> B.fetch_json Auth.api_key_response_of_yojson
+    let req = B.new_post t.http "/auth/api-key" |> B.with_body "{}" in
+    with_l1_request req ~private_key:t.private_key ~address:t.address ~nonce
+      (B.fetch_json Auth.api_key_response_of_yojson)
 
   let delete_api_key (t : t) =
-    B.new_delete t.http "/auth/api-key"
-    |> Auth.with_l2_auth ~credentials:t.credentials ~address:t.address
-    |> B.fetch_unit
+    let req = B.new_delete t.http "/auth/api-key" in
+    with_l2_request req ~credentials:t.credentials ~address:t.address
+      B.fetch_unit
 
   let get_api_keys (t : t) =
-    B.new_get t.http "/auth/api-keys"
-    |> Auth.with_l2_auth ~credentials:t.credentials ~address:t.address
-    |> B.fetch_json_list (fun json ->
-        match json with
-        | `String s -> s
-        | _ ->
-            raise
-              (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
-                 (Failure "Expected string in API keys list", json)))
+    let req = B.new_get t.http "/auth/api-keys" in
+    with_l2_request req ~credentials:t.credentials ~address:t.address
+      (B.fetch_json_list (fun json ->
+           match json with
+           | `String s -> s
+           | _ ->
+               raise
+                 (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
+                    (Failure "Expected string in API keys list", json))))
 
   let create_order (t : t) ~order ~owner ~order_type () =
-    B.new_post t.http "/order"
-    |> B.with_body
-         (J.body
-            (J.obj
-               [
-                 ("order", yojson_of_signed_order order);
-                 ("owner", J.string owner);
-                 ("orderType", J.string (Order_type.to_string order_type));
-               ]))
-    |> Auth.with_l2_auth ~credentials:t.credentials ~address:t.address
-    |> B.fetch_json
+    let req =
+      B.new_post t.http "/order"
+      |> B.with_body
+           (J.body
+              (J.obj
+                 [
+                   ("order", yojson_of_signed_order order);
+                   ("owner", J.string owner);
+                   ("orderType", J.string (Order_type.to_string order_type));
+                 ]))
+    in
+    with_l2_request req ~credentials:t.credentials ~address:t.address
+      (B.fetch_json
          ~expected_fields:Types.yojson_fields_of_create_order_response
-         ~context:"create_order_response" create_order_response_of_yojson
+         ~context:"create_order_response" create_order_response_of_yojson)
 
   let create_orders (t : t) ~orders () =
-    B.new_post t.http "/orders"
-    |> B.with_body
-         (J.list
-            (fun (order, owner, order_type) ->
-              J.obj
-                [
-                  ("order", yojson_of_signed_order order);
-                  ("owner", J.string owner);
-                  ("orderType", J.string (Order_type.to_string order_type));
-                ])
-            orders)
-    |> Auth.with_l2_auth ~credentials:t.credentials ~address:t.address
-    |> B.fetch_json_list
+    let req =
+      B.new_post t.http "/orders"
+      |> B.with_body
+           (J.list
+              (fun (order, owner, order_type) ->
+                J.obj
+                  [
+                    ("order", yojson_of_signed_order order);
+                    ("owner", J.string owner);
+                    ("orderType", J.string (Order_type.to_string order_type));
+                  ])
+              orders)
+    in
+    with_l2_request req ~credentials:t.credentials ~address:t.address
+      (B.fetch_json_list
          ~expected_fields:Types.yojson_fields_of_create_order_response
-         ~context:"create_order_response" create_order_response_of_yojson
+         ~context:"create_order_response" create_order_response_of_yojson)
 
   let get_order (t : t) ~order_id () =
-    B.new_get t.http ("/data/order/" ^ order_id)
-    |> Auth.with_l2_auth ~credentials:t.credentials ~address:t.address
-    |> B.fetch_json ~expected_fields:Types.yojson_fields_of_open_order
-         ~context:"open_order" open_order_of_yojson
+    let req = B.new_get t.http ("/data/order/" ^ order_id) in
+    with_l2_request req ~credentials:t.credentials ~address:t.address
+      (B.fetch_json ~expected_fields:Types.yojson_fields_of_open_order
+         ~context:"open_order" open_order_of_yojson)
 
   let get_orders (t : t) ?market ?asset_id () =
-    B.new_get t.http "/data/orders"
-    |> Auth.with_l2_auth ~credentials:t.credentials ~address:t.address
-    |> B.query_add "market" market
-    |> B.query_add "asset_id" asset_id
-    |> B.fetch_json_list ~expected_fields:Types.yojson_fields_of_open_order
-         ~context:"open_order" open_order_of_yojson
+    let req =
+      B.new_get t.http "/data/orders"
+      |> B.query_add "market" market
+      |> B.query_add "asset_id" asset_id
+    in
+    with_l2_request req ~credentials:t.credentials ~address:t.address
+      (B.fetch_json_list ~expected_fields:Types.yojson_fields_of_open_order
+         ~context:"open_order" open_order_of_yojson)
 
   let cancel_order (t : t) ~order_id () =
-    B.new_delete t.http "/order"
-    |> Auth.with_l2_auth ~credentials:t.credentials ~address:t.address
-    |> B.query_param "orderID" order_id
-    |> B.fetch_json cancel_response_of_yojson
+    let req =
+      B.new_delete t.http "/order" |> B.query_param "orderID" order_id
+    in
+    with_l2_request req ~credentials:t.credentials ~address:t.address
+      (B.fetch_json cancel_response_of_yojson)
 
   let cancel_orders (t : t) ~order_ids () =
-    B.new_delete t.http "/orders"
-    |> Auth.with_l2_auth ~credentials:t.credentials ~address:t.address
-    |> B.query_each "orderIDs" Fun.id (Some order_ids)
-    |> B.fetch_json cancel_response_of_yojson
+    let req =
+      B.new_delete t.http "/orders"
+      |> B.query_each "orderIDs" Fun.id (Some order_ids)
+    in
+    with_l2_request req ~credentials:t.credentials ~address:t.address
+      (B.fetch_json cancel_response_of_yojson)
 
   let cancel_all (t : t) () =
-    B.new_delete t.http "/cancel-all"
-    |> Auth.with_l2_auth ~credentials:t.credentials ~address:t.address
-    |> B.fetch_json cancel_response_of_yojson
+    let req = B.new_delete t.http "/cancel-all" in
+    with_l2_request req ~credentials:t.credentials ~address:t.address
+      (B.fetch_json cancel_response_of_yojson)
 
   let cancel_market_orders (t : t) ?market ?asset_id () =
-    B.new_delete t.http "/cancel-market-orders"
-    |> Auth.with_l2_auth ~credentials:t.credentials ~address:t.address
-    |> B.query_add "market" market
-    |> B.query_add "asset_id" asset_id
-    |> B.fetch_json cancel_response_of_yojson
+    let req =
+      B.new_delete t.http "/cancel-market-orders"
+      |> B.query_add "market" market
+      |> B.query_add "asset_id" asset_id
+    in
+    with_l2_request req ~credentials:t.credentials ~address:t.address
+      (B.fetch_json cancel_response_of_yojson)
 
   let get_trades (t : t) ?id ?taker ?maker ?market ?before ?after () =
-    B.new_get t.http "/data/trades"
-    |> Auth.with_l2_auth ~credentials:t.credentials ~address:t.address
-    |> B.query_add "id" id |> B.query_add "taker" taker
-    |> B.query_add "maker" maker
-    |> B.query_add "market" market
-    |> B.query_add "before" before
-    |> B.query_add "after" after
-    |> B.fetch_json_list ~expected_fields:Types.yojson_fields_of_clob_trade
-         ~context:"clob_trade" clob_trade_of_yojson
+    let req =
+      B.new_get t.http "/data/trades"
+      |> B.query_add "id" id |> B.query_add "taker" taker
+      |> B.query_add "maker" maker
+      |> B.query_add "market" market
+      |> B.query_add "before" before
+      |> B.query_add "after" after
+    in
+    with_l2_request req ~credentials:t.credentials ~address:t.address
+      (B.fetch_json_list ~expected_fields:Types.yojson_fields_of_clob_trade
+         ~context:"clob_trade" clob_trade_of_yojson)
 end
 
 (** {1 State Transitions} *)
 
-let upgrade_to_l1 (t : unauthed) ~private_key : l1 =
-  let address = Crypto.private_key_to_address private_key in
-  { http = t.http; private_key; address }
+let upgrade_to_l1 (t : unauthed) ~private_key =
+  match Crypto.private_key_to_address private_key with
+  | Error msg -> Error msg
+  | Ok address -> Ok ({ http = t.http; private_key; address } : l1)
 
 let upgrade_to_l2 (t : l1) ~credentials : l2 =
   {

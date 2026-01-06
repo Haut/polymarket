@@ -245,67 +245,75 @@ let run_demo env =
       in
 
       (* Upgrade to L1 client with private key *)
-      let l1_client = Clob.upgrade_to_l1 unauthed_client ~private_key in
-      let address = Clob.L1.address l1_client in
-      Logger.info (Printf.sprintf "Upgraded to L1 (address: %s)" address);
+      (match Clob.upgrade_to_l1 unauthed_client ~private_key with
+      | Error msg ->
+          Logger.error "upgrade_to_l1" msg;
+          failwith msg
+      | Ok l1_client -> (
+          let address = Clob.L1.address l1_client in
+          Logger.info (Printf.sprintf "Upgraded to L1 (address: %s)" address);
 
-      (* L1 can still call public endpoints *)
-      let _ = Clob.L1.get_midpoint l1_client ~token_id () in
-      Logger.ok "L1.get_midpoint" "public endpoints still accessible";
+          (* L1 can still call public endpoints *)
+          let _ = Clob.L1.get_midpoint l1_client ~token_id () in
+          Logger.ok "L1.get_midpoint" "public endpoints still accessible";
 
-      (* Derive API key to upgrade to L2 *)
-      let nonce = int_of_float (Unix.gettimeofday () *. 1000.0) mod 1000000 in
-      (match Clob.L1.derive_api_key l1_client ~nonce with
-      | Ok (l2_client, resp) ->
-          Logger.ok "derive_api_key"
-            (Printf.sprintf "api_key=%s..." (String.sub resp.api_key 0 8));
+          (* Derive API key to upgrade to L2 *)
+          let nonce =
+            int_of_float (Unix.gettimeofday () *. 1000.0) mod 1000000
+          in
+          match Clob.L1.derive_api_key l1_client ~nonce with
+          | Ok (l2_client, resp) ->
+              Logger.ok "derive_api_key"
+                (Printf.sprintf "api_key=%s..." (String.sub resp.api_key 0 8));
 
-          (* ===== L2 Authentication (API Key) ===== *)
-          Logger.info "Upgraded to L2 via derive_api_key";
+              (* ===== L2 Authentication (API Key) ===== *)
+              Logger.info "Upgraded to L2 via derive_api_key";
 
-          (* L2 can call authenticated endpoints *)
-          let orders = Clob.L2.get_orders l2_client () in
-          print_result "get_orders" orders ~on_ok:(fun o ->
-              Printf.sprintf "%d orders" (List.length o));
+              (* L2 can call authenticated endpoints *)
+              let orders = Clob.L2.get_orders l2_client () in
+              print_result "get_orders" orders ~on_ok:(fun o ->
+                  Printf.sprintf "%d orders" (List.length o));
 
-          let trades = Clob.L2.get_trades l2_client () in
-          print_result "get_trades" trades ~on_ok:(fun t ->
-              Printf.sprintf "%d trades" (List.length t));
+              let trades = Clob.L2.get_trades l2_client () in
+              print_result "get_trades" trades ~on_ok:(fun t ->
+                  Printf.sprintf "%d trades" (List.length t));
 
-          (* Test get_order with a non-existent order ID (demonstrates error handling) *)
-          let fake_order_id = "00000000-0000-0000-0000-000000000000" in
-          let order = Clob.L2.get_order l2_client ~order_id:fake_order_id () in
-          (match order with
-          | Ok o ->
-              Logger.ok "get_order"
-                (Printf.sprintf "order_id=%s"
-                   (Option.value ~default:"(none)" o.id))
-          | Error _ ->
-              (* Expected - no order with this ID exists *)
-              Logger.ok "get_order" "endpoint works (no matching order)");
+              (* Test get_order with a non-existent order ID (demonstrates error handling) *)
+              let fake_order_id = "00000000-0000-0000-0000-000000000000" in
+              let order =
+                Clob.L2.get_order l2_client ~order_id:fake_order_id ()
+              in
+              (match order with
+              | Ok o ->
+                  Logger.ok "get_order"
+                    (Printf.sprintf "order_id=%s"
+                       (Option.value ~default:"(none)" o.id))
+              | Error _ ->
+                  (* Expected - no order with this ID exists *)
+                  Logger.ok "get_order" "endpoint works (no matching order)");
 
-          (* Test get_api_keys - list all API keys for this address *)
-          let api_keys = Clob.L2.get_api_keys l2_client in
-          print_result_count "get_api_keys" api_keys;
+              (* Test get_api_keys - list all API keys for this address *)
+              let api_keys = Clob.L2.get_api_keys l2_client in
+              print_result_count "get_api_keys" api_keys;
 
-          (* L2 can also call public endpoints *)
-          let _ = Clob.L2.get_midpoint l2_client ~token_id () in
-          Logger.ok "L2.get_midpoint" "public endpoints still accessible";
+              (* L2 can also call public endpoints *)
+              let _ = Clob.L2.get_midpoint l2_client ~token_id () in
+              Logger.ok "L2.get_midpoint" "public endpoints still accessible";
 
-          (* Demonstrate downgrade *)
-          let _l1_again = Clob.l2_to_l1 l2_client in
-          Logger.ok "l2_to_l1" "downgraded to L1";
-          let _unauthed_again = Clob.l2_to_unauthed l2_client in
-          Logger.ok "l2_to_unauthed" "downgraded to Unauthed";
+              (* Demonstrate downgrade *)
+              let _l1_again = Clob.l2_to_l1 l2_client in
+              Logger.ok "l2_to_l1" "downgraded to L1";
+              let _unauthed_again = Clob.l2_to_unauthed l2_client in
+              Logger.ok "l2_to_unauthed" "downgraded to Unauthed";
 
-          (* Also demonstrate l1_to_unauthed transition *)
-          let l1_for_downgrade = Clob.l2_to_l1 l2_client in
-          let _unauthed_from_l1 = Clob.l1_to_unauthed l1_for_downgrade in
-          Logger.ok "l1_to_unauthed" "downgraded from L1 to Unauthed"
-      | Error err ->
-          Logger.error "derive_api_key" (Clob.error_to_string err);
-          Logger.skip "get_orders" "could not derive API key";
-          Logger.skip "get_trades" "could not derive API key");
+              (* Also demonstrate l1_to_unauthed transition *)
+              let l1_for_downgrade = Clob.l2_to_l1 l2_client in
+              let _unauthed_from_l1 = Clob.l1_to_unauthed l1_for_downgrade in
+              Logger.ok "l1_to_unauthed" "downgraded from L1 to Unauthed"
+          | Error err ->
+              Logger.error "derive_api_key" (Clob.error_to_string err);
+              Logger.skip "get_orders" "could not derive API key";
+              Logger.skip "get_trades" "could not derive API key"));
 
       Logger.skip "create_order" "requires signed order";
       Logger.skip "cancel_order" "requires order ID";

@@ -109,4 +109,4 @@ let sign_order ~private_key ~salt ~maker ~signer ~taker ~token_id ~maker_amount
   let struct_bytes = Hex.to_string (`Hex struct_hash) in
   let final_data = prefix ^ domain_bytes ^ struct_bytes in
   let final_hash = Digestif.KECCAK_256.(to_hex (digest_string final_data)) in
-  Crypto.sign_hash ~private_key final_hash
+  Crypto.sign_hash ~private_key final_hash (* Returns Result *)

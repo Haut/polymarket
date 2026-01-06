@@ -44,8 +44,9 @@ type t = { fin : bool; opcode : Opcode.t; payload : string }
 val encode : mask:bool -> t -> string
 (** Encode a frame for sending. Client frames should use [mask:true]. *)
 
-val decode : _ Eio.Flow.source -> t
-(** Decode a frame from a flow. Blocks until a complete frame is received. *)
+val decode : _ Eio.Flow.source -> (t, string) result
+(** Decode a frame from a flow. Blocks until a complete frame is received.
+    Returns [Error msg] if the frame is too large or has invalid encoding. *)
 
 (** {1 Frame Constructors} *)
 

@@ -167,20 +167,25 @@ let receive_loop t =
   | Some flow -> (
       try
         while Eio.Mutex.use_ro t.state_mutex (fun () -> t.state = Connected) do
-          let frame = Frame.decode flow in
-          match frame.opcode with
-          | Frame.Opcode.Text | Frame.Opcode.Binary ->
-              Eio.Stream.add t.message_stream frame.payload
-          | Frame.Opcode.Ping ->
-              (* Respond with pong *)
-              send_frame t (Frame.pong ~payload:frame.payload ());
-              Log.debug (fun m -> m "Ping received")
-          | Frame.Opcode.Pong -> Log.debug (fun m -> m "Pong received")
-          | Frame.Opcode.Close ->
-              Log.debug (fun m -> m "Close received");
+          match Frame.decode flow with
+          | Error msg ->
+              Log.err (fun m -> m "Frame decode error: %s" msg);
               Eio.Mutex.use_rw ~protect:true t.state_mutex (fun () ->
-                  t.state <- Closed)
-          | _ -> ()
+                  t.state <- Disconnected)
+          | Ok frame -> (
+              match frame.opcode with
+              | Frame.Opcode.Text | Frame.Opcode.Binary ->
+                  Eio.Stream.add t.message_stream frame.payload
+              | Frame.Opcode.Ping ->
+                  (* Respond with pong *)
+                  send_frame t (Frame.pong ~payload:frame.payload ());
+                  Log.debug (fun m -> m "Ping received")
+              | Frame.Opcode.Pong -> Log.debug (fun m -> m "Pong received")
+              | Frame.Opcode.Close ->
+                  Log.debug (fun m -> m "Close received");
+                  Eio.Mutex.use_rw ~protect:true t.state_mutex (fun () ->
+                      t.state <- Closed)
+              | _ -> ())
         done
       with
       | End_of_file ->

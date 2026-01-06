@@ -209,76 +209,85 @@ let run_demo env =
         | Error e ->
             failwith ("CLOB client error: " ^ Clob.init_error_to_string e)
       in
-      let l1_client = Clob.upgrade_to_l1 unauthed_client ~private_key in
-      let nonce = int_of_float (Unix.gettimeofday () *. 1000.0) mod 1000000 in
-
-      (match Clob.L1.derive_api_key l1_client ~nonce with
-      | Ok (_l2_client, resp) ->
-          Logger.ok "derive_api_key"
-            (Printf.sprintf "api_key=%s..." (String.sub resp.api_key 0 8));
-
-          let credentials : Clob.credentials =
-            {
-              api_key = resp.api_key;
-              secret = resp.secret;
-              passphrase = resp.passphrase;
-            }
+      (match Clob.upgrade_to_l1 unauthed_client ~private_key with
+      | Error msg ->
+          Logger.error "upgrade_to_l1" msg;
+          Logger.skip "User.connect" "could not upgrade to L1"
+      | Ok l1_client -> (
+          let nonce =
+            int_of_float (Unix.gettimeofday () *. 1000.0) mod 1000000
           in
 
-          (* Get condition IDs for markets (User channel uses markets, not assets) *)
-          let gamma_client =
-            match Gamma.create ~sw ~net ~rate_limiter () with
-            | Ok c -> c
-            | Error e ->
-                failwith ("Gamma client error: " ^ Gamma.string_of_init_error e)
-          in
-          let market_ids =
-            match Gamma.get_markets gamma_client ~limit:2 ~closed:false () with
-            | Ok markets ->
-                List.filter_map
-                  (fun (m : Gamma.market) -> m.condition_id)
-                  markets
-            | Error _ -> []
-          in
+          match Clob.L1.derive_api_key l1_client ~nonce with
+          | Ok (_l2_client, resp) ->
+              Logger.ok "derive_api_key"
+                (Printf.sprintf "api_key=%s..." (String.sub resp.api_key 0 8));
 
-          if List.length market_ids > 0 then begin
-            Logger.info
-              (Printf.sprintf "Connecting to user channel (%d markets)"
-                 (List.length market_ids));
+              let credentials : Clob.credentials =
+                {
+                  api_key = resp.api_key;
+                  secret = resp.secret;
+                  passphrase = resp.passphrase;
+                }
+              in
 
-            let user_client =
-              Wss.User.connect ~sw ~net ~clock ~credentials ~markets:market_ids
-                ()
-            in
-            let user_stream = Wss.User.stream user_client in
+              (* Get condition IDs for markets (User channel uses markets, not assets) *)
+              let gamma_client =
+                match Gamma.create ~sw ~net ~rate_limiter () with
+                | Ok c -> c
+                | Error e ->
+                    failwith
+                      ("Gamma client error: " ^ Gamma.string_of_init_error e)
+              in
+              let market_ids =
+                match
+                  Gamma.get_markets gamma_client ~limit:2 ~closed:false ()
+                with
+                | Ok markets ->
+                    List.filter_map
+                      (fun (m : Gamma.market) -> m.condition_id)
+                      markets
+                | Error _ -> []
+              in
 
-            Logger.ok "CONNECTED" "User channel connected";
+              if List.length market_ids > 0 then begin
+                Logger.info
+                  (Printf.sprintf "Connecting to user channel (%d markets)"
+                     (List.length market_ids));
 
-            (* Listen briefly for user events (likely none for test account) *)
-            let user_msg_count = ref 0 in
-            (try
-               while !user_msg_count < 3 do
-                 match
-                   Eio.Time.with_timeout clock 5.0 (fun () ->
-                       Ok (Eio.Stream.take user_stream))
-                 with
-                 | Ok msg ->
-                     incr user_msg_count;
-                     handle_market_message msg
-                 | Error `Timeout ->
-                     Logger.ok "USER_TIMEOUT"
-                       "no user events (expected for test account)";
-                     user_msg_count := 3
-               done
-             with _ -> ());
+                let user_client =
+                  Wss.User.connect ~sw ~net ~clock ~credentials
+                    ~markets:market_ids ()
+                in
+                let user_stream = Wss.User.stream user_client in
 
-            Wss.User.close user_client;
-            Logger.ok "CLOSED" "User channel closed"
-          end
-          else Logger.skip "User.connect" "no market IDs available"
-      | Error err ->
-          Logger.error "derive_api_key" (Clob.error_to_string err);
-          Logger.skip "User.connect" "could not derive API key");
+                Logger.ok "CONNECTED" "User channel connected";
+
+                (* Listen briefly for user events (likely none for test account) *)
+                let user_msg_count = ref 0 in
+                (try
+                   while !user_msg_count < 3 do
+                     match
+                       Eio.Time.with_timeout clock 5.0 (fun () ->
+                           Ok (Eio.Stream.take user_stream))
+                     with
+                     | Ok msg ->
+                         incr user_msg_count;
+                         handle_market_message msg
+                     | Error `Timeout ->
+                         Logger.ok "USER_TIMEOUT"
+                           "no user events (expected for test account)";
+                         user_msg_count := 3
+                   done
+                 with _ -> ());
+
+                Wss.User.close user_client;
+                Logger.ok "CLOSED" "User channel closed"
+              end
+              else Logger.skip "User.connect" "no market IDs available"
+          | Error err ->
+              Logger.error "derive_api_key" (Clob.error_to_string err);
+              Logger.skip "User.connect" "could not derive API key"));
 
       (* Summary *)
       Logger.info

@@ -34,9 +34,9 @@ val sign_l2_request :
   method_:string ->
   path:string ->
   body:string ->
-  string
+  (string, string) result
 (** Generate L2 authentication signature. [secret] is base64-encoded. Returns
-    base64-encoded signature. *)
+    [Ok signature] with base64-encoded signature, or [Error msg] on failure. *)
 
 (** {1 EIP-712 for L1 Authentication} *)
 
@@ -45,22 +45,25 @@ val sign_clob_auth_message :
   address:string ->
   timestamp:string ->
   nonce:int ->
-  string
-(** Sign the CLOB authentication message using EIP-712. Returns hex signature
-    with 0x prefix. *)
+  (string, string) result
+(** Sign the CLOB authentication message using EIP-712. Returns [Ok signature]
+    with hex signature (0x prefix), or [Error msg] on failure. *)
 
 (** {1 Utilities} *)
 
-val private_key_to_address : private_key -> string
-(** Derive Ethereum address from private key. Returns 0x-prefixed address. *)
+val private_key_to_address : private_key -> (string, string) result
+(** Derive Ethereum address from private key. Returns [Ok address] with
+    0x-prefixed address, or [Error msg] on failure. *)
 
 val current_timestamp_ms : unit -> string
 (** Get current Unix timestamp in milliseconds as string. *)
 
 (** {1 Low-level Signing} *)
 
-val sign_hash : private_key:private_key -> string -> string
+val sign_hash : private_key:private_key -> string -> (string, string) result
 (** Sign a 32-byte keccak256 hash with a private key.
     @param private_key The signing key
     @param hash_hex The hash as a hex string (no 0x prefix)
-    @return Signature with recovery id as 0x-prefixed hex string *)
+    @return
+      [Ok signature] with recovery id as 0x-prefixed hex string, or [Error msg]
+      on failure *)

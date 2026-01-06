@@ -49,42 +49,40 @@ let poly_passphrase = "POLY_PASSPHRASE"
 
 let build_l1_headers ~private_key ~address ~nonce =
   let timestamp = Crypto.current_timestamp_ms () in
-  let signature =
-    Crypto.sign_clob_auth_message ~private_key ~address ~timestamp ~nonce
-  in
-  [
-    (poly_address, address);
-    (poly_signature, signature);
-    (poly_timestamp, timestamp);
-    (poly_nonce, string_of_int nonce);
-  ]
+  Crypto.sign_clob_auth_message ~private_key ~address ~timestamp ~nonce
+  |> Result.map (fun signature ->
+      [
+        (poly_address, address);
+        (poly_signature, signature);
+        (poly_timestamp, timestamp);
+        (poly_nonce, string_of_int nonce);
+      ])
 
 (** {1 L2 Authentication} *)
 
 let build_l2_headers ~(credentials : credentials) ~address ~method_ ~path ~body
     =
   let timestamp = Crypto.current_timestamp_ms () in
-  let signature =
-    Crypto.sign_l2_request ~secret:credentials.secret ~timestamp ~method_ ~path
-      ~body
-  in
-  [
-    (poly_address, address);
-    (poly_signature, signature);
-    (poly_timestamp, timestamp);
-    (poly_api_key, credentials.api_key);
-    (poly_passphrase, credentials.passphrase);
-  ]
+  Crypto.sign_l2_request ~secret:credentials.secret ~timestamp ~method_ ~path
+    ~body
+  |> Result.map (fun signature ->
+      [
+        (poly_address, address);
+        (poly_signature, signature);
+        (poly_timestamp, timestamp);
+        (poly_api_key, credentials.api_key);
+        (poly_passphrase, credentials.passphrase);
+      ])
 
 (** {1 Request Builder Helpers} *)
 
 let with_l1_auth ~private_key ~address ~nonce req =
-  let headers = build_l1_headers ~private_key ~address ~nonce in
-  Polymarket_http.Request.header_list headers req
+  build_l1_headers ~private_key ~address ~nonce
+  |> Result.map (fun headers -> Polymarket_http.Request.header_list headers req)
 
 let with_l2_auth ~credentials ~address req =
   let method_ = Polymarket_http.Request.method_string req in
   let path = Polymarket_http.Request.path req in
   let body = Option.value ~default:"" (Polymarket_http.Request.body_opt req) in
-  let headers = build_l2_headers ~credentials ~address ~method_ ~path ~body in
-  Polymarket_http.Request.header_list headers req
+  build_l2_headers ~credentials ~address ~method_ ~path ~body
+  |> Result.map (fun headers -> Polymarket_http.Request.header_list headers req)

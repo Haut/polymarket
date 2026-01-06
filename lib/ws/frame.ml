@@ -142,7 +142,8 @@ let read_exactly flow n =
   loop 0 n;
   Cstruct.to_string buf
 
-(** Decode a frame from a flow *)
+(** Decode a frame from a flow. Returns [Error msg] for frames that are too
+    large or have invalid length encoding. *)
 let decode flow =
   (* Read first two bytes *)
   let header = read_exactly flow 2 in
@@ -155,40 +156,47 @@ let decode flow =
   let len0 = byte1 land 0x7F in
 
   (* Extended payload length *)
-  let payload_len =
-    if len0 < 126 then len0
-    else if len0 = 126 then begin
+  let payload_len_result =
+    if len0 < 126 then Ok len0
+    else if len0 = 126 then
       let ext = read_exactly flow 2 in
-      (Char.code ext.[0] lsl 8) lor Char.code ext.[1]
-    end
-    else begin
+      Ok ((Char.code ext.[0] lsl 8) lor Char.code ext.[1])
+    else
       let ext = read_exactly flow 8 in
       (* Validate that high-order bytes are zero to prevent overflow.
          OCaml int is 63-bit on 64-bit platforms, but we limit to 2^31
          for practical memory allocation limits. *)
-      for i = 0 to 3 do
-        if Char.code ext.[i] <> 0 then
-          failwith "WebSocket frame too large (exceeds 2^31 bytes)"
-      done;
-      let len = ref 0 in
-      for i = 4 to 7 do
-        len := (!len lsl 8) lor Char.code ext.[i]
-      done;
-      if !len < 0 then failwith "WebSocket frame length overflow";
-      !len
-    end
+      let rec check_high_bytes i =
+        if i > 3 then Ok ()
+        else if Char.code ext.[i] <> 0 then
+          Error "WebSocket frame too large (exceeds 2^31 bytes)"
+        else check_high_bytes (i + 1)
+      in
+      match check_high_bytes 0 with
+      | Error _ as e -> e
+      | Ok () ->
+          let len = ref 0 in
+          for i = 4 to 7 do
+            len := (!len lsl 8) lor Char.code ext.[i]
+          done;
+          if !len < 0 then Error "WebSocket frame length overflow" else Ok !len
   in
 
-  (* Masking key (if present) *)
-  let mask_key = if masked then Some (read_exactly flow 4) else None in
+  match payload_len_result with
+  | Error _ as e -> e
+  | Ok payload_len ->
+      (* Masking key (if present) *)
+      let mask_key = if masked then Some (read_exactly flow 4) else None in
 
-  (* Payload *)
-  let payload = read_exactly flow payload_len in
-  let payload =
-    match mask_key with Some key -> apply_mask ~key payload | None -> payload
-  in
+      (* Payload *)
+      let payload = read_exactly flow payload_len in
+      let payload =
+        match mask_key with
+        | Some key -> apply_mask ~key payload
+        | None -> payload
+      in
 
-  { fin; opcode; payload }
+      Ok { fin; opcode; payload }
 
 (** Create a text frame *)
 let text ?(fin = true) payload = { fin; opcode = Text; payload }

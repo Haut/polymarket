@@ -15,7 +15,7 @@ val build_accept_quote_body :
   ?nonce:string ->
   ?fee_rate_bps:string ->
   unit ->
-  Types.accept_quote_body
+  (Types.accept_quote_body, string) result
 (** Build a signed accept_quote request body.
 
     @param private_key Ethereum private key
@@ -28,4 +28,4 @@ val build_accept_quote_body :
     @param expiration Optional expiration timestamp (default: 1 year)
     @param nonce Optional order nonce (default: "0")
     @param fee_rate_bps Optional fee rate in basis points (default: "0")
-    @return A signed accept_quote_body ready for submission *)
+    @return [Ok body] ready for submission, or [Error msg] on failure *)

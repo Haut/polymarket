@@ -130,12 +130,17 @@ let fetch (req : ready t) : int * string =
   match req.method_ with
   | GET -> C.do_get ~headers:req.headers req.client uri
   | DELETE -> C.do_delete ~headers:req.headers req.client uri
-  | POST ->
-      let body_str = Option.get req.body in
-      C.do_post ~headers:req.headers req.client uri ~body:body_str
-  | DELETE_WITH_BODY ->
-      let body_str = Option.get req.body in
-      C.do_delete_with_body ~headers:req.headers req.client uri ~body:body_str
+  | POST -> (
+      match req.body with
+      | Some body_str ->
+          C.do_post ~headers:req.headers req.client uri ~body:body_str
+      | None -> assert false (* Phantom types guarantee body is set for POST *))
+  | DELETE_WITH_BODY -> (
+      match req.body with
+      | Some body_str ->
+          C.do_delete_with_body ~headers:req.headers req.client uri
+            ~body:body_str
+      | None -> assert false (* Phantom types guarantee body is set *))
 
 (** {1 Response Parsers}
 
