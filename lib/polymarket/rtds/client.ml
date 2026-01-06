@@ -21,7 +21,7 @@ let make_filtered_client (type a) ~sw ~net ~clock ~subscription
     ~(filter : Types.message -> a option) ~channel_name :
     Connection.t * a Eio.Stream.t =
   let conn =
-    Connection.create ~sw ~net ~clock ~host:default_host ~resource:"/ws"
+    Connection.create ~sw ~net ~clock ~host:default_host ~resource:"/"
       ~ping_interval:Constants.rtds_ping_interval
       ~buffer_size:Constants.message_buffer_size ()
   in
@@ -47,7 +47,7 @@ type t = {
 let connect ~sw ~net ~clock () =
   Log.debug (fun m -> m "Unified: connecting");
   let conn =
-    Connection.create ~sw ~net ~clock ~host:default_host ~resource:"/ws"
+    Connection.create ~sw ~net ~clock ~host:default_host ~resource:"/"
       ~ping_interval:Constants.rtds_ping_interval
       ~buffer_size:Constants.message_buffer_size ()
   in
@@ -66,11 +66,14 @@ let subscribe t ~subscriptions =
         (List.length subscriptions)
         (List.length t.subscriptions + List.length subscriptions));
   t.subscriptions <- t.subscriptions @ subscriptions;
-  let msg = Types.subscribe_json ~subscriptions in
-  Connection.send t.conn msg;
-  (* Update stored subscription for reconnect *)
+  (* Update stored subscription for reconnect - this will be sent when connected *)
   let full_msg = Types.subscribe_json ~subscriptions:t.subscriptions in
-  Connection.set_subscription t.conn full_msg
+  Connection.set_subscription t.conn full_msg;
+  (* Only send immediately if already connected *)
+  if Connection.is_connected t.conn then begin
+    let msg = Types.subscribe_json ~subscriptions in
+    Connection.send t.conn msg
+  end
 
 let unsubscribe t ~subscriptions =
   let new_subs =
@@ -117,8 +120,12 @@ module Crypto_prices = struct
           | Some s -> Printf.sprintf " (%d symbols)" (List.length s)
           | None -> ""));
     let subscription =
-      let filters = Option.map Types.binance_symbol_filter symbols in
-      Types.crypto_prices_subscription ?filters ()
+      let filters =
+        match symbols with
+        | Some s -> Types.binance_symbol_filter s
+        | None -> ""
+      in
+      Types.crypto_prices_subscription ~filters ()
     in
     let conn, message_stream =
       make_filtered_client ~sw ~net ~clock ~subscription ~filter:crypto_filter
@@ -131,8 +138,12 @@ module Crypto_prices = struct
         m "Crypto: connecting to Chainlink%s"
           (match symbol with Some s -> Printf.sprintf " (%s)" s | None -> ""));
     let subscription =
-      let filters = Option.map Types.chainlink_symbol_filter symbol in
-      Types.crypto_prices_chainlink_subscription ?filters ()
+      let filters =
+        match symbol with
+        | Some s -> Types.chainlink_symbol_filter s
+        | None -> ""
+      in
+      Types.crypto_prices_chainlink_subscription ~filters ()
     in
     let conn, message_stream =
       make_filtered_client ~sw ~net ~clock ~subscription ~filter:crypto_filter

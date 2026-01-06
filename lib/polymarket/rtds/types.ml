@@ -162,7 +162,7 @@ type gamma_auth = { address : string } [@@deriving yojson, show, eq]
 type subscription = {
   topic : string;
   type_ : string; [@key "type"]
-  filters : string option; [@yojson.option]
+  filters : string; [@default ""]
   clob_auth : clob_auth option; [@yojson.option]
   gamma_auth : gamma_auth option; [@yojson.option]
 }
@@ -175,16 +175,16 @@ type subscribe_request = { action : string; subscriptions : subscription list }
 
 (** {1 Subscription Builders} *)
 
-let crypto_prices_subscription ?filters () : subscription =
+let crypto_prices_subscription ?(filters = "") () : subscription =
   {
     topic = "crypto_prices";
-    type_ = "update";
+    type_ = "*";
     filters;
     clob_auth = None;
     gamma_auth = None;
   }
 
-let crypto_prices_chainlink_subscription ?filters () : subscription =
+let crypto_prices_chainlink_subscription ?(filters = "") () : subscription =
   {
     topic = "crypto_prices_chainlink";
     type_ = "*";
@@ -196,8 +196,8 @@ let crypto_prices_chainlink_subscription ?filters () : subscription =
 let comments_subscription ?gamma_auth () : subscription =
   {
     topic = "comments";
-    type_ = "comment_created";
-    filters = None;
+    type_ = "*";
+    filters = "";
     clob_auth = None;
     gamma_auth;
   }

@@ -51,13 +51,10 @@ let run_crypto_binance_demo env sw =
   let net = Eio.Stdenv.net env in
   let clock = Eio.Stdenv.clock env in
 
-  Logger.info "Connecting to Binance (btcusdt, ethusdt, solusdt)";
+  (* Note: Binance symbol filtering may not work - subscribe to all symbols *)
+  Logger.info "Connecting to Binance (all symbols)";
 
-  let client =
-    Rtds.Crypto_prices.connect_binance ~sw ~net ~clock
-      ~symbols:[ "btcusdt"; "ethusdt"; "solusdt" ]
-      ()
-  in
+  let client = Rtds.Crypto_prices.connect_binance ~sw ~net ~clock () in
   let stream = Rtds.Crypto_prices.stream client in
 
   (* Test accessor functions *)
@@ -202,12 +199,10 @@ let run_unified_demo env sw =
   let client = Rtds.connect ~sw ~net ~clock () in
   let stream = Rtds.stream client in
 
-  (* Subscribe to multiple topics *)
+  (* Subscribe to multiple topics (without filters - filtering may not work) *)
   let subscriptions =
     [
-      Rtds.Types.crypto_prices_subscription
-        ~filters:(Rtds.Types.binance_symbol_filter [ "btcusdt" ])
-        ();
+      Rtds.Types.crypto_prices_subscription ();
       Rtds.Types.comments_subscription ();
     ]
   in

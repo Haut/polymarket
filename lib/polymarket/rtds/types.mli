@@ -131,7 +131,7 @@ type gamma_auth = { address : string } [@@deriving yojson, eq]
 type subscription = {
   topic : string;
   type_ : string;
-  filters : string option;
+  filters : string;
   clob_auth : clob_auth option;
   gamma_auth : gamma_auth option;
 }

@@ -271,9 +271,7 @@ end
       let client = Rtds.connect ~sw ~net ~clock () in
       let subscriptions =
         [
-          Rtds.Types.crypto_prices_subscription
-            ~filters:(Rtds.Types.binance_symbol_filter [ "btcusdt" ])
-            ();
+          Rtds.Types.crypto_prices_subscription ();
           Rtds.Types.comments_subscription ();
         ]
       in
