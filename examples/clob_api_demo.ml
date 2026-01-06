@@ -310,7 +310,7 @@ let run_demo env =
                 (Printf.sprintf "key=%s..." (String.sub resp.api_key 0 8));
 
               (* ===== L2 Authentication (API Key) ===== *)
-              Logger.info "Upgraded to L2 via derive_api_key";
+              Logger.info "Upgraded to L2";
 
               (* L2 can call authenticated endpoints *)
               let orders = Clob.L2.get_orders l2_client () in

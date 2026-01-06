@@ -50,8 +50,13 @@ let hmac_sha256 ~key message =
   Digestif.SHA256.(to_raw_string (hmac_string ~key message))
 
 let sign_l2_request ~secret ~timestamp ~method_ ~path ~body =
-  (* Decode base64 secret with error handling *)
-  match Base64.decode secret with
+  (* Decode base64 secret - try URL-safe first, then standard *)
+  let decoded =
+    match Base64.decode ~alphabet:Base64.uri_safe_alphabet secret with
+    | Ok _ as ok -> ok
+    | Error _ -> Base64.decode secret
+  in
+  match decoded with
   | Error (`Msg msg) -> Error (Invalid_base64 msg)
   | Ok key -> (
       (* Construct message: timestamp + method + path + body *)
