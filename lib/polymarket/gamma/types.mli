@@ -588,6 +588,9 @@ and event = {
   game_status : string option;
   neg_risk_augmented : bool option;
   requires_translation : bool option;
+  cumulative_markets : bool option;
+  country_name : string option;
+  election_type : string option;
 }
 [@@deriving yojson, show, eq]
 (** Event *)

@@ -349,28 +349,32 @@ val get_series :
 
 val get_comments :
   t ->
+  parent_entity_type:Parent_entity_type.t ->
+  parent_entity_id:int ->
   ?limit:int ->
   ?offset:int ->
   ?order:string ->
   ?ascending:bool ->
-  ?parent_entity_type:Parent_entity_type.t ->
-  ?parent_entity_id:int ->
   ?get_positions:bool ->
   ?holders_only:bool ->
   unit ->
   (comment list, error) result
-(** Get list of comments.
+(** Get list of comments for an entity.
+    @param parent_entity_type Entity type (Event, Series, Market)
+    @param parent_entity_id Entity ID
     @param limit Maximum number of results (non-negative)
     @param offset Pagination offset (non-negative)
     @param order Comma-separated list of fields to order by
     @param ascending Sort ascending if true
-    @param parent_entity_type Entity type (Event, Series, market)
-    @param parent_entity_id Entity ID
     @param get_positions Include position data
     @param holders_only Filter to holders only *)
 
 val get_comment :
-  t -> id:string -> ?get_positions:bool -> unit -> (comment, error) result
+  t ->
+  id:string ->
+  ?get_positions:bool ->
+  unit ->
+  (comment option, error) result
 (** Get a comment by ID.
     @param id Comment ID (required)
     @param get_positions Include position data *)

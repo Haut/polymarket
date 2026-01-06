@@ -644,6 +644,9 @@ and event = {
   neg_risk_augmented : bool option; [@default None] [@key "negRiskAugmented"]
   requires_translation : bool option;
       [@default None] [@key "requiresTranslation"]
+  cumulative_markets : bool option; [@default None] [@key "cumulativeMarkets"]
+  country_name : string option; [@default None] [@key "countryName"]
+  election_type : string option; [@default None] [@key "electionType"]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 

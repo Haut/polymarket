@@ -236,16 +236,16 @@ let get_series t ~id ?include_chat () =
 
 (** {1 Comments Endpoints} *)
 
-let get_comments t ?limit ?offset ?order ?ascending ?parent_entity_type
-    ?parent_entity_id ?get_positions ?holders_only () =
+let get_comments t ~parent_entity_type ~parent_entity_id ?limit ?offset ?order
+    ?ascending ?get_positions ?holders_only () =
   B.new_get t "/comments"
+  |> B.query_param "parent_entity_type"
+       (Parent_entity_type.to_string parent_entity_type)
+  |> B.query_param "parent_entity_id" (string_of_int parent_entity_id)
   |> B.query_option "limit" string_of_int limit
   |> B.query_option "offset" string_of_int offset
   |> B.query_add "order" order
   |> B.query_bool "ascending" ascending
-  |> B.query_option "parent_entity_type" Parent_entity_type.to_string
-       parent_entity_type
-  |> B.query_option "parent_entity_id" string_of_int parent_entity_id
   |> B.query_bool "get_positions" get_positions
   |> B.query_bool "holders_only" holders_only
   |> B.fetch_json_list ~expected_fields:yojson_fields_of_comment
@@ -254,8 +254,9 @@ let get_comments t ?limit ?offset ?order ?ascending ?parent_entity_type
 let get_comment t ~id ?get_positions () =
   B.new_get t (Printf.sprintf "/comments/%s" id)
   |> B.query_bool "get_positions" get_positions
-  |> B.fetch_json ~expected_fields:yojson_fields_of_comment ~context:"comment"
-       comment_of_yojson
+  |> B.fetch_json_list ~expected_fields:yojson_fields_of_comment
+       ~context:"comment" comment_of_yojson
+  |> Result.map (function c :: _ -> Some c | [] -> None)
 
 let get_user_comments t ~user_address ?limit ?offset ?order ?ascending () =
   B.new_get t (Printf.sprintf "/comments/user_address/%s" user_address)
