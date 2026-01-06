@@ -97,6 +97,7 @@ type order_book_summary = {
   min_order_size : string option;
   tick_size : string option;
   neg_risk : bool option;
+  last_trade_price : string option;
 }
 (** Order book summary for a token *)
 

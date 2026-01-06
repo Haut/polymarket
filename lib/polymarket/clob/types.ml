@@ -99,6 +99,7 @@ type order_book_summary = {
   min_order_size : string option; [@yojson.option] [@key "min_order_size"]
   tick_size : string option; [@yojson.option] [@key "tick_size"]
   neg_risk : bool option; [@yojson.option] [@key "neg_risk"]
+  last_trade_price : string option; [@yojson.option] [@key "last_trade_price"]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Order book summary for a token *)

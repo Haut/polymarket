@@ -11,12 +11,34 @@
     The demo first fetches markets from the Gamma API to discover valid token
     IDs, then uses those to test CLOB endpoints.
 
-    To test authenticated endpoints, set this environment variable:
-    - POLY_PRIVATE_KEY: Your Ethereum private key (hex, without 0x prefix)
+    To test authenticated endpoints, create a .env file in the project root:
+    POLY_PRIVATE_KEY=your_key_without_0x_prefix
 
-    Or the demo will use a well-known test key (do not use with real funds). *)
+    Or set the environment variable directly. *)
 
 open Polymarket
+
+(** Load environment variables from .env file if it exists *)
+let load_dotenv () =
+  let env_file = ".env" in
+  if Sys.file_exists env_file then
+    let ic = open_in env_file in
+    try
+      while true do
+        let line = input_line ic in
+        let line = String.trim line in
+        if String.length line > 0 && line.[0] <> '#' then
+          match String.index_opt line '=' with
+          | Some idx ->
+              let key = String.sub line 0 idx |> String.trim in
+              let value =
+                String.sub line (idx + 1) (String.length line - idx - 1)
+                |> String.trim
+              in
+              if Sys.getenv_opt key = None then Unix.putenv key value
+          | None -> ()
+      done
+    with End_of_file -> close_in ic
 
 (** {1 Helper Functions} *)
 
@@ -258,14 +280,34 @@ let run_demo env =
           let _ = Clob.L1.get_midpoint l1_client ~token_id () in
           Logger.ok "L1.get_midpoint" "public endpoints still accessible";
 
-          (* Derive API key to upgrade to L2 *)
+          (* Create or derive API key to upgrade to L2 *)
           let nonce =
             int_of_float (Unix.gettimeofday () *. 1000.0) mod 1000000
           in
-          match Clob.L1.derive_api_key l1_client ~nonce with
+          (* Try create first (for new wallets), fall back to derive.
+             Note: create_api_key returns just api_key_response,
+             derive_api_key returns (l2 * api_key_response) *)
+          let l2_result =
+            match Clob.L1.create_api_key l1_client ~nonce with
+            | Ok resp ->
+                Logger.ok "create_api_key"
+                  (Printf.sprintf "api_key=%s..." (String.sub resp.api_key 0 8));
+                let creds : Clob.credentials =
+                  {
+                    api_key = resp.api_key;
+                    secret = resp.secret;
+                    passphrase = resp.passphrase;
+                  }
+                in
+                Ok (Clob.upgrade_to_l2 l1_client ~credentials:creds, resp)
+            | Error _ ->
+                (* Nonce may already be used, try derive (returns l2 client directly) *)
+                Clob.L1.derive_api_key l1_client ~nonce
+          in
+          match l2_result with
           | Ok (l2_client, resp) ->
-              Logger.ok "derive_api_key"
-                (Printf.sprintf "api_key=%s..." (String.sub resp.api_key 0 8));
+              Logger.ok "api_key"
+                (Printf.sprintf "key=%s..." (String.sub resp.api_key 0 8));
 
               (* ===== L2 Authentication (API Key) ===== *)
               Logger.info "Upgraded to L2 via derive_api_key";
@@ -323,6 +365,7 @@ let run_demo env =
       Logger.info "Demo complete"
 
 let () =
+  load_dotenv ();
   Mirage_crypto_rng_unix.use_default ();
   Eio_main.run run_demo;
   Logger.close ()
