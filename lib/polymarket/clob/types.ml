@@ -342,7 +342,7 @@ let yojson_of_spreads_response resp =
 
 type price_point = {
   t : int64 option; [@yojson.option]
-  p : float option; [@yojson.option]
+  p : P.Decimal.t option; [@yojson.option]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Single price point with timestamp and price *)

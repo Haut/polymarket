@@ -3,6 +3,7 @@
     This module defines types for the Market and User WebSocket channels. *)
 
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
+module P = Common.Primitives
 
 (** {1 Channel Types} *)
 
@@ -12,7 +13,7 @@ end
 
 (** {1 Common Types} *)
 
-type order_summary = { price : string; size : string }
+type order_summary = { price : P.Decimal.t; size : P.Decimal.t }
 [@@deriving yojson, show, eq]
 
 (** {1 Market Channel Message Types} *)
@@ -41,12 +42,12 @@ type book_message = {
 
 type price_change_entry = {
   asset_id : string; [@key "asset_id"]
-  price : string;
-  size : string;
+  price : P.Decimal.t;
+  size : P.Decimal.t;
   side : string;
   hash : string;
-  best_bid : string; [@key "best_bid"]
-  best_ask : string; [@key "best_ask"]
+  best_bid : P.Decimal.t; [@key "best_bid"]
+  best_ask : P.Decimal.t; [@key "best_ask"]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Price change entry within a price_change message *)
@@ -64,8 +65,8 @@ type tick_size_change_message = {
   event_type : string; [@key "event_type"]
   asset_id : string; [@key "asset_id"]
   market : string;
-  old_tick_size : string; [@key "old_tick_size"]
-  new_tick_size : string; [@key "new_tick_size"]
+  old_tick_size : P.Decimal.t; [@key "old_tick_size"]
+  new_tick_size : P.Decimal.t; [@key "new_tick_size"]
   side : string option; [@default None]
   timestamp : string;
 }
@@ -76,10 +77,10 @@ type last_trade_price_message = {
   event_type : string; [@key "event_type"]
   asset_id : string; [@key "asset_id"]
   market : string;
-  price : string;
+  price : P.Decimal.t;
   side : string;
-  size : string;
-  fee_rate_bps : string; [@key "fee_rate_bps"]
+  size : P.Decimal.t;
+  fee_rate_bps : P.Decimal.t; [@key "fee_rate_bps"]
   timestamp : string;
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
@@ -89,8 +90,8 @@ type best_bid_ask_message = {
   event_type : string; [@key "event_type"]
   asset_id : string; [@key "asset_id"]
   market : string;
-  best_bid : string; [@key "best_bid"]
-  best_ask : string; [@key "best_ask"]
+  best_bid : P.Decimal.t; [@key "best_bid"]
+  best_ask : P.Decimal.t; [@key "best_ask"]
   timestamp : string;
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
@@ -112,11 +113,11 @@ end
 
 type maker_order = {
   asset_id : string; [@key "asset_id"]
-  matched_amount : string; [@key "matched_amount"]
+  matched_amount : P.Decimal.t; [@key "matched_amount"]
   order_id : string; [@key "order_id"]
   outcome : string;
   owner : string;
-  price : string;
+  price : P.Decimal.t;
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Maker order in a trade *)
@@ -127,8 +128,8 @@ type trade_message = {
   asset_id : string; [@key "asset_id"]
   market : string;
   side : string;
-  size : string;
-  price : string;
+  size : P.Decimal.t;
+  price : P.Decimal.t;
   status : Trade_status.t;
   outcome : string;
   owner : string;
@@ -149,9 +150,9 @@ type order_message = {
   asset_id : string; [@key "asset_id"]
   market : string;
   side : string;
-  price : string;
-  original_size : string; [@key "original_size"]
-  size_matched : string; [@key "size_matched"]
+  price : P.Decimal.t;
+  original_size : P.Decimal.t; [@key "original_size"]
+  size_matched : P.Decimal.t; [@key "size_matched"]
   outcome : string;
   owner : string;
   order_owner : string; [@key "order_owner"]

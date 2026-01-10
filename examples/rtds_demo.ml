@@ -13,10 +13,12 @@ let handle_crypto_message (msg : Rtds.Types.crypto_message) =
   match msg with
   | Binance m ->
       Logger.ok "BINANCE"
-        (Printf.sprintf "symbol=%s price=%.2f" m.payload.symbol m.payload.value)
+        (Printf.sprintf "symbol=%s price=%.2f" m.payload.symbol
+           (Primitives.Decimal.to_float m.payload.value))
   | Chainlink m ->
       Logger.ok "CHAINLINK"
-        (Printf.sprintf "symbol=%s price=%.2f" m.payload.symbol m.payload.value)
+        (Printf.sprintf "symbol=%s price=%.2f" m.payload.symbol
+           (Primitives.Decimal.to_float m.payload.value))
 
 let handle_comment (msg : Rtds.Types.comment) =
   match msg with

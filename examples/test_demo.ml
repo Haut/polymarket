@@ -4,6 +4,7 @@
     markets. Run with: dune exec examples/test_demo.exe *)
 
 open Polymarket
+module D = Primitives.Decimal
 
 (** {1 Option monad syntax} *)
 
@@ -92,11 +93,11 @@ let apply_book_snapshot ~token_id book (msg : Wss.Types.book_message) =
     Hashtbl.clear book.asks;
     List.iter
       (fun (o : Wss.Types.order_summary) ->
-        Hashtbl.replace book.bids o.price o.size)
+        Hashtbl.replace book.bids (D.to_string o.price) (D.to_string o.size))
       msg.bids;
     List.iter
       (fun (o : Wss.Types.order_summary) ->
-        Hashtbl.replace book.asks o.price o.size)
+        Hashtbl.replace book.asks (D.to_string o.price) (D.to_string o.size))
       msg.asks
   end
 
@@ -112,10 +113,12 @@ let apply_price_changes ~token_id book (msg : Wss.Types.price_change_message) =
             Logger.warn "SIDE" ("Unknown side: " ^ pc.side);
             None)
         in
+        let price_str = D.to_string pc.price in
+        let size_str = D.to_string pc.size in
         Option.iter
           (fun tbl ->
-            if pc.size = "0" then Hashtbl.remove tbl pc.price
-            else Hashtbl.replace tbl pc.price pc.size)
+            if size_str = "0" then Hashtbl.remove tbl price_str
+            else Hashtbl.replace tbl price_str size_str)
           tbl_opt)
     msg.price_changes
 
@@ -219,7 +222,8 @@ let run_stream_loop ~clock ~token_id ~book ~stream =
     | Wss.Types.Market (Last_trade_price trade) when trade.asset_id = token_id
       ->
         Logger.ok "TRADE"
-          (Printf.sprintf "%s @ %s (%s)" trade.side trade.price trade.size)
+          (Printf.sprintf "%s @ %s (%s)" trade.side (D.to_string trade.price)
+             (D.to_string trade.size))
     | _ -> ()
   in
   (try

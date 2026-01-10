@@ -91,9 +91,9 @@ type rfq_request = {
   token : P.Token_id.t;
   complement : P.Token_id.t;
   side : Side.t;
-  size_in : float; [@key "sizeIn"]
-  size_out : float; [@key "sizeOut"]
-  price : float;
+  size_in : P.Decimal.t; [@key "sizeIn"]
+  size_out : P.Decimal.t; [@key "sizeOut"]
+  price : P.Decimal.t;
   expiry : int;
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
@@ -138,9 +138,9 @@ type rfq_quote = {
   token : P.Token_id.t;
   complement : P.Token_id.t;
   side : Side.t;
-  size_in : float; [@key "sizeIn"]
-  size_out : float; [@key "sizeOut"]
-  price : float;
+  size_in : P.Decimal.t; [@key "sizeIn"]
+  size_out : P.Decimal.t; [@key "sizeOut"]
+  price : P.Decimal.t;
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** A single RFQ quote in the list response. *)

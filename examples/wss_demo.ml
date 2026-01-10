@@ -27,18 +27,23 @@ let handle_market_message (msg : Wss.Types.message) =
       Logger.ok "PRICE" (Printf.sprintf "market=%s changes=%d" change.market n)
   | Market (Last_trade_price trade) ->
       Logger.ok "TRADE"
-        (Printf.sprintf "asset=%s price=%s" trade.asset_id trade.price)
+        (Printf.sprintf "asset=%s price=%s" trade.asset_id
+           (Primitives.Decimal.to_string trade.price))
   | Market (Tick_size_change _) -> Logger.ok "TICK_SIZE" "tick size changed"
   | Market (Best_bid_ask bba) ->
       Logger.ok "BBA"
-        (Printf.sprintf "asset=%s bid=%s ask=%s" bba.asset_id bba.best_bid
-           bba.best_ask)
+        (Printf.sprintf "asset=%s bid=%s ask=%s" bba.asset_id
+           (Primitives.Decimal.to_string bba.best_bid)
+           (Primitives.Decimal.to_string bba.best_ask))
   | User (Trade trade) ->
       Logger.ok "USER_TRADE"
-        (Printf.sprintf "id=%s price=%s size=%s" trade.id trade.price trade.size)
+        (Printf.sprintf "id=%s price=%s size=%s" trade.id
+           (Primitives.Decimal.to_string trade.price)
+           (Primitives.Decimal.to_string trade.size))
   | User (Order order) ->
       Logger.ok "USER_ORDER"
-        (Printf.sprintf "id=%s side=%s price=%s" order.id order.side order.price)
+        (Printf.sprintf "id=%s side=%s price=%s" order.id order.side
+           (Primitives.Decimal.to_string order.price))
   | Unknown raw ->
       if String.length raw > 80 then
         Logger.skip "MSG" (String.sub raw 0 80 ^ "...")

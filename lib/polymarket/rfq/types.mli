@@ -136,9 +136,9 @@ type rfq_request = {
   token : P.Token_id.t;
   complement : P.Token_id.t;
   side : Side.t;
-  size_in : float;
-  size_out : float;
-  price : float;
+  size_in : P.Decimal.t;
+  size_out : P.Decimal.t;
+  price : P.Decimal.t;
   expiry : int;
 }
 (** A single RFQ request in the list response. *)
@@ -212,9 +212,9 @@ type rfq_quote = {
   token : P.Token_id.t;
   complement : P.Token_id.t;
   side : Side.t;
-  size_in : float;
-  size_out : float;
-  price : float;
+  size_in : P.Decimal.t;
+  size_out : P.Decimal.t;
+  price : P.Decimal.t;
 }
 (** A single RFQ quote in the list response. *)
 

@@ -18,7 +18,11 @@ end
 
 (** {1 Common Types} *)
 
-type order_summary = { price : string; size : string } [@@deriving yojson, eq]
+type order_summary = {
+  price : Common.Primitives.Decimal.t;
+  size : Common.Primitives.Decimal.t;
+}
+[@@deriving yojson, eq]
 
 (** {1 Market Channel Message Types} *)
 
@@ -53,12 +57,12 @@ type book_message = {
 
 type price_change_entry = {
   asset_id : string;
-  price : string;
-  size : string;
+  price : Common.Primitives.Decimal.t;
+  size : Common.Primitives.Decimal.t;
   side : string;
   hash : string;
-  best_bid : string;
-  best_ask : string;
+  best_bid : Common.Primitives.Decimal.t;
+  best_ask : Common.Primitives.Decimal.t;
 }
 [@@deriving yojson, eq]
 (** Price change entry within a price_change message *)
@@ -76,8 +80,8 @@ type tick_size_change_message = {
   event_type : string;
   asset_id : string;
   market : string;
-  old_tick_size : string;
-  new_tick_size : string;
+  old_tick_size : Common.Primitives.Decimal.t;
+  new_tick_size : Common.Primitives.Decimal.t;
   side : string option;
   timestamp : string;
 }
@@ -88,10 +92,10 @@ type last_trade_price_message = {
   event_type : string;
   asset_id : string;
   market : string;
-  price : string;
+  price : Common.Primitives.Decimal.t;
   side : string;
-  size : string;
-  fee_rate_bps : string;
+  size : Common.Primitives.Decimal.t;
+  fee_rate_bps : Common.Primitives.Decimal.t;
   timestamp : string;
 }
 [@@deriving yojson, eq]
@@ -101,8 +105,8 @@ type best_bid_ask_message = {
   event_type : string;
   asset_id : string;
   market : string;
-  best_bid : string;
-  best_ask : string;
+  best_bid : Common.Primitives.Decimal.t;
+  best_ask : Common.Primitives.Decimal.t;
   timestamp : string;
 }
 [@@deriving yojson, eq]
@@ -148,11 +152,11 @@ end
 
 type maker_order = {
   asset_id : string;
-  matched_amount : string;
+  matched_amount : Common.Primitives.Decimal.t;
   order_id : string;
   outcome : string;
   owner : string;
-  price : string;
+  price : Common.Primitives.Decimal.t;
 }
 [@@deriving yojson, eq]
 (** Maker order in a trade *)
@@ -163,8 +167,8 @@ type trade_message = {
   asset_id : string;
   market : string;
   side : string;
-  size : string;
-  price : string;
+  size : Common.Primitives.Decimal.t;
+  price : Common.Primitives.Decimal.t;
   status : Trade_status.t;
   outcome : string;
   owner : string;
@@ -185,9 +189,9 @@ type order_message = {
   asset_id : string;
   market : string;
   side : string;
-  price : string;
-  original_size : string;
-  size_matched : string;
+  price : Common.Primitives.Decimal.t;
+  original_size : Common.Primitives.Decimal.t;
+  size_matched : Common.Primitives.Decimal.t;
   outcome : string;
   owner : string;
   order_owner : string;

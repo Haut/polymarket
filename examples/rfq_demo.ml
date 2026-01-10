@@ -110,7 +110,8 @@ let run_demo env =
         (Printf.sprintf "Sample request: %s %s@%.4f size=%.2f"
            (Rfq.Types.P.Request_id.to_string req.request_id)
            (Rfq.Types.Side.to_string req.side)
-           req.price req.size_in)
+           (Primitives.Decimal.to_float req.price)
+           (Primitives.Decimal.to_float req.size_in))
   | _ -> ());
 
   (* Get inactive (completed/canceled) requests *)
@@ -140,7 +141,8 @@ let run_demo env =
         (Printf.sprintf "Sample quote: %s for request %s @%.4f size=%.2f"
            (Rfq.Types.P.Quote_id.to_string quote.quote_id)
            (Rfq.Types.P.Request_id.to_string quote.request_id)
-           quote.price quote.size_in)
+           (Primitives.Decimal.to_float quote.price)
+           (Primitives.Decimal.to_float quote.size_in))
   | _ -> ());
 
   (* Get inactive quotes *)

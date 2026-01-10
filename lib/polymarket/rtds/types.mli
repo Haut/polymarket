@@ -39,7 +39,11 @@ end
 
 (** {1 Crypto Price Types} *)
 
-type crypto_price_payload = { symbol : string; timestamp : int; value : float }
+type crypto_price_payload = {
+  symbol : string;
+  timestamp : int;
+  value : Common.Primitives.Decimal.t;
+}
 [@@deriving yojson, eq]
 (** Payload for crypto price updates (both Binance and Chainlink sources) *)
 

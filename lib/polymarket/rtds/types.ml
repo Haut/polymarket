@@ -4,6 +4,7 @@
     including crypto prices (Binance and Chainlink) and comments. *)
 
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
+module P = Common.Primitives
 
 (** {1 Topic Types} *)
 
@@ -30,7 +31,11 @@ end
 
 (** {1 Crypto Price Types} *)
 
-type crypto_price_payload = { symbol : string; timestamp : int; value : float }
+type crypto_price_payload = {
+  symbol : string;
+  timestamp : int;
+  value : P.Decimal.t;
+}
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Payload for crypto price updates (both Binance and Chainlink sources) *)
 

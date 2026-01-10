@@ -301,7 +301,7 @@ val equal_spreads_response : spreads_response -> spreads_response -> bool
 
 (** {1 Timeseries Types} *)
 
-type price_point = { t : int64 option; p : float option }
+type price_point = { t : int64 option; p : Common.Primitives.Decimal.t option }
 (** Single price point with timestamp and price *)
 
 val price_point_of_yojson : Yojson.Safe.t -> price_point
