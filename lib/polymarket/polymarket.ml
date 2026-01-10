@@ -33,6 +33,12 @@ module Rfq = struct
   module Order_builder = Rfq.Order_builder
 end
 
+(** Bridge API client for cross-chain deposits to Polymarket. *)
+module Bridge = struct
+  include Bridge.Client
+  module Types = Bridge.Types
+end
+
 (** WebSocket client for real-time market and user data. *)
 module Wss = struct
   include Wss.Client

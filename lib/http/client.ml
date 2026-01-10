@@ -221,7 +221,7 @@ let parse_error ~status body =
 
 let handle_response status body parse_fn =
   match status with
-  | 200 -> parse_fn body
+  | 200 | 201 -> parse_fn body
   | _ -> Error (parse_error ~status body)
 
 (** {1 JSON Field Checking} *)

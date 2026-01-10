@@ -37,6 +37,11 @@
  (libraries polymarket unix eio_main mirage-crypto-rng.unix logs fmt fmt.tty))
 
 (executable
+ (name bridge_api_demo)
+ (modules bridge_api_demo logger)
+ (libraries polymarket unix eio_main mirage-crypto-rng.unix logs fmt fmt.tty))
+
+(executable
  (name test_demo)
  (modules test_demo logger)
  (libraries polymarket unix eio_main mirage-crypto-rng.unix logs fmt fmt.tty))

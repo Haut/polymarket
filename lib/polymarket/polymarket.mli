@@ -162,6 +162,39 @@ module Rfq : sig
   module Order_builder = Rfq.Order_builder
 end
 
+(** Bridge API client for cross-chain deposits to Polymarket.
+
+    Polymarket uses USDC.e (Bridged USDC) on Polygon as collateral for all
+    trading activities. This API enables users to bridge assets from various
+    chains (Ethereum, Solana, Arbitrum, Base, Bitcoin, etc.) and swap them to
+    USDC.e on Polygon for trading.
+
+    {2 Example}
+
+    {[
+      let rate_limiter =
+        Rate_limiter.create ~routes:(Rate_limit_presets.all ~behavior:Delay)
+          ~clock ()
+      in
+      let client = Bridge.create ~sw ~net ~rate_limiter () in
+
+      (* Get supported chains and tokens *)
+      let assets = Bridge.get_supported_assets client () in
+
+      (* Create deposit addresses for your wallet *)
+      let deposit =
+        Bridge.create_deposit_addresses client ~address:my_wallet_address ()
+      in
+      (* Now send assets to the appropriate deposit address *)
+    ]} *)
+module Bridge : sig
+  include module type of struct
+    include Bridge.Client
+  end
+
+  module Types = Bridge.Types
+end
+
 (** WebSocket client for real-time market and user data.
 
     Uses pure-OCaml TLS (tls-eio) for cross-platform compatibility.

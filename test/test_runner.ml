@@ -16,6 +16,8 @@ let () =
          prefix_tests "Gamma_api.Types" Test_gamma_api.Test_types.tests;
          (* CLOB API tests *)
          prefix_tests "Clob_api.Types" Test_clob_api.Test_types.tests;
+         (* Bridge API tests *)
+         prefix_tests "Bridge_api.Types" Test_bridge_api.Test_types.tests;
          (* WebSocket client tests *)
          prefix_tests "Wss.Types" Test_websocket_client.Test_types.tests;
        ])
