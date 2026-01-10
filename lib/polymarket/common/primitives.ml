@@ -36,8 +36,6 @@ let is_hex_char = function
   | _ -> false
 
 let is_hex_string s = String.for_all is_hex_char s
-let is_digit_char = function '0' .. '9' -> true | _ -> false
-let is_numeric_string s = String.length s > 0 && String.for_all is_digit_char s
 
 let validate_hex_prefixed ~name ~expected_length s =
   let len = String.length s in
@@ -123,22 +121,6 @@ module Hash = Make_hex_string (struct
     else if not (is_hex_string (String.sub s 2 (len - 2))) then
       Error (Invalid_hex { type_name = name })
     else Ok s
-end)
-
-(** {1 Token_id Module}
-
-    ERC1155 token ID (numeric string representing uint256). *)
-
-module Token_id = Make_string_type (struct
-  let name = "Token_id"
-
-  let validate s =
-    if String.length s = 0 then Error (Empty_value { type_name = name })
-    else if is_numeric_string s then Ok s
-    else
-      Error
-        (Invalid_format
-           { type_name = name; reason = "must contain only digits" })
 end)
 
 (** {1 Signature Module}
@@ -232,6 +214,111 @@ end
 
     Arbitrary-precision decimal numbers using Zarith rationals. Used for
     financial values where floating-point approximation is unacceptable. *)
+
+(** {1 U256 Module}
+
+    256-bit unsigned integer using Zarith. Used for token amounts, raw prices,
+    and other values that require exact uint256 representation. *)
+
+module U256 = struct
+  type t = Z.t
+
+  let max_value = Z.(shift_left one 256 - one)
+  let min_value = Z.zero
+  let is_valid z = Z.(geq z zero && leq z max_value)
+
+  let make z =
+    if is_valid z then Ok z
+    else
+      Error
+        (Invalid_format
+           { type_name = "U256"; reason = "value out of uint256 range" })
+
+  let of_z = make
+  let unsafe_of_z z = z
+  let to_z t = t
+
+  let of_string s =
+    if String.length s = 0 then Error (Empty_value { type_name = "U256" })
+    else
+      try
+        let z = Z.of_string s in
+        make z
+      with _ ->
+        Error (Invalid_format { type_name = "U256"; reason = "invalid number" })
+
+  let unsafe_of_string s = Z.of_string s
+  let to_string t = Z.to_string t
+
+  let to_hex t =
+    let hex = Z.format "%x" t in
+    "0x" ^ hex
+
+  let pp fmt t = Format.fprintf fmt "%s" (Z.to_string t)
+  let equal = Z.equal
+  let compare = Z.compare
+
+  (* Constants *)
+  let zero = Z.zero
+  let one = Z.one
+
+  (* Arithmetic - all operations check bounds *)
+  let add a b =
+    let r = Z.add a b in
+    if Z.leq r max_value then Some r else None
+
+  let sub a b =
+    let r = Z.sub a b in
+    if Z.geq r zero then Some r else None
+
+  let mul a b =
+    let r = Z.mul a b in
+    if Z.leq r max_value then Some r else None
+
+  let div a b = if Z.equal b zero then None else Some (Z.div a b)
+
+  (* Unsafe arithmetic - for trusted inputs *)
+  let unsafe_add = Z.add
+  let unsafe_sub = Z.sub
+  let unsafe_mul = Z.mul
+  let unsafe_div = Z.div
+
+  (* Comparisons *)
+  let ( = ) = Z.equal
+  let ( < ) = Z.lt
+  let ( > ) = Z.gt
+  let ( <= ) = Z.leq
+  let ( >= ) = Z.geq
+
+  let t_of_yojson json =
+    match json with
+    | `String s -> (
+        match of_string s with
+        | Ok v -> v
+        | Error e ->
+            raise
+              (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
+                 (Failure (string_of_validation_error e), json)))
+    | `Int i ->
+        if Stdlib.(i >= 0) then Z.of_int i
+        else
+          raise
+            (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
+               (Failure "U256: negative value not allowed", json))
+    | `Intlit s -> (
+        match of_string s with
+        | Ok v -> v
+        | Error e ->
+            raise
+              (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
+                 (Failure (string_of_validation_error e), json)))
+    | _ ->
+        raise
+          (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
+             (Failure "U256: expected string or int", json))
+
+  let yojson_of_t t = `String (Z.to_string t)
+end
 
 module Decimal = struct
   type t = Q.t

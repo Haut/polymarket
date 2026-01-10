@@ -38,7 +38,7 @@ let create_limit_order ~private_key ~token_id ~(side : Types.Side.t) ~price
       let address = P.Address.unsafe_of_string address_str in
       let salt = Order_signing.generate_salt () in
       let maker_amount, taker_amount = calculate_amounts ~side ~price ~size in
-      let token_id_str = P.Token_id.to_string token_id in
+      let token_id_str = P.U256.to_string token_id in
       Log.debug (fun m ->
           m "Building order: side=%s price=%.4f size=%.2f -> maker=%s taker=%s"
             (Types.Side.to_string side)

@@ -114,7 +114,7 @@ type signed_order = {
   maker : P.Address.t option;
   signer : P.Address.t option;
   taker : P.Address.t option;
-  token_id : P.Token_id.t option;
+  token_id : P.U256.t option;
   maker_amount : string option;
   taker_amount : string option;
   expiration : string option;
@@ -168,7 +168,7 @@ type open_order = {
   id : string option;
   status : Status.t option;
   market : string option;
-  asset_id : P.Token_id.t option;
+  asset_id : P.U256.t option;
   original_size : string option;
   size_matched : string option;
   price : string option;
@@ -212,7 +212,7 @@ type maker_order_fill = {
   matched_amount : string option;
   fee_rate_bps : string option;
   price : string option;
-  asset_id : P.Token_id.t option;
+  asset_id : P.U256.t option;
   outcome : string option;
   side : Side.t option;
 }
@@ -228,7 +228,7 @@ type clob_trade = {
   id : string option;
   taker_order_id : string option;
   market : string option;
-  asset_id : P.Token_id.t option;
+  asset_id : P.U256.t option;
   side : Side.t option;
   size : string option;
   fee_rate_bps : string option;
@@ -281,7 +281,7 @@ val pp_token_price : Format.formatter -> token_price -> unit
 val show_token_price : token_price -> string
 val equal_token_price : token_price -> token_price -> bool
 
-type prices_response = (P.Token_id.t * token_price) list
+type prices_response = (P.U256.t * token_price) list
 (** Map from token_id to token_price *)
 
 val prices_response_of_yojson : Yojson.Safe.t -> prices_response
@@ -290,7 +290,7 @@ val pp_prices_response : Format.formatter -> prices_response -> unit
 val show_prices_response : prices_response -> string
 val equal_prices_response : prices_response -> prices_response -> bool
 
-type spreads_response = (P.Token_id.t * string) list
+type spreads_response = (P.U256.t * string) list
 (** Map from token_id to spread value *)
 
 val spreads_response_of_yojson : Yojson.Safe.t -> spreads_response

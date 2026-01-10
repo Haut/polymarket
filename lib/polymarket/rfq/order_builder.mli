@@ -7,7 +7,7 @@ val build_accept_quote_body :
   private_key:Common.Crypto.private_key ->
   request_id:Types.P.Request_id.t ->
   quote_id:Types.P.Quote_id.t ->
-  token_id:Types.P.Token_id.t ->
+  token_id:Types.P.U256.t ->
   maker_amount:string ->
   taker_amount:string ->
   side:Types.Side.t ->

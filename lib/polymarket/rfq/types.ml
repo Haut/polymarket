@@ -63,8 +63,8 @@ module Sort_dir = P.Sort_dir
 (** {1 Request Types} *)
 
 type create_request_body = {
-  asset_in : P.Token_id.t; [@key "assetIn"]
-  asset_out : P.Token_id.t; [@key "assetOut"]
+  asset_in : P.U256.t; [@key "assetIn"]
+  asset_out : P.U256.t; [@key "assetOut"]
   amount_in : string; [@key "amountIn"]
   amount_out : string; [@key "amountOut"]
   user_type : User_type.t; [@key "userType"]
@@ -88,8 +88,8 @@ type rfq_request = {
   user : P.Address.t;
   proxy : P.Address.t;
   market : P.Hash64.t;
-  token : P.Token_id.t;
-  complement : P.Token_id.t;
+  token : P.U256.t;
+  complement : P.U256.t;
   side : Side.t;
   size_in : P.Decimal.t; [@key "sizeIn"]
   size_out : P.Decimal.t; [@key "sizeOut"]
@@ -112,8 +112,8 @@ type get_requests_response = {
 
 type create_quote_body = {
   request_id : P.Request_id.t; [@key "requestId"]
-  asset_in : P.Token_id.t; [@key "assetIn"]
-  asset_out : P.Token_id.t; [@key "assetOut"]
+  asset_in : P.U256.t; [@key "assetIn"]
+  asset_out : P.U256.t; [@key "assetOut"]
   amount_in : string; [@key "amountIn"]
   amount_out : string; [@key "amountOut"]
   user_type : User_type.t; [@key "userType"]
@@ -135,8 +135,8 @@ type rfq_quote = {
   user : P.Address.t;
   proxy : P.Address.t;
   market : P.Hash64.t;
-  token : P.Token_id.t;
-  complement : P.Token_id.t;
+  token : P.U256.t;
+  complement : P.U256.t;
   side : Side.t;
   size_in : P.Decimal.t; [@key "sizeIn"]
   size_out : P.Decimal.t; [@key "sizeOut"]
@@ -161,7 +161,7 @@ type accept_quote_body = {
   quote_id : P.Quote_id.t; [@key "quoteId"]
   maker_amount : string; [@key "makerAmount"]
   taker_amount : string; [@key "takerAmount"]
-  token_id : P.Token_id.t; [@key "tokenId"]
+  token_id : P.U256.t; [@key "tokenId"]
   maker : P.Address.t;
   signer : P.Address.t;
   taker : P.Address.t;

@@ -304,27 +304,24 @@ let test_signature_of_yojson_invalid () =
       let msg = P.string_of_validation_error e in
       Alcotest.(check bool) "returns Error" true (String.length msg > 0)
 
-let test_token_id_valid () =
-  let valid_ids = [ "12345"; "0"; "999999999999999999999999" ] in
+let test_u256_valid () =
+  let valid_ids = [ "12345"; "0"; "999999999999999999999999"; "0x1a2b3c" ] in
   List.iter
     (fun id ->
-      match P.Token_id.make id with
+      match P.U256.of_string id with
       | Ok _ -> ()
       | Error _ -> Alcotest.fail ("expected Ok for " ^ id))
     valid_ids
 
-let test_token_id_invalid () =
+let test_u256_invalid () =
   let invalid_cases =
     [
-      ("", "empty string");
-      ("abc", "non-numeric");
-      ("123abc", "mixed");
-      ("-123", "negative");
+      ("", "empty string"); ("abc", "non-numeric non-hex"); ("-123", "negative");
     ]
   in
   List.iter
     (fun (id, desc) ->
-      match P.Token_id.make id with
+      match P.U256.of_string id with
       | Ok _ -> Alcotest.fail ("expected Error for " ^ desc)
       | Error _ -> ())
     invalid_cases
@@ -379,7 +376,7 @@ let tests =
         ("Address.of_yojson invalid", `Quick, test_address_of_yojson_invalid);
         ("Signature.of_yojson valid", `Quick, test_signature_of_yojson_valid);
         ("Signature.of_yojson invalid", `Quick, test_signature_of_yojson_invalid);
-        ("Token_id.make valid", `Quick, test_token_id_valid);
-        ("Token_id.make invalid", `Quick, test_token_id_invalid);
+        ("U256.of_string valid", `Quick, test_u256_valid);
+        ("U256.of_string invalid", `Quick, test_u256_invalid);
       ] );
   ]

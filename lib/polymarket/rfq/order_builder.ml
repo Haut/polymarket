@@ -23,7 +23,7 @@ let build_accept_quote_body ~private_key ~request_id ~quote_id ~token_id
       let salt = Order_signing.generate_salt () in
       let request_id_str = P.Request_id.to_string request_id in
       let quote_id_str = P.Quote_id.to_string quote_id in
-      let token_id_str = P.Token_id.to_string token_id in
+      let token_id_str = P.U256.to_string token_id in
       Log.debug (fun m ->
           m
             "Building accept_quote: request=%s quote=%s side=%s maker=%s \

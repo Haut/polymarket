@@ -126,41 +126,6 @@ module Hash : sig
   (** JSON deserialization (ppx_yojson_conv compatibility). *)
 end
 
-(** {1 Token_id Module}
-
-    ERC1155 token ID (numeric string representing uint256). Token IDs must be
-    non-empty strings containing only digits 0-9. *)
-module Token_id : sig
-  type t = private string
-
-  val make : string -> (t, validation_error) result
-  (** Create a token_id with validation. Returns Error if not numeric. *)
-
-  val unsafe_of_string : string -> t
-  (** Create from string without validation. Use only for trusted sources. *)
-
-  val to_string : t -> string
-  (** Convert to string. *)
-
-  val pp : Format.formatter -> t -> unit
-  (** Pretty printer for Format. *)
-
-  val equal : t -> t -> bool
-  (** Equality comparison. *)
-
-  val of_yojson : Yojson.Safe.t -> (t, validation_error) result
-  (** JSON deserialization with validation. *)
-
-  val to_yojson : t -> Yojson.Safe.t
-  (** JSON serialization. *)
-
-  val yojson_of_t : t -> Yojson.Safe.t
-  (** JSON serialization (ppx_yojson_conv compatibility). *)
-
-  val t_of_yojson : Yojson.Safe.t -> t
-  (** JSON deserialization (ppx_yojson_conv compatibility). *)
-end
-
 (** {1 Signature Module}
 
     Hex-encoded cryptographic signature (0x-prefixed, variable length). This is
@@ -377,6 +342,95 @@ module Sort_dir : sig
 
   val pp : Format.formatter -> t -> unit
   val equal : t -> t -> bool
+end
+
+(** {1 U256 Module}
+
+    256-bit unsigned integer using Zarith. Used for token amounts, raw prices,
+    and other values that require exact uint256 representation. *)
+module U256 : sig
+  type t
+  (** 256-bit unsigned integer (0 to 2^256 - 1) *)
+
+  (** {2 Constants} *)
+
+  val max_value : t
+  (** Maximum uint256 value (2^256 - 1) *)
+
+  val min_value : t
+  (** Minimum uint256 value (0) *)
+
+  val zero : t
+  val one : t
+
+  (** {2 Constructors} *)
+
+  val make : Z.t -> (t, validation_error) result
+  (** Create from Zarith integer with bounds validation. *)
+
+  val of_z : Z.t -> (t, validation_error) result
+  (** Alias for [make]. *)
+
+  val unsafe_of_z : Z.t -> t
+  (** Create from Zarith integer without validation. Use only for trusted
+      sources. *)
+
+  val of_string : string -> (t, validation_error) result
+  (** Parse from decimal or hex string (e.g., "123" or "0x7b"). *)
+
+  val unsafe_of_string : string -> t
+  (** Parse from string without validation. Use only for trusted sources. *)
+
+  (** {2 Conversions} *)
+
+  val to_z : t -> Z.t
+  (** Convert to Zarith integer. *)
+
+  val to_string : t -> string
+  (** Convert to decimal string. *)
+
+  val to_hex : t -> string
+  (** Convert to 0x-prefixed hex string. *)
+
+  (** {2 Arithmetic}
+
+      Safe arithmetic operations return [None] on overflow/underflow. *)
+
+  val add : t -> t -> t option
+  val sub : t -> t -> t option
+  val mul : t -> t -> t option
+  val div : t -> t -> t option
+
+  (** {2 Unsafe Arithmetic}
+
+      For trusted inputs where overflow is impossible. *)
+
+  val unsafe_add : t -> t -> t
+  val unsafe_sub : t -> t -> t
+  val unsafe_mul : t -> t -> t
+  val unsafe_div : t -> t -> t
+
+  (** {2 Comparisons} *)
+
+  val ( = ) : t -> t -> bool
+  val ( < ) : t -> t -> bool
+  val ( > ) : t -> t -> bool
+  val ( <= ) : t -> t -> bool
+  val ( >= ) : t -> t -> bool
+  val compare : t -> t -> int
+  val equal : t -> t -> bool
+
+  (** {2 Pretty-printing} *)
+
+  val pp : Format.formatter -> t -> unit
+
+  (** {2 JSON serialization} *)
+
+  val t_of_yojson : Yojson.Safe.t -> t
+  (** Parse from JSON string or int *)
+
+  val yojson_of_t : t -> Yojson.Safe.t
+  (** Serialize to JSON string (preserves full precision) *)
 end
 
 (** {1 Decimal Module}

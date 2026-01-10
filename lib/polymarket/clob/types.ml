@@ -111,7 +111,7 @@ type signed_order = {
   maker : P.Address.t option; [@yojson.option]
   signer : P.Address.t option; [@yojson.option]
   taker : P.Address.t option; [@yojson.option]
-  token_id : P.Token_id.t option; [@yojson.option] [@key "tokenId"]
+  token_id : P.U256.t option; [@yojson.option] [@key "tokenId"]
   maker_amount : string option; [@yojson.option] [@key "makerAmount"]
   taker_amount : string option; [@yojson.option] [@key "takerAmount"]
   expiration : string option; [@yojson.option]
@@ -149,7 +149,7 @@ type open_order = {
   id : string option; [@yojson.option]
   status : Status.t option; [@yojson.option]
   market : string option; [@yojson.option]
-  asset_id : P.Token_id.t option; [@yojson.option] [@key "asset_id"]
+  asset_id : P.U256.t option; [@yojson.option] [@key "asset_id"]
   original_size : string option; [@yojson.option] [@key "original_size"]
   size_matched : string option; [@yojson.option] [@key "size_matched"]
   price : string option; [@yojson.option]
@@ -216,7 +216,7 @@ type maker_order_fill = {
   matched_amount : string option; [@yojson.option] [@key "matched_amount"]
   fee_rate_bps : string option; [@yojson.option] [@key "fee_rate_bps"]
   price : string option; [@yojson.option]
-  asset_id : P.Token_id.t option; [@yojson.option] [@key "asset_id"]
+  asset_id : P.U256.t option; [@yojson.option] [@key "asset_id"]
   outcome : string option; [@yojson.option]
   side : Side.t option; [@yojson.option]
 }
@@ -227,7 +227,7 @@ type clob_trade = {
   id : string option; [@yojson.option]
   taker_order_id : string option; [@yojson.option] [@key "taker_order_id"]
   market : string option; [@yojson.option]
-  asset_id : P.Token_id.t option; [@yojson.option] [@key "asset_id"]
+  asset_id : P.U256.t option; [@yojson.option] [@key "asset_id"]
   side : Side.t option; [@yojson.option]
   size : string option; [@yojson.option]
   fee_rate_bps : string option; [@yojson.option] [@key "fee_rate_bps"]
@@ -263,13 +263,12 @@ type token_price = {
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Token prices for buy and sell sides *)
 
-type prices_response = (P.Token_id.t * token_price) list
+type prices_response = (P.U256.t * token_price) list
 
 let equal_prices_response a b =
   List.length a = List.length b
   && List.for_all2
-       (fun (t1, p1) (t2, p2) ->
-         P.Token_id.equal t1 t2 && equal_token_price p1 p2)
+       (fun (t1, p1) (t2, p2) -> P.U256.equal t1 t2 && equal_token_price p1 p2)
        a b
 
 let pp_prices_response fmt resp =
@@ -277,7 +276,7 @@ let pp_prices_response fmt resp =
     (Format.pp_print_list
        ~pp_sep:(fun fmt () -> Format.fprintf fmt "; ")
        (fun fmt (tid, tp) ->
-         Format.fprintf fmt "(%a, %a)" P.Token_id.pp tid pp_token_price tp))
+         Format.fprintf fmt "(%a, %a)" P.U256.pp tid pp_token_price tp))
     resp
 
 let show_prices_response resp = Format.asprintf "%a" pp_prices_response resp
@@ -289,7 +288,7 @@ let prices_response_of_yojson json =
   | `Assoc pairs ->
       List.map
         (fun (tid_str, v) ->
-          (P.Token_id.unsafe_of_string tid_str, token_price_of_yojson v))
+          (P.U256.unsafe_of_string tid_str, token_price_of_yojson v))
         pairs
   | _ ->
       raise
@@ -299,22 +298,22 @@ let prices_response_of_yojson json =
 let yojson_of_prices_response resp =
   `Assoc
     (List.map
-       (fun (tid, tp) -> (P.Token_id.to_string tid, yojson_of_token_price tp))
+       (fun (tid, tp) -> (P.U256.to_string tid, yojson_of_token_price tp))
        resp)
 
-type spreads_response = (P.Token_id.t * string) list
+type spreads_response = (P.U256.t * string) list
 
 let equal_spreads_response a b =
   List.length a = List.length b
   && List.for_all2
-       (fun (t1, s1) (t2, s2) -> P.Token_id.equal t1 t2 && String.equal s1 s2)
+       (fun (t1, s1) (t2, s2) -> P.U256.equal t1 t2 && String.equal s1 s2)
        a b
 
 let pp_spreads_response fmt resp =
   Format.fprintf fmt "[%a]"
     (Format.pp_print_list
        ~pp_sep:(fun fmt () -> Format.fprintf fmt "; ")
-       (fun fmt (tid, s) -> Format.fprintf fmt "(%a, %s)" P.Token_id.pp tid s))
+       (fun fmt (tid, s) -> Format.fprintf fmt "(%a, %s)" P.U256.pp tid s))
     resp
 
 let show_spreads_response resp = Format.asprintf "%a" pp_spreads_response resp
@@ -327,7 +326,7 @@ let spreads_response_of_yojson json =
       List.filter_map
         (fun (tid_str, v) ->
           match v with
-          | `String s -> Some (P.Token_id.unsafe_of_string tid_str, s)
+          | `String s -> Some (P.U256.unsafe_of_string tid_str, s)
           | _ -> None)
         pairs
   | _ ->
@@ -336,7 +335,7 @@ let spreads_response_of_yojson json =
            (Failure "spreads_response: expected object", json))
 
 let yojson_of_spreads_response resp =
-  `Assoc (List.map (fun (tid, s) -> (P.Token_id.to_string tid, `String s)) resp)
+  `Assoc (List.map (fun (tid, s) -> (P.U256.to_string tid, `String s)) resp)
 
 (** {1 Timeseries Types} *)
 

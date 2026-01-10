@@ -87,8 +87,8 @@ module Sort_dir = P.Sort_dir
 (** {1 Request Types} *)
 
 type create_request_body = {
-  asset_in : P.Token_id.t;
-  asset_out : P.Token_id.t;
+  asset_in : P.U256.t;
+  asset_out : P.U256.t;
   amount_in : string;
   amount_out : string;
   user_type : User_type.t;
@@ -133,8 +133,8 @@ type rfq_request = {
   user : P.Address.t;
   proxy : P.Address.t;
   market : P.Hash64.t;
-  token : P.Token_id.t;
-  complement : P.Token_id.t;
+  token : P.U256.t;
+  complement : P.U256.t;
   side : Side.t;
   size_in : P.Decimal.t;
   size_out : P.Decimal.t;
@@ -169,8 +169,8 @@ val equal_get_requests_response :
 
 type create_quote_body = {
   request_id : P.Request_id.t;
-  asset_in : P.Token_id.t;
-  asset_out : P.Token_id.t;
+  asset_in : P.U256.t;
+  asset_out : P.U256.t;
   amount_in : string;
   amount_out : string;
   user_type : User_type.t;
@@ -209,8 +209,8 @@ type rfq_quote = {
   user : P.Address.t;
   proxy : P.Address.t;
   market : P.Hash64.t;
-  token : P.Token_id.t;
-  complement : P.Token_id.t;
+  token : P.U256.t;
+  complement : P.U256.t;
   side : Side.t;
   size_in : P.Decimal.t;
   size_out : P.Decimal.t;
@@ -247,7 +247,7 @@ type accept_quote_body = {
   quote_id : P.Quote_id.t;
   maker_amount : string;
   taker_amount : string;
-  token_id : P.Token_id.t;
+  token_id : P.U256.t;
   maker : P.Address.t;
   signer : P.Address.t;
   taker : P.Address.t;

@@ -40,7 +40,7 @@ val calculate_amounts :
 
 val create_limit_order :
   private_key:Common.Crypto.private_key ->
-  token_id:Types.P.Token_id.t ->
+  token_id:Types.P.U256.t ->
   side:Types.Side.t ->
   price:float ->
   size:float ->

@@ -339,7 +339,7 @@ module Rate_limit_presets = Common.Rate_limit_presets
     - {!Primitives.Address}: Ethereum addresses (0x-prefixed, 40 hex chars)
     - {!Primitives.Hash64}: 64-character hex hashes
     - {!Primitives.Hash}: Variable-length hex strings
-    - {!Primitives.Token_id}: ERC1155 token IDs
+    - {!Primitives.U256}: 256-bit unsigned integers (token IDs, amounts)
     - {!Primitives.Signature}: Cryptographic signatures
     - {!Primitives.Timestamp}: ISO 8601 timestamps *)
 
