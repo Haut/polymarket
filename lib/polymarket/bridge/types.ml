@@ -23,7 +23,7 @@ type supported_asset = {
   chain_id : string option; [@default None] [@key "chainId"]
   chain_name : string option; [@default None] [@key "chainName"]
   token : token option; [@default None]
-  min_checkout_usd : float option; [@default None] [@key "minCheckoutUsd"]
+  min_checkout_usd : P.Decimal.t option; [@default None] [@key "minCheckoutUsd"]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Supported asset with chain and minimum deposit information *)

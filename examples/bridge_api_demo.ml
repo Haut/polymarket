@@ -71,7 +71,7 @@ let run_demo env =
           let chain_id = Option.value ~default:"?" asset.chain_id in
           let min_usd =
             match asset.min_checkout_usd with
-            | Some v -> Printf.sprintf "$%.2f" v
+            | Some v -> Printf.sprintf "$%.2f" (Primitives.Decimal.to_float v)
             | None -> "N/A"
           in
           let token_symbol =

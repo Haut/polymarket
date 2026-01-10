@@ -4,6 +4,7 @@
     (https://gamma-api.polymarket.com). *)
 
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
+module P = Common.Primitives
 
 (** {1 Enum Modules} *)
 
@@ -48,9 +49,9 @@ type image_optimization = {
   image_url_source : string option; [@default None] [@key "imageUrlSource"]
   image_url_optimized : string option;
       [@default None] [@key "imageUrlOptimized"]
-  image_size_kb_source : float option;
+  image_size_kb_source : P.Decimal.t option;
       [@default None] [@key "imageSizeKbSource"]
-  image_size_kb_optimized : float option;
+  image_size_kb_optimized : P.Decimal.t option;
       [@default None] [@key "imageSizeKbOptimized"]
   image_optimized_complete : bool option;
       [@default None] [@key "imageOptimizedComplete"]
@@ -73,10 +74,8 @@ type team = {
   logo : string option; [@default None]
   abbreviation : string option; [@default None]
   alias : string option; [@default None]
-  created_at : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "createdAt"]
-  updated_at : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "updatedAt"]
+  created_at : P.Timestamp.t option; [@default None] [@key "createdAt"]
+  updated_at : P.Timestamp.t option; [@default None] [@key "updatedAt"]
   provider_id : int option; [@default None] [@key "providerId"]
   color : string option; [@default None]
 }
@@ -91,10 +90,8 @@ type tag = {
   published_at : string option; [@default None] [@key "publishedAt"]
   created_by : int option; [@default None] [@key "createdBy"]
   updated_by : int option; [@default None] [@key "updatedBy"]
-  created_at : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "createdAt"]
-  updated_at : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "updatedAt"]
+  created_at : P.Timestamp.t option; [@default None] [@key "createdAt"]
+  updated_at : P.Timestamp.t option; [@default None] [@key "updatedAt"]
   force_hide : bool option; [@default None] [@key "forceHide"]
   is_carousel : bool option; [@default None] [@key "isCarousel"]
   requires_translation : bool option;
@@ -144,10 +141,8 @@ type chat = {
   channel_name : string option; [@default None] [@key "channelName"]
   channel_image : string option; [@default None] [@key "channelImage"]
   live : bool option; [@default None]
-  start_time : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "startTime"]
-  end_time : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "endTime"]
+  start_time : P.Timestamp.t option; [@default None] [@key "startTime"]
+  end_time : P.Timestamp.t option; [@default None] [@key "endTime"]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Chat channel *)
@@ -225,10 +220,8 @@ type comment = {
   parent_comment_id : string option; [@default None] [@key "parentCommentID"]
   user_address : string option; [@default None] [@key "userAddress"]
   reply_address : string option; [@default None] [@key "replyAddress"]
-  created_at : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "createdAt"]
-  updated_at : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "updatedAt"]
+  created_at : P.Timestamp.t option; [@default None] [@key "createdAt"]
+  updated_at : P.Timestamp.t option; [@default None] [@key "updatedAt"]
   profile : comment_profile option; [@default None]
   reactions : reaction list; [@default []]
   report_count : int option; [@default None] [@key "reportCount"]
@@ -248,8 +241,7 @@ type public_profile_user = {
 (** Public profile user *)
 
 type public_profile_response = {
-  created_at : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "createdAt"]
+  created_at : P.Timestamp.t option; [@default None] [@key "createdAt"]
   proxy_wallet : string option; [@default None] [@key "proxyWallet"]
   profile_image : string option; [@default None] [@key "profileImage"]
   display_username_public : bool option;
@@ -271,10 +263,8 @@ type profile = {
   referral : string option; [@default None]
   created_by : int option; [@default None] [@key "createdBy"]
   updated_by : int option; [@default None] [@key "updatedBy"]
-  created_at : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "createdAt"]
-  updated_at : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "updatedAt"]
+  created_at : P.Timestamp.t option; [@default None] [@key "createdAt"]
+  updated_at : P.Timestamp.t option; [@default None] [@key "updatedAt"]
   utm_source : string option; [@default None] [@key "utmSource"]
   utm_medium : string option; [@default None] [@key "utmMedium"]
   utm_campaign : string option; [@default None] [@key "utmCampaign"]
@@ -339,8 +329,9 @@ type clob_reward = {
   id : string option; [@default None]
   condition_id : string option; [@default None] [@key "conditionId"]
   asset_address : string option; [@default None] [@key "assetAddress"]
-  rewards_amount : float option; [@default None] [@key "rewardsAmount"]
-  rewards_daily_rate : float option; [@default None] [@key "rewardsDailyRate"]
+  rewards_amount : P.Decimal.t option; [@default None] [@key "rewardsAmount"]
+  rewards_daily_rate : P.Decimal.t option;
+      [@default None] [@key "rewardsDailyRate"]
   start_date : string option; [@default None] [@key "startDate"]
   end_date : string option; [@default None] [@key "endDate"]
 }
@@ -358,15 +349,13 @@ type market = {
   slug : string option; [@default None]
   twitter_card_image : string option; [@default None] [@key "twitterCardImage"]
   resolution_source : string option; [@default None] [@key "resolutionSource"]
-  end_date : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "endDate"]
+  end_date : P.Timestamp.t option; [@default None] [@key "endDate"]
   category : string option; [@default None]
   amm_type : string option; [@default None] [@key "ammType"]
   liquidity : string option; [@default None]
   sponsor_name : string option; [@default None] [@key "sponsorName"]
   sponsor_image : string option; [@default None] [@key "sponsorImage"]
-  start_date : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "startDate"]
+  start_date : P.Timestamp.t option; [@default None] [@key "startDate"]
   x_axis_value : string option; [@default None] [@key "xAxisValue"]
   y_axis_value : string option; [@default None] [@key "yAxisValue"]
   denomination_token : string option; [@default None] [@key "denominationToken"]
@@ -389,10 +378,8 @@ type market = {
       [@default None] [@key "marketMakerAddress"]
   created_by : int option; [@default None] [@key "createdBy"]
   updated_by : int option; [@default None] [@key "updatedBy"]
-  created_at : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "createdAt"]
-  updated_at : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "updatedAt"]
+  created_at : P.Timestamp.t option; [@default None] [@key "createdAt"]
+  updated_at : P.Timestamp.t option; [@default None] [@key "updatedAt"]
   closed_time : string option; [@default None] [@key "closedTime"]
   wide_format : bool option; [@default None] [@key "wideFormat"]
   is_new : bool option; [@default None] [@key "new"]
@@ -411,24 +398,24 @@ type market = {
   question_id : string option; [@default None] [@key "questionID"]
   uma_end_date : string option; [@default None] [@key "umaEndDate"]
   enable_order_book : bool option; [@default None] [@key "enableOrderBook"]
-  order_price_min_tick_size : float option;
+  order_price_min_tick_size : P.Decimal.t option;
       [@default None] [@key "orderPriceMinTickSize"]
-  order_min_size : float option; [@default None] [@key "orderMinSize"]
+  order_min_size : P.Decimal.t option; [@default None] [@key "orderMinSize"]
   uma_resolution_status : string option;
       [@default None] [@key "umaResolutionStatus"]
   curation_order : int option; [@default None] [@key "curationOrder"]
-  volume_num : float option; [@default None] [@key "volumeNum"]
-  liquidity_num : float option; [@default None] [@key "liquidityNum"]
+  volume_num : P.Decimal.t option; [@default None] [@key "volumeNum"]
+  liquidity_num : P.Decimal.t option; [@default None] [@key "liquidityNum"]
   end_date_iso : string option; [@default None] [@key "endDateIso"]
   start_date_iso : string option; [@default None] [@key "startDateIso"]
   uma_end_date_iso : string option; [@default None] [@key "umaEndDateIso"]
   has_reviewed_dates : bool option; [@default None] [@key "hasReviewedDates"]
   ready_for_cron : bool option; [@default None] [@key "readyForCron"]
   comments_enabled : bool option; [@default None] [@key "commentsEnabled"]
-  volume_24hr : float option; [@default None] [@key "volume24hr"]
-  volume_1wk : float option; [@default None] [@key "volume1wk"]
-  volume_1mo : float option; [@default None] [@key "volume1mo"]
-  volume_1yr : float option; [@default None] [@key "volume1yr"]
+  volume_24hr : P.Decimal.t option; [@default None] [@key "volume24hr"]
+  volume_1wk : P.Decimal.t option; [@default None] [@key "volume1wk"]
+  volume_1mo : P.Decimal.t option; [@default None] [@key "volume1mo"]
+  volume_1yr : P.Decimal.t option; [@default None] [@key "volume1yr"]
   game_start_time : string option; [@default None] [@key "gameStartTime"]
   seconds_delay : int option; [@default None] [@key "secondsDelay"]
   clob_token_ids : string option; [@default None] [@key "clobTokenIds"]
@@ -439,18 +426,18 @@ type market = {
   uma_bond : string option; [@default None] [@key "umaBond"]
   uma_reward : string option; [@default None] [@key "umaReward"]
   fpmm_live : bool option; [@default None] [@key "fpmmLive"]
-  volume_24hr_amm : float option; [@default None] [@key "volume24hrAmm"]
-  volume_1wk_amm : float option; [@default None] [@key "volume1wkAmm"]
-  volume_1mo_amm : float option; [@default None] [@key "volume1moAmm"]
-  volume_1yr_amm : float option; [@default None] [@key "volume1yrAmm"]
-  volume_24hr_clob : float option; [@default None] [@key "volume24hrClob"]
-  volume_1wk_clob : float option; [@default None] [@key "volume1wkClob"]
-  volume_1mo_clob : float option; [@default None] [@key "volume1moClob"]
-  volume_1yr_clob : float option; [@default None] [@key "volume1yrClob"]
-  volume_amm : float option; [@default None] [@key "volumeAmm"]
-  volume_clob : float option; [@default None] [@key "volumeClob"]
-  liquidity_amm : float option; [@default None] [@key "liquidityAmm"]
-  liquidity_clob : float option; [@default None] [@key "liquidityClob"]
+  volume_24hr_amm : P.Decimal.t option; [@default None] [@key "volume24hrAmm"]
+  volume_1wk_amm : P.Decimal.t option; [@default None] [@key "volume1wkAmm"]
+  volume_1mo_amm : P.Decimal.t option; [@default None] [@key "volume1moAmm"]
+  volume_1yr_amm : P.Decimal.t option; [@default None] [@key "volume1yrAmm"]
+  volume_24hr_clob : P.Decimal.t option; [@default None] [@key "volume24hrClob"]
+  volume_1wk_clob : P.Decimal.t option; [@default None] [@key "volume1wkClob"]
+  volume_1mo_clob : P.Decimal.t option; [@default None] [@key "volume1moClob"]
+  volume_1yr_clob : P.Decimal.t option; [@default None] [@key "volume1yrClob"]
+  volume_amm : P.Decimal.t option; [@default None] [@key "volumeAmm"]
+  volume_clob : P.Decimal.t option; [@default None] [@key "volumeClob"]
+  liquidity_amm : P.Decimal.t option; [@default None] [@key "liquidityAmm"]
+  liquidity_clob : P.Decimal.t option; [@default None] [@key "liquidityClob"]
   maker_base_fee : int option; [@default None] [@key "makerBaseFee"]
   taker_base_fee : int option; [@default None] [@key "takerBaseFee"]
   custom_liveness : int option; [@default None] [@key "customLiveness"]
@@ -469,31 +456,32 @@ type market = {
   ready : bool option; [@default None]
   funded : bool option; [@default None]
   past_slugs : string option; [@default None] [@key "pastSlugs"]
-  ready_timestamp : Common.Primitives.Timestamp.t option;
+  ready_timestamp : P.Timestamp.t option;
       [@default None] [@key "readyTimestamp"]
-  funded_timestamp : Common.Primitives.Timestamp.t option;
+  funded_timestamp : P.Timestamp.t option;
       [@default None] [@key "fundedTimestamp"]
-  accepting_orders_timestamp : Common.Primitives.Timestamp.t option;
+  accepting_orders_timestamp : P.Timestamp.t option;
       [@default None] [@key "acceptingOrdersTimestamp"]
-  competitive : float option; [@default None]
-  rewards_min_size : float option; [@default None] [@key "rewardsMinSize"]
-  rewards_max_spread : float option; [@default None] [@key "rewardsMaxSpread"]
-  spread : float option; [@default None]
+  competitive : P.Decimal.t option; [@default None]
+  rewards_min_size : P.Decimal.t option; [@default None] [@key "rewardsMinSize"]
+  rewards_max_spread : P.Decimal.t option;
+      [@default None] [@key "rewardsMaxSpread"]
+  spread : P.Decimal.t option; [@default None]
   automatically_resolved : bool option;
       [@default None] [@key "automaticallyResolved"]
-  one_day_price_change : float option;
+  one_day_price_change : P.Decimal.t option;
       [@default None] [@key "oneDayPriceChange"]
-  one_hour_price_change : float option;
+  one_hour_price_change : P.Decimal.t option;
       [@default None] [@key "oneHourPriceChange"]
-  one_week_price_change : float option;
+  one_week_price_change : P.Decimal.t option;
       [@default None] [@key "oneWeekPriceChange"]
-  one_month_price_change : float option;
+  one_month_price_change : P.Decimal.t option;
       [@default None] [@key "oneMonthPriceChange"]
-  one_year_price_change : float option;
+  one_year_price_change : P.Decimal.t option;
       [@default None] [@key "oneYearPriceChange"]
-  last_trade_price : float option; [@default None] [@key "lastTradePrice"]
-  best_bid : float option; [@default None] [@key "bestBid"]
-  best_ask : float option; [@default None] [@key "bestAsk"]
+  last_trade_price : P.Decimal.t option; [@default None] [@key "lastTradePrice"]
+  best_bid : P.Decimal.t option; [@default None] [@key "bestBid"]
+  best_ask : P.Decimal.t option; [@default None] [@key "bestAsk"]
   automatically_active : bool option;
       [@default None] [@key "automaticallyActive"]
   clear_book_on_start : bool option; [@default None] [@key "clearBookOnStart"]
@@ -506,17 +494,17 @@ type market = {
   game_id : string option; [@default None] [@key "gameId"]
   group_item_range : string option; [@default None] [@key "groupItemRange"]
   sports_market_type : string option; [@default None] [@key "sportsMarketType"]
-  line : float option; [@default None]
+  line : P.Decimal.t option; [@default None]
   uma_resolution_statuses : string option;
       [@default None] [@key "umaResolutionStatuses"]
   pending_deployment : bool option; [@default None] [@key "pendingDeployment"]
   deploying : bool option; [@default None]
-  deploying_timestamp : Common.Primitives.Timestamp.t option;
+  deploying_timestamp : P.Timestamp.t option;
       [@default None] [@key "deployingTimestamp"]
-  scheduled_deployment_timestamp : Common.Primitives.Timestamp.t option;
+  scheduled_deployment_timestamp : P.Timestamp.t option;
       [@default None] [@key "scheduledDeploymentTimestamp"]
   rfq_enabled : bool option; [@default None] [@key "rfqEnabled"]
-  event_start_time : Common.Primitives.Timestamp.t option;
+  event_start_time : P.Timestamp.t option;
       [@default None] [@key "eventStartTime"]
   cyom : bool option; [@default None]
   pager_duty_notification_enabled : bool option;
@@ -543,12 +531,9 @@ and event = {
   subtitle : string option; [@default None]
   description : string option; [@default None]
   resolution_source : string option; [@default None] [@key "resolutionSource"]
-  start_date : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "startDate"]
-  creation_date : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "creationDate"]
-  end_date : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "endDate"]
+  start_date : P.Timestamp.t option; [@default None] [@key "startDate"]
+  creation_date : P.Timestamp.t option; [@default None] [@key "creationDate"]
+  end_date : P.Timestamp.t option; [@default None] [@key "endDate"]
   image : string option; [@default None]
   icon : string option; [@default None]
   active : bool option; [@default None]
@@ -557,9 +542,9 @@ and event = {
   is_new : bool option; [@default None] [@key "new"]
   featured : bool option; [@default None]
   restricted : bool option; [@default None]
-  liquidity : float option; [@default None]
-  volume : float option; [@default None]
-  open_interest : float option; [@default None] [@key "openInterest"]
+  liquidity : P.Decimal.t option; [@default None]
+  volume : P.Decimal.t option; [@default None]
+  open_interest : P.Decimal.t option; [@default None] [@key "openInterest"]
   sort_by : string option; [@default None] [@key "sortBy"]
   category : string option; [@default None]
   subcategory : string option; [@default None]
@@ -568,22 +553,20 @@ and event = {
   published_at : string option; [@default None] [@key "published_at"]
   created_by : string option; [@default None] [@key "createdBy"]
   updated_by : string option; [@default None] [@key "updatedBy"]
-  created_at : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "createdAt"]
-  updated_at : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "updatedAt"]
+  created_at : P.Timestamp.t option; [@default None] [@key "createdAt"]
+  updated_at : P.Timestamp.t option; [@default None] [@key "updatedAt"]
   comments_enabled : bool option; [@default None] [@key "commentsEnabled"]
-  competitive : float option; [@default None]
-  volume_24hr : float option; [@default None] [@key "volume24hr"]
-  volume_1wk : float option; [@default None] [@key "volume1wk"]
-  volume_1mo : float option; [@default None] [@key "volume1mo"]
-  volume_1yr : float option; [@default None] [@key "volume1yr"]
+  competitive : P.Decimal.t option; [@default None]
+  volume_24hr : P.Decimal.t option; [@default None] [@key "volume24hr"]
+  volume_1wk : P.Decimal.t option; [@default None] [@key "volume1wk"]
+  volume_1mo : P.Decimal.t option; [@default None] [@key "volume1mo"]
+  volume_1yr : P.Decimal.t option; [@default None] [@key "volume1yr"]
   featured_image : string option; [@default None] [@key "featuredImage"]
   disqus_thread : string option; [@default None] [@key "disqusThread"]
   parent_event : string option; [@default None] [@key "parentEvent"]
   enable_order_book : bool option; [@default None] [@key "enableOrderBook"]
-  liquidity_amm : float option; [@default None] [@key "liquidityAmm"]
-  liquidity_clob : float option; [@default None] [@key "liquidityClob"]
+  liquidity_amm : P.Decimal.t option; [@default None] [@key "liquidityAmm"]
+  liquidity_clob : P.Decimal.t option; [@default None] [@key "liquidityClob"]
   neg_risk : bool option; [@default None] [@key "negRisk"]
   neg_risk_market_id : string option; [@default None] [@key "negRiskMarketID"]
   neg_risk_fee_bips : int option; [@default None] [@key "negRiskFeeBips"]
@@ -601,8 +584,7 @@ and event = {
   collections : collection list; [@default []]
   tags : tag list; [@default []]
   cyom : bool option; [@default None]
-  closed_time : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "closedTime"]
+  closed_time : P.Timestamp.t option; [@default None] [@key "closedTime"]
   show_all_outcomes : bool option; [@default None] [@key "showAllOutcomes"]
   show_market_images : bool option; [@default None] [@key "showMarketImages"]
   automatically_resolved : bool option;
@@ -611,8 +593,7 @@ and event = {
   automatically_active : bool option;
       [@default None] [@key "automaticallyActive"]
   event_date : string option; [@default None] [@key "eventDate"]
-  start_time : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "startTime"]
+  start_time : P.Timestamp.t option; [@default None] [@key "startTime"]
   event_week : int option; [@default None] [@key "eventWeek"]
   series_slug : string option; [@default None] [@key "seriesSlug"]
   score : string option; [@default None]
@@ -620,7 +601,7 @@ and event = {
   period : string option; [@default None]
   live : bool option; [@default None]
   ended : bool option; [@default None]
-  finished_timestamp : Common.Primitives.Timestamp.t option;
+  finished_timestamp : P.Timestamp.t option;
       [@default None] [@key "finishedTimestamp"]
   gmp_chart_mode : string option; [@default None] [@key "gmpChartMode"]
   event_creators : event_creator list; [@default []] [@key "eventCreators"]
@@ -631,14 +612,15 @@ and event = {
   cant_estimate : bool option; [@default None] [@key "cantEstimate"]
   estimated_value : string option; [@default None] [@key "estimatedValue"]
   templates : template list; [@default []]
-  spreads_main_line : float option; [@default None] [@key "spreadsMainLine"]
-  totals_main_line : float option; [@default None] [@key "totalsMainLine"]
+  spreads_main_line : P.Decimal.t option;
+      [@default None] [@key "spreadsMainLine"]
+  totals_main_line : P.Decimal.t option; [@default None] [@key "totalsMainLine"]
   carousel_map : string option; [@default None] [@key "carouselMap"]
   pending_deployment : bool option; [@default None] [@key "pendingDeployment"]
   deploying : bool option; [@default None] [@key "deploying"]
-  deploying_timestamp : Common.Primitives.Timestamp.t option;
+  deploying_timestamp : P.Timestamp.t option;
       [@default None] [@key "deployingTimestamp"]
-  scheduled_deployment_timestamp : Common.Primitives.Timestamp.t option;
+  scheduled_deployment_timestamp : P.Timestamp.t option;
       [@default None] [@key "scheduledDeploymentTimestamp"]
   game_status : string option; [@default None] [@key "gameStatus"]
   neg_risk_augmented : bool option; [@default None] [@key "negRiskAugmented"]
@@ -673,17 +655,14 @@ and series = {
   published_at : string option; [@default None] [@key "publishedAt"]
   created_by : string option; [@default None] [@key "createdBy"]
   updated_by : string option; [@default None] [@key "updatedBy"]
-  created_at : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "createdAt"]
-  updated_at : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "updatedAt"]
+  created_at : P.Timestamp.t option; [@default None] [@key "createdAt"]
+  updated_at : P.Timestamp.t option; [@default None] [@key "updatedAt"]
   comments_enabled : bool option; [@default None] [@key "commentsEnabled"]
   competitive : string option; [@default None]
-  volume_24hr : float option; [@default None] [@key "volume24hr"]
-  volume : float option; [@default None]
-  liquidity : float option; [@default None]
-  start_date : Common.Primitives.Timestamp.t option;
-      [@default None] [@key "startDate"]
+  volume_24hr : P.Decimal.t option; [@default None] [@key "volume24hr"]
+  volume : P.Decimal.t option; [@default None]
+  liquidity : P.Decimal.t option; [@default None]
+  start_date : P.Timestamp.t option; [@default None] [@key "startDate"]
   pyth_token_id : string option; [@default None] [@key "pythTokenID"]
   cg_asset_name : string option; [@default None] [@key "cgAssetName"]
   score : int option; [@default None]

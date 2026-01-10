@@ -58,7 +58,7 @@ let test_supported_asset_json_roundtrip () =
       chain_id = Some "1";
       chain_name = Some "Ethereum";
       token = Some token;
-      min_checkout_usd = Some 45.0;
+      min_checkout_usd = Some (P.Decimal.of_string "45.0");
     }
   in
   let json = yojson_of_supported_asset asset in
@@ -80,8 +80,21 @@ let test_supported_asset_json_keys () =
   Alcotest.(check (option string)) "chain_id" (Some "137") asset.chain_id;
   Alcotest.(check (option string))
     "chain_name" (Some "Polygon") asset.chain_name;
-  Alcotest.(check (option (float 0.001)))
-    "min_checkout_usd" (Some 10.0) asset.min_checkout_usd
+  let check_decimal_option =
+    Alcotest.testable
+      (fun fmt -> function
+        | Some d -> Format.fprintf fmt "Some %s" (P.Decimal.to_string d)
+        | None -> Format.fprintf fmt "None")
+      (fun a b ->
+        match (a, b) with
+        | Some x, Some y -> P.Decimal.equal x y
+        | None, None -> true
+        | _ -> false)
+  in
+  Alcotest.(check check_decimal_option)
+    "min_checkout_usd"
+    (Some (P.Decimal.of_string "10.0"))
+    asset.min_checkout_usd
 
 (** {1 Deposit Addresses JSON Tests} *)
 
@@ -192,7 +205,7 @@ let test_supported_assets_response_json () =
       chain_id = Some "1";
       chain_name = Some "Ethereum";
       token = Some token;
-      min_checkout_usd = Some 45.0;
+      min_checkout_usd = Some (P.Decimal.of_string "45.0");
     }
   in
   let resp = { supported_assets = [ asset ]; note = Some "Test note" } in
