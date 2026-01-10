@@ -29,7 +29,7 @@ let get_positions t ~user ?market ?event_id ?size_threshold ?redeemable
   |> B.query_param "user" (P.Address.to_string user)
   |> B.query_list "market" P.Hash64.to_string market
   |> B.query_list "eventId" string_of_int event_id
-  |> B.query_option "sizeThreshold" string_of_float size_threshold
+  |> B.query_option "sizeThreshold" P.Decimal.to_string size_threshold
   |> B.query_bool "redeemable" redeemable
   |> B.query_bool "mergeable" mergeable
   |> B.query_option "limit" string_of_int limit
@@ -49,7 +49,7 @@ let get_trades t ?user ?market ?event_id ?side ?filter_type ?filter_amount
   |> B.query_option "offset" string_of_int offset
   |> B.query_bool "takerOnly" taker_only
   |> B.query_option "filterType" Filter_type.to_string filter_type
-  |> B.query_option "filterAmount" string_of_float filter_amount
+  |> B.query_option "filterAmount" P.Decimal.to_string filter_amount
   |> B.query_list "market" P.Hash64.to_string market
   |> B.query_list "eventId" string_of_int event_id
   |> B.query_option "user" P.Address.to_string user

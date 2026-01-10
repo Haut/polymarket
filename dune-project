@@ -42,6 +42,7 @@
   (fmt (>= 0.9))
   (ptime (>= 1.0))
   (mirage-crypto-rng (>= 1.0))
-  (alcotest (and (>= 1.7) :with-test)))
+  (alcotest (and (>= 1.7) :with-test))
+  (zarith (>= 1.13)))
  (tags
   (polymarket prediction-market blockchain polygon api-client trading)))

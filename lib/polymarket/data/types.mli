@@ -122,16 +122,16 @@ type position = {
   proxy_wallet : Common.Primitives.Address.t;
   asset : string;
   condition_id : Common.Primitives.Hash64.t;
-  size : float;
-  avg_price : float;
-  initial_value : float;
-  current_value : float;
-  cash_pnl : float;
-  percent_pnl : float;
-  total_bought : float;
-  realized_pnl : float;
-  percent_realized_pnl : float;
-  cur_price : float;
+  size : Common.Primitives.Decimal.t;
+  avg_price : Common.Primitives.Decimal.t;
+  initial_value : Common.Primitives.Decimal.t;
+  current_value : Common.Primitives.Decimal.t;
+  cash_pnl : Common.Primitives.Decimal.t;
+  percent_pnl : Common.Primitives.Decimal.t;
+  total_bought : Common.Primitives.Decimal.t;
+  realized_pnl : Common.Primitives.Decimal.t;
+  percent_realized_pnl : Common.Primitives.Decimal.t;
+  cur_price : Common.Primitives.Decimal.t;
   redeemable : bool;
   mergeable : bool;
   title : string;
@@ -153,10 +153,10 @@ type closed_position = {
   proxy_wallet : Common.Primitives.Address.t;
   asset : string;
   condition_id : Common.Primitives.Hash64.t;
-  avg_price : float;
-  total_bought : float;
-  realized_pnl : float;
-  cur_price : float;
+  avg_price : Common.Primitives.Decimal.t;
+  total_bought : Common.Primitives.Decimal.t;
+  realized_pnl : Common.Primitives.Decimal.t;
+  cur_price : Common.Primitives.Decimal.t;
   timestamp : int64;
   title : string;
   slug : string;
@@ -176,8 +176,8 @@ type trade = {
   side : Side.t;
   asset : string;
   condition_id : Common.Primitives.Hash64.t;
-  size : float;
-  price : float;
+  size : Common.Primitives.Decimal.t;
+  price : Common.Primitives.Decimal.t;
   timestamp : int64;
   title : string;
   slug : string;
@@ -200,10 +200,10 @@ type activity = {
   timestamp : int64;
   condition_id : Common.Primitives.Hash64.t;
   activity_type : Activity_type.t;
-  size : float;
-  usdc_size : float;
+  size : Common.Primitives.Decimal.t;
+  usdc_size : Common.Primitives.Decimal.t;
   transaction_hash : string;
-  price : float;
+  price : Common.Primitives.Decimal.t;
   asset : string;
   side : Side.t option;
       (** None when activity type has no side (e.g., rewards) *)
@@ -227,7 +227,7 @@ type holder = {
   bio : string;
   asset : string;
   pseudonym : string;
-  amount : float;
+  amount : Common.Primitives.Decimal.t;
   display_username_public : bool;
   outcome_index : int;
   name : string;
@@ -256,25 +256,31 @@ type revision_payload = {
 [@@deriving yojson, show, eq]
 (** Revision payload *)
 
-type value = { user : Common.Primitives.Address.t; value : float }
+type value = {
+  user : Common.Primitives.Address.t;
+  value : Common.Primitives.Decimal.t;
+}
 [@@deriving yojson, show, eq]
 (** Value record *)
 
 type open_interest = {
   market : string;  (** Can be "GLOBAL" or a condition ID hash *)
-  value : float;
+  value : Common.Primitives.Decimal.t;
 }
 [@@deriving yojson, show, eq]
 (** Open interest for a market *)
 
 type market_volume = {
   market : Common.Primitives.Hash64.t option;
-  value : float option;
+  value : Common.Primitives.Decimal.t option;
 }
 [@@deriving yojson, show, eq]
 (** Market volume *)
 
-type live_volume = { total : float option; markets : market_volume list }
+type live_volume = {
+  total : Common.Primitives.Decimal.t option;
+  markets : market_volume list;
+}
 [@@deriving yojson, show, eq]
 (** Live volume *)
 
@@ -283,7 +289,7 @@ type live_volume = { total : float option; markets : market_volume list }
 type leaderboard_entry = {
   rank : string;
   builder : string;
-  volume : float;
+  volume : Common.Primitives.Decimal.t;
   active_users : int;
   verified : bool;
   builder_logo : string;
@@ -296,7 +302,7 @@ type builder_volume_entry = {
   builder : string;
   builder_logo : string;
   verified : bool;
-  volume : float;
+  volume : Common.Primitives.Decimal.t;
   active_users : int;
   rank : string;
 }
@@ -307,8 +313,8 @@ type trader_leaderboard_entry = {
   rank : string;
   proxy_wallet : Common.Primitives.Address.t;
   user_name : string;
-  vol : float;
-  pnl : float;
+  vol : Common.Primitives.Decimal.t;
+  pnl : Common.Primitives.Decimal.t;
   profile_image : string;
   x_username : string;
   verified_badge : bool;

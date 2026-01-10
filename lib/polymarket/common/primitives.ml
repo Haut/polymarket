@@ -227,3 +227,60 @@ end
 module Sort_dir = struct
   type t = Asc | Desc [@@deriving enum]
 end
+
+(** {1 Decimal Module}
+
+    Arbitrary-precision decimal numbers using Zarith rationals. Used for
+    financial values where floating-point approximation is unacceptable. *)
+
+module Decimal = struct
+  type t = Q.t
+
+  let of_string s = Q.of_string s
+  let of_float f = Q.of_float f
+  let of_int i = Q.of_int i
+  let to_string t = Q.to_string t
+  let to_float t = Q.to_float t
+  let pp fmt t = Format.fprintf fmt "%s" (Q.to_string t)
+  let equal = Q.equal
+  let compare = Q.compare
+  let zero = Q.zero
+  let one = Q.one
+  let ( + ) = Q.add
+  let ( - ) = Q.sub
+  let ( * ) = Q.mul
+  let ( / ) = Q.div
+  let ( ~- ) = Q.neg
+  let abs = Q.abs
+  let neg = Q.neg
+  let min = Q.min
+  let max = Q.max
+  let ( = ) = Q.equal
+  let ( < ) = Q.lt
+  let ( > ) = Q.gt
+  let ( <= ) = Q.leq
+  let ( >= ) = Q.geq
+
+  let t_of_yojson json =
+    match json with
+    | `String s -> (
+        try Q.of_string s
+        with _ ->
+          raise
+            (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
+               (Failure ("Decimal: invalid string: " ^ s), json)))
+    | `Float f -> Q.of_float f
+    | `Int i -> Q.of_int i
+    | `Intlit s -> (
+        try Q.of_string s
+        with _ ->
+          raise
+            (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
+               (Failure ("Decimal: invalid intlit: " ^ s), json)))
+    | _ ->
+        raise
+          (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
+             (Failure "Decimal: expected string or number", json))
+
+  let yojson_of_t t = `String (Q.to_string t)
+end

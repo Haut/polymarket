@@ -378,3 +378,71 @@ module Sort_dir : sig
   val pp : Format.formatter -> t -> unit
   val equal : t -> t -> bool
 end
+
+(** {1 Decimal Module}
+
+    Arbitrary-precision decimal numbers using Zarith rationals. Used for
+    financial values (prices, sizes, PnL) where floating-point approximation is
+    unacceptable. *)
+module Decimal : sig
+  type t
+  (** Arbitrary-precision rational number *)
+
+  (** {2 Constructors} *)
+
+  val of_string : string -> t
+  (** Parse from string (e.g., "1.5", "3/4", "100") *)
+
+  val of_float : float -> t
+  (** Convert from float (note: introduces float's inherent imprecision) *)
+
+  val of_int : int -> t
+  (** Convert from int (exact) *)
+
+  (** {2 Conversions} *)
+
+  val to_string : t -> string
+  (** Convert to string representation *)
+
+  val to_float : t -> float
+  (** Convert to float (may lose precision) *)
+
+  (** {2 Constants} *)
+
+  val zero : t
+  val one : t
+
+  (** {2 Arithmetic} *)
+
+  val ( + ) : t -> t -> t
+  val ( - ) : t -> t -> t
+  val ( * ) : t -> t -> t
+  val ( / ) : t -> t -> t
+  val ( ~- ) : t -> t
+  val abs : t -> t
+  val neg : t -> t
+  val min : t -> t -> t
+  val max : t -> t -> t
+
+  (** {2 Comparisons} *)
+
+  val ( = ) : t -> t -> bool
+  val ( < ) : t -> t -> bool
+  val ( > ) : t -> t -> bool
+  val ( <= ) : t -> t -> bool
+  val ( >= ) : t -> t -> bool
+  val compare : t -> t -> int
+  val equal : t -> t -> bool
+
+  (** {2 Pretty-printing} *)
+
+  val pp : Format.formatter -> t -> unit
+
+  (** {2 JSON serialization} *)
+
+  val t_of_yojson : Yojson.Safe.t -> t
+  (** Parse from JSON string, float, or int *)
+
+  val yojson_of_t : t -> Yojson.Safe.t
+  (** Serialize to JSON string (preserves precision) *)
+end

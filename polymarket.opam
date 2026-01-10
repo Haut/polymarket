@@ -39,6 +39,7 @@ depends: [
   "ptime" {>= "1.0"}
   "mirage-crypto-rng" {>= "1.0"}
   "alcotest" {>= "1.7" & with-test}
+  "zarith" {>= "1.13"}
   "odoc" {with-doc}
 ]
 build: [

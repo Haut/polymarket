@@ -5,24 +5,25 @@
     (https://data-api.polymarket.com). *)
 
 open Ppx_yojson_conv_lib.Yojson_conv.Primitives
+module P = Common.Primitives
 
 (** Side option that treats empty string as None *)
 module Side_option = struct
-  type t = Common.Primitives.Side.t option [@@deriving show, eq]
+  type t = P.Side.t option [@@deriving show, eq]
 
   let t_of_yojson = function
     | `String "" -> None
-    | json -> Some (Common.Primitives.Side.t_of_yojson json)
+    | json -> Some (P.Side.t_of_yojson json)
 
   let yojson_of_t = function
     | None -> `String ""
-    | Some s -> Common.Primitives.Side.yojson_of_t s
+    | Some s -> P.Side.yojson_of_t s
 end
 
 (** {1 Query Parameter Enums} *)
 
-module Sort_direction = Common.Primitives.Sort_dir
-(** Re-export shared Sort_dir module from Common.Primitives *)
+module Sort_direction = P.Sort_dir
+(** Re-export shared Sort_dir module from P *)
 
 module Position_sort_by = struct
   type t =
@@ -76,8 +77,8 @@ end
 
 (** {1 Domain Enums} *)
 
-module Side = Common.Primitives.Side
-(** Re-export shared Side module from Common.Primitives *)
+module Side = P.Side
+(** Re-export shared Side module from P *)
 
 module Activity_type = struct
   type t = Trade | Split | Merge | Redeem | Reward | Conversion
@@ -99,19 +100,19 @@ let pp_error = Polymarket_http.Client.pp_error
 (** {1 Domain Models} *)
 
 type position = {
-  proxy_wallet : Common.Primitives.Address.t; [@key "proxyWallet"]
+  proxy_wallet : P.Address.t; [@key "proxyWallet"]
   asset : string;
-  condition_id : Common.Primitives.Hash64.t; [@key "conditionId"]
-  size : float;
-  avg_price : float; [@key "avgPrice"]
-  initial_value : float; [@key "initialValue"]
-  current_value : float; [@key "currentValue"]
-  cash_pnl : float; [@key "cashPnl"]
-  percent_pnl : float; [@key "percentPnl"]
-  total_bought : float; [@key "totalBought"]
-  realized_pnl : float; [@key "realizedPnl"]
-  percent_realized_pnl : float; [@key "percentRealizedPnl"]
-  cur_price : float; [@key "curPrice"]
+  condition_id : P.Hash64.t; [@key "conditionId"]
+  size : P.Decimal.t;
+  avg_price : P.Decimal.t; [@key "avgPrice"]
+  initial_value : P.Decimal.t; [@key "initialValue"]
+  current_value : P.Decimal.t; [@key "currentValue"]
+  cash_pnl : P.Decimal.t; [@key "cashPnl"]
+  percent_pnl : P.Decimal.t; [@key "percentPnl"]
+  total_bought : P.Decimal.t; [@key "totalBought"]
+  realized_pnl : P.Decimal.t; [@key "realizedPnl"]
+  percent_realized_pnl : P.Decimal.t; [@key "percentRealizedPnl"]
+  cur_price : P.Decimal.t; [@key "curPrice"]
   redeemable : bool;
   mergeable : bool;
   title : string;
@@ -130,13 +131,13 @@ type position = {
 (** Position in a market *)
 
 type closed_position = {
-  proxy_wallet : Common.Primitives.Address.t; [@key "proxyWallet"]
+  proxy_wallet : P.Address.t; [@key "proxyWallet"]
   asset : string;
-  condition_id : Common.Primitives.Hash64.t; [@key "conditionId"]
-  avg_price : float; [@key "avgPrice"]
-  total_bought : float; [@key "totalBought"]
-  realized_pnl : float; [@key "realizedPnl"]
-  cur_price : float; [@key "curPrice"]
+  condition_id : P.Hash64.t; [@key "conditionId"]
+  avg_price : P.Decimal.t; [@key "avgPrice"]
+  total_bought : P.Decimal.t; [@key "totalBought"]
+  realized_pnl : P.Decimal.t; [@key "realizedPnl"]
+  cur_price : P.Decimal.t; [@key "curPrice"]
   timestamp : int64;
   title : string;
   slug : string;
@@ -152,12 +153,12 @@ type closed_position = {
 (** Closed position in a market *)
 
 type trade = {
-  proxy_wallet : Common.Primitives.Address.t; [@key "proxyWallet"]
+  proxy_wallet : P.Address.t; [@key "proxyWallet"]
   side : Side.t;
   asset : string;
-  condition_id : Common.Primitives.Hash64.t; [@key "conditionId"]
-  size : float;
-  price : float;
+  condition_id : P.Hash64.t; [@key "conditionId"]
+  size : P.Decimal.t;
+  price : P.Decimal.t;
   timestamp : int64;
   title : string;
   slug : string;
@@ -176,14 +177,14 @@ type trade = {
 (** Trade record *)
 
 type activity = {
-  proxy_wallet : Common.Primitives.Address.t; [@key "proxyWallet"]
+  proxy_wallet : P.Address.t; [@key "proxyWallet"]
   timestamp : int64;
-  condition_id : Common.Primitives.Hash64.t; [@key "conditionId"]
+  condition_id : P.Hash64.t; [@key "conditionId"]
   activity_type : Activity_type.t; [@key "type"]
-  size : float;
-  usdc_size : float; [@key "usdcSize"]
+  size : P.Decimal.t;
+  usdc_size : P.Decimal.t; [@key "usdcSize"]
   transaction_hash : string; [@key "transactionHash"]
-  price : float;
+  price : P.Decimal.t;
   asset : string;
   side : Side_option.t;
   outcome_index : int; [@key "outcomeIndex"]
@@ -202,11 +203,11 @@ type activity = {
 (** Activity record *)
 
 type holder = {
-  proxy_wallet : Common.Primitives.Address.t; [@key "proxyWallet"]
+  proxy_wallet : P.Address.t; [@key "proxyWallet"]
   bio : string;
   asset : string;
   pseudonym : string;
-  amount : float;
+  amount : P.Decimal.t;
   display_username_public : bool; [@key "displayUsernamePublic"]
   outcome_index : int; [@key "outcomeIndex"]
   name : string;
@@ -220,7 +221,7 @@ type meta_holder = { token : string; holders : holder list }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Meta holder with token and list of holders *)
 
-type traded = { user : Common.Primitives.Address.t; traded : int }
+type traded = { user : P.Address.t; traded : int }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Traded record *)
 
@@ -229,32 +230,32 @@ type revision_entry = { revision : string; timestamp : int }
 (** Revision entry *)
 
 type revision_payload = {
-  question_id : Common.Primitives.Hash64.t; [@key "questionID"]
+  question_id : P.Hash64.t; [@key "questionID"]
   revisions : revision_entry list;
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Revision payload *)
 
-type value = { user : Common.Primitives.Address.t; value : float }
+type value = { user : P.Address.t; value : P.Decimal.t }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Value record *)
 
 type open_interest = {
   market : string;  (** Can be "GLOBAL" or a condition ID hash *)
-  value : float;
+  value : P.Decimal.t;
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Open interest for a market *)
 
 type market_volume = {
-  market : Common.Primitives.Hash64.t option; [@yojson.option]
-  value : float option; [@yojson.option]
+  market : P.Hash64.t option; [@yojson.option]
+  value : P.Decimal.t option; [@yojson.option]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Market volume *)
 
 type live_volume = {
-  total : float option; [@yojson.option]
+  total : P.Decimal.t option; [@yojson.option]
   markets : market_volume list; [@default []]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
@@ -266,8 +267,9 @@ let live_volume_of_yojson json =
   | `Assoc fields ->
       let total =
         match List.assoc_opt "total" fields with
-        | Some (`Float f) -> Some f
-        | Some (`Int i) -> Some (float_of_int i)
+        | Some (`Float f) -> Some (P.Decimal.of_float f)
+        | Some (`Int i) -> Some (P.Decimal.of_int i)
+        | Some (`String s) -> Some (P.Decimal.of_string s)
         | Some `Null | None -> None
         | _ -> None
       in
@@ -288,7 +290,7 @@ let live_volume_of_yojson json =
 type leaderboard_entry = {
   rank : string;
   builder : string;
-  volume : float;
+  volume : P.Decimal.t;
   active_users : int; [@key "activeUsers"]
   verified : bool;
   builder_logo : string; [@key "builderLogo"]
@@ -297,11 +299,11 @@ type leaderboard_entry = {
 (** Leaderboard entry for builders *)
 
 type builder_volume_entry = {
-  dt : Common.Primitives.Timestamp.t;
+  dt : P.Timestamp.t;
   builder : string;
   builder_logo : string; [@key "builderLogo"]
   verified : bool;
-  volume : float;
+  volume : P.Decimal.t;
   active_users : int; [@key "activeUsers"]
   rank : string;
 }
@@ -310,10 +312,10 @@ type builder_volume_entry = {
 
 type trader_leaderboard_entry = {
   rank : string;
-  proxy_wallet : Common.Primitives.Address.t; [@key "proxyWallet"]
+  proxy_wallet : P.Address.t; [@key "proxyWallet"]
   user_name : string; [@key "userName"]
-  vol : float;
-  pnl : float;
+  vol : P.Decimal.t;
+  pnl : P.Decimal.t;
   profile_image : string; [@key "profileImage"]
   x_username : string; [@key "xUsername"]
   verified_badge : bool; [@key "verifiedBadge"]

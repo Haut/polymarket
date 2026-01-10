@@ -30,6 +30,8 @@
   mirage-crypto-rng
   ; JSON
   yojson
-  ppx_yojson_conv_lib)
+  ppx_yojson_conv_lib
+  ; Arbitrary precision
+  zarith)
  (preprocess
   (pps ppx_yojson_conv ppx_deriving.show ppx_deriving.eq ppx_polymarket_enum)))

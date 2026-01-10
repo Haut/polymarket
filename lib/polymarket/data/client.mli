@@ -43,7 +43,7 @@ val get_positions :
   user:Common.Primitives.Address.t ->
   ?market:Common.Primitives.Hash64.t list ->
   ?event_id:int list ->
-  ?size_threshold:float ->
+  ?size_threshold:Common.Primitives.Decimal.t ->
   ?redeemable:bool ->
   ?mergeable:bool ->
   ?limit:int ->
@@ -98,7 +98,7 @@ val get_trades :
   ?event_id:int list ->
   ?side:Side.t ->
   ?filter_type:Filter_type.t ->
-  ?filter_amount:float ->
+  ?filter_amount:Common.Primitives.Decimal.t ->
   ?taker_only:bool ->
   ?limit:int ->
   ?offset:int ->
