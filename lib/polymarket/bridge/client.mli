@@ -97,3 +97,16 @@ val get_supported_assets : t -> unit -> (supported_asset list, error) result
 
     @return List of supported assets with chain information and minimum amounts
 *)
+
+(** {1 Status Endpoint} *)
+
+val get_status : t -> address:string -> unit -> (status_response, error) result
+(** Get the transaction status for all deposits associated with a given deposit
+    address.
+
+    The address parameter accepts any deposit address type (EVM, Solana, or
+    Bitcoin). Returns a list of all deposit transactions with their current
+    status.
+
+    @param address The deposit address to check status for (EVM, SVM, or BTC)
+    @return List of deposit transactions with chain IDs, amounts, and status *)

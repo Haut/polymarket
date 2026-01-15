@@ -34,3 +34,10 @@ let get_supported_assets t () =
   |> B.fetch_json ~expected_fields:yojson_fields_of_supported_assets_response
        ~context:"supported_assets_response" supported_assets_response_of_yojson
   |> Result.map (fun r -> r.supported_assets)
+
+(** {1 Status Endpoint} *)
+
+let get_status t ~address () =
+  B.new_get t (Printf.sprintf "/status/%s" address)
+  |> B.fetch_json ~expected_fields:yojson_fields_of_status_response
+       ~context:"status_response" status_response_of_yojson

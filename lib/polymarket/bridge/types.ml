@@ -55,6 +55,39 @@ type deposit_response = {
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Response from POST /deposit *)
 
+(** {1 Status Endpoint Types} *)
+
+(** Transaction status for bridge deposits *)
+module Deposit_transaction_status = struct
+  type t =
+    | Deposit_detected [@value "DEPOSIT_DETECTED"]
+    | Processing [@value "PROCESSING"]
+    | Origin_tx_confirmed [@value "ORIGIN_TX_CONFIRMED"]
+    | Submitted [@value "SUBMITTED"]
+    | Completed [@value "COMPLETED"]
+    | Failed [@value "FAILED"]
+  [@@deriving enum]
+end
+
+(** Individual deposit transaction with status *)
+type deposit_transaction = {
+  from_chain_id : int; [@key "fromChainId"]
+  from_token_address : string; [@key "fromTokenAddress"]
+  from_amount_base_unit : P.U256.t; [@key "fromAmountBaseUnit"]
+  to_chain_id : int; [@key "toChainId"]
+  to_token_address : P.Address.t; [@key "toTokenAddress"]
+  status : Deposit_transaction_status.t;
+  tx_hash : string option; [@default None] [@key "txHash"]
+  created_time_ms : int64 option; [@default None] [@key "createdTimeMs"]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** A single deposit transaction with chain IDs, amounts, and status *)
+
+(** Response from GET /status/:address *)
+type status_response = { transactions : deposit_transaction list }
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** List of all deposit transactions for the given address *)
+
 (** {1 Error Types} *)
 
 type error = Polymarket_http.Client.error
