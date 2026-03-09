@@ -2,8 +2,15 @@
 
     All RFQ endpoints require L2 authentication. *)
 
-module Auth = Common.Auth
-module Crypto = Common.Crypto
+type private_key = Common.Crypto.private_key
+(** Abstract type for a private key. *)
+
+type credentials = Common.Auth.credentials = {
+  api_key : string;
+  secret : string;
+  passphrase : string;
+}
+(** API credentials for L2 authentication. *)
 
 val default_base_url : string
 (** Default base URL for the RFQ API: https://clob.polymarket.com *)
@@ -19,8 +26,8 @@ val create :
   sw:Eio.Switch.t ->
   net:_ Eio.Net.t ->
   rate_limiter:Rate_limiter.t ->
-  private_key:Crypto.private_key ->
-  credentials:Auth.credentials ->
+  private_key:private_key ->
+  credentials:credentials ->
   unit ->
   (t, init_error) result
 (** Create a new RFQ client.
@@ -29,7 +36,7 @@ val create :
 val address : t -> string
 (** Get the Ethereum address derived from the private key. *)
 
-val credentials : t -> Auth.credentials
+val credentials : t -> credentials
 (** Get the API credentials. *)
 
 (** {1 Request Endpoints} *)

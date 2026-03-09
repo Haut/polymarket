@@ -6,23 +6,12 @@
 
 (** {1 Internal Helpers} *)
 
-(** Pad hex string to 64 chars (32 bytes) with leading zeros *)
-let pad_hex_32 hex =
-  let len = String.length hex in
-  if len >= 64 then hex else String.make (64 - len) '0' ^ hex
-
-(** Encode native int as 32-byte hex (only for small values like side,
-    signature_type) *)
-let encode_uint256 n =
-  let hex = Printf.sprintf "%x" n in
-  pad_hex_32 hex
-
 (** Encode decimal string as 32-byte hex using Zarith (handles full 256-bit
     range) *)
 let encode_uint256_str s =
   let z = Z.of_string s in
   let hex = Z.format "%x" z in
-  pad_hex_32 hex
+  Crypto.pad_hex_32 hex
 
 (** {1 Default Values} *)
 
@@ -76,9 +65,9 @@ let ctf_domain_separator =
     Digestif.KECCAK_256.(
       to_hex (digest_string Constants.ctf_exchange_domain_version))
   in
-  let chain_id_hex = encode_uint256 Constants.polygon_chain_id in
+  let chain_id_hex = Crypto.encode_uint256 Constants.polygon_chain_id in
   let contract_hex = String.sub Constants.ctf_exchange_address 2 40 in
-  let contract_padded = pad_hex_32 contract_hex in
+  let contract_padded = Crypto.pad_hex_32 contract_hex in
   let data =
     domain_type_hash ^ name_hash ^ version_hash ^ chain_id_hex ^ contract_padded
   in
@@ -95,7 +84,7 @@ let sign_order ~private_key ~salt ~maker ~signer ~taker ~token_id ~maker_amount
         String.sub addr 2 (String.length addr - 2)
       else addr
     in
-    pad_hex_32 hex
+    Crypto.pad_hex_32 hex
   in
   let struct_data =
     order_type_hash ^ encode_uint256_str salt ^ encode_address maker
@@ -106,8 +95,8 @@ let sign_order ~private_key ~salt ~maker ~signer ~taker ~token_id ~maker_amount
     ^ encode_uint256_str expiration
     ^ encode_uint256_str nonce
     ^ encode_uint256_str fee_rate_bps
-    ^ encode_uint256 side
-    ^ encode_uint256 signature_type
+    ^ Crypto.encode_uint256 side
+    ^ Crypto.encode_uint256 signature_type
   in
   let struct_bytes = Hex.to_string (`Hex struct_data) in
   let struct_hash = Digestif.KECCAK_256.(to_hex (digest_string struct_bytes)) in

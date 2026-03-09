@@ -149,12 +149,15 @@ let compute_eip712_hash ~address ~timestamp ~nonce =
 
 (** {1 Secp256k1 Signing} *)
 
+(** Module-level secp256k1 context — expensive to create, safe to reuse *)
+let secp256k1_ctx =
+  Libsecp256k1.External.Context.create ~sign:true ~verify:true ()
+
 (** Sign a 32-byte hash with private key, returns signature with recovery id *)
 let sign_hash ~private_key hash_hex =
   let open Libsecp256k1.External in
   try
-    (* Create signing context *)
-    let ctx = Context.create ~sign:true ~verify:true () in
+    let ctx = secp256k1_ctx in
     (* Parse private key (hex string to bytes) *)
     let sk_bytes = Bigstring.of_string (Hex.to_string (`Hex private_key)) in
     match Key.read_sk ctx sk_bytes with
@@ -192,8 +195,7 @@ let sign_clob_auth_message ~private_key ~address ~timestamp ~nonce =
 let private_key_to_address private_key =
   let open Libsecp256k1.External in
   try
-    (* Create context *)
-    let ctx = Context.create ~sign:true ~verify:true () in
+    let ctx = secp256k1_ctx in
     (* Parse private key *)
     let sk_bytes = Bigstring.of_string (Hex.to_string (`Hex private_key)) in
     match Key.read_sk ctx sk_bytes with

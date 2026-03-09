@@ -140,34 +140,27 @@ let clob_other ~behavior =
     ]
 
 let clob_api ~behavior =
-  (* Combine all CLOB configs *)
-  match
-    ( clob_trading ~behavior,
-      clob_market_data ~behavior,
-      clob_ledger ~behavior,
-      clob_other ~behavior,
-      B.per_host ~host:clob_api_host ~requests:9000 ~window_seconds:10.0
-        ~behavior )
-  with
-  | Ok trading, Ok market_data, Ok ledger, Ok other, Ok general_limit ->
-      Ok (trading @ market_data @ ledger @ other @ [ general_limit ])
-  | Error e, _, _, _, _ -> Error e
-  | _, Error e, _, _, _ -> Error e
-  | _, _, Error e, _, _ -> Error e
-  | _, _, _, Error e, _ -> Error e
-  | _, _, _, _, Error e -> Error e
+  collect_results
+    [
+      clob_trading ~behavior;
+      clob_market_data ~behavior;
+      clob_ledger ~behavior;
+      clob_other ~behavior;
+      Result.map
+        (fun x -> [ x ])
+        (B.per_host ~host:clob_api_host ~requests:9000 ~window_seconds:10.0
+           ~behavior);
+    ]
+  |> Result.map List.concat
 
 (* {1 Combined Presets} *)
 
 let all ~behavior =
-  match
-    ( data_api ~behavior,
-      gamma_api ~behavior,
-      clob_api ~behavior,
-      general ~behavior )
-  with
-  | Ok data, Ok gamma, Ok clob, Ok gen -> Ok (data @ gamma @ clob @ gen)
-  | Error e, _, _, _ -> Error e
-  | _, Error e, _, _ -> Error e
-  | _, _, Error e, _ -> Error e
-  | _, _, _, Error e -> Error e
+  collect_results
+    [
+      data_api ~behavior;
+      gamma_api ~behavior;
+      clob_api ~behavior;
+      general ~behavior;
+    ]
+  |> Result.map List.concat

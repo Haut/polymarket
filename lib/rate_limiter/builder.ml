@@ -23,7 +23,7 @@ let path p t = { t with path_prefix = Some p }
 
 let limit ~requests ~window_seconds t =
   let lim = Types.limit ~requests ~window_seconds in
-  { t with limits = t.limits @ [ lim ] }
+  { t with limits = lim :: t.limits }
 
 let on_limit b t = { t with behavior = Some b }
 
@@ -34,7 +34,7 @@ let build t : (Types.route_config, string) result =
       { host = t.host; method_ = t.method_; path_prefix = t.path_prefix }
     in
     let behavior = Option.value ~default:Types.Delay t.behavior in
-    Ok { pattern; limits = t.limits; behavior }
+    Ok { pattern; limits = List.rev t.limits; behavior }
 
 let simple ?host:h ?method_:m ?path:p ~requests ~window_seconds ?behavior () =
   let b = route () in
@@ -61,7 +61,7 @@ let for_host h = { hb_host = h; routes = [] }
 
 let add_route r hb =
   let r_with_host = { r with host = Some hb.hb_host } in
-  { hb with routes = hb.routes @ [ r_with_host ] }
+  { hb with routes = r_with_host :: hb.routes }
 
 let build_host hb =
   let rec build_all acc = function
@@ -71,4 +71,4 @@ let build_host hb =
         | Ok cfg -> build_all (cfg :: acc) rest
         | Error e -> Error e)
   in
-  build_all [] hb.routes
+  build_all [] (List.rev hb.routes)

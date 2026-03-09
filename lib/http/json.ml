@@ -27,13 +27,13 @@ let format_path = function [] -> "<root>" | parts -> String.concat "." parts
 
 (** {1 JSON Parsing} *)
 
-let parse (parse_fn : Yojson.Safe.t -> 'a) (body : string) : ('a, string) result
-    =
+(** Shared error handler for JSON parsing *)
+let with_json_errors body f =
   let root_json = ref `Null in
   try
     let json = Yojson.Safe.from_string body in
     root_json := json;
-    Ok (parse_fn json)
+    f json
   with
   | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, bad_json) ->
       let path =
@@ -60,43 +60,19 @@ let parse (parse_fn : Yojson.Safe.t -> 'a) (body : string) : ('a, string) result
       Log.err (fun m -> m "Error: %s" (Printexc.to_string exn));
       Error msg
 
+let parse (parse_fn : Yojson.Safe.t -> 'a) (body : string) : ('a, string) result
+    =
+  with_json_errors body (fun json -> Ok (parse_fn json))
+
 let parse_list (parse_item_fn : Yojson.Safe.t -> 'a) (body : string) :
     ('a list, string) result =
-  let root_json = ref `Null in
-  try
-    let json = Yojson.Safe.from_string body in
-    root_json := json;
-    match json with
-    | `List items -> Ok (List.map parse_item_fn items)
-    | _ ->
-        let err = "Expected JSON array\nBody:\n" ^ body in
-        Log.err (fun m -> m "Expected JSON array");
-        Error err
-  with
-  | Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (exn, bad_json) ->
-      let path =
-        match find_path_to_value ~target:bad_json ~path:[] !root_json with
-        | Some p -> format_path p
-        | None -> "<unknown>"
-      in
-      let msg =
-        Printf.sprintf "JSON parse error at field '%s': %s\nValue: %s" path
-          (Printexc.to_string exn)
-          (Yojson.Safe.to_string bad_json)
-      in
-      Log.err (fun m -> m "Parse error at %s: %s" path (Printexc.to_string exn));
-      Error msg
-  | Yojson.Json_error msg ->
-      let err = "JSON error: " ^ msg ^ "\nBody:\n" ^ body in
-      Log.err (fun m -> m "JSON error: %s" msg);
-      Error err
-  | exn ->
-      let msg =
-        Printf.sprintf "Parse error: %s\nFull response:\n%s"
-          (Printexc.to_string exn) body
-      in
-      Log.err (fun m -> m "Error: %s" (Printexc.to_string exn));
-      Error msg
+  with_json_errors body (fun json ->
+      match json with
+      | `List items -> Ok (List.map parse_item_fn items)
+      | _ ->
+          let err = "Expected JSON array\nBody:\n" ^ body in
+          Log.err (fun m -> m "Expected JSON array");
+          Error err)
 
 (** {1 JSON Body Builders} *)
 

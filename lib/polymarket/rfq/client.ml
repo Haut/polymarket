@@ -9,9 +9,17 @@ module Auth = Common.Auth
 module Crypto = Common.Crypto
 open Types
 
+type private_key = Crypto.private_key
+
+type credentials = Auth.credentials = {
+  api_key : string;
+  secret : string;
+  passphrase : string;
+}
+
 let default_base_url = "https://clob.polymarket.com"
 
-type t = { http : H.t; address : string; credentials : Auth.credentials }
+type t = { http : H.t; address : string; credentials : credentials }
 type init_error = H.init_error
 
 let create ?(base_url = default_base_url) ~sw ~net ~rate_limiter ~private_key

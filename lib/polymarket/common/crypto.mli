@@ -76,6 +76,15 @@ val private_key_to_address : private_key -> (string, error) result
 val current_timestamp_ms : unit -> string
 (** Get current Unix timestamp in milliseconds as string. *)
 
+(** {1 EIP-712 Encoding Helpers} *)
+
+val pad_hex_32 : string -> string
+(** Pad hex string to 64 chars (32 bytes) with leading zeros. *)
+
+val encode_uint256 : int -> string
+(** Encode native int as 32-byte hex. Only for small values (side,
+    signature_type, chain_id). *)
+
 (** {1 Low-level Signing} *)
 
 val sign_hash : private_key:private_key -> string -> (string, error) result
