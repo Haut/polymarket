@@ -218,7 +218,7 @@ let run_demo env =
       let midpoint = Clob.Unauthed.get_midpoint unauthed_client ~token_id () in
       print_result "get_midpoint" midpoint
         ~on_ok:(fun (m : Clob.Types.midpoint_response) ->
-          Option.value ~default:"(no mid)" m.mid);
+          Option.value ~default:"(no mid)" m.mid_price);
 
       (* Batch prices *)
       let requests =

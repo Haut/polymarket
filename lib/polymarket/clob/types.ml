@@ -252,7 +252,9 @@ type price_response = { price : string option [@yojson.option] }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Response from get price endpoint *)
 
-type midpoint_response = { mid : string option [@yojson.option] }
+type midpoint_response = {
+  mid_price : string option; [@yojson.option] [@key "mid_price"]
+}
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Response from get midpoint endpoint *)
 

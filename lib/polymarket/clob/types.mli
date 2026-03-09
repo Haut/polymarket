@@ -263,7 +263,7 @@ val pp_price_response : Format.formatter -> price_response -> unit
 val show_price_response : price_response -> string
 val equal_price_response : price_response -> price_response -> bool
 
-type midpoint_response = { mid : string option }
+type midpoint_response = { mid_price : string option }
 (** Response from get midpoint endpoint *)
 
 val midpoint_response_of_yojson : Yojson.Safe.t -> midpoint_response
