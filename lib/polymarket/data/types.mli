@@ -87,12 +87,29 @@ module Leaderboard_order_by : sig
   val pp : Format.formatter -> t -> unit
 end
 
+module Market_position_status : sig
+  type t = Open | Closed | All [@@deriving yojson, eq]
+
+  val to_string : t -> string
+  val of_string : string -> t
+  val pp : Format.formatter -> t -> unit
+end
+
+module Market_position_sort_by : sig
+  type t = Tokens | Cash_pnl | Realized_pnl | Total_pnl
+  [@@deriving yojson, eq]
+
+  val to_string : t -> string
+  val of_string : string -> t
+  val pp : Format.formatter -> t -> unit
+end
+
 (** {1 Domain Enums} *)
 
 module Side = Common.Primitives.Side
 
 module Activity_type : sig
-  type t = Trade | Split | Merge | Redeem | Reward | Conversion
+  type t = Trade | Split | Merge | Redeem | Reward | Conversion | Maker_rebate
   [@@deriving eq]
 
   val to_string : t -> string
@@ -284,6 +301,36 @@ type live_volume = {
 [@@deriving yojson, show, eq]
 (** Live volume *)
 
+(** {1 Market Position Types} *)
+
+type market_position_v1 = {
+  proxy_wallet : Common.Primitives.Address.t;
+  name : string;
+  profile_image : string;
+  verified : bool;
+  asset : string;
+  condition_id : Common.Primitives.Hash64.t;
+  avg_price : Common.Primitives.Decimal.t;
+  size : Common.Primitives.Decimal.t;
+  curr_price : Common.Primitives.Decimal.t;
+  current_value : Common.Primitives.Decimal.t;
+  cash_pnl : Common.Primitives.Decimal.t;
+  total_bought : Common.Primitives.Decimal.t;
+  realized_pnl : Common.Primitives.Decimal.t;
+  total_pnl : Common.Primitives.Decimal.t;
+  outcome : string;
+  outcome_index : int;
+}
+[@@deriving yojson, show, eq]
+(** Position in a market (v1) *)
+
+type meta_market_position_v1 = {
+  token : string;
+  positions : market_position_v1 list;
+}
+[@@deriving yojson, show, eq]
+(** Meta market position with token and list of positions *)
+
 (** {1 Leaderboard Types} *)
 
 type leaderboard_entry = {
@@ -338,6 +385,8 @@ val yojson_fields_of_value : string list
 val yojson_fields_of_open_interest : string list
 val yojson_fields_of_market_volume : string list
 val yojson_fields_of_live_volume : string list
+val yojson_fields_of_market_position_v1 : string list
+val yojson_fields_of_meta_market_position_v1 : string list
 val yojson_fields_of_leaderboard_entry : string list
 val yojson_fields_of_builder_volume_entry : string list
 val yojson_fields_of_trader_leaderboard_entry : string list

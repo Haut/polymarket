@@ -176,6 +176,30 @@ val get_value :
     @param user User address (required)
     @param market Condition IDs to filter by *)
 
+(** {1 Market Positions Endpoint} *)
+
+val get_market_positions :
+  t ->
+  market:Common.Primitives.Hash64.t ->
+  ?user:Common.Primitives.Address.t ->
+  ?status:Market_position_status.t ->
+  ?sort_by:Market_position_sort_by.t ->
+  ?sort_direction:Sort_direction.t ->
+  ?limit:int ->
+  ?offset:int ->
+  unit ->
+  (meta_market_position_v1 list, error) result
+(** Get positions for a market.
+    @param market Condition ID of the market (required)
+    @param user Filter to a single user by proxy wallet address
+    @param status Filter by position status: OPEN, CLOSED, or ALL (default: ALL)
+    @param sort_by
+      Sort field: TOKENS, CASH_PNL, REALIZED_PNL, or TOTAL_PNL (default:
+      TOTAL_PNL)
+    @param sort_direction Sort direction (default: DESC)
+    @param limit Maximum results per outcome token 0-500 (default: 50)
+    @param offset Pagination offset per outcome token 0-10000 (default: 0) *)
+
 (** {1 Market Data Endpoints} *)
 
 val get_open_interest :
@@ -189,6 +213,14 @@ val get_open_interest :
 val get_live_volume : t -> id:int -> unit -> (live_volume list, error) result
 (** Get live volume for an event.
     @param id Event ID >= 1 (required) *)
+
+(** {1 Accounting Endpoint} *)
+
+val get_accounting_snapshot :
+  t -> user:Common.Primitives.Address.t -> unit -> (string, error) result
+(** Download an accounting snapshot as a ZIP file containing positions.csv and
+    equity.csv. The returned string contains the raw ZIP binary data.
+    @param user User address (required) *)
 
 (** {1 Leaderboard Endpoints} *)
 

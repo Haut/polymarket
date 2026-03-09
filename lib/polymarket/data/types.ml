@@ -75,13 +75,33 @@ module Leaderboard_order_by = struct
   type t = Pnl | Vol [@@deriving enum]
 end
 
+module Market_position_status = struct
+  type t = Open | Closed | All [@@deriving enum]
+end
+
+module Market_position_sort_by = struct
+  type t =
+    | Tokens
+    | Cash_pnl [@value "CASH_PNL"]
+    | Realized_pnl [@value "REALIZED_PNL"]
+    | Total_pnl [@value "TOTAL_PNL"]
+  [@@deriving enum]
+end
+
 (** {1 Domain Enums} *)
 
 module Side = P.Side
 (** Re-export shared Side module from P *)
 
 module Activity_type = struct
-  type t = Trade | Split | Merge | Redeem | Reward | Conversion
+  type t =
+    | Trade
+    | Split
+    | Merge
+    | Redeem
+    | Reward
+    | Conversion
+    | Maker_rebate [@value "MAKER_REBATE"]
   [@@deriving enum]
 end
 
@@ -284,6 +304,36 @@ let live_volume_of_yojson json =
       raise
         (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
            (Failure "live_volume: expected object", json))
+
+(** {1 Market Position Types} *)
+
+type market_position_v1 = {
+  proxy_wallet : P.Address.t; [@key "proxyWallet"]
+  name : string;
+  profile_image : string; [@key "profileImage"]
+  verified : bool;
+  asset : string;
+  condition_id : P.Hash64.t; [@key "conditionId"]
+  avg_price : P.Decimal.t; [@key "avgPrice"]
+  size : P.Decimal.t;
+  curr_price : P.Decimal.t; [@key "currPrice"]
+  current_value : P.Decimal.t; [@key "currentValue"]
+  cash_pnl : P.Decimal.t; [@key "cashPnl"]
+  total_bought : P.Decimal.t; [@key "totalBought"]
+  realized_pnl : P.Decimal.t; [@key "realizedPnl"]
+  total_pnl : P.Decimal.t; [@key "totalPnl"]
+  outcome : string;
+  outcome_index : int; [@key "outcomeIndex"]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** Position in a market (v1) *)
+
+type meta_market_position_v1 = {
+  token : string;
+  positions : market_position_v1 list;
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** Meta market position with token and list of positions *)
 
 (** {1 Leaderboard Types} *)
 

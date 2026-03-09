@@ -111,6 +111,28 @@ let get_closed_positions t ~user ?market ?event_id ?title ?sort_by
   |> B.fetch_json_list ~expected_fields:yojson_fields_of_closed_position
        ~context:"closed_position" closed_position_of_yojson
 
+(** {1 Market Positions Endpoint} *)
+
+let get_market_positions t ~market ?user ?status ?sort_by ?sort_direction ?limit
+    ?offset () =
+  B.new_get t "/v1/market-positions"
+  |> B.query_param "market" (P.Hash64.to_string market)
+  |> B.query_option "user" P.Address.to_string user
+  |> B.query_option "status" Market_position_status.to_string status
+  |> B.query_option "sortBy" Market_position_sort_by.to_string sort_by
+  |> B.query_option "sortDirection" Sort_direction.to_string sort_direction
+  |> B.query_option "limit" string_of_int limit
+  |> B.query_option "offset" string_of_int offset
+  |> B.fetch_json_list ~expected_fields:yojson_fields_of_meta_market_position_v1
+       ~context:"meta_market_position_v1" meta_market_position_v1_of_yojson
+
+(** {1 Accounting Endpoint} *)
+
+let get_accounting_snapshot t ~user () =
+  B.new_get t "/v1/accounting/snapshot"
+  |> B.query_param "user" (P.Address.to_string user)
+  |> B.fetch_text
+
 (** {1 Trader Leaderboard Endpoint} *)
 
 let get_trader_leaderboard t ?category ?time_period ?order_by ?user ?user_name
