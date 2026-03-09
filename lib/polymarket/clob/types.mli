@@ -290,6 +290,15 @@ val pp_prices_response : Format.formatter -> prices_response -> unit
 val show_prices_response : prices_response -> string
 val equal_prices_response : prices_response -> prices_response -> bool
 
+type midpoints_response = (P.U256.t * string) list
+(** Map from token_id to midpoint price *)
+
+val midpoints_response_of_yojson : Yojson.Safe.t -> midpoints_response
+val yojson_of_midpoints_response : midpoints_response -> Yojson.Safe.t
+val pp_midpoints_response : Format.formatter -> midpoints_response -> unit
+val show_midpoints_response : midpoints_response -> string
+val equal_midpoints_response : midpoints_response -> midpoints_response -> bool
+
 type spreads_response = (P.U256.t * string) list
 (** Map from token_id to spread value *)
 

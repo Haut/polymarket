@@ -220,6 +220,16 @@ let run_demo env =
         ~on_ok:(fun (m : Clob.Types.midpoint_response) ->
           Option.value ~default:"(no mid)" m.mid_price);
 
+      (* Batch midpoints *)
+      if List.length token_ids_subset > 0 then
+        let midpoints =
+          Clob.Unauthed.get_midpoints unauthed_client
+            ~token_ids:token_ids_subset ()
+        in
+        print_result "get_midpoints" midpoints ~on_ok:(fun m ->
+            Printf.sprintf "%d midpoint entries" (List.length m))
+      else Logger.skip "get_midpoints" "no token IDs available";
+
       (* Batch prices *)
       let requests =
         List.filteri (fun i _ -> i < 3) all_token_ids

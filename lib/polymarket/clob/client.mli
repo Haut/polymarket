@@ -150,6 +150,14 @@ module Unauthed : sig
       @param token_ids Token IDs (comma-separated internally)
       @param sides Corresponding sides for each token ID *)
 
+  val get_midpoints :
+    t ->
+    token_ids:string list ->
+    unit ->
+    (Types.midpoints_response, error) result
+  (** Get midpoint prices for multiple tokens via query parameters. The midpoint
+      is the average of best bid and best ask prices. *)
+
   val get_spreads :
     t -> token_ids:string list -> unit -> (Types.spreads_response, error) result
 
@@ -244,6 +252,14 @@ module L1 : sig
   (** Get market prices for multiple tokens via query parameters.
       @param token_ids Token IDs (comma-separated internally)
       @param sides Corresponding sides for each token ID *)
+
+  val get_midpoints :
+    t ->
+    token_ids:string list ->
+    unit ->
+    (Types.midpoints_response, error) result
+  (** Get midpoint prices for multiple tokens via query parameters. The midpoint
+      is the average of best bid and best ask prices. *)
 
   val get_spreads :
     t -> token_ids:string list -> unit -> (Types.spreads_response, error) result
@@ -410,6 +426,14 @@ module L2 : sig
   (** Get market prices for multiple tokens via query parameters.
       @param token_ids Token IDs (comma-separated internally)
       @param sides Corresponding sides for each token ID *)
+
+  val get_midpoints :
+    t ->
+    token_ids:string list ->
+    unit ->
+    (Types.midpoints_response, error) result
+  (** Get midpoint prices for multiple tokens via query parameters. The midpoint
+      is the average of best bid and best ask prices. *)
 
   val get_spreads :
     t -> token_ids:string list -> unit -> (Types.spreads_response, error) result

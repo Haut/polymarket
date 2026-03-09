@@ -303,6 +303,43 @@ let yojson_of_prices_response resp =
        (fun (tid, tp) -> (P.U256.to_string tid, yojson_of_token_price tp))
        resp)
 
+type midpoints_response = (P.U256.t * string) list
+
+let equal_midpoints_response a b =
+  List.length a = List.length b
+  && List.for_all2
+       (fun (t1, s1) (t2, s2) -> P.U256.equal t1 t2 && String.equal s1 s2)
+       a b
+
+let pp_midpoints_response fmt resp =
+  Format.fprintf fmt "[%a]"
+    (Format.pp_print_list
+       ~pp_sep:(fun fmt () -> Format.fprintf fmt "; ")
+       (fun fmt (tid, s) -> Format.fprintf fmt "(%a, %s)" P.U256.pp tid s))
+    resp
+
+let show_midpoints_response resp =
+  Format.asprintf "%a" pp_midpoints_response resp
+
+(** midpoints_response is a map from token_id to midpoint price *)
+
+let midpoints_response_of_yojson json =
+  match json with
+  | `Assoc pairs ->
+      List.filter_map
+        (fun (tid_str, v) ->
+          match v with
+          | `String s -> Some (P.U256.unsafe_of_string tid_str, s)
+          | _ -> None)
+        pairs
+  | _ ->
+      raise
+        (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
+           (Failure "midpoints_response: expected object", json))
+
+let yojson_of_midpoints_response resp =
+  `Assoc (List.map (fun (tid, s) -> (P.U256.to_string tid, `String s)) resp)
+
 type spreads_response = (P.U256.t * string) list
 
 let equal_spreads_response a b =

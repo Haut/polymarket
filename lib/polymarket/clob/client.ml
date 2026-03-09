@@ -103,6 +103,11 @@ module Make_public (M : HAS_HTTP) = struct
     |> B.query_param "sides" (String.concat "," (List.map Side.to_string sides))
     |> B.fetch_json prices_response_of_yojson
 
+  let get_midpoints t ~token_ids () =
+    B.new_get (M.http t) "/midpoints"
+    |> B.query_param "token_ids" (String.concat "," token_ids)
+    |> B.fetch_json midpoints_response_of_yojson
+
   let get_spreads t ~token_ids () =
     let body = J.list_single_field "token_id" token_ids in
     B.new_post (M.http t) "/spreads"
