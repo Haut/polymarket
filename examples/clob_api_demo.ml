@@ -381,7 +381,7 @@ let run_demo env =
               (* L2 can call authenticated endpoints *)
               let orders = Clob.L2.get_orders l2_client () in
               print_result "get_orders" orders ~on_ok:(fun o ->
-                  Printf.sprintf "%d orders" (List.length o));
+                  Printf.sprintf "%d orders" (List.length o.Clob.Types.data));
 
               let trades = Clob.L2.get_trades l2_client () in
               print_result "get_trades" trades ~on_ok:(fun t ->

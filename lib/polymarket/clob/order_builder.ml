@@ -96,4 +96,10 @@ let create_limit_order ~private_key ~token_id ~(side : Types.Side.t) ~price
 
 let create_order_request ~order ~order_type =
   let owner = Option.map P.Address.to_string order.Types.maker in
-  Types.{ order = Some order; owner; order_type = Some order_type }
+  Types.
+    {
+      order = Some order;
+      owner;
+      order_type = Some order_type;
+      defer_exec = None;
+    }

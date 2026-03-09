@@ -420,16 +420,19 @@ module L2 : sig
     order:Types.signed_order ->
     owner:string ->
     order_type:Types.Order_type.t ->
+    ?defer_exec:bool ->
     unit ->
     (Types.create_order_response, error) result
-  (** Create a new order on the CLOB. *)
+  (** Create a new order on the CLOB.
+      @param defer_exec Whether to defer execution (default false) *)
 
   val create_orders :
     t ->
-    orders:(Types.signed_order * string * Types.Order_type.t) list ->
+    orders:(Types.signed_order * string * Types.Order_type.t * bool option) list ->
     unit ->
     (Types.create_order_response list, error) result
-  (** Create multiple orders on the CLOB. *)
+  (** Create multiple orders on the CLOB. Maximum 15 orders per request. Each
+      tuple is (order, owner, order_type, defer_exec). *)
 
   val get_order :
     t -> order_id:string -> unit -> (Types.open_order, error) result
@@ -437,11 +440,21 @@ module L2 : sig
 
   val get_orders :
     t ->
+    ?id:string ->
     ?market:string ->
     ?asset_id:string ->
+    ?next_cursor:string ->
     unit ->
-    (Types.open_order list, error) result
-  (** Get all open orders, optionally filtered by market or asset. *)
+    (Types.orders_response, error) result
+  (** Get open orders for the authenticated user. Returns paginated results.
+      @param id Order ID (hash) to filter by specific order
+      @param market Market (condition ID) to filter orders
+      @param asset_id Asset ID (token ID) to filter orders
+      @param next_cursor Cursor for pagination (base64 encoded offset) *)
+
+  val get_order_scoring :
+    t -> order_id:string -> unit -> (Types.order_scoring_response, error) result
+  (** Check if a specific order is currently scoring for rewards. *)
 
   (** {2 Cancel Orders} *)
 
@@ -458,11 +471,13 @@ module L2 : sig
 
   val cancel_market_orders :
     t ->
-    ?market:string ->
-    ?asset_id:string ->
+    market:string ->
+    asset_id:string ->
     unit ->
     (Types.cancel_response, error) result
-  (** Cancel all orders for a market or asset. *)
+  (** Cancel all open orders for a specific market and asset.
+      @param market Market (condition ID)
+      @param asset_id Asset ID (token ID) *)
 
   (** {2 Trades} *)
 
@@ -477,6 +492,12 @@ module L2 : sig
     unit ->
     (Types.clob_trade list, error) result
   (** Get trade history. *)
+
+  (** {2 Heartbeat} *)
+
+  val send_heartbeat : t -> unit -> (Types.heartbeat_response, error) result
+  (** Send a heartbeat to maintain active session. If heartbeats are not sent
+      regularly, all open orders will be automatically canceled. *)
 
   val get_time : t -> unit -> (int64, error) result
   (** Get current server time as a Unix timestamp. *)

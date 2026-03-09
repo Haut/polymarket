@@ -309,17 +309,20 @@ module L2 = struct
                  (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
                     (Failure "Expected string in API keys list", json))))
 
-  let create_order (t : t) ~order ~owner ~order_type () =
+  let create_order (t : t) ~order ~owner ~order_type ?defer_exec () =
+    let fields =
+      [
+        ("order", yojson_of_signed_order order);
+        ("owner", J.string owner);
+        ("orderType", J.string (Order_type.to_string order_type));
+      ]
+      @
+      match defer_exec with
+      | Some b -> [ ("deferExec", `Bool b) ]
+      | None -> []
+    in
     let req =
-      B.new_post t.http "/order"
-      |> B.with_body
-           (J.body
-              (J.obj
-                 [
-                   ("order", yojson_of_signed_order order);
-                   ("owner", J.string owner);
-                   ("orderType", J.string (Order_type.to_string order_type));
-                 ]))
+      B.new_post t.http "/order" |> B.with_body (J.body (J.obj fields))
     in
     with_l2_request req ~credentials:t.credentials ~address:t.address
       (B.fetch_json
@@ -331,13 +334,17 @@ module L2 = struct
       B.new_post t.http "/orders"
       |> B.with_body
            (J.list
-              (fun (order, owner, order_type) ->
+              (fun (order, owner, order_type, defer_exec) ->
                 J.obj
-                  [
-                    ("order", yojson_of_signed_order order);
-                    ("owner", J.string owner);
-                    ("orderType", J.string (Order_type.to_string order_type));
-                  ])
+                  ([
+                     ("order", yojson_of_signed_order order);
+                     ("owner", J.string owner);
+                     ("orderType", J.string (Order_type.to_string order_type));
+                   ]
+                  @
+                  match defer_exec with
+                  | Some b -> [ ("deferExec", `Bool b) ]
+                  | None -> []))
               orders)
     in
     with_l2_request req ~credentials:t.credentials ~address:t.address
@@ -346,32 +353,43 @@ module L2 = struct
          ~context:"create_order_response" create_order_response_of_yojson)
 
   let get_order (t : t) ~order_id () =
-    let req = B.new_get t.http ("/data/order/" ^ order_id) in
+    let req = B.new_get t.http ("/order/" ^ order_id) in
     with_l2_request req ~credentials:t.credentials ~address:t.address
       (B.fetch_json ~expected_fields:Types.yojson_fields_of_open_order
          ~context:"open_order" open_order_of_yojson)
 
-  let get_orders (t : t) ?market ?asset_id () =
+  let get_orders (t : t) ?id ?market ?asset_id ?next_cursor () =
     let req =
-      B.new_get t.http "/data/orders"
+      B.new_get t.http "/orders" |> B.query_add "id" id
       |> B.query_add "market" market
       |> B.query_add "asset_id" asset_id
+      |> B.query_add "next_cursor" next_cursor
     in
     with_l2_request req ~credentials:t.credentials ~address:t.address
-      (B.fetch_json_list ~expected_fields:Types.yojson_fields_of_open_order
-         ~context:"open_order" open_order_of_yojson)
+      (B.fetch_json ~expected_fields:Types.yojson_fields_of_orders_response
+         ~context:"orders_response" orders_response_of_yojson)
+
+  let get_order_scoring (t : t) ~order_id () =
+    let req =
+      B.new_get t.http "/order-scoring" |> B.query_param "order_id" order_id
+    in
+    with_l2_request req ~credentials:t.credentials ~address:t.address
+      (B.fetch_json
+         ~expected_fields:Types.yojson_fields_of_order_scoring_response
+         ~context:"order_scoring_response" order_scoring_response_of_yojson)
 
   let cancel_order (t : t) ~order_id () =
     let req =
-      B.new_delete t.http "/order" |> B.query_param "orderID" order_id
+      B.new_delete_with_body t.http "/order"
+      |> B.with_body (J.body (J.obj [ ("orderID", J.string order_id) ]))
     in
     with_l2_request req ~credentials:t.credentials ~address:t.address
       (B.fetch_json cancel_response_of_yojson)
 
   let cancel_orders (t : t) ~order_ids () =
     let req =
-      B.new_delete t.http "/orders"
-      |> B.query_each "orderIDs" Fun.id (Some order_ids)
+      B.new_delete_with_body t.http "/orders"
+      |> B.with_body (J.list J.string order_ids)
     in
     with_l2_request req ~credentials:t.credentials ~address:t.address
       (B.fetch_json cancel_response_of_yojson)
@@ -381,11 +399,15 @@ module L2 = struct
     with_l2_request req ~credentials:t.credentials ~address:t.address
       (B.fetch_json cancel_response_of_yojson)
 
-  let cancel_market_orders (t : t) ?market ?asset_id () =
+  let cancel_market_orders (t : t) ~market ~asset_id () =
     let req =
-      B.new_delete t.http "/cancel-market-orders"
-      |> B.query_add "market" market
-      |> B.query_add "asset_id" asset_id
+      B.new_delete_with_body t.http "/cancel-market-orders"
+      |> B.with_body
+           (J.body
+              (J.obj
+                 [
+                   ("market", J.string market); ("asset_id", J.string asset_id);
+                 ]))
     in
     with_l2_request req ~credentials:t.credentials ~address:t.address
       (B.fetch_json cancel_response_of_yojson)
@@ -402,6 +424,12 @@ module L2 = struct
     with_l2_request req ~credentials:t.credentials ~address:t.address
       (B.fetch_json_list ~expected_fields:Types.yojson_fields_of_clob_trade
          ~context:"clob_trade" clob_trade_of_yojson)
+
+  let send_heartbeat (t : t) () =
+    let req = B.new_post t.http "/heartbeats" |> B.with_body "{}" in
+    with_l2_request req ~credentials:t.credentials ~address:t.address
+      (B.fetch_json ~expected_fields:Types.yojson_fields_of_heartbeat_response
+         ~context:"heartbeat_response" heartbeat_response_of_yojson)
 end
 
 (** {1 State Transitions} *)

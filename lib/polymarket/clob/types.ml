@@ -38,6 +38,16 @@ module Status = struct
   [@@deriving enum]
 end
 
+module Order_status = struct
+  type t =
+    | Live [@value "ORDER_STATUS_LIVE"]
+    | Invalid [@value "ORDER_STATUS_INVALID"]
+    | Canceled_market_resolved [@value "ORDER_STATUS_CANCELED_MARKET_RESOLVED"]
+    | Canceled [@value "ORDER_STATUS_CANCELED"]
+    | Matched [@value "ORDER_STATUS_MATCHED"]
+  [@@deriving enum]
+end
+
 (** Eoa: EIP712 from externally owned account (0), Poly_proxy: EIP712 from
     Polymarket proxy wallet signer (1), Poly_gnosis_safe: EIP712 from Polymarket
     Gnosis Safe signer (2) *)
@@ -129,6 +139,7 @@ type order_request = {
   order : signed_order option; [@yojson.option]
   owner : string option; [@yojson.option]
   order_type : Order_type.t option; [@yojson.option] [@key "orderType"]
+  defer_exec : bool option; [@yojson.option] [@key "deferExec"]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Request body for creating an order *)
@@ -136,9 +147,13 @@ type order_request = {
 type create_order_response = {
   success : bool option; [@yojson.option]
   error_msg : string option; [@yojson.option] [@key "errorMsg"]
-  order_id : string option; [@yojson.option] [@key "orderId"]
+  order_id : string option; [@yojson.option] [@key "orderID"]
   order_hashes : string list; [@default []] [@key "orderHashes"]
   status : Status.t option; [@yojson.option]
+  making_amount : string option; [@yojson.option] [@key "makingAmount"]
+  taking_amount : string option; [@yojson.option] [@key "takingAmount"]
+  transactions_hashes : string list; [@default []] [@key "transactionsHashes"]
+  trade_ids : string list; [@default []] [@key "tradeIDs"]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Response from creating an order *)
@@ -147,7 +162,7 @@ type create_order_response = {
 
 type open_order = {
   id : string option; [@yojson.option]
-  status : Status.t option; [@yojson.option]
+  status : Order_status.t option; [@yojson.option]
   market : string option; [@yojson.option]
   asset_id : P.U256.t option; [@yojson.option] [@key "asset_id"]
   original_size : string option; [@yojson.option] [@key "original_size"]
@@ -164,6 +179,23 @@ type open_order = {
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** An open/active order *)
+
+type orders_response = {
+  limit : int;
+  next_cursor : string; [@key "next_cursor"]
+  count : int;
+  data : open_order list; [@default []]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** Paginated response from get orders endpoint *)
+
+type order_scoring_response = { scoring : bool }
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** Response indicating whether an order is currently scoring for rewards *)
+
+type heartbeat_response = { status : string }
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** Response from heartbeat endpoint *)
 
 (** {1 Cancel Types} *)
 

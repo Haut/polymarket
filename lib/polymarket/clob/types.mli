@@ -48,6 +48,17 @@ module Status : sig
   val equal : t -> t -> bool
 end
 
+module Order_status : sig
+  type t = Live | Invalid | Canceled_market_resolved | Canceled | Matched
+
+  val to_string : t -> string
+  val of_string : string -> t
+  val t_of_yojson : Yojson.Safe.t -> t
+  val yojson_of_t : t -> Yojson.Safe.t
+  val pp : Format.formatter -> t -> unit
+  val equal : t -> t -> bool
+end
+
 module Signature_type : sig
   type t =
     | Eoa
@@ -136,6 +147,7 @@ type order_request = {
   order : signed_order option;
   owner : string option;
   order_type : Order_type.t option;
+  defer_exec : bool option;
 }
 (** Request body for creating an order *)
 
@@ -151,6 +163,10 @@ type create_order_response = {
   order_id : string option;
   order_hashes : string list;
   status : Status.t option;
+  making_amount : string option;
+  taking_amount : string option;
+  transactions_hashes : string list;
+  trade_ids : string list;
 }
 (** Response from creating an order *)
 
@@ -166,7 +182,7 @@ val equal_create_order_response :
 
 type open_order = {
   id : string option;
-  status : Status.t option;
+  status : Order_status.t option;
   market : string option;
   asset_id : P.U256.t option;
   original_size : string option;
@@ -188,6 +204,43 @@ val yojson_of_open_order : open_order -> Yojson.Safe.t
 val pp_open_order : Format.formatter -> open_order -> unit
 val show_open_order : open_order -> string
 val equal_open_order : open_order -> open_order -> bool
+
+type orders_response = {
+  limit : int;
+  next_cursor : string;
+  count : int;
+  data : open_order list;
+}
+(** Paginated response from get orders endpoint *)
+
+val orders_response_of_yojson : Yojson.Safe.t -> orders_response
+val yojson_of_orders_response : orders_response -> Yojson.Safe.t
+val pp_orders_response : Format.formatter -> orders_response -> unit
+val show_orders_response : orders_response -> string
+val equal_orders_response : orders_response -> orders_response -> bool
+
+type order_scoring_response = { scoring : bool }
+(** Response indicating whether an order is currently scoring for rewards *)
+
+val order_scoring_response_of_yojson : Yojson.Safe.t -> order_scoring_response
+val yojson_of_order_scoring_response : order_scoring_response -> Yojson.Safe.t
+
+val pp_order_scoring_response :
+  Format.formatter -> order_scoring_response -> unit
+
+val show_order_scoring_response : order_scoring_response -> string
+
+val equal_order_scoring_response :
+  order_scoring_response -> order_scoring_response -> bool
+
+type heartbeat_response = { status : string }
+(** Response from heartbeat endpoint *)
+
+val heartbeat_response_of_yojson : Yojson.Safe.t -> heartbeat_response
+val yojson_of_heartbeat_response : heartbeat_response -> Yojson.Safe.t
+val pp_heartbeat_response : Format.formatter -> heartbeat_response -> unit
+val show_heartbeat_response : heartbeat_response -> string
+val equal_heartbeat_response : heartbeat_response -> heartbeat_response -> bool
 
 (** {1 Cancel Types} *)
 
@@ -392,6 +445,9 @@ val yojson_fields_of_signed_order : string list
 val yojson_fields_of_order_request : string list
 val yojson_fields_of_create_order_response : string list
 val yojson_fields_of_open_order : string list
+val yojson_fields_of_orders_response : string list
+val yojson_fields_of_order_scoring_response : string list
+val yojson_fields_of_heartbeat_response : string list
 val yojson_fields_of_maker_order_fill : string list
 val yojson_fields_of_clob_trade : string list
 val yojson_fields_of_price_response : string list
