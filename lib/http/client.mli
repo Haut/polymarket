@@ -46,32 +46,38 @@ type status_code = int
 (** HTTP status code *)
 
 val do_get :
-  ?headers:(string * string) list -> t -> Uri.t -> status_code * string
-(** Perform a GET request and return status code and body.
-    @param headers Optional list of HTTP headers to include *)
+  ?headers:(string * string) list ->
+  t ->
+  Uri.t ->
+  (status_code * string, string) result
+(** Perform a GET request and return status code and body, or a network error
+    message. *)
 
 val do_post :
   ?headers:(string * string) list ->
   t ->
   Uri.t ->
   body:string ->
-  status_code * string
-(** Perform a POST request with JSON body and return status code and body.
-    @param headers Optional list of HTTP headers to include *)
+  (status_code * string, string) result
+(** Perform a POST request with JSON body and return status code and body, or a
+    network error message. *)
 
 val do_delete :
-  ?headers:(string * string) list -> t -> Uri.t -> status_code * string
-(** Perform a DELETE request and return status code and body.
-    @param headers Optional list of HTTP headers to include *)
+  ?headers:(string * string) list ->
+  t ->
+  Uri.t ->
+  (status_code * string, string) result
+(** Perform a DELETE request and return status code and body, or a network error
+    message. *)
 
 val do_delete_with_body :
   ?headers:(string * string) list ->
   t ->
   Uri.t ->
   body:string ->
-  status_code * string
-(** Perform a DELETE request with JSON body and return status code and body.
-    @param headers Optional list of HTTP headers to include *)
+  (status_code * string, string) result
+(** Perform a DELETE request with JSON body and return status code and body, or
+    a network error message. *)
 
 (** {1 Error Handling} *)
 

@@ -13,8 +13,8 @@ let ( let* ) = Option.bind
 (** {1 Orderbook State} *)
 
 type orderbook = {
-  bids : (string, string) Hashtbl.t;
-  asks : (string, string) Hashtbl.t;
+  bids : (string, D.t) Hashtbl.t;
+  asks : (string, D.t) Hashtbl.t;
 }
 
 let create_orderbook () = { bids = Hashtbl.create 64; asks = Hashtbl.create 64 }
@@ -30,20 +30,10 @@ let parse_token_ids s =
     Logger.warn "PARSE" ("Failed to parse token IDs: " ^ msg);
     []
 
-(** Compare prices as floats. Returns None if either price is invalid. *)
-let compare_prices_opt p1 p2 =
-  match (float_of_string_opt p1, float_of_string_opt p2) with
-  | Some f1, Some f2 -> Some (Float.compare f1 f2)
-  | _ -> None
-
-(** Compare prices as floats, treating invalid prices as less than valid ones *)
+(** Compare price strings using Decimal for exact comparison *)
 let compare_prices p1 p2 =
-  match compare_prices_opt p1 p2 with
-  | Some cmp -> cmp
-  | None ->
-      let valid1 = Option.is_some (float_of_string_opt p1) in
-      let valid2 = Option.is_some (float_of_string_opt p2) in
-      Bool.compare valid1 valid2
+  try D.compare (D.of_string p1) (D.of_string p2)
+  with _ -> String.compare p1 p2
 
 (** Get best bid (highest) from orderbook *)
 let get_best_bid book =
@@ -74,9 +64,10 @@ let format_orderbook book =
   let spread =
     match (best_bid, best_ask) with
     | Some b, Some a -> (
-        match (float_of_string_opt b, float_of_string_opt a) with
-        | Some bf, Some af -> Printf.sprintf "%.2f" ((af -. bf) *. 100.0)
-        | _ -> "-")
+        try
+          let bd = D.of_string b and ad = D.of_string a in
+          Printf.sprintf "%.2f" (D.to_float D.(ad - bd) *. 100.0)
+        with _ -> "-")
     | _ -> "-"
   in
   let bid_depth = Hashtbl.length book.bids in
@@ -93,11 +84,11 @@ let apply_book_snapshot ~token_id book (msg : Wss.Types.book_message) =
     Hashtbl.clear book.asks;
     List.iter
       (fun (o : Wss.Types.order_summary) ->
-        Hashtbl.replace book.bids (D.to_string o.price) (D.to_string o.size))
+        Hashtbl.replace book.bids (D.to_string o.price) o.size)
       msg.bids;
     List.iter
       (fun (o : Wss.Types.order_summary) ->
-        Hashtbl.replace book.asks (D.to_string o.price) (D.to_string o.size))
+        Hashtbl.replace book.asks (D.to_string o.price) o.size)
       msg.asks
   end
 
@@ -114,11 +105,10 @@ let apply_price_changes ~token_id book (msg : Wss.Types.price_change_message) =
             None)
         in
         let price_str = D.to_string pc.price in
-        let size_str = D.to_string pc.size in
         Option.iter
           (fun tbl ->
-            if size_str = "0" then Hashtbl.remove tbl price_str
-            else Hashtbl.replace tbl price_str size_str)
+            if D.(pc.size = zero) then Hashtbl.remove tbl price_str
+            else Hashtbl.replace tbl price_str pc.size)
           tbl_opt)
     msg.price_changes
 
@@ -127,13 +117,13 @@ let apply_rest_snapshot book (initial : Clob.Types.order_book_summary) =
   List.iter
     (fun (lvl : Clob.Types.order_book_level) ->
       match (lvl.price, lvl.size) with
-      | Some p, Some s -> Hashtbl.replace book.bids p s
+      | Some p, Some s -> Hashtbl.replace book.bids p (D.of_string s)
       | _ -> ())
     initial.bids;
   List.iter
     (fun (lvl : Clob.Types.order_book_level) ->
       match (lvl.price, lvl.size) with
-      | Some p, Some s -> Hashtbl.replace book.asks p s
+      | Some p, Some s -> Hashtbl.replace book.asks p (D.of_string s)
       | _ -> ())
     initial.asks
 

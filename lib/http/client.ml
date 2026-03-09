@@ -99,75 +99,41 @@ let log_response ~method_ uri status =
 let log_error ~method_ uri error =
   Log.err (fun m -> m "%s %s failed: %s" method_ (Uri.to_string uri) error)
 
-let do_get ?(headers = []) t uri =
-  apply_rate_limit t ~method_:"GET" ~uri;
-  let headers = make_headers headers in
-  log_request ~method_:"GET" uri;
+let execute_request ~method_ t uri ~call =
+  apply_rate_limit t ~method_ ~uri;
+  log_request ~method_ uri;
   try
-    let resp, body = Cohttp_eio.Client.get ~sw:t.sw ~headers t.client uri in
+    let resp, body = call () in
     let status = Http.Response.status resp |> Http.Status.to_int in
     let body_str = body_to_string body in
-    log_response ~method_:"GET" uri status;
-    (status, body_str)
+    log_response ~method_ uri status;
+    Ok (status, body_str)
   with exn ->
     let msg = Printexc.to_string exn in
-    log_error ~method_:"GET" uri msg;
-    (500, Printf.sprintf {|{"error": "Request failed: %s"}|} msg)
+    log_error ~method_ uri msg;
+    Error msg
+
+let do_get ?(headers = []) t uri =
+  let h = make_headers headers in
+  execute_request ~method_:"GET" t uri ~call:(fun () ->
+      Cohttp_eio.Client.get ~sw:t.sw ~headers:h t.client uri)
 
 let do_post ?(headers = []) t uri ~body:request_body =
-  apply_rate_limit t ~method_:"POST" ~uri;
-  let headers =
-    make_headers (("Content-Type", "application/json") :: headers)
-  in
+  let h = make_headers (("Content-Type", "application/json") :: headers) in
   let body = Cohttp_eio.Body.of_string request_body in
-  log_request ~method_:"POST" uri;
-  try
-    let resp, resp_body =
-      Cohttp_eio.Client.post ~sw:t.sw ~headers ~body t.client uri
-    in
-    let status = Http.Response.status resp |> Http.Status.to_int in
-    let body_str = body_to_string resp_body in
-    log_response ~method_:"POST" uri status;
-    (status, body_str)
-  with exn ->
-    let msg = Printexc.to_string exn in
-    log_error ~method_:"POST" uri msg;
-    (500, Printf.sprintf {|{"error": "Request failed: %s"}|} msg)
+  execute_request ~method_:"POST" t uri ~call:(fun () ->
+      Cohttp_eio.Client.post ~sw:t.sw ~headers:h ~body t.client uri)
 
 let do_delete ?(headers = []) t uri =
-  apply_rate_limit t ~method_:"DELETE" ~uri;
-  let headers = make_headers headers in
-  log_request ~method_:"DELETE" uri;
-  try
-    let resp, body = Cohttp_eio.Client.delete ~sw:t.sw ~headers t.client uri in
-    let status = Http.Response.status resp |> Http.Status.to_int in
-    let body_str = body_to_string body in
-    log_response ~method_:"DELETE" uri status;
-    (status, body_str)
-  with exn ->
-    let msg = Printexc.to_string exn in
-    log_error ~method_:"DELETE" uri msg;
-    (500, Printf.sprintf {|{"error": "Request failed: %s"}|} msg)
+  let h = make_headers headers in
+  execute_request ~method_:"DELETE" t uri ~call:(fun () ->
+      Cohttp_eio.Client.delete ~sw:t.sw ~headers:h t.client uri)
 
 let do_delete_with_body ?(headers = []) t uri ~body:request_body =
-  apply_rate_limit t ~method_:"DELETE" ~uri;
-  let headers =
-    make_headers (("Content-Type", "application/json") :: headers)
-  in
+  let h = make_headers (("Content-Type", "application/json") :: headers) in
   let body = Cohttp_eio.Body.of_string request_body in
-  log_request ~method_:"DELETE" uri;
-  try
-    let resp, resp_body =
-      Cohttp_eio.Client.delete ~sw:t.sw ~headers ~body t.client uri
-    in
-    let status = Http.Response.status resp |> Http.Status.to_int in
-    let body_str = body_to_string resp_body in
-    log_response ~method_:"DELETE" uri status;
-    (status, body_str)
-  with exn ->
-    let msg = Printexc.to_string exn in
-    log_error ~method_:"DELETE" uri msg;
-    (500, Printf.sprintf {|{"error": "Request failed: %s"}|} msg)
+  execute_request ~method_:"DELETE" t uri ~call:(fun () ->
+      Cohttp_eio.Client.delete ~sw:t.sw ~headers:h ~body t.client uri)
 
 (** {1 Error Handling} *)
 

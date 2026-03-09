@@ -309,9 +309,36 @@ module Decimal = struct
   let of_string s = Q.of_string s
   let of_float f = Q.of_float f
   let of_int i = Q.of_int i
-  let to_string t = Q.to_string t
+
+  let to_string t =
+    let d = Q.den t in
+    if Z.equal d Z.one then Z.to_string (Q.num t)
+    else
+      let sign = if Q.sign t < 0 then "-" else "" in
+      let abs_t = Q.abs t in
+      let n = Q.num abs_t and d = Q.den abs_t in
+      let int_part = Z.div n d in
+      let rem = Z.rem n d in
+      if Z.equal rem Z.zero then
+        Printf.sprintf "%s%s" sign (Z.to_string int_part)
+      else
+        let buf = Buffer.create 32 in
+        Buffer.add_string buf sign;
+        Buffer.add_string buf (Z.to_string int_part);
+        Buffer.add_char buf '.';
+        let r = ref rem in
+        let max_digits = 20 in
+        let i = ref 0 in
+        while (not (Z.equal !r Z.zero)) && !i < max_digits do
+          r := Z.mul !r (Z.of_int 10);
+          Buffer.add_string buf (Z.to_string (Z.div !r d));
+          r := Z.rem !r d;
+          incr i
+        done;
+        Buffer.contents buf
+
   let to_float t = Q.to_float t
-  let pp fmt t = Format.fprintf fmt "%s" (Q.to_string t)
+  let pp fmt t = Format.fprintf fmt "%s" (to_string t)
   let equal = Q.equal
   let compare = Q.compare
   let zero = Q.zero
@@ -342,5 +369,5 @@ module Decimal = struct
     | `Intlit s -> parse_or_raise "Decimal: invalid intlit: " s
     | _ -> raise_yojson_error "Decimal: expected string or number" json
 
-  let yojson_of_t t = `String (Q.to_string t)
+  let yojson_of_t t = `String (to_string t)
 end

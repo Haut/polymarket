@@ -16,6 +16,7 @@
     Or the demo will use test credentials (read-only operations only). *)
 
 open Polymarket
+module D = Primitives.Decimal
 
 (** {1 Helper Functions} *)
 
@@ -157,8 +158,9 @@ let run_demo env =
 
   (* Filter by price range *)
   let price_filtered =
-    Rfq.get_requests rfq_client ~price_min:0.3 ~price_max:0.7
-      ~sort_by:Rfq.Types.Sort_by.Price ~sort_dir:Rfq.Types.Sort_dir.Desc ()
+    Rfq.get_requests rfq_client ~price_min:(D.of_string "0.3")
+      ~price_max:(D.of_string "0.7") ~sort_by:Rfq.Types.Sort_by.Price
+      ~sort_dir:Rfq.Types.Sort_dir.Desc ()
   in
   print_result "get_requests (price 0.3-0.7)" price_filtered
     ~on_ok:(fun (r : Rfq.Types.get_requests_response) ->
@@ -166,8 +168,8 @@ let run_demo env =
 
   (* Filter by size *)
   let size_filtered =
-    Rfq.get_requests rfq_client ~size_min:100.0 ~sort_by:Rfq.Types.Sort_by.Size
-      ()
+    Rfq.get_requests rfq_client ~size_min:(D.of_int 100)
+      ~sort_by:Rfq.Types.Sort_by.Size ()
   in
   print_result "get_requests (size >= 100)" size_filtered
     ~on_ok:(fun (r : Rfq.Types.get_requests_response) ->

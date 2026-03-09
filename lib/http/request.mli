@@ -97,9 +97,8 @@ val with_body : string -> not_ready t -> ready t
 
 (** {1 Execution} *)
 
-val fetch : ready t -> int * string
-(** Execute the request and return raw (status, body). Use this for custom
-    response handling. *)
+val fetch : ready t -> (int * string, Client.error) result
+(** Execute the request and return raw (status, body) or a Network_error. *)
 
 (** {1 Response Parsers}
 

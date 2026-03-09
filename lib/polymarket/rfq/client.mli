@@ -57,12 +57,12 @@ val get_requests :
   ?state:Types.State_filter.t ->
   ?request_ids:string list ->
   ?markets:string list ->
-  ?size_min:float ->
-  ?size_max:float ->
-  ?size_usdc_min:float ->
-  ?size_usdc_max:float ->
-  ?price_min:float ->
-  ?price_max:float ->
+  ?size_min:Types.P.Decimal.t ->
+  ?size_max:Types.P.Decimal.t ->
+  ?size_usdc_min:Types.P.Decimal.t ->
+  ?size_usdc_max:Types.P.Decimal.t ->
+  ?price_min:Types.P.Decimal.t ->
+  ?price_max:Types.P.Decimal.t ->
   ?sort_by:Types.Sort_by.t ->
   ?sort_dir:Types.Sort_dir.t ->
   unit ->
@@ -87,12 +87,12 @@ val get_quotes :
   ?quote_ids:string list ->
   ?request_ids:string list ->
   ?markets:string list ->
-  ?size_min:float ->
-  ?size_max:float ->
-  ?size_usdc_min:float ->
-  ?size_usdc_max:float ->
-  ?price_min:float ->
-  ?price_max:float ->
+  ?size_min:Types.P.Decimal.t ->
+  ?size_max:Types.P.Decimal.t ->
+  ?size_usdc_min:Types.P.Decimal.t ->
+  ?size_usdc_max:Types.P.Decimal.t ->
+  ?price_min:Types.P.Decimal.t ->
+  ?price_max:Types.P.Decimal.t ->
   ?sort_by:Types.Sort_by.t ->
   ?sort_dir:Types.Sort_dir.t ->
   unit ->

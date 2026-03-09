@@ -68,12 +68,12 @@ let get_requests t ?offset ?limit ?state ?request_ids ?markets ?size_min
     |> B.query_option "state" State_filter.to_string state
     |> B.query_each "requestIds" Fun.id request_ids
     |> B.query_each "markets" Fun.id markets
-    |> B.query_option "sizeMin" string_of_float size_min
-    |> B.query_option "sizeMax" string_of_float size_max
-    |> B.query_option "sizeUsdcMin" string_of_float size_usdc_min
-    |> B.query_option "sizeUsdcMax" string_of_float size_usdc_max
-    |> B.query_option "priceMin" string_of_float price_min
-    |> B.query_option "priceMax" string_of_float price_max
+    |> B.query_option "sizeMin" P.Decimal.to_string size_min
+    |> B.query_option "sizeMax" P.Decimal.to_string size_max
+    |> B.query_option "sizeUsdcMin" P.Decimal.to_string size_usdc_min
+    |> B.query_option "sizeUsdcMax" P.Decimal.to_string size_usdc_max
+    |> B.query_option "priceMin" P.Decimal.to_string price_min
+    |> B.query_option "priceMax" P.Decimal.to_string price_max
     |> B.query_option "sortBy" Sort_by.to_string sort_by
     |> B.query_option "sortDir" Sort_dir.to_string sort_dir
   in
@@ -110,12 +110,12 @@ let get_quotes t ?offset ?limit ?state ?quote_ids ?request_ids ?markets
     |> B.query_each "quoteIds" Fun.id quote_ids
     |> B.query_each "requestIds" Fun.id request_ids
     |> B.query_each "markets" Fun.id markets
-    |> B.query_option "sizeMin" string_of_float size_min
-    |> B.query_option "sizeMax" string_of_float size_max
-    |> B.query_option "sizeUsdcMin" string_of_float size_usdc_min
-    |> B.query_option "sizeUsdcMax" string_of_float size_usdc_max
-    |> B.query_option "priceMin" string_of_float price_min
-    |> B.query_option "priceMax" string_of_float price_max
+    |> B.query_option "sizeMin" P.Decimal.to_string size_min
+    |> B.query_option "sizeMax" P.Decimal.to_string size_max
+    |> B.query_option "sizeUsdcMin" P.Decimal.to_string size_usdc_min
+    |> B.query_option "sizeUsdcMax" P.Decimal.to_string size_usdc_max
+    |> B.query_option "priceMin" P.Decimal.to_string price_min
+    |> B.query_option "priceMax" P.Decimal.to_string price_max
     |> B.query_option "sortBy" Sort_by.to_string sort_by
     |> B.query_option "sortDir" Sort_dir.to_string sort_dir
   in

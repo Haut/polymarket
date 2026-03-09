@@ -125,22 +125,26 @@ let with_body (body : string) (req : not_ready t) : ready t =
 
 (** {1 Execution} *)
 
-let fetch (req : ready t) : int * string =
+let fetch (req : ready t) : (int * string, C.error) result =
   let uri = Client.build_uri (C.base_url req.client) req.path req.params in
-  match req.method_ with
-  | GET -> C.do_get ~headers:req.headers req.client uri
-  | DELETE -> C.do_delete ~headers:req.headers req.client uri
-  | POST -> (
-      match req.body with
-      | Some body_str ->
-          C.do_post ~headers:req.headers req.client uri ~body:body_str
-      | None -> assert false (* Phantom types guarantee body is set for POST *))
-  | DELETE_WITH_BODY -> (
-      match req.body with
-      | Some body_str ->
-          C.do_delete_with_body ~headers:req.headers req.client uri
-            ~body:body_str
-      | None -> assert false (* Phantom types guarantee body is set *))
+  let result =
+    match req.method_ with
+    | GET -> C.do_get ~headers:req.headers req.client uri
+    | DELETE -> C.do_delete ~headers:req.headers req.client uri
+    | POST -> (
+        match req.body with
+        | Some body_str ->
+            C.do_post ~headers:req.headers req.client uri ~body:body_str
+        | None ->
+            assert false (* Phantom types guarantee body is set for POST *))
+    | DELETE_WITH_BODY -> (
+        match req.body with
+        | Some body_str ->
+            C.do_delete_with_body ~headers:req.headers req.client uri
+              ~body:body_str
+        | None -> assert false (* Phantom types guarantee body is set *))
+  in
+  Result.map_error (fun msg -> C.Network_error { message = msg }) result
 
 (** {1 Response Parsers}
 
@@ -148,30 +152,37 @@ let fetch (req : ready t) : int * string =
 
 let fetch_json ?(expected_fields : string list option) ?(context : string = "")
     (parser : Yojson.Safe.t -> 'a) (req : ready t) : ('a, C.error) result =
-  let status, body = fetch req in
-  C.handle_response status body (fun b ->
-      match expected_fields with
-      | Some fields ->
-          C.parse_with_field_check ~expected_fields:fields ~context b parser
-      | None -> Json.parse parser b |> Result.map_error Client.to_error)
+  match fetch req with
+  | Error _ as e -> e
+  | Ok (status, body) ->
+      C.handle_response status body (fun b ->
+          match expected_fields with
+          | Some fields ->
+              C.parse_with_field_check ~expected_fields:fields ~context b parser
+          | None -> Json.parse parser b |> Result.map_error Client.to_error)
 
 let fetch_json_list ?(expected_fields : string list option)
     ?(context : string = "") (parser : Yojson.Safe.t -> 'a) (req : ready t) :
     ('a list, C.error) result =
-  let status, body = fetch req in
-  C.handle_response status body (fun b ->
-      match expected_fields with
-      | Some fields ->
-          C.parse_list_with_field_check ~expected_fields:fields ~context b
-            (Ppx_yojson_conv_lib.Yojson_conv.list_of_yojson parser)
-      | None -> Json.parse_list parser b |> Result.map_error Client.to_error)
+  match fetch req with
+  | Error _ as e -> e
+  | Ok (status, body) ->
+      C.handle_response status body (fun b ->
+          match expected_fields with
+          | Some fields ->
+              C.parse_list_with_field_check ~expected_fields:fields ~context b
+                (Ppx_yojson_conv_lib.Yojson_conv.list_of_yojson parser)
+          | None -> Json.parse_list parser b |> Result.map_error Client.to_error)
 
 let fetch_text (req : ready t) : (string, C.error) result =
-  let status, body = fetch req in
-  C.handle_response status body (fun b -> Ok b)
+  match fetch req with
+  | Error _ as e -> e
+  | Ok (status, body) -> C.handle_response status body (fun b -> Ok b)
 
 let fetch_unit (req : ready t) : (unit, C.error) result =
-  let status, body = fetch req in
-  match status with
-  | 200 | 201 | 204 -> Ok ()
-  | _ -> Error (C.parse_error ~status body)
+  match fetch req with
+  | Error _ as e -> e
+  | Ok (status, body) -> (
+      match status with
+      | 200 | 201 | 204 -> Ok ()
+      | _ -> Error (C.parse_error ~status body))

@@ -76,7 +76,9 @@ val private_key_to_address : private_key -> (string, error) result
 val current_timestamp_ms : unit -> string
 (** Get current Unix timestamp in milliseconds as string. *)
 
-(** {1 EIP-712 Encoding Helpers} *)
+(** {1 EIP-712 Encoding Helpers}
+
+    Internal helpers used by [Order_signing]. *)
 
 val pad_hex_32 : string -> string
 (** Pad hex string to 64 chars (32 bytes) with leading zeros. *)
