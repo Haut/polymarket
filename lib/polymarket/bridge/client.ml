@@ -27,6 +27,42 @@ let create_deposit_addresses t ~address () =
   |> B.fetch_json ~expected_fields:yojson_fields_of_deposit_response
        ~context:"deposit_response" deposit_response_of_yojson
 
+(** {1 Withdrawal Endpoint} *)
+
+let create_withdrawal_addresses t ~address ~to_chain_id ~to_token_address
+    ~recipient_addr () =
+  B.new_post t "/withdraw"
+  |> B.with_body
+       (J.body
+          (J.obj
+             [
+               ("address", J.string (P.Address.to_string address));
+               ("toChainId", J.string to_chain_id);
+               ("toTokenAddress", J.string to_token_address);
+               ("recipientAddr", J.string recipient_addr);
+             ]))
+  |> B.fetch_json ~expected_fields:yojson_fields_of_deposit_response
+       ~context:"deposit_response" deposit_response_of_yojson
+
+(** {1 Quote Endpoint} *)
+
+let get_quote t ~from_amount_base_unit ~from_chain_id ~from_token_address
+    ~recipient_address ~to_chain_id ~to_token_address () =
+  B.new_post t "/quote"
+  |> B.with_body
+       (J.body
+          (J.obj
+             [
+               ("fromAmountBaseUnit", J.string from_amount_base_unit);
+               ("fromChainId", J.string from_chain_id);
+               ("fromTokenAddress", J.string from_token_address);
+               ("recipientAddress", J.string recipient_address);
+               ("toChainId", J.string to_chain_id);
+               ("toTokenAddress", J.string to_token_address);
+             ]))
+  |> B.fetch_json ~expected_fields:yojson_fields_of_quote_response
+       ~context:"quote_response" quote_response_of_yojson
+
 (** {1 Supported Assets Endpoint} *)
 
 let get_supported_assets t () =

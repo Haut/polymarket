@@ -78,6 +78,42 @@ val create_deposit_addresses :
     @param address Your Polymarket wallet address (required)
     @return Deposit addresses for EVM, SVM, and BTC networks *)
 
+(** {1 Withdrawal Endpoint} *)
+
+val create_withdrawal_addresses :
+  t ->
+  address:Common.Primitives.Address.t ->
+  to_chain_id:string ->
+  to_token_address:string ->
+  recipient_addr:string ->
+  unit ->
+  (deposit_response, error) result
+(** Create withdrawal addresses for bridging assets out of Polymarket.
+    @param address Source Polymarket wallet address on Polygon
+    @param to_chain_id Destination chain ID
+    @param to_token_address Destination token contract address
+    @param recipient_addr Destination wallet address where funds will be sent *)
+
+(** {1 Quote Endpoint} *)
+
+val get_quote :
+  t ->
+  from_amount_base_unit:string ->
+  from_chain_id:string ->
+  from_token_address:string ->
+  recipient_address:string ->
+  to_chain_id:string ->
+  to_token_address:string ->
+  unit ->
+  (quote_response, error) result
+(** Get a quote for bridging/swapping assets.
+    @param from_amount_base_unit Amount of tokens to send in base units
+    @param from_chain_id Source chain ID
+    @param from_token_address Source token contract address
+    @param recipient_address Recipient wallet address
+    @param to_chain_id Destination chain ID
+    @param to_token_address Destination token contract address *)
+
 (** {1 Supported Assets Endpoint} *)
 
 val get_supported_assets : t -> unit -> (supported_asset list, error) result

@@ -256,7 +256,6 @@ let get_comment t ~id ?get_positions () =
   |> B.query_bool "get_positions" get_positions
   |> B.fetch_json_list ~expected_fields:yojson_fields_of_comment
        ~context:"comment" comment_of_yojson
-  |> Result.map (function c :: _ -> Some c | [] -> None)
 
 let get_user_comments t ~user_address ?limit ?offset ?order ?ascending () =
   B.new_get t (Printf.sprintf "/comments/user_address/%s" user_address)

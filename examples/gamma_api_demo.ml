@@ -203,14 +203,14 @@ let run_demo env =
       match comments with
       | Ok (c :: _) -> (
           (match Gamma.get_comment client ~id:c.id () with
-          | Ok (Some comment) ->
+          | Ok (comment :: _) ->
               let body = Option.value ~default:"(no body)" comment.body in
               let truncated =
                 if String.length body > 50 then String.sub body 0 50 ^ "..."
                 else body
               in
               Logger.ok "get_comment" truncated
-          | Ok None -> Logger.skip "get_comment" "comment not found"
+          | Ok [] -> Logger.skip "get_comment" "comment not found"
           | Error err -> Logger.error "get_comment" (Gamma.error_to_string err));
 
           match c.user_address with

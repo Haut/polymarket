@@ -370,12 +370,8 @@ val get_comments :
     @param holders_only Filter to holders only *)
 
 val get_comment :
-  t ->
-  id:string ->
-  ?get_positions:bool ->
-  unit ->
-  (comment option, error) result
-(** Get a comment by ID.
+  t -> id:string -> ?get_positions:bool -> unit -> (comment list, error) result
+(** Get comments by comment ID. Returns an array of comments.
     @param id Comment ID (required)
     @param get_positions Include position data *)
 

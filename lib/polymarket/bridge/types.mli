@@ -53,6 +53,36 @@ type deposit_response = {
 [@@deriving yojson, show, eq]
 (** Response from POST /deposit *)
 
+(** {1 Quote Types} *)
+
+type fee_breakdown = {
+  app_fee_label : string option;
+  app_fee_percent : float option;
+  app_fee_usd : float option;
+  fill_cost_percent : float option;
+  fill_cost_usd : float option;
+  gas_usd : float option;
+  max_slippage : float option;
+  min_received : float option;
+  swap_impact : float option;
+  swap_impact_usd : float option;
+  total_impact : float option;
+  total_impact_usd : float option;
+}
+[@@deriving yojson, show, eq]
+(** Breakdown of estimated fees for a quote *)
+
+type quote_response = {
+  est_checkout_time_ms : int option;
+  est_fee_breakdown : fee_breakdown option;
+  est_input_usd : float option;
+  est_output_usd : float option;
+  est_to_token_base_unit : string option;
+  quote_id : string option;
+}
+[@@deriving yojson, show, eq]
+(** Response from POST /quote *)
+
 (** {1 Status Endpoint Types} *)
 
 (** Transaction status for bridge deposits *)
@@ -75,14 +105,14 @@ end
 
 (** Individual deposit transaction with status *)
 type deposit_transaction = {
-  from_chain_id : int;
+  from_chain_id : string;
   from_token_address : string;
-  from_amount_base_unit : P.U256.t;
-  to_chain_id : int;
-  to_token_address : P.Address.t;
+  from_amount_base_unit : string;
+  to_chain_id : string;
+  to_token_address : string;
   status : Deposit_transaction_status.t;
   tx_hash : string option;
-  created_time_ms : int64 option;
+  created_time_ms : float option;
 }
 [@@deriving yojson, show, eq]
 (** A single deposit transaction with chain IDs, amounts, and status *)
@@ -99,6 +129,8 @@ val yojson_fields_of_supported_asset : string list
 val yojson_fields_of_supported_assets_response : string list
 val yojson_fields_of_deposit_addresses : string list
 val yojson_fields_of_deposit_response : string list
+val yojson_fields_of_fee_breakdown : string list
+val yojson_fields_of_quote_response : string list
 val yojson_fields_of_deposit_transaction : string list
 val yojson_fields_of_status_response : string list
 

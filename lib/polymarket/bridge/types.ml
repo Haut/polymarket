@@ -55,6 +55,38 @@ type deposit_response = {
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Response from POST /deposit *)
 
+(** {1 Quote Types} *)
+
+type fee_breakdown = {
+  app_fee_label : string option; [@default None] [@key "appFeeLabel"]
+  app_fee_percent : float option; [@default None] [@key "appFeePercent"]
+  app_fee_usd : float option; [@default None] [@key "appFeeUsd"]
+  fill_cost_percent : float option; [@default None] [@key "fillCostPercent"]
+  fill_cost_usd : float option; [@default None] [@key "fillCostUsd"]
+  gas_usd : float option; [@default None] [@key "gasUsd"]
+  max_slippage : float option; [@default None] [@key "maxSlippage"]
+  min_received : float option; [@default None] [@key "minReceived"]
+  swap_impact : float option; [@default None] [@key "swapImpact"]
+  swap_impact_usd : float option; [@default None] [@key "swapImpactUsd"]
+  total_impact : float option; [@default None] [@key "totalImpact"]
+  total_impact_usd : float option; [@default None] [@key "totalImpactUsd"]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** Breakdown of estimated fees for a quote *)
+
+type quote_response = {
+  est_checkout_time_ms : int option; [@default None] [@key "estCheckoutTimeMs"]
+  est_fee_breakdown : fee_breakdown option;
+      [@default None] [@key "estFeeBreakdown"]
+  est_input_usd : float option; [@default None] [@key "estInputUsd"]
+  est_output_usd : float option; [@default None] [@key "estOutputUsd"]
+  est_to_token_base_unit : string option;
+      [@default None] [@key "estToTokenBaseUnit"]
+  quote_id : string option; [@default None] [@key "quoteId"]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** Response from POST /quote *)
+
 (** {1 Status Endpoint Types} *)
 
 (** Transaction status for bridge deposits *)
@@ -71,14 +103,14 @@ end
 
 (** Individual deposit transaction with status *)
 type deposit_transaction = {
-  from_chain_id : int; [@key "fromChainId"]
+  from_chain_id : string; [@key "fromChainId"]
   from_token_address : string; [@key "fromTokenAddress"]
-  from_amount_base_unit : P.U256.t; [@key "fromAmountBaseUnit"]
-  to_chain_id : int; [@key "toChainId"]
-  to_token_address : P.Address.t; [@key "toTokenAddress"]
+  from_amount_base_unit : string; [@key "fromAmountBaseUnit"]
+  to_chain_id : string; [@key "toChainId"]
+  to_token_address : string; [@key "toTokenAddress"]
   status : Deposit_transaction_status.t;
   tx_hash : string option; [@default None] [@key "txHash"]
-  created_time_ms : int64 option; [@default None] [@key "createdTimeMs"]
+  created_time_ms : float option; [@default None] [@key "createdTimeMs"]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** A single deposit transaction with chain IDs, amounts, and status *)
