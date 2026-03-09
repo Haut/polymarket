@@ -138,6 +138,16 @@ module Unauthed : sig
     unit ->
     (Types.prices_response, error) result
 
+  val get_prices_query :
+    t ->
+    token_ids:string list ->
+    sides:Types.Side.t list ->
+    unit ->
+    (Types.prices_response, error) result
+  (** Get market prices for multiple tokens via query parameters.
+      @param token_ids Token IDs (comma-separated internally)
+      @param sides Corresponding sides for each token ID *)
+
   val get_spreads :
     t -> token_ids:string list -> unit -> (Types.spreads_response, error) result
 
@@ -220,6 +230,16 @@ module L1 : sig
     requests:(string * Types.Side.t) list ->
     unit ->
     (Types.prices_response, error) result
+
+  val get_prices_query :
+    t ->
+    token_ids:string list ->
+    sides:Types.Side.t list ->
+    unit ->
+    (Types.prices_response, error) result
+  (** Get market prices for multiple tokens via query parameters.
+      @param token_ids Token IDs (comma-separated internally)
+      @param sides Corresponding sides for each token ID *)
 
   val get_spreads :
     t -> token_ids:string list -> unit -> (Types.spreads_response, error) result
@@ -374,6 +394,16 @@ module L2 : sig
     requests:(string * Types.Side.t) list ->
     unit ->
     (Types.prices_response, error) result
+
+  val get_prices_query :
+    t ->
+    token_ids:string list ->
+    sides:Types.Side.t list ->
+    unit ->
+    (Types.prices_response, error) result
+  (** Get market prices for multiple tokens via query parameters.
+      @param token_ids Token IDs (comma-separated internally)
+      @param sides Corresponding sides for each token ID *)
 
   val get_spreads :
     t -> token_ids:string list -> unit -> (Types.spreads_response, error) result
