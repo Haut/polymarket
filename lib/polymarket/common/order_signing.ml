@@ -11,9 +11,17 @@ let pad_hex_32 hex =
   let len = String.length hex in
   if len >= 64 then hex else String.make (64 - len) '0' ^ hex
 
-(** Encode uint256 as 32-byte hex *)
+(** Encode native int as 32-byte hex (only for small values like side,
+    signature_type) *)
 let encode_uint256 n =
   let hex = Printf.sprintf "%x" n in
+  pad_hex_32 hex
+
+(** Encode decimal string as 32-byte hex using Zarith (handles full 256-bit
+    range) *)
+let encode_uint256_str s =
+  let z = Z.of_string s in
+  let hex = Z.format "%x" z in
   pad_hex_32 hex
 
 (** {1 Default Values} *)
@@ -89,7 +97,6 @@ let sign_order ~private_key ~salt ~maker ~signer ~taker ~token_id ~maker_amount
     in
     pad_hex_32 hex
   in
-  let encode_uint256_str s = encode_uint256 (int_of_string s) in
   let struct_data =
     order_type_hash ^ encode_uint256_str salt ^ encode_address maker
     ^ encode_address signer ^ encode_address taker

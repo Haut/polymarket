@@ -49,6 +49,11 @@ let validate_hex_prefixed ~name ~expected_length s =
     Error (Invalid_hex { type_name = name })
   else Ok s
 
+(** {1 JSON Error Helper} *)
+
+let raise_yojson_error msg json =
+  raise (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error (Failure msg, json))
+
 (** {1 String Type Functors}
 
     Shared implementations for validated string types. *)
@@ -56,6 +61,20 @@ let validate_hex_prefixed ~name ~expected_length s =
 module type STRING_CONFIG = sig
   val name : string
   val validate : string -> (string, validation_error) result
+end
+
+module type VALIDATED_STRING = sig
+  type t = private string
+
+  val make : string -> (t, validation_error) result
+  val unsafe_of_string : string -> t
+  val to_string : t -> string
+  val pp : Format.formatter -> t -> unit
+  val equal : t -> t -> bool
+  val of_yojson : Yojson.Safe.t -> (t, validation_error) result
+  val to_yojson : t -> Yojson.Safe.t
+  val yojson_of_t : t -> Yojson.Safe.t
+  val t_of_yojson : Yojson.Safe.t -> t
 end
 
 module Make_string_type (C : STRING_CONFIG) = struct
@@ -78,49 +97,43 @@ module Make_string_type (C : STRING_CONFIG) = struct
   let of_yojson_exn json =
     match of_yojson json with
     | Ok v -> v
-    | Error e ->
-        raise
-          (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
-             (Failure (string_of_validation_error e), json))
+    | Error e -> raise_yojson_error (string_of_validation_error e) json
 
   let to_yojson t = `String t
   let yojson_of_t = to_yojson
   let t_of_yojson = of_yojson_exn
 end
 
-module type HEX_STRING_CONFIG = STRING_CONFIG
-(** Alias for backwards compatibility *)
-
-module Make_hex_string = Make_string_type
+(** Validate a variable-length 0x-prefixed hex string *)
+let validate_hex_variable ~name s =
+  let len = String.length s in
+  if len < 3 then
+    Error (Invalid_format { type_name = name; reason = "too short" })
+  else if s.[0] <> '0' || s.[1] <> 'x' then
+    Error (Missing_prefix { type_name = name; expected = "0x" })
+  else if not (is_hex_string (String.sub s 2 (len - 2))) then
+    Error (Invalid_hex { type_name = name })
+  else Ok s
 
 (** {1 Address Module} *)
 
-module Address = Make_hex_string (struct
+module Address = Make_string_type (struct
   let name = "Address"
   let validate = validate_hex_prefixed ~name ~expected_length:42
 end)
 
 (** {1 Hash64 Module} *)
 
-module Hash64 = Make_hex_string (struct
+module Hash64 = Make_string_type (struct
   let name = "Hash64"
   let validate = validate_hex_prefixed ~name ~expected_length:66
 end)
 
 (** {1 Hash Module (variable length)} *)
 
-module Hash = Make_hex_string (struct
+module Hash = Make_string_type (struct
   let name = "Hash"
-
-  let validate s =
-    let len = String.length s in
-    if len < 3 then
-      Error (Invalid_format { type_name = name; reason = "too short" })
-    else if s.[0] <> '0' || s.[1] <> 'x' then
-      Error (Missing_prefix { type_name = name; expected = "0x" })
-    else if not (is_hex_string (String.sub s 2 (len - 2))) then
-      Error (Invalid_hex { type_name = name })
-    else Ok s
+  let validate = validate_hex_variable ~name
 end)
 
 (** {1 Signature Module}
@@ -129,16 +142,7 @@ end)
 
 module Signature = Make_string_type (struct
   let name = "Signature"
-
-  let validate s =
-    let len = String.length s in
-    if len < 3 then
-      Error (Invalid_format { type_name = name; reason = "too short" })
-    else if s.[0] <> '0' || s.[1] <> 'x' then
-      Error (Missing_prefix { type_name = name; expected = "0x" })
-    else if not (is_hex_string (String.sub s 2 (len - 2))) then
-      Error (Invalid_hex { type_name = name })
-    else Ok s
+  let validate = validate_hex_variable ~name
 end)
 
 (** {1 UUID-based ID Types}
@@ -184,10 +188,7 @@ module Timestamp = struct
   let t_of_yojson json =
     match json with
     | `String s -> of_string_exn s
-    | _ ->
-        raise
-          (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
-             (Failure "Timestamp: expected string", json))
+    | _ -> raise_yojson_error "Timestamp: expected string" json
 
   let yojson_of_t t = `String (to_string t)
   let pp fmt t = Format.fprintf fmt "%s" (to_string t)
@@ -209,11 +210,6 @@ end
 module Sort_dir = struct
   type t = Asc | Desc [@@deriving enum]
 end
-
-(** {1 Decimal Module}
-
-    Arbitrary-precision decimal numbers using Zarith rationals. Used for
-    financial values where floating-point approximation is unacceptable. *)
 
 (** {1 U256 Module}
 
@@ -291,31 +287,18 @@ module U256 = struct
   let ( >= ) = Z.geq
 
   let t_of_yojson json =
+    let of_string_or_raise s =
+      match of_string s with
+      | Ok v -> v
+      | Error e -> raise_yojson_error (string_of_validation_error e) json
+    in
     match json with
-    | `String s -> (
-        match of_string s with
-        | Ok v -> v
-        | Error e ->
-            raise
-              (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
-                 (Failure (string_of_validation_error e), json)))
+    | `String s -> of_string_or_raise s
     | `Int i ->
         if Stdlib.(i >= 0) then Z.of_int i
-        else
-          raise
-            (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
-               (Failure "U256: negative value not allowed", json))
-    | `Intlit s -> (
-        match of_string s with
-        | Ok v -> v
-        | Error e ->
-            raise
-              (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
-                 (Failure (string_of_validation_error e), json)))
-    | _ ->
-        raise
-          (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
-             (Failure "U256: expected string or int", json))
+        else raise_yojson_error "U256: negative value not allowed" json
+    | `Intlit s -> of_string_or_raise s
+    | _ -> raise_yojson_error "U256: expected string or int" json
 
   let yojson_of_t t = `String (Z.to_string t)
 end
@@ -349,25 +332,15 @@ module Decimal = struct
   let ( >= ) = Q.geq
 
   let t_of_yojson json =
+    let parse_or_raise prefix s =
+      try Q.of_string s with _ -> raise_yojson_error (prefix ^ s) json
+    in
     match json with
-    | `String s -> (
-        try Q.of_string s
-        with _ ->
-          raise
-            (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
-               (Failure ("Decimal: invalid string: " ^ s), json)))
+    | `String s -> parse_or_raise "Decimal: invalid string: " s
     | `Float f -> Q.of_float f
     | `Int i -> Q.of_int i
-    | `Intlit s -> (
-        try Q.of_string s
-        with _ ->
-          raise
-            (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
-               (Failure ("Decimal: invalid intlit: " ^ s), json)))
-    | _ ->
-        raise
-          (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
-             (Failure "Decimal: expected string or number", json))
+    | `Intlit s -> parse_or_raise "Decimal: invalid intlit: " s
+    | _ -> raise_yojson_error "Decimal: expected string or number" json
 
   let yojson_of_t t = `String (Q.to_string t)
 end

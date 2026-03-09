@@ -21,251 +21,45 @@ val string_of_validation_error : validation_error -> string
 val pp_validation_error : Format.formatter -> validation_error -> unit
 (** Pretty-printer for validation errors. *)
 
-(** {1 Address Module}
+(** {1 Validated String Types}
 
-    Ethereum address type (0x-prefixed, 40 hex chars, total 42 chars). Pattern:
-    [^0x[a-fA-F0-9]\{40\}$] *)
-module Address : sig
+    Shared signature for all validated string wrapper types. *)
+
+module type VALIDATED_STRING = sig
   type t = private string
 
   val make : string -> (t, validation_error) result
-  (** Create an address with validation. Returns Error if invalid. *)
-
   val unsafe_of_string : string -> t
-  (** Create from string without validation. Use only for trusted sources. *)
-
   val to_string : t -> string
-  (** Convert to string. *)
-
   val pp : Format.formatter -> t -> unit
-  (** Pretty printer for Format. *)
-
   val equal : t -> t -> bool
-  (** Equality comparison. *)
-
   val of_yojson : Yojson.Safe.t -> (t, validation_error) result
-  (** JSON deserialization with validation. *)
-
   val to_yojson : t -> Yojson.Safe.t
-  (** JSON serialization. *)
-
   val yojson_of_t : t -> Yojson.Safe.t
-  (** JSON serialization (ppx_yojson_conv compatibility). *)
-
   val t_of_yojson : Yojson.Safe.t -> t
-  (** JSON deserialization (ppx_yojson_conv compatibility). *)
 end
 
-(** {1 Hash64 Module}
+module Address : VALIDATED_STRING
+(** Ethereum address (0x-prefixed, 40 hex chars, total 42 chars). *)
 
-    64-character hex hash type (0x-prefixed, 64 hex chars, total 66 chars).
-    Pattern: [^0x[a-fA-F0-9]\{64\}$] *)
-module Hash64 : sig
-  type t = private string
+module Hash64 : VALIDATED_STRING
+(** 64-character hex hash (0x-prefixed, 64 hex chars, total 66 chars). *)
 
-  val make : string -> (t, validation_error) result
-  (** Create a hash64 with validation. Returns Error if invalid. *)
+module Hash : VALIDATED_STRING
+(** Variable-length hex hash (0x-prefixed). *)
 
-  val unsafe_of_string : string -> t
-  (** Create from string without validation. Use only for trusted sources. *)
+module Signature : VALIDATED_STRING
+(** Hex-encoded cryptographic signature (0x-prefixed, variable length). Distinct
+    type from Hash to prevent mixing signatures with other hex data. *)
 
-  val to_string : t -> string
-  (** Convert to string. *)
+module Request_id : VALIDATED_STRING
+(** UUID for RFQ requests. Distinct from Quote_id and Trade_id. *)
 
-  val pp : Format.formatter -> t -> unit
-  (** Pretty printer for Format. *)
+module Quote_id : VALIDATED_STRING
+(** UUID for RFQ quotes. Distinct from Request_id and Trade_id. *)
 
-  val equal : t -> t -> bool
-  (** Equality comparison. *)
-
-  val of_yojson : Yojson.Safe.t -> (t, validation_error) result
-  (** JSON deserialization with validation. *)
-
-  val to_yojson : t -> Yojson.Safe.t
-  (** JSON serialization. *)
-
-  val yojson_of_t : t -> Yojson.Safe.t
-  (** JSON serialization (ppx_yojson_conv compatibility). *)
-
-  val t_of_yojson : Yojson.Safe.t -> t
-  (** JSON deserialization (ppx_yojson_conv compatibility). *)
-end
-
-(** {1 Hash Module}
-
-    Variable-length hex hash type (0x-prefixed, any number of hex chars). Used
-    for signatures and other variable-length hex data. *)
-module Hash : sig
-  type t = private string
-
-  val make : string -> (t, validation_error) result
-  (** Create a hash with validation. Returns Error if invalid. *)
-
-  val unsafe_of_string : string -> t
-  (** Create from string without validation. Use only for trusted sources. *)
-
-  val to_string : t -> string
-  (** Convert to string. *)
-
-  val pp : Format.formatter -> t -> unit
-  (** Pretty printer for Format. *)
-
-  val equal : t -> t -> bool
-  (** Equality comparison. *)
-
-  val of_yojson : Yojson.Safe.t -> (t, validation_error) result
-  (** JSON deserialization with validation. *)
-
-  val to_yojson : t -> Yojson.Safe.t
-  (** JSON serialization. *)
-
-  val yojson_of_t : t -> Yojson.Safe.t
-  (** JSON serialization (ppx_yojson_conv compatibility). *)
-
-  val t_of_yojson : Yojson.Safe.t -> t
-  (** JSON deserialization (ppx_yojson_conv compatibility). *)
-end
-
-(** {1 Signature Module}
-
-    Hex-encoded cryptographic signature (0x-prefixed, variable length). This is
-    a distinct type from Hash to prevent accidentally mixing signatures with
-    other hex data. *)
-module Signature : sig
-  type t = private string
-
-  val make : string -> (t, validation_error) result
-  (** Create a signature with validation. Returns Error if invalid hex. *)
-
-  val unsafe_of_string : string -> t
-  (** Create from string without validation. Use only for trusted sources. *)
-
-  val to_string : t -> string
-  (** Convert to string. *)
-
-  val pp : Format.formatter -> t -> unit
-  (** Pretty printer for Format. *)
-
-  val equal : t -> t -> bool
-  (** Equality comparison. *)
-
-  val of_yojson : Yojson.Safe.t -> (t, validation_error) result
-  (** JSON deserialization with validation. *)
-
-  val to_yojson : t -> Yojson.Safe.t
-  (** JSON serialization. *)
-
-  val yojson_of_t : t -> Yojson.Safe.t
-  (** JSON serialization (ppx_yojson_conv compatibility). *)
-
-  val t_of_yojson : Yojson.Safe.t -> t
-  (** JSON deserialization (ppx_yojson_conv compatibility). *)
-end
-
-(** {1 Request_id Module}
-
-    UUID for RFQ requests. This is a distinct type from Quote_id and Trade_id to
-    prevent accidentally mixing different ID kinds. *)
-module Request_id : sig
-  type t = private string
-
-  val make : string -> (t, validation_error) result
-  (** Create a request_id with validation. Returns Error if empty. *)
-
-  val unsafe_of_string : string -> t
-  (** Create from string without validation. Use only for trusted sources. *)
-
-  val to_string : t -> string
-  (** Convert to string. *)
-
-  val pp : Format.formatter -> t -> unit
-  (** Pretty printer for Format. *)
-
-  val equal : t -> t -> bool
-  (** Equality comparison. *)
-
-  val of_yojson : Yojson.Safe.t -> (t, validation_error) result
-  (** JSON deserialization with validation. *)
-
-  val to_yojson : t -> Yojson.Safe.t
-  (** JSON serialization. *)
-
-  val yojson_of_t : t -> Yojson.Safe.t
-  (** JSON serialization (ppx_yojson_conv compatibility). *)
-
-  val t_of_yojson : Yojson.Safe.t -> t
-  (** JSON deserialization (ppx_yojson_conv compatibility). *)
-end
-
-(** {1 Quote_id Module}
-
-    UUID for RFQ quotes. This is a distinct type from Request_id and Trade_id to
-    prevent accidentally mixing different ID kinds. *)
-module Quote_id : sig
-  type t = private string
-
-  val make : string -> (t, validation_error) result
-  (** Create a quote_id with validation. Returns Error if empty. *)
-
-  val unsafe_of_string : string -> t
-  (** Create from string without validation. Use only for trusted sources. *)
-
-  val to_string : t -> string
-  (** Convert to string. *)
-
-  val pp : Format.formatter -> t -> unit
-  (** Pretty printer for Format. *)
-
-  val equal : t -> t -> bool
-  (** Equality comparison. *)
-
-  val of_yojson : Yojson.Safe.t -> (t, validation_error) result
-  (** JSON deserialization with validation. *)
-
-  val to_yojson : t -> Yojson.Safe.t
-  (** JSON serialization. *)
-
-  val yojson_of_t : t -> Yojson.Safe.t
-  (** JSON serialization (ppx_yojson_conv compatibility). *)
-
-  val t_of_yojson : Yojson.Safe.t -> t
-  (** JSON deserialization (ppx_yojson_conv compatibility). *)
-end
-
-(** {1 Trade_id Module}
-
-    UUID for trades. This is a distinct type from Request_id and Quote_id to
-    prevent accidentally mixing different ID kinds. *)
-module Trade_id : sig
-  type t = private string
-
-  val make : string -> (t, validation_error) result
-  (** Create a trade_id with validation. Returns Error if empty. *)
-
-  val unsafe_of_string : string -> t
-  (** Create from string without validation. Use only for trusted sources. *)
-
-  val to_string : t -> string
-  (** Convert to string. *)
-
-  val pp : Format.formatter -> t -> unit
-  (** Pretty printer for Format. *)
-
-  val equal : t -> t -> bool
-  (** Equality comparison. *)
-
-  val of_yojson : Yojson.Safe.t -> (t, validation_error) result
-  (** JSON deserialization with validation. *)
-
-  val to_yojson : t -> Yojson.Safe.t
-  (** JSON serialization. *)
-
-  val yojson_of_t : t -> Yojson.Safe.t
-  (** JSON serialization (ppx_yojson_conv compatibility). *)
-
-  val t_of_yojson : Yojson.Safe.t -> t
-  (** JSON deserialization (ppx_yojson_conv compatibility). *)
-end
+module Trade_id : VALIDATED_STRING
+(** UUID for trades. Distinct from Request_id and Quote_id. *)
 
 (** {1 Timestamps}
 
