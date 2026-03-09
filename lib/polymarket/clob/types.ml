@@ -90,6 +90,16 @@ module Trade_type = struct
   type t = Taker | Maker [@@deriving enum]
 end
 
+module Trade_status = struct
+  type t =
+    | Confirmed [@value "TRADE_STATUS_CONFIRMED"]
+    | Failed [@value "TRADE_STATUS_FAILED"]
+    | Retrying [@value "TRADE_STATUS_RETRYING"]
+    | Matched [@value "TRADE_STATUS_MATCHED"]
+    | Mined [@value "TRADE_STATUS_MINED"]
+  [@@deriving enum]
+end
+
 (** {1 Order Book Types} *)
 
 type order_book_level = {
@@ -264,19 +274,164 @@ type clob_trade = {
   size : string option; [@yojson.option]
   fee_rate_bps : string option; [@yojson.option] [@key "fee_rate_bps"]
   price : string option; [@yojson.option]
-  status : string option; [@yojson.option]
+  status : Trade_status.t option; [@yojson.option]
   match_time : string option; [@yojson.option] [@key "match_time"]
+  match_time_nano : string option; [@yojson.option] [@key "match_time_nano"]
   last_update : string option; [@yojson.option] [@key "last_update"]
   outcome : string option; [@yojson.option]
-  maker_address : P.Address.t option; [@yojson.option] [@key "maker_address"]
-  owner : string option; [@yojson.option]
-  transaction_hash : string option; [@yojson.option] [@key "transaction_hash"]
   bucket_index : int option; [@yojson.option] [@key "bucket_index"]
+  owner : string option; [@yojson.option]
+  maker_address : P.Address.t option; [@yojson.option] [@key "maker_address"]
+  transaction_hash : string option; [@yojson.option] [@key "transaction_hash"]
+  err_msg : string option; [@yojson.option] [@key "err_msg"]
   maker_orders : maker_order_fill list; [@default []] [@key "maker_orders"]
-  trade_type : Trade_type.t option; [@yojson.option] [@key "type"]
+  trader_side : Trade_type.t option; [@yojson.option] [@key "trader_side"]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** A trade on the CLOB *)
+
+type trades_response = {
+  limit : int;
+  next_cursor : string; [@key "next_cursor"]
+  count : int;
+  data : clob_trade list; [@default []]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** Paginated response from get trades endpoint *)
+
+(** {1 Builder Trade Types} *)
+
+type builder_trade = {
+  id : string option; [@yojson.option]
+  trade_type : string option; [@yojson.option] [@key "tradeType"]
+  taker_order_hash : string option; [@yojson.option] [@key "takerOrderHash"]
+  builder : string option; [@yojson.option]
+  market : string option; [@yojson.option]
+  asset_id : string option; [@yojson.option] [@key "assetId"]
+  side : Side.t option; [@yojson.option]
+  size : string option; [@yojson.option]
+  size_usdc : string option; [@yojson.option] [@key "sizeUsdc"]
+  price : string option; [@yojson.option]
+  status : string option; [@yojson.option]
+  outcome : string option; [@yojson.option]
+  outcome_index : int option; [@yojson.option] [@key "outcomeIndex"]
+  owner : string option; [@yojson.option]
+  maker : P.Address.t option; [@yojson.option]
+  transaction_hash : string option; [@yojson.option] [@key "transactionHash"]
+  match_time : string option; [@yojson.option] [@key "matchTime"]
+  bucket_index : int option; [@yojson.option] [@key "bucketIndex"]
+  fee : string option; [@yojson.option]
+  fee_usdc : string option; [@yojson.option] [@key "feeUsdc"]
+  err_msg : string option; [@yojson.option] [@key "err_msg"]
+  created_at : string option; [@yojson.option] [@key "createdAt"]
+  updated_at : string option; [@yojson.option] [@key "updatedAt"]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** A builder-originated trade *)
+
+type builder_trades_response = {
+  limit : int;
+  next_cursor : string; [@key "next_cursor"]
+  count : int;
+  data : builder_trade list; [@default []]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** Paginated response from get builder trades endpoint *)
+
+(** {1 Simplified Market Types} *)
+
+type reward_rate = {
+  asset_address : string option; [@yojson.option] [@key "asset_address"]
+  rewards_daily_rate : float option; [@yojson.option] [@key "rewards_daily_rate"]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** Reward rate for a specific asset *)
+
+type rewards = {
+  rates : reward_rate list; [@default []]
+  min_size : float option; [@yojson.option] [@key "min_size"]
+  max_spread : float option; [@yojson.option] [@key "max_spread"]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** Rewards configuration for a market *)
+
+type market_token = {
+  token_id : string option; [@yojson.option] [@key "token_id"]
+  outcome : string option; [@yojson.option]
+  price : float option; [@yojson.option]
+  winner : bool option; [@yojson.option]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** Token within a simplified market *)
+
+type simplified_market = {
+  condition_id : string option; [@yojson.option] [@key "condition_id"]
+  rewards : rewards option; [@yojson.option]
+  tokens : market_token list; [@default []]
+  active : bool option; [@yojson.option]
+  closed : bool option; [@yojson.option]
+  archived : bool option; [@yojson.option]
+  accepting_orders : bool option; [@yojson.option] [@key "accepting_orders"]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** A simplified market from the CLOB *)
+
+type simplified_markets_response = {
+  limit : int option; [@yojson.option]
+  next_cursor : string option; [@yojson.option] [@key "next_cursor"]
+  count : int option; [@yojson.option]
+  data : simplified_market list; [@default []]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** Paginated response from get simplified markets endpoint *)
+
+type clob_market = {
+  enable_order_book : bool option; [@yojson.option] [@key "enable_order_book"]
+  active : bool option; [@yojson.option]
+  closed : bool option; [@yojson.option]
+  archived : bool option; [@yojson.option]
+  accepting_orders : bool option; [@yojson.option] [@key "accepting_orders"]
+  accepting_order_timestamp : string option;
+      [@yojson.option] [@key "accepting_order_timestamp"]
+  minimum_order_size : float option;
+      [@yojson.option] [@key "minimum_order_size"]
+  minimum_tick_size : float option; [@yojson.option] [@key "minimum_tick_size"]
+  condition_id : string option; [@yojson.option] [@key "condition_id"]
+  question_id : string option; [@yojson.option] [@key "question_id"]
+  question : string option; [@yojson.option]
+  description : string option; [@yojson.option]
+  market_slug : string option; [@yojson.option] [@key "market_slug"]
+  end_date_iso : string option; [@yojson.option] [@key "end_date_iso"]
+  game_start_time : string option; [@yojson.option] [@key "game_start_time"]
+  seconds_delay : int option; [@yojson.option] [@key "seconds_delay"]
+  fpmm : string option; [@yojson.option]
+  maker_base_fee : int64 option; [@yojson.option] [@key "maker_base_fee"]
+  taker_base_fee : int64 option; [@yojson.option] [@key "taker_base_fee"]
+  notifications_enabled : bool option;
+      [@yojson.option] [@key "notifications_enabled"]
+  neg_risk : bool option; [@yojson.option] [@key "neg_risk"]
+  neg_risk_market_id : string option;
+      [@yojson.option] [@key "neg_risk_market_id"]
+  neg_risk_request_id : string option;
+      [@yojson.option] [@key "neg_risk_request_id"]
+  icon : string option; [@yojson.option]
+  image : string option; [@yojson.option]
+  rewards : rewards option; [@yojson.option]
+  is_50_50_outcome : bool option; [@yojson.option] [@key "is_50_50_outcome"]
+  tokens : market_token list; [@default []]
+  tags : string list; [@default []]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** A full market from the CLOB *)
+
+type markets_response = {
+  limit : int option; [@yojson.option]
+  next_cursor : string option; [@yojson.option] [@key "next_cursor"]
+  count : int option; [@yojson.option]
+  data : clob_market list; [@default []]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** Paginated response from get markets endpoint *)
 
 (** {1 Price Types} *)
 
@@ -442,6 +597,16 @@ type price_point = {
 type price_history = { history : price_point list [@default []] }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Historical price data *)
+
+type rebated_fees = {
+  date : string;
+  condition_id : string;
+  asset_address : string;
+  maker_address : string;
+  rebated_fees_usdc : string;
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** Rebated fees for a maker on a specific market and date *)
 
 (** {1 Error Response} *)
 

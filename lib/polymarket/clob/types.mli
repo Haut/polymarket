@@ -87,6 +87,17 @@ module Trade_type : sig
   val equal : t -> t -> bool
 end
 
+module Trade_status : sig
+  type t = Confirmed | Failed | Retrying | Matched | Mined
+
+  val to_string : t -> string
+  val of_string : string -> t
+  val t_of_yojson : Yojson.Safe.t -> t
+  val yojson_of_t : t -> Yojson.Safe.t
+  val pp : Format.formatter -> t -> unit
+  val equal : t -> t -> bool
+end
+
 (** {1 Order Book Types} *)
 
 type order_book_level = { price : string option; size : string option }
@@ -286,16 +297,18 @@ type clob_trade = {
   size : string option;
   fee_rate_bps : string option;
   price : string option;
-  status : string option;
+  status : Trade_status.t option;
   match_time : string option;
+  match_time_nano : string option;
   last_update : string option;
   outcome : string option;
-  maker_address : P.Address.t option;
-  owner : string option;
-  transaction_hash : string option;
   bucket_index : int option;
+  owner : string option;
+  maker_address : P.Address.t option;
+  transaction_hash : string option;
+  err_msg : string option;
   maker_orders : maker_order_fill list;
-  trade_type : Trade_type.t option;
+  trader_side : Trade_type.t option;
 }
 (** A trade on the CLOB *)
 
@@ -304,6 +317,207 @@ val yojson_of_clob_trade : clob_trade -> Yojson.Safe.t
 val pp_clob_trade : Format.formatter -> clob_trade -> unit
 val show_clob_trade : clob_trade -> string
 val equal_clob_trade : clob_trade -> clob_trade -> bool
+
+type trades_response = {
+  limit : int;
+  next_cursor : string;
+  count : int;
+  data : clob_trade list;
+}
+(** Paginated response from get trades endpoint *)
+
+val trades_response_of_yojson : Yojson.Safe.t -> trades_response
+val yojson_of_trades_response : trades_response -> Yojson.Safe.t
+val pp_trades_response : Format.formatter -> trades_response -> unit
+val show_trades_response : trades_response -> string
+val equal_trades_response : trades_response -> trades_response -> bool
+
+(** {1 Builder Trade Types} *)
+
+type builder_trade = {
+  id : string option;
+  trade_type : string option;
+  taker_order_hash : string option;
+  builder : string option;
+  market : string option;
+  asset_id : string option;
+  side : Side.t option;
+  size : string option;
+  size_usdc : string option;
+  price : string option;
+  status : string option;
+  outcome : string option;
+  outcome_index : int option;
+  owner : string option;
+  maker : P.Address.t option;
+  transaction_hash : string option;
+  match_time : string option;
+  bucket_index : int option;
+  fee : string option;
+  fee_usdc : string option;
+  err_msg : string option;
+  created_at : string option;
+  updated_at : string option;
+}
+(** A builder-originated trade *)
+
+val builder_trade_of_yojson : Yojson.Safe.t -> builder_trade
+val yojson_of_builder_trade : builder_trade -> Yojson.Safe.t
+val pp_builder_trade : Format.formatter -> builder_trade -> unit
+val show_builder_trade : builder_trade -> string
+val equal_builder_trade : builder_trade -> builder_trade -> bool
+
+type builder_trades_response = {
+  limit : int;
+  next_cursor : string;
+  count : int;
+  data : builder_trade list;
+}
+(** Paginated response from get builder trades endpoint *)
+
+val builder_trades_response_of_yojson : Yojson.Safe.t -> builder_trades_response
+val yojson_of_builder_trades_response : builder_trades_response -> Yojson.Safe.t
+
+val pp_builder_trades_response :
+  Format.formatter -> builder_trades_response -> unit
+
+val show_builder_trades_response : builder_trades_response -> string
+
+val equal_builder_trades_response :
+  builder_trades_response -> builder_trades_response -> bool
+
+(** {1 Simplified Market Types} *)
+
+type reward_rate = {
+  asset_address : string option;
+  rewards_daily_rate : float option;
+}
+(** Reward rate for a specific asset *)
+
+val reward_rate_of_yojson : Yojson.Safe.t -> reward_rate
+val yojson_of_reward_rate : reward_rate -> Yojson.Safe.t
+val pp_reward_rate : Format.formatter -> reward_rate -> unit
+val show_reward_rate : reward_rate -> string
+val equal_reward_rate : reward_rate -> reward_rate -> bool
+
+type rewards = {
+  rates : reward_rate list;
+  min_size : float option;
+  max_spread : float option;
+}
+(** Rewards configuration for a market *)
+
+val rewards_of_yojson : Yojson.Safe.t -> rewards
+val yojson_of_rewards : rewards -> Yojson.Safe.t
+val pp_rewards : Format.formatter -> rewards -> unit
+val show_rewards : rewards -> string
+val equal_rewards : rewards -> rewards -> bool
+
+type market_token = {
+  token_id : string option;
+  outcome : string option;
+  price : float option;
+  winner : bool option;
+}
+(** Token within a simplified market *)
+
+val market_token_of_yojson : Yojson.Safe.t -> market_token
+val yojson_of_market_token : market_token -> Yojson.Safe.t
+val pp_market_token : Format.formatter -> market_token -> unit
+val show_market_token : market_token -> string
+val equal_market_token : market_token -> market_token -> bool
+
+type simplified_market = {
+  condition_id : string option;
+  rewards : rewards option;
+  tokens : market_token list;
+  active : bool option;
+  closed : bool option;
+  archived : bool option;
+  accepting_orders : bool option;
+}
+(** A simplified market from the CLOB *)
+
+val simplified_market_of_yojson : Yojson.Safe.t -> simplified_market
+val yojson_of_simplified_market : simplified_market -> Yojson.Safe.t
+val pp_simplified_market : Format.formatter -> simplified_market -> unit
+val show_simplified_market : simplified_market -> string
+val equal_simplified_market : simplified_market -> simplified_market -> bool
+
+type simplified_markets_response = {
+  limit : int option;
+  next_cursor : string option;
+  count : int option;
+  data : simplified_market list;
+}
+(** Paginated response from get simplified markets endpoint *)
+
+val simplified_markets_response_of_yojson :
+  Yojson.Safe.t -> simplified_markets_response
+
+val yojson_of_simplified_markets_response :
+  simplified_markets_response -> Yojson.Safe.t
+
+val pp_simplified_markets_response :
+  Format.formatter -> simplified_markets_response -> unit
+
+val show_simplified_markets_response : simplified_markets_response -> string
+
+val equal_simplified_markets_response :
+  simplified_markets_response -> simplified_markets_response -> bool
+
+type clob_market = {
+  enable_order_book : bool option;
+  active : bool option;
+  closed : bool option;
+  archived : bool option;
+  accepting_orders : bool option;
+  accepting_order_timestamp : string option;
+  minimum_order_size : float option;
+  minimum_tick_size : float option;
+  condition_id : string option;
+  question_id : string option;
+  question : string option;
+  description : string option;
+  market_slug : string option;
+  end_date_iso : string option;
+  game_start_time : string option;
+  seconds_delay : int option;
+  fpmm : string option;
+  maker_base_fee : int64 option;
+  taker_base_fee : int64 option;
+  notifications_enabled : bool option;
+  neg_risk : bool option;
+  neg_risk_market_id : string option;
+  neg_risk_request_id : string option;
+  icon : string option;
+  image : string option;
+  rewards : rewards option;
+  is_50_50_outcome : bool option;
+  tokens : market_token list;
+  tags : string list;
+}
+(** A full market from the CLOB *)
+
+val clob_market_of_yojson : Yojson.Safe.t -> clob_market
+val yojson_of_clob_market : clob_market -> Yojson.Safe.t
+val pp_clob_market : Format.formatter -> clob_market -> unit
+val show_clob_market : clob_market -> string
+val equal_clob_market : clob_market -> clob_market -> bool
+
+type markets_response = {
+  limit : int option;
+  next_cursor : string option;
+  count : int option;
+  data : clob_market list;
+}
+(** Paginated response from get markets endpoint *)
+
+val markets_response_of_yojson : Yojson.Safe.t -> markets_response
+val yojson_of_markets_response : markets_response -> Yojson.Safe.t
+val pp_markets_response : Format.formatter -> markets_response -> unit
+val show_markets_response : markets_response -> string
+val equal_markets_response : markets_response -> markets_response -> bool
 
 (** {1 Price Types} *)
 
@@ -426,6 +640,21 @@ val pp_price_history : Format.formatter -> price_history -> unit
 val show_price_history : price_history -> string
 val equal_price_history : price_history -> price_history -> bool
 
+type rebated_fees = {
+  date : string;
+  condition_id : string;
+  asset_address : string;
+  maker_address : string;
+  rebated_fees_usdc : string;
+}
+(** Rebated fees for a maker on a specific market and date *)
+
+val rebated_fees_of_yojson : Yojson.Safe.t -> rebated_fees
+val yojson_of_rebated_fees : rebated_fees -> Yojson.Safe.t
+val pp_rebated_fees : Format.formatter -> rebated_fees -> unit
+val show_rebated_fees : rebated_fees -> string
+val equal_rebated_fees : rebated_fees -> rebated_fees -> bool
+
 (** {1 Error Types} *)
 
 type error = Polymarket_http.Client.error
@@ -450,6 +679,16 @@ val yojson_fields_of_order_scoring_response : string list
 val yojson_fields_of_heartbeat_response : string list
 val yojson_fields_of_maker_order_fill : string list
 val yojson_fields_of_clob_trade : string list
+val yojson_fields_of_trades_response : string list
+val yojson_fields_of_builder_trade : string list
+val yojson_fields_of_builder_trades_response : string list
+val yojson_fields_of_reward_rate : string list
+val yojson_fields_of_rewards : string list
+val yojson_fields_of_market_token : string list
+val yojson_fields_of_simplified_market : string list
+val yojson_fields_of_simplified_markets_response : string list
+val yojson_fields_of_clob_market : string list
+val yojson_fields_of_markets_response : string list
 val yojson_fields_of_price_response : string list
 val yojson_fields_of_midpoint_response : string list
 val yojson_fields_of_spread_response : string list
@@ -459,3 +698,4 @@ val yojson_fields_of_tick_size_response : string list
 val yojson_fields_of_token_price : string list
 val yojson_fields_of_price_point : string list
 val yojson_fields_of_price_history : string list
+val yojson_fields_of_rebated_fees : string list

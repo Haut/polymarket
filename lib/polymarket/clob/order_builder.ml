@@ -94,8 +94,8 @@ let create_limit_order ~private_key ~token_id ~(side : Types.Side.t) ~price
                 signature = Some signature;
               })
 
-let create_order_request ~order ~order_type =
-  let owner = Option.map P.Address.to_string order.Types.maker in
+let create_order_request ~(order : Types.signed_order) ~order_type =
+  let owner = Option.map P.Address.to_string order.maker in
   Types.
     {
       order = Some order;

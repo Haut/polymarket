@@ -182,6 +182,35 @@ module Make_public (M : HAS_HTTP) = struct
     |> B.query_option "fidelity" string_of_int fidelity
     |> B.fetch_json ~expected_fields:Types.yojson_fields_of_price_history
          ~context:"price_history" price_history_of_yojson
+
+  let get_simplified_markets t ?next_cursor () =
+    B.new_get (M.http t) "/simplified-markets"
+    |> B.query_add "next_cursor" next_cursor
+    |> B.fetch_json
+         ~expected_fields:Types.yojson_fields_of_simplified_markets_response
+         ~context:"simplified_markets_response"
+         simplified_markets_response_of_yojson
+
+  let get_sampling_markets t ?next_cursor () =
+    B.new_get (M.http t) "/sampling-markets"
+    |> B.query_add "next_cursor" next_cursor
+    |> B.fetch_json ~expected_fields:Types.yojson_fields_of_markets_response
+         ~context:"markets_response" markets_response_of_yojson
+
+  let get_sampling_simplified_markets t ?next_cursor () =
+    B.new_get (M.http t) "/sampling-simplified-markets"
+    |> B.query_add "next_cursor" next_cursor
+    |> B.fetch_json
+         ~expected_fields:Types.yojson_fields_of_simplified_markets_response
+         ~context:"simplified_markets_response"
+         simplified_markets_response_of_yojson
+
+  let get_current_rebated_fees t ~date ~maker_address () =
+    B.new_get (M.http t) "/rebates/current"
+    |> B.query_param "date" date
+    |> B.query_param "maker_address" maker_address
+    |> B.fetch_json_list ~expected_fields:Types.yojson_fields_of_rebated_fees
+         ~context:"rebated_fees" rebated_fees_of_yojson
 end
 
 (** {1 Unauthenticated Client} *)
@@ -412,18 +441,21 @@ module L2 = struct
     with_l2_request req ~credentials:t.credentials ~address:t.address
       (B.fetch_json cancel_response_of_yojson)
 
-  let get_trades (t : t) ?id ?taker ?maker ?market ?before ?after () =
+  let get_trades (t : t) ~maker_address ?id ?market ?asset_id ?before ?after
+      ?next_cursor () =
     let req =
-      B.new_get t.http "/data/trades"
-      |> B.query_add "id" id |> B.query_add "taker" taker
-      |> B.query_add "maker" maker
+      B.new_get t.http "/trades"
+      |> B.query_param "maker_address" maker_address
+      |> B.query_add "id" id
       |> B.query_add "market" market
+      |> B.query_add "asset_id" asset_id
       |> B.query_add "before" before
       |> B.query_add "after" after
+      |> B.query_add "next_cursor" next_cursor
     in
     with_l2_request req ~credentials:t.credentials ~address:t.address
-      (B.fetch_json_list ~expected_fields:Types.yojson_fields_of_clob_trade
-         ~context:"clob_trade" clob_trade_of_yojson)
+      (B.fetch_json ~expected_fields:Types.yojson_fields_of_trades_response
+         ~context:"trades_response" trades_response_of_yojson)
 
   let send_heartbeat (t : t) () =
     let req = B.new_post t.http "/heartbeats" |> B.with_body "{}" in

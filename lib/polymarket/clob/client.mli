@@ -218,6 +218,34 @@ module Unauthed : sig
     ?fidelity:int ->
     unit ->
     (Types.price_history, error) result
+
+  (** {2 Simplified Markets} *)
+
+  val get_simplified_markets :
+    t ->
+    ?next_cursor:string ->
+    unit ->
+    (Types.simplified_markets_response, error) result
+  (** Get simplified market data with pagination. *)
+
+  val get_sampling_markets :
+    t -> ?next_cursor:string -> unit -> (Types.markets_response, error) result
+  (** Get sampling market data with pagination. *)
+
+  val get_sampling_simplified_markets :
+    t ->
+    ?next_cursor:string ->
+    unit ->
+    (Types.simplified_markets_response, error) result
+  (** Get sampling simplified market data with pagination. *)
+
+  val get_current_rebated_fees :
+    t ->
+    date:string ->
+    maker_address:string ->
+    unit ->
+    (Types.rebated_fees list, error) result
+  (** Get current rebated fees for a maker address on a given date. *)
 end
 
 (** {1 L1-Authenticated Client}
@@ -367,6 +395,34 @@ module L1 : sig
     ?fidelity:int ->
     unit ->
     (Types.price_history, error) result
+
+  (** {2 Simplified Markets} *)
+
+  val get_simplified_markets :
+    t ->
+    ?next_cursor:string ->
+    unit ->
+    (Types.simplified_markets_response, error) result
+  (** Get simplified market data with pagination. *)
+
+  val get_sampling_markets :
+    t -> ?next_cursor:string -> unit -> (Types.markets_response, error) result
+  (** Get sampling market data with pagination. *)
+
+  val get_sampling_simplified_markets :
+    t ->
+    ?next_cursor:string ->
+    unit ->
+    (Types.simplified_markets_response, error) result
+  (** Get sampling simplified market data with pagination. *)
+
+  val get_current_rebated_fees :
+    t ->
+    date:string ->
+    maker_address:string ->
+    unit ->
+    (Types.rebated_fees list, error) result
+  (** Get current rebated fees for a maker address on a given date. *)
 end
 
 (** {1 L2-Authenticated Client}
@@ -483,15 +539,23 @@ module L2 : sig
 
   val get_trades :
     t ->
+    maker_address:string ->
     ?id:string ->
-    ?taker:string ->
-    ?maker:string ->
     ?market:string ->
+    ?asset_id:string ->
     ?before:string ->
     ?after:string ->
+    ?next_cursor:string ->
     unit ->
-    (Types.clob_trade list, error) result
-  (** Get trade history. *)
+    (Types.trades_response, error) result
+  (** Get trades for the authenticated user. Returns paginated results.
+      @param maker_address Maker address to filter trades (required)
+      @param id Trade ID to filter by specific trade
+      @param market Market (condition ID) to filter trades
+      @param asset_id Asset ID (token ID) to filter trades
+      @param before Filter trades before this Unix timestamp
+      @param after Filter trades after this Unix timestamp
+      @param next_cursor Cursor for pagination (base64 encoded offset) *)
 
   (** {2 Heartbeat} *)
 
@@ -608,6 +672,34 @@ module L2 : sig
     ?fidelity:int ->
     unit ->
     (Types.price_history, error) result
+
+  (** {2 Simplified Markets} *)
+
+  val get_simplified_markets :
+    t ->
+    ?next_cursor:string ->
+    unit ->
+    (Types.simplified_markets_response, error) result
+  (** Get simplified market data with pagination. *)
+
+  val get_sampling_markets :
+    t -> ?next_cursor:string -> unit -> (Types.markets_response, error) result
+  (** Get sampling market data with pagination. *)
+
+  val get_sampling_simplified_markets :
+    t ->
+    ?next_cursor:string ->
+    unit ->
+    (Types.simplified_markets_response, error) result
+  (** Get sampling simplified market data with pagination. *)
+
+  val get_current_rebated_fees :
+    t ->
+    date:string ->
+    maker_address:string ->
+    unit ->
+    (Types.rebated_fees list, error) result
+  (** Get current rebated fees for a maker address on a given date. *)
 end
 
 (** {1 State Transitions}

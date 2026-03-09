@@ -380,12 +380,17 @@ let run_demo env =
 
               (* L2 can call authenticated endpoints *)
               let orders = Clob.L2.get_orders l2_client () in
-              print_result "get_orders" orders ~on_ok:(fun o ->
-                  Printf.sprintf "%d orders" (List.length o.Clob.Types.data));
+              print_result "get_orders" orders
+                ~on_ok:(fun (o : Clob.Types.orders_response) ->
+                  Printf.sprintf "%d orders" (List.length o.data));
 
-              let trades = Clob.L2.get_trades l2_client () in
-              print_result "get_trades" trades ~on_ok:(fun t ->
-                  Printf.sprintf "%d trades" (List.length t));
+              let maker_addr = Clob.L2.address l2_client in
+              let trades =
+                Clob.L2.get_trades l2_client ~maker_address:maker_addr ()
+              in
+              print_result "get_trades" trades
+                ~on_ok:(fun (t : Clob.Types.trades_response) ->
+                  Printf.sprintf "%d trades" (List.length t.data));
 
               (* Test get_order with a non-existent order ID (demonstrates error handling) *)
               let fake_order_id = "00000000-0000-0000-0000-000000000000" in
