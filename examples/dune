@@ -45,3 +45,8 @@
  (name test_demo)
  (modules test_demo logger)
  (libraries polymarket unix eio_main mirage-crypto-rng.unix logs fmt fmt.tty))
+
+(executable
+ (name sports_demo)
+ (modules sports_demo logger)
+ (libraries polymarket unix eio_main mirage-crypto-rng.unix logs fmt fmt.tty))

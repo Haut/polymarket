@@ -14,4 +14,5 @@
   test_gamma_api
   test_clob_api
   test_bridge_api
-  test_websocket_client))
+  test_websocket_client
+  test_sports))

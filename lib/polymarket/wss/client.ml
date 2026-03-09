@@ -41,10 +41,14 @@ module Market = struct
     mutable asset_ids : string list;
   }
 
-  let connect ~sw ~net ~clock ~asset_ids () =
+  let connect ~sw ~net ~clock ?initial_dump ?level ?custom_feature_enabled
+      ~asset_ids () =
     Log.debug (fun m ->
         m "Market: connecting with %d assets" (List.length asset_ids));
-    let subscribe_msg = Types.market_subscribe_json ~asset_ids in
+    let subscribe_msg =
+      Types.market_subscribe_json ?initial_dump ?level ?custom_feature_enabled
+        ~asset_ids ()
+    in
     let conn, message_stream =
       make_client ~sw ~net ~clock ~resource:"/ws/market" ~subscribe_msg
         ~channel:Types.Channel.Market ~channel_name:"market"
@@ -53,18 +57,20 @@ module Market = struct
 
   let stream t = t.message_stream
 
-  let subscribe t ~asset_ids =
+  let subscribe t ?level ?custom_feature_enabled ~asset_ids () =
     Log.debug (fun m ->
         m "Market: subscribing to %d assets (total: %d)" (List.length asset_ids)
           (List.length t.asset_ids + List.length asset_ids));
     t.asset_ids <- t.asset_ids @ asset_ids;
-    let msg = Types.subscribe_assets_json ~asset_ids in
+    let msg =
+      Types.subscribe_assets_json ?level ?custom_feature_enabled ~asset_ids ()
+    in
     Connection.send t.conn msg;
     (* Update stored subscription for reconnect *)
-    let full_msg = Types.market_subscribe_json ~asset_ids:t.asset_ids in
+    let full_msg = Types.market_subscribe_json ~asset_ids:t.asset_ids () in
     Connection.set_subscription t.conn full_msg
 
-  let unsubscribe t ~asset_ids =
+  let unsubscribe t ?custom_feature_enabled ~asset_ids () =
     let new_ids =
       List.filter (fun id -> not (List.mem id asset_ids)) t.asset_ids
     in
@@ -72,10 +78,12 @@ module Market = struct
         m "Market: unsubscribing from %d assets (remaining: %d)"
           (List.length asset_ids) (List.length new_ids));
     t.asset_ids <- new_ids;
-    let msg = Types.unsubscribe_assets_json ~asset_ids in
+    let msg =
+      Types.unsubscribe_assets_json ?custom_feature_enabled ~asset_ids ()
+    in
     Connection.send t.conn msg;
     (* Update stored subscription for reconnect *)
-    let full_msg = Types.market_subscribe_json ~asset_ids:t.asset_ids in
+    let full_msg = Types.market_subscribe_json ~asset_ids:t.asset_ids () in
     Connection.set_subscription t.conn full_msg
 
   let close t = Connection.close t.conn
@@ -84,18 +92,54 @@ end
 (** {1 User Channel Client} *)
 
 module User = struct
-  type t = { conn : Connection.t; message_stream : Types.message Eio.Stream.t }
+  type t = {
+    conn : Connection.t;
+    message_stream : Types.message Eio.Stream.t;
+    credentials : Common.Auth.credentials;
+    mutable markets : string list;
+  }
 
-  let connect ~sw ~net ~clock ~credentials ~markets () =
+  let connect ~sw ~net ~clock ~credentials ?markets () =
     Log.debug (fun m ->
-        m "User: connecting with %d markets" (List.length markets));
-    let subscribe_msg = Types.user_subscribe_json ~credentials ~markets in
+        m "User: connecting with %s"
+          (match markets with
+          | Some ms -> Printf.sprintf "%d markets" (List.length ms)
+          | None -> "all markets"));
+    let subscribe_msg = Types.user_subscribe_json ~credentials ?markets () in
     let conn, message_stream =
       make_client ~sw ~net ~clock ~resource:"/ws/user" ~subscribe_msg
         ~channel:Types.Channel.User ~channel_name:"user"
     in
-    { conn; message_stream }
+    let markets = match markets with Some ms -> ms | None -> [] in
+    { conn; message_stream; credentials; markets }
 
   let stream t = t.message_stream
+
+  let subscribe t ~markets =
+    Log.debug (fun m ->
+        m "User: subscribing to %d markets" (List.length markets));
+    t.markets <- t.markets @ markets;
+    let msg = Types.user_subscribe_markets_json ~markets in
+    Connection.send t.conn msg;
+    let full_msg =
+      Types.user_subscribe_json ~credentials:t.credentials ~markets:t.markets ()
+    in
+    Connection.set_subscription t.conn full_msg
+
+  let unsubscribe t ~markets =
+    let new_markets =
+      List.filter (fun id -> not (List.mem id markets)) t.markets
+    in
+    Log.debug (fun m ->
+        m "User: unsubscribing from %d markets (remaining: %d)"
+          (List.length markets) (List.length new_markets));
+    t.markets <- new_markets;
+    let msg = Types.user_unsubscribe_markets_json ~markets in
+    Connection.send t.conn msg;
+    let full_msg =
+      Types.user_subscribe_json ~credentials:t.credentials ~markets:t.markets ()
+    in
+    Connection.set_subscription t.conn full_msg
+
   let close t = Connection.close t.conn
 end

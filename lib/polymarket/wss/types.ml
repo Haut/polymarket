@@ -25,6 +25,8 @@ module Market_event = struct
     | Tick_size_change [@value "tick_size_change"]
     | Last_trade_price [@value "last_trade_price"]
     | Best_bid_ask [@value "best_bid_ask"]
+    | New_market [@value "new_market"]
+    | Market_resolved [@value "market_resolved"]
   [@@deriving enum]
 end
 
@@ -46,8 +48,8 @@ type price_change_entry = {
   size : P.Decimal.t;
   side : string;
   hash : string;
-  best_bid : P.Decimal.t; [@key "best_bid"]
-  best_ask : P.Decimal.t; [@key "best_ask"]
+  best_bid : P.Decimal.t option; [@key "best_bid"] [@default None]
+  best_ask : P.Decimal.t option; [@key "best_ask"] [@default None]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Price change entry within a price_change message *)
@@ -80,7 +82,8 @@ type last_trade_price_message = {
   price : P.Decimal.t;
   side : string;
   size : P.Decimal.t;
-  fee_rate_bps : P.Decimal.t; [@key "fee_rate_bps"]
+  fee_rate_bps : P.Decimal.t option; [@key "fee_rate_bps"] [@default None]
+  transaction_hash : string option; [@key "transaction_hash"] [@default None]
   timestamp : string;
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
@@ -92,10 +95,51 @@ type best_bid_ask_message = {
   market : string;
   best_bid : P.Decimal.t; [@key "best_bid"]
   best_ask : P.Decimal.t; [@key "best_ask"]
+  spread : P.Decimal.t;
   timestamp : string;
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Best bid/ask message *)
+
+type event_message = {
+  id : string option; [@default None]
+  ticker : string option; [@default None]
+  slug : string option; [@default None]
+  title : string option; [@default None]
+  description : string option; [@default None]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+(** Event metadata shared by new_market and market_resolved messages *)
+
+type new_market_message = {
+  event_type : string; [@key "event_type"]
+  id : string;
+  question : string;
+  market : string;
+  slug : string;
+  description : string option; [@default None]
+  assets_ids : string list; [@key "assets_ids"]
+  outcomes : string list;
+  event : event_message option; [@default None]
+  timestamp : string;
+  tags : string list option; [@default None]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+(** New market message *)
+
+type market_resolved_message = {
+  event_type : string; [@key "event_type"]
+  id : string;
+  market : string;
+  assets_ids : string list; [@key "assets_ids"]
+  winning_asset_id : string; [@key "winning_asset_id"]
+  winning_outcome : string; [@key "winning_outcome"]
+  event : event_message option; [@default None]
+  timestamp : string;
+  tags : string list option; [@default None]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
+(** Market resolved message *)
 
 (** {1 User Channel Message Types} *)
 
@@ -115,9 +159,12 @@ type maker_order = {
   asset_id : string; [@key "asset_id"]
   matched_amount : P.Decimal.t; [@key "matched_amount"]
   order_id : string; [@key "order_id"]
-  outcome : string;
+  outcome : string option; [@default None]
   owner : string;
   price : P.Decimal.t;
+  maker_address : string option; [@key "maker_address"] [@default None]
+  fee_rate_bps : P.Decimal.t option; [@key "fee_rate_bps"] [@default None]
+  side : string option; [@default None]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Maker order in a trade *)
@@ -131,15 +178,20 @@ type trade_message = {
   size : P.Decimal.t;
   price : P.Decimal.t;
   status : Trade_status.t;
-  outcome : string;
+  outcome : string option; [@default None]
   owner : string;
-  trade_owner : string; [@key "trade_owner"]
+  trade_owner : string option; [@key "trade_owner"] [@default None]
   taker_order_id : string; [@key "taker_order_id"]
-  maker_orders : maker_order list; [@key "maker_orders"]
-  matchtime : string;
-  last_update : string; [@key "last_update"]
+  maker_orders : maker_order list option; [@key "maker_orders"] [@default None]
+  matchtime : string option; [@default None]
+  last_update : string option; [@key "last_update"] [@default None]
   timestamp : string;
   type_ : string; [@key "type"]
+  fee_rate_bps : P.Decimal.t option; [@key "fee_rate_bps"] [@default None]
+  maker_address : string option; [@key "maker_address"] [@default None]
+  transaction_hash : string option; [@key "transaction_hash"] [@default None]
+  bucket_index : int option; [@key "bucket_index"] [@default None]
+  trader_side : string option; [@key "trader_side"] [@default None]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Trade message from user channel *)
@@ -153,13 +205,18 @@ type order_message = {
   price : P.Decimal.t;
   original_size : P.Decimal.t; [@key "original_size"]
   size_matched : P.Decimal.t; [@key "size_matched"]
-  outcome : string;
+  outcome : string option; [@default None]
   owner : string;
-  order_owner : string; [@key "order_owner"]
+  order_owner : string option; [@key "order_owner"] [@default None]
   associate_trades : string list option;
       [@key "associate_trades"] [@default None]
   timestamp : string;
   type_ : Order_event_type.t; [@key "type"]
+  created_at : string option; [@key "created_at"] [@default None]
+  expiration : string option; [@default None]
+  order_type : string option; [@key "order_type"] [@default None]
+  status : string option; [@default None]
+  maker_address : string option; [@key "maker_address"] [@default None]
 }
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq]
 (** Order message from user channel *)
@@ -173,6 +230,8 @@ type market_message =
   | Tick_size_change of tick_size_change_message
   | Last_trade_price of last_trade_price_message
   | Best_bid_ask of best_bid_ask_message
+  | New_market of new_market_message
+  | Market_resolved of market_resolved_message
 [@@deriving show, eq]
 
 (** User channel messages. *)
@@ -202,6 +261,10 @@ let parse_market_message (json : Yojson.Safe.t) :
           Ok (Last_trade_price (last_trade_price_message_of_yojson json))
       | Some (`String "best_bid_ask") ->
           Ok (Best_bid_ask (best_bid_ask_message_of_yojson json))
+      | Some (`String "new_market") ->
+          Ok (New_market (new_market_message_of_yojson json))
+      | Some (`String "market_resolved") ->
+          Ok (Market_resolved (market_resolved_message_of_yojson json))
       | Some (`String s) -> Error ("Unknown market event_type: " ^ s)
       | _ -> Error "Missing or invalid event_type in market message")
   | _ -> Error "Market message must be a JSON object"
@@ -257,13 +320,21 @@ type market_subscribe_request = {
   assets_ids : string list; [@key "assets_ids"]
   type_ : string; [@key "type"]
   custom_feature_enabled : bool; [@key "custom_feature_enabled"]
+  initial_dump : bool option; [@key "initial_dump"] [@yojson.option]
+  level : int option; [@yojson.option]
 }
 [@@deriving yojson]
 
 type user_subscribe_request = {
-  markets : string list;
+  markets : string list option; [@yojson.option]
   auth : auth;
   type_ : string; [@key "type"]
+}
+[@@deriving yojson]
+
+type user_subscription_update_request = {
+  operation : string;
+  markets : string list;
 }
 [@@deriving yojson]
 
@@ -271,15 +342,23 @@ type asset_subscription_request = {
   assets_ids : string list; [@key "assets_ids"]
   operation : string;
   custom_feature_enabled : bool; [@key "custom_feature_enabled"]
+  level : int option; [@yojson.option]
 }
 [@@deriving yojson]
 
-let market_subscribe_json ~asset_ids =
+let market_subscribe_json ?initial_dump ?level ?(custom_feature_enabled = true)
+    ~asset_ids () =
   yojson_of_market_subscribe_request
-    { assets_ids = asset_ids; type_ = "MARKET"; custom_feature_enabled = true }
+    {
+      assets_ids = asset_ids;
+      type_ = "MARKET";
+      custom_feature_enabled;
+      initial_dump;
+      level;
+    }
   |> Yojson.Safe.to_string
 
-let user_subscribe_json ~(credentials : Common.Auth.credentials) ~markets =
+let user_subscribe_json ~(credentials : Common.Auth.credentials) ?markets () =
   let auth =
     {
       apiKey = credentials.api_key;
@@ -290,20 +369,33 @@ let user_subscribe_json ~(credentials : Common.Auth.credentials) ~markets =
   yojson_of_user_subscribe_request { markets; auth; type_ = "USER" }
   |> Yojson.Safe.to_string
 
-let subscribe_assets_json ~asset_ids =
+let user_subscribe_markets_json ~markets =
+  yojson_of_user_subscription_update_request
+    { operation = "subscribe"; markets }
+  |> Yojson.Safe.to_string
+
+let user_unsubscribe_markets_json ~markets =
+  yojson_of_user_subscription_update_request
+    { operation = "unsubscribe"; markets }
+  |> Yojson.Safe.to_string
+
+let subscribe_assets_json ?level ?(custom_feature_enabled = true) ~asset_ids ()
+    =
   yojson_of_asset_subscription_request
     {
       assets_ids = asset_ids;
       operation = "subscribe";
-      custom_feature_enabled = true;
+      custom_feature_enabled;
+      level;
     }
   |> Yojson.Safe.to_string
 
-let unsubscribe_assets_json ~asset_ids =
+let unsubscribe_assets_json ?(custom_feature_enabled = true) ~asset_ids () =
   yojson_of_asset_subscription_request
     {
       assets_ids = asset_ids;
       operation = "unsubscribe";
-      custom_feature_enabled = true;
+      custom_feature_enabled;
+      level = None;
     }
   |> Yojson.Safe.to_string

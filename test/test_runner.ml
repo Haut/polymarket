@@ -20,4 +20,6 @@ let () =
          prefix_tests "Bridge_api.Types" Test_bridge_api.Test_types.tests;
          (* WebSocket client tests *)
          prefix_tests "Wss.Types" Test_websocket_client.Test_types.tests;
+         (* Sports WebSocket tests *)
+         prefix_tests "Sports.Types" Test_sports.Test_types.tests;
        ])

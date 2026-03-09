@@ -51,6 +51,12 @@ module Rtds = struct
   module Types = Rtds.Types
 end
 
+(** Sports WebSocket client for live match results. *)
+module Sports = struct
+  include Sports.Client
+  module Types = Sports.Types
+end
+
 module Rate_limiter = Rate_limiter
 (** Route-based rate limiting middleware. *)
 

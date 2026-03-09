@@ -12,6 +12,9 @@ module Market : sig
     sw:Eio.Switch.t ->
     net:'a Eio.Net.t ->
     clock:float Eio.Time.clock_ty Eio.Resource.t ->
+    ?initial_dump:bool ->
+    ?level:int ->
+    ?custom_feature_enabled:bool ->
     asset_ids:string list ->
     unit ->
     t
@@ -20,10 +23,17 @@ module Market : sig
   val stream : t -> Types.message Eio.Stream.t
   (** Get the stream of market messages. *)
 
-  val subscribe : t -> asset_ids:string list -> unit
+  val subscribe :
+    t ->
+    ?level:int ->
+    ?custom_feature_enabled:bool ->
+    asset_ids:string list ->
+    unit ->
+    unit
   (** Subscribe to additional assets. *)
 
-  val unsubscribe : t -> asset_ids:string list -> unit
+  val unsubscribe :
+    t -> ?custom_feature_enabled:bool -> asset_ids:string list -> unit -> unit
   (** Unsubscribe from assets. *)
 
   val close : t -> unit
@@ -41,13 +51,20 @@ module User : sig
     net:'a Eio.Net.t ->
     clock:float Eio.Time.clock_ty Eio.Resource.t ->
     credentials:Common.Auth.credentials ->
-    markets:string list ->
+    ?markets:string list ->
     unit ->
     t
-  (** Connect to the user channel with authentication. *)
+  (** Connect to the user channel with authentication. If [markets] is omitted,
+      subscribes to all markets. *)
 
   val stream : t -> Types.message Eio.Stream.t
   (** Get the stream of user messages. *)
+
+  val subscribe : t -> markets:string list -> unit
+  (** Subscribe to additional markets. *)
+
+  val unsubscribe : t -> markets:string list -> unit
+  (** Unsubscribe from markets. *)
 
   val close : t -> unit
   (** Close the connection. *)

@@ -32,9 +32,16 @@ let handle_market_message (msg : Wss.Types.message) =
   | Market (Tick_size_change _) -> Logger.ok "TICK_SIZE" "tick size changed"
   | Market (Best_bid_ask bba) ->
       Logger.ok "BBA"
-        (Printf.sprintf "asset=%s bid=%s ask=%s" bba.asset_id
+        (Printf.sprintf "asset=%s bid=%s ask=%s spread=%s" bba.asset_id
            (Primitives.Decimal.to_string bba.best_bid)
-           (Primitives.Decimal.to_string bba.best_ask))
+           (Primitives.Decimal.to_string bba.best_ask)
+           (Primitives.Decimal.to_string bba.spread))
+  | Market (New_market nm) ->
+      Logger.ok "NEW_MARKET"
+        (Printf.sprintf "id=%s question=%s" nm.id nm.question)
+  | Market (Market_resolved mr) ->
+      Logger.ok "RESOLVED"
+        (Printf.sprintf "id=%s winner=%s" mr.id mr.winning_outcome)
   | User (Trade trade) ->
       Logger.ok "USER_TRADE"
         (Printf.sprintf "id=%s price=%s size=%s" trade.id
@@ -157,12 +164,12 @@ let run_demo env =
 
       (* Unsubscribe from first asset *)
       let first_asset = List.hd asset_ids in
-      Wss.Market.unsubscribe client ~asset_ids:[ first_asset ];
+      Wss.Market.unsubscribe client ~asset_ids:[ first_asset ] ();
       Logger.ok "unsubscribe"
         (Printf.sprintf "unsubscribed from %s..." (String.sub first_asset 0 20));
 
       (* Subscribe to same asset again *)
-      Wss.Market.subscribe client ~asset_ids:[ first_asset ];
+      Wss.Market.subscribe client ~asset_ids:[ first_asset ] ();
       Logger.ok "subscribe"
         (Printf.sprintf "re-subscribed to %s..." (String.sub first_asset 0 20));
 
@@ -264,6 +271,19 @@ let run_demo env =
                   Wss.User.connect ~sw ~net ~clock ~credentials
                     ~markets:market_ids ()
                 in
+
+                (* Demo: dynamic subscribe/unsubscribe on user channel *)
+                let first_market = List.hd market_ids in
+                Wss.User.unsubscribe user_client ~markets:[ first_market ];
+                Logger.ok "USER_UNSUB"
+                  (Printf.sprintf "unsubscribed from %s..."
+                     (String.sub first_market 0
+                        (min 20 (String.length first_market))));
+                Wss.User.subscribe user_client ~markets:[ first_market ];
+                Logger.ok "USER_SUB"
+                  (Printf.sprintf "re-subscribed to %s..."
+                     (String.sub first_market 0
+                        (min 20 (String.length first_market))));
                 let user_stream = Wss.User.stream user_client in
 
                 Logger.ok "CONNECTED" "User channel connected";

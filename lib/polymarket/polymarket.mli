@@ -324,6 +324,36 @@ module Rtds : sig
   module Types = Rtds.Types
 end
 
+(** Sports WebSocket client for live match results.
+
+    Connects to sports-api.polymarket.com/ws and streams live sports match
+    results. No subscription message is needed — all events are broadcast
+    immediately on connect. The client automatically handles text-based
+    ping/pong keepalive.
+
+    {2 Example}
+
+    {[
+      Eio_main.run @@ fun env ->
+      Eio.Switch.run @@ fun sw ->
+      let net = Eio.Stdenv.net env in
+      let clock = Eio.Stdenv.clock env in
+      let client = Sports.connect ~sw ~net ~clock () in
+      let stream = Sports.stream client in
+      match Eio.Stream.take stream with
+      | Sports.Types.Update result ->
+          Printf.printf "Match: %s score=%s\n" result.slug
+            (Option.value ~default:"N/A" result.score)
+      | Sports.Types.Unknown _ -> ()
+    ]} *)
+module Sports : sig
+  include module type of struct
+    include Sports.Client
+  end
+
+  module Types = Sports.Types
+end
+
 module Rate_limiter = Rate_limiter
 (** Route-based rate limiting middleware for HTTP clients. *)
 
