@@ -57,6 +57,16 @@ module type HAS_HTTP = sig
 end
 
 module Make_public (M : HAS_HTTP) = struct
+  let get_time t () =
+    B.new_get (M.http t) "/time"
+    |> B.fetch_json (function
+      | `Int i -> Int64.of_int i
+      | `Intlit s -> Int64.of_string s
+      | json ->
+          raise
+            (Ppx_yojson_conv_lib.Yojson_conv.Of_yojson_error
+               (Failure "expected integer", json)))
+
   let get_order_book t ~token_id () =
     B.new_get (M.http t) "/book"
     |> B.query_param "token_id" token_id
@@ -114,11 +124,54 @@ module Make_public (M : HAS_HTTP) = struct
     |> B.query_param "token_ids" (String.concat "," token_ids)
     |> B.fetch_json midpoints_response_of_yojson
 
+  let get_spread t ~token_id () =
+    B.new_get (M.http t) "/spread"
+    |> B.query_param "token_id" token_id
+    |> B.fetch_json ~expected_fields:Types.yojson_fields_of_spread_response
+         ~context:"spread_response" spread_response_of_yojson
+
   let get_spreads t ~token_ids () =
     let body = J.list_single_field "token_id" token_ids in
     B.new_post (M.http t) "/spreads"
     |> B.with_body body
     |> B.fetch_json spreads_response_of_yojson
+
+  let get_last_trades_prices t ~token_ids () =
+    let body = J.list_single_field "token_id" token_ids in
+    B.new_post (M.http t) "/last-trades-prices"
+    |> B.with_body body
+    |> B.fetch_json_list
+         ~expected_fields:Types.yojson_fields_of_last_trade_price_entry
+         ~context:"last_trade_price_entry" last_trade_price_entry_of_yojson
+
+  let get_last_trades_prices_query t ~token_ids () =
+    B.new_get (M.http t) "/last-trades-prices"
+    |> B.query_param "token_ids" (String.concat "," token_ids)
+    |> B.fetch_json_list
+         ~expected_fields:Types.yojson_fields_of_last_trade_price_entry
+         ~context:"last_trade_price_entry" last_trade_price_entry_of_yojson
+
+  let get_fee_rate t ?token_id () =
+    B.new_get (M.http t) "/fee-rate"
+    |> B.query_option "token_id" Fun.id token_id
+    |> B.fetch_json ~expected_fields:Types.yojson_fields_of_fee_rate_response
+         ~context:"fee_rate_response" fee_rate_response_of_yojson
+
+  let get_fee_rate_by_path t ~token_id () =
+    B.new_get (M.http t) ("/fee-rate/" ^ token_id)
+    |> B.fetch_json ~expected_fields:Types.yojson_fields_of_fee_rate_response
+         ~context:"fee_rate_response" fee_rate_response_of_yojson
+
+  let get_tick_size t ?token_id () =
+    B.new_get (M.http t) "/tick-size"
+    |> B.query_option "token_id" Fun.id token_id
+    |> B.fetch_json ~expected_fields:Types.yojson_fields_of_tick_size_response
+         ~context:"tick_size_response" tick_size_response_of_yojson
+
+  let get_tick_size_by_path t ~token_id () =
+    B.new_get (M.http t) ("/tick-size/" ^ token_id)
+    |> B.fetch_json ~expected_fields:Types.yojson_fields_of_tick_size_response
+         ~context:"tick_size_response" tick_size_response_of_yojson
 
   let get_price_history t ~market ?start_ts ?end_ts ?interval ?fidelity () =
     B.new_get (M.http t) "/prices-history"

@@ -198,6 +198,11 @@ let run_demo env =
         print_result_count "get_order_books" order_books
       else Logger.skip "get_order_books" "need multiple token IDs";
 
+      (* Server time *)
+      let server_time = Clob.Unauthed.get_time unauthed_client () in
+      print_result "get_time" server_time ~on_ok:(fun t ->
+          Printf.sprintf "%Ld" t);
+
       (* ===== Pricing (Unauthed) ===== *)
       let price_buy =
         Clob.Unauthed.get_price unauthed_client ~token_id
@@ -251,7 +256,13 @@ let run_demo env =
             Printf.sprintf "%d price entries" (List.length p))
       else Logger.skip "get_prices" "no token IDs for batch request";
 
-      (* Spreads *)
+      (* Spread (single) *)
+      let spread = Clob.Unauthed.get_spread unauthed_client ~token_id () in
+      print_result "get_spread" spread
+        ~on_ok:(fun (s : Clob.Types.spread_response) ->
+          Option.value ~default:"(no spread)" s.spread);
+
+      (* Spreads (batch) *)
       if List.length token_ids_subset > 0 then
         let spreads =
           Clob.Unauthed.get_spreads unauthed_client ~token_ids:token_ids_subset
@@ -260,6 +271,41 @@ let run_demo env =
         print_result "get_spreads" spreads ~on_ok:(fun s ->
             Printf.sprintf "%d spread entries" (List.length s))
       else Logger.skip "get_spreads" "no token IDs available";
+
+      (* Last trade prices (POST) *)
+      if List.length token_ids_subset > 0 then
+        let last_trades =
+          Clob.Unauthed.get_last_trades_prices unauthed_client
+            ~token_ids:token_ids_subset ()
+        in
+        print_result "get_last_trades_prices" last_trades ~on_ok:(fun entries ->
+            Printf.sprintf "%d last trade entries" (List.length entries))
+      else Logger.skip "get_last_trades_prices" "no token IDs available";
+
+      (* Last trade prices (GET query) *)
+      if List.length token_ids_subset > 0 then
+        let last_trades =
+          Clob.Unauthed.get_last_trades_prices_query unauthed_client
+            ~token_ids:token_ids_subset ()
+        in
+        print_result "get_last_trades_prices_query" last_trades
+          ~on_ok:(fun entries ->
+            Printf.sprintf "%d last trade entries" (List.length entries))
+      else Logger.skip "get_last_trades_prices_query" "no token IDs available";
+
+      (* Fee rate *)
+      let fee_rate = Clob.Unauthed.get_fee_rate unauthed_client ~token_id () in
+      print_result "get_fee_rate" fee_rate
+        ~on_ok:(fun (r : Clob.Types.fee_rate_response) ->
+          Printf.sprintf "%Ld bps" r.base_fee);
+
+      (* Tick size *)
+      let tick_size =
+        Clob.Unauthed.get_tick_size unauthed_client ~token_id ()
+      in
+      print_result "get_tick_size" tick_size
+        ~on_ok:(fun (r : Clob.Types.tick_size_response) ->
+          Printf.sprintf "%g" r.minimum_tick_size);
 
       (* ===== Timeseries (Unauthed) ===== *)
       (match market.condition_id with

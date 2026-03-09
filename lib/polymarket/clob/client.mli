@@ -109,6 +109,9 @@ module Unauthed : sig
       @param rate_limiter Shared rate limiter for enforcing API limits
       @return Ok client on success, Error on TLS initialization failure *)
 
+  val get_time : t -> unit -> (int64, error) result
+  (** Get current server time as a Unix timestamp. *)
+
   (** {2 Order Book} *)
 
   val get_order_book :
@@ -166,8 +169,43 @@ module Unauthed : sig
   (** Get midpoint prices for multiple tokens via query parameters.
       @param token_ids Token IDs (comma-separated internally) *)
 
+  val get_spread :
+    t -> token_id:string -> unit -> (Types.spread_response, error) result
+
   val get_spreads :
     t -> token_ids:string list -> unit -> (Types.spreads_response, error) result
+
+  val get_last_trades_prices :
+    t ->
+    token_ids:string list ->
+    unit ->
+    (Types.last_trade_price_entry list, error) result
+  (** Get last trade prices for multiple tokens via request body. Maximum 500
+      token IDs per call. *)
+
+  val get_last_trades_prices_query :
+    t ->
+    token_ids:string list ->
+    unit ->
+    (Types.last_trade_price_entry list, error) result
+  (** Get last trade prices for multiple tokens via query parameters.
+      @param token_ids Token IDs (comma-separated internally, max 500) *)
+
+  val get_fee_rate :
+    t -> ?token_id:string -> unit -> (Types.fee_rate_response, error) result
+  (** Get the base fee rate, optionally for a specific token ID. *)
+
+  val get_fee_rate_by_path :
+    t -> token_id:string -> unit -> (Types.fee_rate_response, error) result
+  (** Get the base fee rate using token ID as a path parameter. *)
+
+  val get_tick_size :
+    t -> ?token_id:string -> unit -> (Types.tick_size_response, error) result
+  (** Get the minimum tick size, optionally for a specific token ID. *)
+
+  val get_tick_size_by_path :
+    t -> token_id:string -> unit -> (Types.tick_size_response, error) result
+  (** Get the minimum tick size using token ID as a path parameter. *)
 
   (** {2 Timeseries} *)
 
@@ -220,6 +258,9 @@ module L1 : sig
   (** Derive API key from wallet and automatically upgrade to L2 client. Returns
       both the L2 client and the raw response (for credential storage). *)
 
+  val get_time : t -> unit -> (int64, error) result
+  (** Get current server time as a Unix timestamp. *)
+
   (** {2 Order Book} *)
 
   val get_order_book :
@@ -277,8 +318,43 @@ module L1 : sig
   (** Get midpoint prices for multiple tokens via query parameters.
       @param token_ids Token IDs (comma-separated internally) *)
 
+  val get_spread :
+    t -> token_id:string -> unit -> (Types.spread_response, error) result
+
   val get_spreads :
     t -> token_ids:string list -> unit -> (Types.spreads_response, error) result
+
+  val get_last_trades_prices :
+    t ->
+    token_ids:string list ->
+    unit ->
+    (Types.last_trade_price_entry list, error) result
+  (** Get last trade prices for multiple tokens via request body. Maximum 500
+      token IDs per call. *)
+
+  val get_last_trades_prices_query :
+    t ->
+    token_ids:string list ->
+    unit ->
+    (Types.last_trade_price_entry list, error) result
+  (** Get last trade prices for multiple tokens via query parameters.
+      @param token_ids Token IDs (comma-separated internally, max 500) *)
+
+  val get_fee_rate :
+    t -> ?token_id:string -> unit -> (Types.fee_rate_response, error) result
+  (** Get the base fee rate, optionally for a specific token ID. *)
+
+  val get_fee_rate_by_path :
+    t -> token_id:string -> unit -> (Types.fee_rate_response, error) result
+  (** Get the base fee rate using token ID as a path parameter. *)
+
+  val get_tick_size :
+    t -> ?token_id:string -> unit -> (Types.tick_size_response, error) result
+  (** Get the minimum tick size, optionally for a specific token ID. *)
+
+  val get_tick_size_by_path :
+    t -> token_id:string -> unit -> (Types.tick_size_response, error) result
+  (** Get the minimum tick size using token ID as a path parameter. *)
 
   (** {2 Timeseries} *)
 
@@ -402,6 +478,9 @@ module L2 : sig
     (Types.clob_trade list, error) result
   (** Get trade history. *)
 
+  val get_time : t -> unit -> (int64, error) result
+  (** Get current server time as a Unix timestamp. *)
+
   (** {2 Order Book} *)
 
   val get_order_book :
@@ -459,8 +538,43 @@ module L2 : sig
   (** Get midpoint prices for multiple tokens via query parameters.
       @param token_ids Token IDs (comma-separated internally) *)
 
+  val get_spread :
+    t -> token_id:string -> unit -> (Types.spread_response, error) result
+
   val get_spreads :
     t -> token_ids:string list -> unit -> (Types.spreads_response, error) result
+
+  val get_last_trades_prices :
+    t ->
+    token_ids:string list ->
+    unit ->
+    (Types.last_trade_price_entry list, error) result
+  (** Get last trade prices for multiple tokens via request body. Maximum 500
+      token IDs per call. *)
+
+  val get_last_trades_prices_query :
+    t ->
+    token_ids:string list ->
+    unit ->
+    (Types.last_trade_price_entry list, error) result
+  (** Get last trade prices for multiple tokens via query parameters.
+      @param token_ids Token IDs (comma-separated internally, max 500) *)
+
+  val get_fee_rate :
+    t -> ?token_id:string -> unit -> (Types.fee_rate_response, error) result
+  (** Get the base fee rate, optionally for a specific token ID. *)
+
+  val get_fee_rate_by_path :
+    t -> token_id:string -> unit -> (Types.fee_rate_response, error) result
+  (** Get the base fee rate using token ID as a path parameter. *)
+
+  val get_tick_size :
+    t -> ?token_id:string -> unit -> (Types.tick_size_response, error) result
+  (** Get the minimum tick size, optionally for a specific token ID. *)
+
+  val get_tick_size_by_path :
+    t -> token_id:string -> unit -> (Types.tick_size_response, error) result
+  (** Get the minimum tick size using token ID as a path parameter. *)
 
   (** {2 Timeseries} *)
 

@@ -272,6 +272,15 @@ val pp_midpoint_response : Format.formatter -> midpoint_response -> unit
 val show_midpoint_response : midpoint_response -> string
 val equal_midpoint_response : midpoint_response -> midpoint_response -> bool
 
+type spread_response = { spread : string option }
+(** Response from get spread endpoint *)
+
+val spread_response_of_yojson : Yojson.Safe.t -> spread_response
+val yojson_of_spread_response : spread_response -> Yojson.Safe.t
+val pp_spread_response : Format.formatter -> spread_response -> unit
+val show_spread_response : spread_response -> string
+val equal_spread_response : spread_response -> spread_response -> bool
+
 type token_price = { buy : string option; sell : string option }
 (** Token prices for buy and sell sides *)
 
@@ -307,6 +316,42 @@ val yojson_of_spreads_response : spreads_response -> Yojson.Safe.t
 val pp_spreads_response : Format.formatter -> spreads_response -> unit
 val show_spreads_response : spreads_response -> string
 val equal_spreads_response : spreads_response -> spreads_response -> bool
+
+type last_trade_price_entry = {
+  token_id : string;
+  price : string;
+  side : Side.t;
+}
+(** Entry in last trade prices response *)
+
+val last_trade_price_entry_of_yojson : Yojson.Safe.t -> last_trade_price_entry
+val yojson_of_last_trade_price_entry : last_trade_price_entry -> Yojson.Safe.t
+
+val pp_last_trade_price_entry :
+  Format.formatter -> last_trade_price_entry -> unit
+
+val show_last_trade_price_entry : last_trade_price_entry -> string
+
+val equal_last_trade_price_entry :
+  last_trade_price_entry -> last_trade_price_entry -> bool
+
+type fee_rate_response = { base_fee : int64 }
+(** Response from get fee rate endpoint *)
+
+val fee_rate_response_of_yojson : Yojson.Safe.t -> fee_rate_response
+val yojson_of_fee_rate_response : fee_rate_response -> Yojson.Safe.t
+val pp_fee_rate_response : Format.formatter -> fee_rate_response -> unit
+val show_fee_rate_response : fee_rate_response -> string
+val equal_fee_rate_response : fee_rate_response -> fee_rate_response -> bool
+
+type tick_size_response = { minimum_tick_size : float }
+(** Response from get tick size endpoint *)
+
+val tick_size_response_of_yojson : Yojson.Safe.t -> tick_size_response
+val yojson_of_tick_size_response : tick_size_response -> Yojson.Safe.t
+val pp_tick_size_response : Format.formatter -> tick_size_response -> unit
+val show_tick_size_response : tick_size_response -> string
+val equal_tick_size_response : tick_size_response -> tick_size_response -> bool
 
 (** {1 Timeseries Types} *)
 
@@ -351,6 +396,10 @@ val yojson_fields_of_maker_order_fill : string list
 val yojson_fields_of_clob_trade : string list
 val yojson_fields_of_price_response : string list
 val yojson_fields_of_midpoint_response : string list
+val yojson_fields_of_spread_response : string list
+val yojson_fields_of_last_trade_price_entry : string list
+val yojson_fields_of_fee_rate_response : string list
+val yojson_fields_of_tick_size_response : string list
 val yojson_fields_of_token_price : string list
 val yojson_fields_of_price_point : string list
 val yojson_fields_of_price_history : string list

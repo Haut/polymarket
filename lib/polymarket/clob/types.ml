@@ -258,6 +258,10 @@ type midpoint_response = {
 [@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
 (** Response from get midpoint endpoint *)
 
+type spread_response = { spread : string option [@yojson.option] }
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** Response from get spread endpoint *)
+
 type token_price = {
   buy : string option; [@yojson.option] [@key "BUY"]
   sell : string option; [@yojson.option] [@key "SELL"]
@@ -375,6 +379,24 @@ let spreads_response_of_yojson json =
 
 let yojson_of_spreads_response resp =
   `Assoc (List.map (fun (tid, s) -> (P.U256.to_string tid, `String s)) resp)
+
+type last_trade_price_entry = {
+  token_id : string; [@key "token_id"]
+  price : string; [@key "price"]
+  side : Side.t; [@key "side"]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** Entry in last trade prices response *)
+
+type fee_rate_response = { base_fee : int64 [@key "base_fee"] }
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** Response from get fee rate endpoint *)
+
+type tick_size_response = {
+  minimum_tick_size : float; [@key "minimum_tick_size"]
+}
+[@@yojson.allow_extra_fields] [@@deriving yojson, show, eq, yojson_fields]
+(** Response from get tick size endpoint *)
 
 (** {1 Timeseries Types} *)
 
