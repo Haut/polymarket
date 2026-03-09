@@ -223,7 +223,7 @@ let run_demo env =
       (* Batch prices *)
       let requests =
         List.filteri (fun i _ -> i < 3) all_token_ids
-        |> List.map (fun tid -> (tid, Clob.Types.Side.Buy))
+        |> List.map (fun tid -> (tid, Some Clob.Types.Side.Buy))
       in
       if List.length requests > 0 then
         let prices = Clob.Unauthed.get_prices unauthed_client ~requests () in

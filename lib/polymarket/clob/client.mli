@@ -134,9 +134,11 @@ module Unauthed : sig
 
   val get_prices :
     t ->
-    requests:(string * Types.Side.t) list ->
+    requests:(string * Types.Side.t option) list ->
     unit ->
     (Types.prices_response, error) result
+  (** Get market prices for multiple tokens. Side is optional per the API spec.
+  *)
 
   val get_prices_query :
     t ->
@@ -227,9 +229,11 @@ module L1 : sig
 
   val get_prices :
     t ->
-    requests:(string * Types.Side.t) list ->
+    requests:(string * Types.Side.t option) list ->
     unit ->
     (Types.prices_response, error) result
+  (** Get market prices for multiple tokens. Side is optional per the API spec.
+  *)
 
   val get_prices_query :
     t ->
@@ -391,9 +395,11 @@ module L2 : sig
 
   val get_prices :
     t ->
-    requests:(string * Types.Side.t) list ->
+    requests:(string * Types.Side.t option) list ->
     unit ->
     (Types.prices_response, error) result
+  (** Get market prices for multiple tokens. Side is optional per the API spec.
+  *)
 
   val get_prices_query :
     t ->

@@ -89,10 +89,11 @@ module Make_public (M : HAS_HTTP) = struct
          (J.list
             (fun (token_id, side) ->
               J.obj
-                [
-                  ("token_id", J.string token_id);
-                  ("side", J.string (Side.to_string side));
-                ])
+                (("token_id", J.string token_id)
+                ::
+                (match side with
+                | Some s -> [ ("side", J.string (Side.to_string s)) ]
+                | None -> [])))
             requests)
     |> B.fetch_json prices_response_of_yojson
 
